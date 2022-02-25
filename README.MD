@@ -105,7 +105,7 @@ For example, to retrieve the languageKey string from the example above, you woul
 import {useLanguage} from "ilingo";
 
 (async () => {
-    console.log(await useLanguage().getLine('app.languageKey'));
+    console.log(await useLanguage().get('app.languageKey'));
 
     // lang is a helper function for fast access ;)
     console.log(await lang('app.languageKey'));
@@ -117,7 +117,7 @@ import {useLanguage} from "ilingo";
 ```typescript
 import {useLanguage} from "ilingo";
 
-console.log(useLanguage().getLineSync('app.languageKey'));
+console.log(useLanguage().getSync('app.languageKey'));
 
 // lang is a helper function for fast access ;)
 console.log(langSync('app.languageKey'));
@@ -152,7 +152,7 @@ import {useLanguage} from "ilingo";
 (async () => {
     const language = useLanguage();
 
-    let output = language.getLine('app.age', {age: 18});
+    let output = language.get('app.age', {age: 18});
     console.log(output);
     // I am 18 yeas old
 
@@ -177,11 +177,11 @@ import {useLanguage} from "ilingo";
         locale: 'en'
     });
 
-    let output = language.getLine('app.age', {age: 18});
+    let output = language.get('app.age', {age: 18});
     console.log(output);
     // I am 18 yeas old
 
-    output = language.getLine('app.age', {age: 18}, 'fr');
+    output = language.get('app.age', {age: 18}, 'fr');
     console.log(output);
     // J'ai 18 ans
 
@@ -204,14 +204,14 @@ import {useLanguage} from "ilingo";
         locale: 'en'
     });
 
-    language.setLine('foo.bar', 'baz {{param}}');
-    language.setLine('foo.bar', 'boz {{param}}', 'de');
+    language.set('foo.bar', 'baz {{param}}');
+    language.set('foo.bar', 'boz {{param}}', 'de');
 
-    let output = language.getLine('foo.bar', {param: 'x'});
+    let output = language.get('foo.bar', {param: 'x'});
     console.log(output);
     // baz x
 
-    output = await language.getLine('foo.bar', {param: 'y'}, 'de');
+    output = await language.get('foo.bar', {param: 'y'}, 'de');
     console.log(output);
     // boz y
 })();

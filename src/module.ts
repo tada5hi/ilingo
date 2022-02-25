@@ -50,7 +50,7 @@ export class Language {
 
     // ----------------------------------------------------
 
-    async getLine(
+    async get(
         key: string,
         args?: Record<string, any>,
         locale?: string,
@@ -61,14 +61,14 @@ export class Language {
             return this.formatMessage(key, args);
         }
 
-        const [file, line] = this.parseLine(key);
+        const [file, line] = this.parse(key);
         locale = locale ?? this.getLocale();
 
         if (
             typeof this.cache[locale] === 'undefined' ||
             typeof this.cache[locale][file] === 'undefined'
         ) {
-            await this.load(file, locale);
+            await this.loadFile(file, locale);
         }
 
         const message = this.getMessage(file, line, locale);
@@ -76,7 +76,7 @@ export class Language {
         return this.formatMessage(message ?? line, args);
     }
 
-    getLineSync(
+    getSync(
         key: string,
         args?: Record<string, any>,
         locale?: string,
@@ -87,14 +87,14 @@ export class Language {
             return this.formatMessage(key, args);
         }
 
-        const [file, line] = this.parseLine(key);
+        const [file, line] = this.parse(key);
         locale = locale ?? this.getLocale();
 
         if (
             typeof this.cache[locale] === 'undefined' ||
             typeof this.cache[locale][file] === 'undefined'
         ) {
-            this.loadSync(file, locale);
+            this.loadFileSync(file, locale);
         }
 
         const message = this.getMessage(file, line, locale);
@@ -104,12 +104,12 @@ export class Language {
 
     // ----------------------------------------------------
 
-    setLine(
+    set(
         key: string,
         value: any,
         locale?: string,
     ) {
-        const [file, line] = this.parseLine(key);
+        const [file, line] = this.parse(key);
         locale = locale ?? this.getLocale();
 
         this.initCache(file, locale);
@@ -117,7 +117,7 @@ export class Language {
         this.cache[locale][file][line] = value;
     }
 
-    parseLine(key: string) : [string, string] {
+    parse(key: string) : [string, string] {
         const file = key.substring(0, key.indexOf('.'));
         const line = key.substring(file.length + 1);
 
@@ -165,7 +165,7 @@ export class Language {
 
     // ---------------------------------------------------
 
-    async load(file: string, locale?: string) : Promise<Record<string, any>> {
+    async loadFile(file: string, locale?: string) : Promise<Record<string, any>> {
         locale ??= this.getLocale();
 
         // only load file once
@@ -189,7 +189,7 @@ export class Language {
         return this.cache[locale][file];
     }
 
-    loadSync(file: string, locale?: string) : Record<string, any> {
+    loadFileSync(file: string, locale?: string) : Record<string, any> {
         locale ??= this.getLocale();
 
         if (this.isLoaded(file, locale)) {

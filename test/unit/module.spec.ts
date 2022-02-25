@@ -26,22 +26,22 @@ describe('src/module.ts', () => {
     it('should work with lazy input', async () => {
         const language = new Language();
 
-        let output = await language.getLine('{{foo}}', {foo: 'bar'});
+        let output = await language.get('{{foo}}', {foo: 'bar'});
         expect(output).toEqual('bar');
 
-        output = language.getLineSync('{{foo}}', {foo: 'bar'});
+        output = language.getSync('{{foo}}', {foo: 'bar'});
         expect(output).toEqual('bar');
     });
 
     it('should set line on the fly', async () => {
         const language = new Language();
 
-        language.setLine('foo.bar', 'value on the fly');
-        let value = language.getLineSync('foo.bar');
+        language.set('foo.bar', 'value on the fly');
+        let value = language.getSync('foo.bar');
         expect(value).toEqual('value on the fly');
 
-        language.setLine('foo.baz', 'value with param {{param}} on the fly');
-        value = await language.getLine('foo.baz', {param: 'lorem'});
+        language.set('foo.baz', 'value with param {{param}} on the fly');
+        value = await language.get('foo.baz', {param: 'lorem'});
         expect(value).toEqual('value with param lorem on the fly');
     })
 
@@ -52,26 +52,26 @@ describe('src/module.ts', () => {
             locale: 'en'
         });
 
-        let output = await language.getLine('form.nested.key');
+        let output = await language.get('form.nested.key');
         expect(output).toEqual('I am nested');
 
-        output = await language.getLine('form.nested.deep.key');
+        output = await language.get('form.nested.deep.key');
         expect(output).toEqual('I am deep nested');
 
-        output = await language.getLine('form.nested.keyWithParam', {param: 'foo'});
+        output = await language.get('form.nested.keyWithParam', {param: 'foo'});
         expect(output).toEqual('I am nested with param foo');
 
         // --------------------------------------------------
 
         language.setOptions({locale: 'de'})
 
-        output = language.getLineSync('form.nested.key');
+        output = language.getSync('form.nested.key');
         expect(output).toEqual('Ich bin verschachtelt');
 
-        output = language.getLineSync('form.nested.deep.key');
+        output = language.getSync('form.nested.deep.key');
         expect(output).toEqual('Ich bin tief verschachtelt');
 
-        output = language.getLineSync('form.nested.keyWithParam', {param: 'foo'});
+        output = language.getSync('form.nested.keyWithParam', {param: 'foo'});
         expect(output).toEqual('Ich bin mit parameter foo verschachtelt');
     })
 
@@ -82,18 +82,18 @@ describe('src/module.ts', () => {
             locale: 'en'
         });
 
-        let line = await language.getLine('form.email');
+        let line = await language.get('form.email');
         expect(line).toBeDefined();
         expect(line).toEqual('The input must be a valid email address.');
 
-        line = await language.getLine('form.email', {}, 'de');
+        line = await language.get('form.email', {}, 'de');
         expect(line).toEqual('Die Eingabe muss eine gültige E-Mail sein.');
 
-        line = await language.getLine('form.maxLength', {max: 10});
+        line = await language.get('form.maxLength', {max: 10});
         expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 10.');
 
-        line = await language.getLine('form.maxLength', {max: 5});
+        line = await language.get('form.maxLength', {max: 5});
         expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 5.');
 
@@ -101,7 +101,7 @@ describe('src/module.ts', () => {
             locale: 'de'
         })
 
-        line = await language.getLine('form.maxLength', {max: 5});
+        line = await language.get('form.maxLength', {max: 5});
         expect(line).toBeDefined();
         expect(line).toEqual('Die Länge der Eingabe muss kleiner als 5 sein.');
     });
@@ -112,10 +112,10 @@ describe('src/module.ts', () => {
             locale: 'en'
         });
 
-        let line = await language.getLine('form.maxLength', {max: 5}, 'ru');
+        let line = await language.get('form.maxLength', {max: 5}, 'ru');
         expect(line).toEqual('maxLength');
 
-        line = await language.getLine('form.foo', {});
+        line = await language.get('form.foo', {});
         expect(line).toEqual('foo');
     })
 
@@ -128,18 +128,18 @@ describe('src/module.ts', () => {
             locale: 'en'
         });
 
-        let line = language.getLineSync('form.email');
+        let line = language.getSync('form.email');
         expect(line).toBeDefined();
         expect(line).toEqual('The input must be a valid email address.');
 
-        line = language.getLineSync('form.email', {}, 'de');
+        line = language.getSync('form.email', {}, 'de');
         expect(line).toEqual('Die Eingabe muss eine gültige E-Mail sein.');
 
-        line = language.getLineSync('form.maxLength', {max: 10});
+        line = language.getSync('form.maxLength', {max: 10});
         expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 10.');
 
-        line = language.getLineSync('form.maxLength', {max: 5});
+        line = language.getSync('form.maxLength', {max: 5});
         expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 5.');
 
@@ -147,7 +147,7 @@ describe('src/module.ts', () => {
             locale: 'de'
         })
 
-        line = language.getLineSync('form.maxLength', {max: 5});
+        line = language.getSync('form.maxLength', {max: 5});
         expect(line).toBeDefined();
         expect(line).toEqual('Die Länge der Eingabe muss kleiner als 5 sein.');
     });
@@ -158,10 +158,10 @@ describe('src/module.ts', () => {
             locale: 'en'
         });
 
-        let line = language.getLineSync('form.maxLength', {max: 5}, 'ru');
+        let line = language.getSync('form.maxLength', {max: 5}, 'ru');
         expect(line).toEqual('maxLength');
 
-        line = language.getLineSync('form.foo', {});
+        line = language.getSync('form.foo', {});
         expect(line).toEqual('foo');
     })
 })

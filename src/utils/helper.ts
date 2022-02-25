@@ -13,7 +13,7 @@ export async function lang(
     locale?: string,
 ) {
     return useLanguage()
-        .getLine(input, args, locale);
+        .get(input, args, locale);
 }
 
 export function langSync(
@@ -22,5 +22,5 @@ export function langSync(
     locale?: string,
 ) {
     return useLanguage()
-        .getLineSync(input, args, locale);
+        .getSync(input, args, locale);
 }
