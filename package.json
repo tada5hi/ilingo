@@ -26,7 +26,12 @@
     "keywords": [
         "i18n",
         "language",
-        "internalization"
+        "translate",
+        "translation",
+        "bilingual",
+        "internationalization",
+        "locale",
+        "locales"
     ],
     "bin": {
         "ilingo": "dist/cli/index.js"

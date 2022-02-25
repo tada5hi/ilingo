@@ -11,7 +11,7 @@ This is a lightweight library for translation.
 - [Configuration](#configuration)
 - [Usage](#usage)
   - [Parameters](#parameters)
-
+  - [Locales](#locales)
 ## Installation
 
 ```bash
@@ -139,4 +139,53 @@ module.exports = {
     console.log(output);
     // I am 18 yeas old
 });
+```
+
+### Locales
+
+The default locale, which is used by the singleton instance, can be `globally` overwritten after initialisation:
+
+```typescript
+import {useLanguage} from "./singleton";
+
+(async () => {
+    const language = useLanguage();
+
+    let output = language.getLine('app.age', {age: 18});
+    console.log(output);
+    // I am 18 yeas old
+
+    language.setOptions({
+        locale: 'de'
+    });
+
+    output = await lang('app.age', {age: 18});
+    console.log(output);
+    // Ich bin 18 Jahre alt
+})();
+```
+
+Another option to `temporary` overwrite the default locale, is to pass the locale as third argument
+to one of the helper or singleton methods:
+
+```typescript
+import {useLanguage} from "./singleton";
+
+(async () => {
+    const language = useLanguage({
+        locale: 'en'
+    });
+
+    let output = language.getLine('app.age', {age: 18});
+    console.log(output);
+    // I am 18 yeas old
+
+    output = language.getLine('app.age', {age: 18}, 'fr');
+    console.log(output);
+    // J'ai 18 ans
+
+    output = await lang('app.age', {age: 18}, 'de');
+    console.log(output);
+    // Ich bin 18 Jahre alt
+})();
 ```
