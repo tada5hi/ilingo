@@ -19,7 +19,7 @@
         "build": "rm -rf ./dist && tsc",
         "lint": "eslint --ext .js,.vue,.ts ./src",
         "lint:fix": "npm run lint -- --fix",
-        "test": "",
+        "test": ""
     },
     "keywords": [
         "i18n",
