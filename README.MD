@@ -12,6 +12,7 @@ This is a lightweight library for translation.
 - [Usage](#usage)
   - [Parameters](#parameters)
   - [Locales](#locales)
+  - [Lazy](#lazy)
 ## Installation
 
 ```bash
@@ -187,5 +188,31 @@ import {useLanguage} from "ilingo";
     output = await lang('app.age', {age: 18}, 'de');
     console.log(output);
     // Ich bin 18 Jahre alt
+})();
+```
+
+### Lazy
+
+Another option is to either to not access the file system at all or just
+add few translations afterwards.
+
+```typescript
+import {useLanguage} from "ilingo";
+
+(async () => {
+    const language = useLanguage({
+        locale: 'en'
+    });
+
+    language.setLine('foo.bar', 'baz {{param}}');
+    language.setLine('foo.bar', 'boz {{param}}', 'de');
+
+    let output = language.getLine('foo.bar', {param: 'x'});
+    console.log(output);
+    // baz x
+
+    output = await language.getLine('foo.bar', {param: 'y'}, 'de');
+    console.log(output);
+    // boz y
 })();
 ```

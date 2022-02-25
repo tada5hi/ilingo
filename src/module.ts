@@ -51,17 +51,17 @@ export class Language {
     // ----------------------------------------------------
 
     async getLine(
-        input: string,
+        key: string,
         args?: Record<string, any>,
         locale?: string,
     ) : Promise<string> {
         args ??= {};
 
-        if (!input.includes('.')) {
-            return this.formatMessage(input, args);
+        if (!key.includes('.')) {
+            return this.formatMessage(key, args);
         }
 
-        const [file, line] = this.parseLine(input);
+        const [file, line] = this.parseLine(key);
         locale = locale ?? this.getLocale();
 
         if (
@@ -77,17 +77,17 @@ export class Language {
     }
 
     getLineSync(
-        input: string,
+        key: string,
         args?: Record<string, any>,
         locale?: string,
     ) : string {
         args ??= {};
 
-        if (!input.includes('.')) {
-            return this.formatMessage(input, args);
+        if (!key.includes('.')) {
+            return this.formatMessage(key, args);
         }
 
-        const [file, line] = this.parseLine(input);
+        const [file, line] = this.parseLine(key);
         locale = locale ?? this.getLocale();
 
         if (
@@ -104,9 +104,22 @@ export class Language {
 
     // ----------------------------------------------------
 
-    parseLine(line: string) : [string, string] {
-        const file = line.substring(0, line.indexOf('.'));
-        line = line.substring(file.length + 1);
+    setLine(
+        key: string,
+        value: any,
+        locale?: string,
+    ) {
+        const [file, line] = this.parseLine(key);
+        locale = locale ?? this.getLocale();
+
+        this.initCache(file, locale);
+
+        this.cache[locale][file][line] = value;
+    }
+
+    parseLine(key: string) : [string, string] {
+        const file = key.substring(0, key.indexOf('.'));
+        const line = key.substring(file.length + 1);
 
         return [file, line];
     }

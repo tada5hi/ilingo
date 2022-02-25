@@ -33,6 +33,18 @@ describe('src/module.ts', () => {
         expect(output).toEqual('bar');
     });
 
+    it('should set line on the fly', async () => {
+        const language = new Language();
+
+        language.setLine('foo.bar', 'value on the fly');
+        let value = language.getLineSync('foo.bar');
+        expect(value).toEqual('value on the fly');
+
+        language.setLine('foo.baz', 'value with param {{param}} on the fly');
+        value = await language.getLine('foo.baz', {param: 'lorem'});
+        expect(value).toEqual('value with param lorem on the fly');
+    })
+
     it('should work with nested input', async () => {
         const language = new Language();
         language.setOptions({
