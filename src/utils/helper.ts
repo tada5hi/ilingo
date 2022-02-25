@@ -5,21 +5,21 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {useLanguage} from "./singleton";
+import { useLanguage } from './singleton';
 
 export async function lang(
     input: string,
-    args: Record<string, any> = {},
-    locale?: string
+    args?: Record<string, any>,
+    locale?: string,
 ) {
-    return await useLanguage()
+    return useLanguage()
         .getLine(input, args, locale);
 }
 
 export function langSync(
     input: string,
-    args: Record<string, any> = {},
-    locale?: string
+    args?: Record<string, any>,
+    locale?: string,
 ) {
     return useLanguage()
         .getLineSync(input, args, locale);

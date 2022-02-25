@@ -8,9 +8,8 @@
 import template from 'lodash/template';
 import * as path from 'path';
 import { LanguageCache, LanguageOptions } from './type';
-import { isLanguageObject } from './utils';
-import {locateFile, locateFileSync} from "./locator";
-import {hasOwnProperty} from "./utils";
+import { hasOwnProperty, isLanguageObject } from './utils';
+import { locateFile, locateFileSync } from './locator';
 
 export class Language {
     cache : LanguageCache = {};
@@ -31,7 +30,7 @@ export class Language {
 
     setOptions(
         options: Partial<LanguageOptions>,
-        extend = true
+        extend = true,
     ) {
         this.options = {
             ...(extend ? this.options : {}),
@@ -53,9 +52,11 @@ export class Language {
 
     async getLine(
         input: string,
-        args: Record<string, any> = {},
-        locale?: string
+        args: Record<string, any>,
+        locale?: string,
     ) : Promise<string> {
+        args ??= {};
+
         if (!input.includes('.')) {
             return this.formatMessage(input, args);
         }
@@ -77,9 +78,11 @@ export class Language {
 
     getLineSync(
         input: string,
-        args: Record<string, any> = {},
-        locale?: string
+        args?: Record<string, any>,
+        locale?: string,
     ) : string {
+        args ??= {};
+
         if (!input.includes('.')) {
             return this.formatMessage(input, args);
         }
@@ -113,7 +116,7 @@ export class Language {
     getMessage(file: string, line: string, locale?: string) : string | undefined {
         locale ??= this.getLocale();
 
-        if(typeof this.cache[locale][file][line] === 'string') {
+        if (typeof this.cache[locale][file][line] === 'string') {
             return this.cache[locale][file][line];
         }
 
@@ -121,17 +124,17 @@ export class Language {
         let output : unknown;
 
         const parts = line.split('.');
-        for(let i=0; i<parts.length; i++) {
-            if(typeof current === 'undefined') {
+        for (let i = 0; i < parts.length; i++) {
+            if (typeof current === 'undefined') {
                 current = this.cache[locale][file];
             }
 
             output = isLanguageObject(current) ? current[parts[i]] : undefined;
-            if(typeof output === 'string') {
+            if (typeof output === 'string') {
                 return output;
             }
 
-            if(isLanguageObject(output)) {
+            if (isLanguageObject(output)) {
                 current = output;
             }
         }
@@ -162,7 +165,7 @@ export class Language {
         this.setIsLoaded(file, locale);
 
         const locatorInfo = await locateFile(this.buildDirectoryPaths(locale), file);
-        if(!locatorInfo) {
+        if (!locatorInfo) {
             return {};
         }
 
@@ -185,13 +188,13 @@ export class Language {
         this.setIsLoaded(file, locale);
 
         const locatorInfo = locateFileSync(this.buildDirectoryPaths(locale), file);
-        if(!locatorInfo) {
+        if (!locatorInfo) {
             return {};
         }
 
         // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require,import/no-dynamic-require
         let lang = require(path.join(locatorInfo.path, locatorInfo.fileName));
-        if(hasOwnProperty(lang, 'default')) {
+        if (hasOwnProperty(lang, 'default')) {
             lang = lang.default;
         }
 
@@ -233,15 +236,15 @@ export class Language {
 
         let paths : string[];
 
-        if(this.options.directory) {
+        if (this.options.directory) {
             paths = Array.isArray(this.options.directory) ? this.options.directory : [this.options.directory];
         } else {
             /* istanbul ignore next */
             paths = [
-                path.join(process.cwd(), 'language')
+                path.join(process.cwd(), 'language'),
             ];
         }
 
-        return paths.map(item => path.join(item, locale));
+        return paths.map((item) => path.join(item, locale));
     }
 }
