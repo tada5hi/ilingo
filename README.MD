@@ -146,7 +146,7 @@ module.exports = {
 The default locale, which is used by the singleton instance, can be `globally` overwritten after initialisation:
 
 ```typescript
-import {useLanguage} from "./singleton";
+import {useLanguage} from "ilingo";
 
 (async () => {
     const language = useLanguage();
@@ -169,7 +169,7 @@ Another option to `temporary` overwrite the default locale, is to pass the local
 to one of the helper or singleton methods:
 
 ```typescript
-import {useLanguage} from "./singleton";
+import {useLanguage} from "ilingo";
 
 (async () => {
     const language = useLanguage({
