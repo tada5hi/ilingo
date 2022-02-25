@@ -13,6 +13,7 @@ export function isLanguageObject(value: unknown) : value is Record<string, strin
     const ob = value as Record<string, any>;
     const keys = Object.keys(ob);
     for (let i = 0; i < keys.length; i++) {
+        /* istanbul ignore next */
         if (typeof ob[keys[i]] !== 'string') {
             return false;
         }

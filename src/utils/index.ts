@@ -5,8 +5,5 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export * from './locator';
-export * from './module';
-export * from './singleton';
-export * from './type';
-export * from './utils/identify';
+export * from './has-own-property';
+export * from './identify';

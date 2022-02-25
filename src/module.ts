@@ -8,8 +8,9 @@
 import template from 'lodash/template';
 import * as path from 'path';
 import { LanguageCache, LanguageOptions } from './type';
-import { isLanguageObject } from './utils';
+import { isLanguageObject } from './utils/identify';
 import {locateFile, locateFileSync} from "./locator";
+import {hasOwnProperty} from "./utils";
 
 export class Language {
     cache : LanguageCache = {};
@@ -28,9 +29,12 @@ export class Language {
 
     // ----------------------------------------------------
 
-    setOptions(options: Partial<LanguageOptions>) {
+    setOptions(
+        options: Partial<LanguageOptions>,
+        extend = true
+    ) {
         this.options = {
-            ...this.options,
+            ...(extend ? this.options : {}),
             ...options,
         };
     }
@@ -47,15 +51,20 @@ export class Language {
 
     // ----------------------------------------------------
 
-    async getLine(input: string, args: Record<string, any>) : Promise<string> {
+    async getLine(
+        input: string,
+        args: Record<string, any> = {},
+        locale?: string
+    ) : Promise<string> {
         if (!input.includes('.')) {
             return this.formatMessage(input, args);
         }
 
         const [file, line] = this.parseLine(input);
-        const locale = this.getLocale();
+        locale = locale ?? this.getLocale();
 
         if (
+            typeof this.cache[locale] === 'undefined' ||
             typeof this.cache[locale][file] === 'undefined' ||
             typeof this.cache[locale][file][line] === 'undefined'
         ) {
@@ -65,15 +74,20 @@ export class Language {
         return this.formatMessage(this.cache[locale][file][line] ?? line, args);
     }
 
-    getLineSync(input: string, args: Record<string, any>) : string {
+    getLineSync(
+        input: string,
+        args: Record<string, any> = {},
+        locale?: string
+    ) : string {
         if (!input.includes('.')) {
             return this.formatMessage(input, args);
         }
 
         const [file, line] = this.parseLine(input);
-        const locale = this.getLocale();
+        locale = locale ?? this.getLocale();
 
         if (
+            typeof this.cache[locale] === 'undefined' ||
             typeof this.cache[locale][file] === 'undefined' ||
             typeof this.cache[locale][file][line] === 'undefined'
         ) {
@@ -109,13 +123,14 @@ export class Language {
 
         // only load file once
         if (this.isLoaded(file, locale)) {
+            /* istanbul ignore next */
             return {};
         }
 
         this.initCache(file, locale);
         this.setIsLoaded(file, locale);
 
-        const locatorInfo = await locateFile(this.buildDirectoryPaths(), file);
+        const locatorInfo = await locateFile(this.buildDirectoryPaths(locale), file);
         if(!locatorInfo) {
             return {};
         }
@@ -131,19 +146,24 @@ export class Language {
         locale ??= this.getLocale();
 
         if (this.isLoaded(file, locale)) {
+            /* istanbul ignore next */
             return {};
         }
 
         this.initCache(file, locale);
         this.setIsLoaded(file, locale);
 
-        const locatorInfo = locateFileSync(this.buildDirectoryPaths(), file);
+        const locatorInfo = locateFileSync(this.buildDirectoryPaths(locale), file);
         if(!locatorInfo) {
             return {};
         }
 
         // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require,import/no-dynamic-require
-        let { default: lang } = require(path.join(locatorInfo.path, locatorInfo.fileName));
+        let lang = require(path.join(locatorInfo.path, locatorInfo.fileName));
+        if(hasOwnProperty(lang, 'default')) {
+            lang = lang.default;
+        }
+
         lang = isLanguageObject(lang) ? lang : {};
         this.cache[locale][file] = lang;
 
@@ -177,17 +197,20 @@ export class Language {
 
     // --------------------------------------------------------
 
-    private buildDirectoryPaths() {
+    private buildDirectoryPaths(locale?: string) {
+        locale ??= this.getLocale();
+
         let paths : string[];
 
         if(this.options.directory) {
             paths = Array.isArray(this.options.directory) ? this.options.directory : [this.options.directory];
         } else {
+            /* istanbul ignore next */
             paths = [
                 path.join(process.cwd(), 'language')
             ];
         }
 
-        return paths;
+        return paths.map(item => path.join(item, locale));
     }
 }

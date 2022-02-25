@@ -1,6 +1,6 @@
 [![npm version](https://badge.fury.io/js/ilingo.svg)](https://badge.fury.io/js/ilingo)
-[![codecov](https://codecov.io/gh/Tada5hi/ilingo/branch/master/graph/badge.svg?token=4KNSG8L13V)](https://codecov.io/gh/Tada5hi/ilingo)
-[![Master Workflow](https://github.com/Tada5hi/ilingo/workflows/main/badge.svg)](https://github.com/Tada5hi/ilingo)
+[![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=4KNSG8L13V)](https://codecov.io/gh/tada5hi/ilingo)
+[![Master Workflow](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo)
 
 # Ilingo 💬
 This is a lightweight library for translation.

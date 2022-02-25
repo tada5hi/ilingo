@@ -10,17 +10,18 @@ import fs from "fs";
 import {LocatorInfo} from "./type";
 
 export async function locateFile(
-    paths: string[],
+    paths: string[] | string,
     fileName: string,
-    extension?: string | string[]
+    extensions?: string[] | string
 ) : Promise<LocatorInfo | undefined> {
-    const extensions = extension ? (Array.isArray(extension) ? extension : [extension]) : ['.ts', '.js'];
+    paths = Array.isArray(paths) ? paths : [paths];
+    extensions = extensions ? (Array.isArray(extensions) ? extensions : [extensions]) : ['.ts', '.js'];
 
     for(let i=0; i<paths.length; i++) {
         const filePath = path.join(paths[i], fileName);
 
         for(let j=0; j<extensions.length; j++) {
-            const filePathWithExtension = path.join(filePath, extensions[j]);
+            const filePathWithExtension = filePath + extensions[j];
 
             try {
                 await fs.promises.access(filePathWithExtension, fs.constants.R_OK | fs.constants.F_OK);
@@ -40,17 +41,18 @@ export async function locateFile(
 }
 
 export function locateFileSync(
-    paths: string[],
+    paths: string[] | string,
     fileName: string,
-    extension?: string | string[]
+    extensions?: string | string[]
 ) : LocatorInfo | undefined {
-    const extensions = extension ? (Array.isArray(extension) ? extension : [extension]) : ['.ts', '.js'];
+    paths = Array.isArray(paths) ? paths : [paths];
+    extensions = extensions ? (Array.isArray(extensions) ? extensions : [extensions]) : ['.ts', '.js'];
 
     for(let i=0; i<paths.length; i++) {
         const filePath = path.join(paths[i], fileName);
 
         for(let j=0; j<extensions.length; j++) {
-            const filePathWithExtension = path.join(filePath, extensions[j]);
+            const filePathWithExtension = filePath + extensions[j];
 
             try {
                 fs.accessSync(filePathWithExtension, fs.constants.R_OK | fs.constants.F_OK);
