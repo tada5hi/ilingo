@@ -80,7 +80,7 @@ The fist step, is to specify a configuration for the singleton instance.
 This configuration can also be overwritten later.
 
 ```typescript
-import {useLanguage} from "./singleton";
+import {useLanguage} from "ilingo";
 
 useLanguage({
     /**
