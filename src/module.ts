@@ -7,7 +7,6 @@
 
 import template from 'lodash/template';
 import * as path from 'path';
-import * as process from 'process';
 import { LanguageCache, LanguageOptions } from './type';
 import { isLanguageObject } from './utils';
 import {locateFile, locateFileSync} from "./locator";
