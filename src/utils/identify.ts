@@ -14,7 +14,10 @@ export function isLanguageObject(value: unknown) : value is Record<string, strin
     const keys = Object.keys(ob);
     for (let i = 0; i < keys.length; i++) {
         /* istanbul ignore next */
-        if (typeof ob[keys[i]] !== 'string') {
+        if (
+            typeof ob[keys[i]] !== 'string' &&
+            !isLanguageObject(ob[keys[i]])
+        ) {
             return false;
         }
     }

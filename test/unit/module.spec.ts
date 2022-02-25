@@ -31,6 +31,36 @@ describe('src/module.ts', () => {
 
         output = language.getLineSync('{{foo}}', {foo: 'bar'});
         expect(output).toEqual('bar');
+    });
+
+    it('should work with nested input', async () => {
+        const language = new Language();
+        language.setOptions({
+            directory: basePath,
+            locale: 'en'
+        });
+
+        let output = await language.getLine('form.nested.key');
+        expect(output).toEqual('I am nested');
+
+        output = await language.getLine('form.nested.deep.key');
+        expect(output).toEqual('I am deep nested');
+
+        output = await language.getLine('form.nested.keyWithParam', {param: 'foo'});
+        expect(output).toEqual('I am nested with param foo');
+
+        // --------------------------------------------------
+
+        language.setOptions({locale: 'de'})
+
+        output = language.getLineSync('form.nested.key');
+        expect(output).toEqual('Ich bin verschachtelt');
+
+        output = language.getLineSync('form.nested.deep.key');
+        expect(output).toEqual('Ich bin tief verschachtelt');
+
+        output = language.getLineSync('form.nested.keyWithParam', {param: 'foo'});
+        expect(output).toEqual('Ich bin mit parameter foo verschachtelt');
     })
 
     it('should translate async', async () => {

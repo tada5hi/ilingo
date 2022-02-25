@@ -8,6 +8,9 @@ This is a lightweight library for translation.
 **Table of Contents**
 
 - [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+  - [Parameters](#parameters)
 
 ## Installation
 
@@ -22,3 +25,118 @@ The `README.md` file is under construction ☂ at the moment.
 So please stay patient or contribute to it, till it covers all parts ⭐.
 
 ---
+
+## Configuration
+
+While full localization of an application is a complex subject,
+it’s simple to swap out strings in your application with different supported languages.
+
+Therefore, create a language directory somewhere in your project.
+For each locale (e.g. en, de, ...), which should be supported, create a folder inside.
+
+Language strings are stored in subdirectories as group for each supported language (locale).
+
+```bash
+├── ...
+└── language
+    ├── de
+    │   ├── app.{js,ts}      # app group
+    │   └── forum.{js,ts}    # forum group
+    └── en
+        ├── app.{js,ts}      # app group
+        └── forum.{js,ts}    # forum group
+```
+
+Language groups do not have any specific naming convention that are required.
+The file should be named logically to describe the type of content it holds (e.g. app, forum, ...).
+For example, let’s say you want to create a file containing error messages.
+You might name it simply: `error.{js,ts}`.
+
+Each file should return an object with a language key and a string to return.
+
+**`app.{ts,js}`**
+```typescript
+module.exports = {
+    'languageKey': 'The message to be shown.'
+}
+```
+
+The object can also be nested.
+
+**`app.{ts,js}`**
+```typescript
+module.exports = {
+    'nested': {
+        'key': 'The message to be shown.'
+    }
+}
+```
+It is also possible to use `export default {...}` instead of `module.exports = {...}`
+
+## Usage
+
+The fist step, is to specify a configuration for the singleton instance.
+This configuration can also be overwritten later.
+
+```typescript
+import {useLanguage} from "./singleton";
+
+useLanguage({
+    /**
+     * Default: path.join(process.cwd(), 'language')
+     */
+    directory: [path.join(process.cwd(), 'language')],
+    /**
+     * Default: en
+     */
+    locale: 'en'
+})
+```
+
+You can use the direct method of the singleton instance, or use a helper function
+to retrieve text from any of the language files,
+by passing the filename and the language key as the first parameter, separated by a period (.).
+For example, to retrieve the languageKey string from the example above, you would do the following:
+
+**`Async`**
+
+```typescript
+import {useLanguage} from "ilingo";
+
+(async () => {
+    console.log(await useLanguage().getLine('app.languageKey'));
+
+    // lang is a helper function for fast access ;)
+    console.log(await lang('app.languageKey'));
+})();
+```
+
+**`Sync`**
+
+```typescript
+import {useLanguage} from "ilingo";
+
+console.log(useLanguage().getLineSync('app.languageKey'));
+
+// lang is a helper function for fast access ;)
+console.log(langSync('app.languageKey'));
+```
+
+### Parameters
+As template delimiter a mustache like brackets `{{}}` interpolation is used.
+Data properties can be injected as second argument, e.g.
+
+**`app.{ts,js}`**
+```typescript
+module.exports = {
+    'age': 'I am {{age}} years old.'
+}
+```
+
+```typescript
+(async () => {
+    const output = await lang('app.age', {age: 18});
+    console.log(output);
+    // I am 18 yeas old
+});
+```

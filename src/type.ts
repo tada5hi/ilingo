@@ -8,7 +8,7 @@
 export type LanguageCache = {
     [locale: string] : {
         [file: string]: {
-            [parsedLine: string]: string
+            [line: string]: any
         }
     }
 };

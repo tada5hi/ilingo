@@ -8,7 +8,7 @@
 import template from 'lodash/template';
 import * as path from 'path';
 import { LanguageCache, LanguageOptions } from './type';
-import { isLanguageObject } from './utils/identify';
+import { isLanguageObject } from './utils';
 import {locateFile, locateFileSync} from "./locator";
 import {hasOwnProperty} from "./utils";
 
@@ -65,13 +65,14 @@ export class Language {
 
         if (
             typeof this.cache[locale] === 'undefined' ||
-            typeof this.cache[locale][file] === 'undefined' ||
-            typeof this.cache[locale][file][line] === 'undefined'
+            typeof this.cache[locale][file] === 'undefined'
         ) {
             await this.load(file, locale);
         }
 
-        return this.formatMessage(this.cache[locale][file][line] ?? line, args);
+        const message = this.getMessage(file, line, locale);
+
+        return this.formatMessage(message ?? line, args);
     }
 
     getLineSync(
@@ -88,13 +89,14 @@ export class Language {
 
         if (
             typeof this.cache[locale] === 'undefined' ||
-            typeof this.cache[locale][file] === 'undefined' ||
-            typeof this.cache[locale][file][line] === 'undefined'
+            typeof this.cache[locale][file] === 'undefined'
         ) {
             this.loadSync(file, locale);
         }
 
-        return this.formatMessage(this.cache[locale][file][line] ?? line, args);
+        const message = this.getMessage(file, line, locale);
+
+        return this.formatMessage(message ?? line, args);
     }
 
     // ----------------------------------------------------
@@ -107,6 +109,35 @@ export class Language {
     }
 
     // ----------------------------------------------------
+
+    getMessage(file: string, line: string, locale?: string) : string | undefined {
+        locale ??= this.getLocale();
+
+        if(typeof this.cache[locale][file][line] === 'string') {
+            return this.cache[locale][file][line];
+        }
+
+        let current : unknown;
+        let output : unknown;
+
+        const parts = line.split('.');
+        for(let i=0; i<parts.length; i++) {
+            if(typeof current === 'undefined') {
+                current = this.cache[locale][file];
+            }
+
+            output = isLanguageObject(current) ? current[parts[i]] : undefined;
+            if(typeof output === 'string') {
+                return output;
+            }
+
+            if(isLanguageObject(output)) {
+                current = output;
+            }
+        }
+
+        return undefined;
+    }
 
     formatMessage(message: string, args: Record<string, any>) : string {
         const compiled = template(message, {

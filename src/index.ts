@@ -7,6 +7,5 @@
 
 export * from './locator';
 export * from './module';
-export * from './singleton';
+export * from './utils';
 export * from './type';
-export * from './utils/identify';
