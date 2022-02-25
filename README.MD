@@ -152,7 +152,7 @@ import {useLanguage} from "ilingo";
 (async () => {
     const language = useLanguage();
 
-    let output = language.get('app.age', {age: 18});
+    let output = await language.get('app.age', {age: 18});
     console.log(output);
     // I am 18 yeas old
 
@@ -177,11 +177,11 @@ import {useLanguage} from "ilingo";
         locale: 'en'
     });
 
-    let output = language.get('app.age', {age: 18});
+    let output = await language.get('app.age', {age: 18});
     console.log(output);
     // I am 18 yeas old
 
-    output = language.get('app.age', {age: 18}, 'fr');
+    output = await language.get('app.age', {age: 18}, 'fr');
     console.log(output);
     // J'ai 18 ans
 
@@ -207,7 +207,7 @@ import {useLanguage} from "ilingo";
     language.set('foo.bar', 'baz {{param}}');
     language.set('foo.bar', 'boz {{param}}', 'de');
 
-    let output = language.get('foo.bar', {param: 'x'});
+    let output = await language.get('foo.bar', {param: 'x'});
     console.log(output);
     // baz x
 
