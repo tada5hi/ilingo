@@ -52,7 +52,7 @@ export class Language {
 
     async getLine(
         input: string,
-        args: Record<string, any>,
+        args?: Record<string, any>,
         locale?: string,
     ) : Promise<string> {
         args ??= {};
