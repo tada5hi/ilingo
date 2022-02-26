@@ -7,8 +7,8 @@ This is a lightweight library for translation and internationalization.
 It can be used for client- & server-side applications 🔥.
 A bundled version exists for formats such as ESM, CommonJS, AMD, and IIFE-style scripts ⭐.
 
-The file-system access, is only available on server-side applications but
-the scanned locale groups can also be hydrated by manipulating the cache.
+The file-system access is only available on server-side applications but
+locale groups can also be hydrated by manipulating the cache.
 
 **Table of Contents**
 
@@ -32,23 +32,23 @@ npm install ilingo --save
 **Important NOTE**
 
 The library provides `sync` and `async` methods to receive a (compiled) locale key string. The reason
-for this is, that on server side application the library interacts with the file system and this can be done, on a blocking and non-blocking way for the event-loop ⭐.
-On client side applications, just use the `sync` methods 🔥
+for this is that on server side application, the library interacts with the file system, and this can be done in blocking and non-blocking way for the event-loop ⭐.
+On client side applications, use the `sync` methods 🔥
 
 ---
 
 ## Configuration
 While full localization of an application is a complex subject,
-it’s simple to swap out strings in your application for different supported languages/locales.
+swapping out strings in your application for different supported languages/locales is simple.
 
 **`Client`**
 
-On the client side no configuration is required. The different locale strings for translation are provided,
+On the client side, no configuration is required. The different locale strings for translation are provided
 by interacting with the library class instance.
 
 **`Server`**
 
-On the server side locale strings are stored in subdirectories as group for each supported language (locale).
+Locale strings are stored in subdirectories as group for each supported language (locale) on the server side.
 
 ```bash
 ├── ...
@@ -62,14 +62,14 @@ On the server side locale strings are stored in subdirectories as group for each
 ```
 
 To get started, create a language directory somewhere in your project.
-For each locale (e.g. en, de, ...), which should be supported, create a folder inside.
+Create a folder inside for each locale (e.g. en, de, ...), which should be supported.
 
 The created folder represents a locale group. These groups do not have to follow any specific naming convention.
-The file should be named logically to describe the type of content it holds (e.g. app, forum, ...).
+You should name the file logically to describe the type of content it holds (e.g. app, forum, ...).
 For example, let’s say you want to create a file containing error messages.
 You might simply name it: `error.{js,ts}`.
 
-Each file should return an object with a language key and a locale string to return.
+Each file should return an object with a language key and a locale string.
 
 **`app.{ts,js}`**
 ```typescript
@@ -80,7 +80,7 @@ module.exports = {
 
 The object can also be (deeply) nested ⚡.
 
-**`app.{ts,js}`**
+**`app.{ts,js,json}`**
 ```typescript
 module.exports = {
     'nested': {
@@ -88,14 +88,14 @@ module.exports = {
     }
 }
 ```
-It is also possible to use `export default {...}` instead of `module.exports = {...}`
+It is also possible to use `export default {...}` instead of `module.exports = {...}` for script files.
 
 ## Usage
 
 ### Basic
 
-The basic usage is just to create an instance of the `Language` class and either set one or more directories,
-which should be scanned on server side.
+The primary usage is just to create an instance of the `Language` class and either set one or more directories,
+which should be scanned on the server-side.
 
 ```typescript
 import { Language } from "ilingo";
@@ -107,7 +107,7 @@ const language = new Language({
 ```
 
 The other option for client-side applications, which can also be used in addition on server side, is manipulating the cache, on
-instance creation or afterwards by a method call.
+instance creation or afterward by a method call.
 
 ```typescript
 import { Language } from "ilingo";
@@ -156,12 +156,12 @@ console.log(language.getSync('app.key', {}, 'de'));
 
 ### Singleton
 
-The library also supports build in singleton support. There can exist multiple side-by-side instances, by providing a **key** as additional
+The library also supports build in singleton support. There can exist multiple side-by-side instances, by providing a **key** as an additional
 parameter for the singleton method.
 
 The default key is: `default`
 
-The fist step, is to specify a configuration for the singleton instance, if you do not want to use the default ones.
+The fist step, is to specify a configuration for the singleton instance if you do not want to use the default ones.
 Options are only passed to the class if it is not created yet!
 
 ```typescript
@@ -192,7 +192,7 @@ console.log(
 Besides, using the singleton instance, the library also provides helper functions
 for faster access.
 
-The helper always refers to the `default` singleton instance and should therefore be used with caution,
+The helper always refers to the `default` singleton instance and should therefore be used with caution
 if multiple singleton instances are used.
 
 ```typescript
@@ -207,7 +207,7 @@ import { useLanguage } from "ilingo";
 ```
 
 ### Parameters
-As template delimiter a mustache like brackets `{{}}` interpolation is used.
+As a template delimiter a mustache like brackets `{{}}` interpolation is used.
 Data properties can be injected as second argument, e.g.
 
 **`app.{ts,js}`**
@@ -227,7 +227,7 @@ module.exports = {
 
 ### Locales
 
-The default locale, which is used by the singleton instance, can be `globally` overwritten after initialisation:
+The default locale, which is used by the singleton instance, can be `globally` overwritten after initialization:
 
 ```typescript
 import { useLanguage } from "ilingo";
@@ -247,7 +247,7 @@ import { useLanguage } from "ilingo";
 })();
 ```
 
-Another option to **temporary** overwrite the default locale, is to pass the locale as third argument
+Another option to **temporary** overwrite the default locale is to pass the locale as third argument
 to one of the helper or singleton methods:
 
 ```typescript
@@ -300,8 +300,8 @@ console.log(langSync('app.languageKey'));
 
 ### Lazy
 
-Another option is to either to not access the file system at all or just
-add few translations afterwards.
+Another option is to either to not access the file system or
+add a few translations afterward.
 
 ```typescript
 import {useLanguage} from "ilingo";
