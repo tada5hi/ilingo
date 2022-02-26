@@ -39,7 +39,11 @@ export default [
             babel({
                 extensions,
                 babelHelpers: 'bundled',
-                include: ['src/**/*'],
+                include: [
+                    'src/**/*',
+                    '!src/index.client.ts',
+                    '!src/client/**/*'
+                ],
             }),
         ],
 
@@ -54,11 +58,11 @@ export default [
         ],
     },
     {
-        input: './src/index.client.ts',
+        input: './src/index.ts',
 
         // Specify here external modules which you don't want to include in your bundle (for instance: 'lodash', 'moment' etc.)
         // https://rollupjs.org/guide/en/#external
-        external,
+        external: [],
 
         plugins: [
             // Allows node_modules resolution
@@ -71,7 +75,13 @@ export default [
             babel({
                 extensions,
                 babelHelpers: 'bundled',
-                include: ['src/**/*'],
+                include: [
+                    'src/**/*',
+                    '!src/index.server.ts',
+                    '!src/server/**/*',
+                    '!src/loader/**/*',
+                    '!src/locator/**/*'
+                ],
             }),
         ],
         output: [
@@ -86,8 +96,7 @@ export default [
 
                 // https://rollupjs.org/guide/en/#outputglobals
                 globals: {
-                    'path': '{}',
-                    'fs': '{}'
+
                 },
             }
         ]
