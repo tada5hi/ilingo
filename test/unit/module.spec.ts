@@ -98,7 +98,7 @@ describe('src/module.ts', () => {
         expect(line).toBeDefined();
         expect(line).toEqual('The input must be a valid email address.');
 
-        line = await language.get('form.email', {}, 'de');
+        line = await language.get('form.email', 'de');
         expect(line).toEqual('Die Eingabe muss eine gültige E-Mail sein.');
 
         line = await language.get('form.maxLength', {max: 10});
@@ -140,7 +140,7 @@ describe('src/module.ts', () => {
         expect(line).toBeDefined();
         expect(line).toEqual('The input must be a valid email address.');
 
-        line = language.getSync('form.email', {}, 'de');
+        line = language.getSync('form.email', 'de');
         expect(line).toEqual('Die Eingabe muss eine gültige E-Mail sein.');
 
         line = language.getSync('form.maxLength', {max: 10});

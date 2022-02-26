@@ -7,7 +7,7 @@
 
 import template from 'lodash/template';
 import { IlingoOptions, LanguageCache, Lines } from './type';
-import { isLineRecord, toArray } from './utils';
+import { isLineRecord, parseArgsToDataAndLocale, toArray } from './utils';
 
 export abstract class AbstractIlingo {
     cache : LanguageCache = {};
@@ -87,54 +87,52 @@ export abstract class AbstractIlingo {
 
     async get(
         key: string,
-        args?: Record<string, any>,
+        data?: Record<string, any> | string,
         locale?: string,
     ) : Promise<string> {
-        args = args || {};
+        const parsed = parseArgsToDataAndLocale(data, locale, { locale: this.getLocale() });
 
         if (!key.includes('.')) {
-            return this.formatMessage(key, args);
+            return this.formatMessage(key, parsed[0]);
         }
 
         const [file, line] = this.parse(key);
-        locale = locale || this.getLocale();
 
         if (
-            typeof this.cache[locale] === 'undefined' ||
-            typeof this.cache[locale][file] === 'undefined'
+            typeof this.cache[parsed[1]] === 'undefined' ||
+            typeof this.cache[parsed[1]][file] === 'undefined'
         ) {
-            await this.loadGroup(file, locale);
+            await this.loadGroup(file, parsed[1]);
         }
 
-        const message = this.getMessage(file, line, locale);
+        const message = this.getMessage(file, line, parsed[1]);
 
-        return this.formatMessage(message || line, args);
+        return this.formatMessage(message || line, parsed[0]);
     }
 
     getSync(
         key: string,
-        args?: Record<string, any>,
+        data?: Record<string, any> | string,
         locale?: string,
     ) : string {
-        args = args || {};
+        const parsed = parseArgsToDataAndLocale(data, locale, { locale: this.getLocale() });
 
         if (!key.includes('.')) {
-            return this.formatMessage(key, args);
+            return this.formatMessage(key, parsed[0]);
         }
 
         const [group, line] = this.parse(key);
-        locale = locale || this.getLocale();
 
         if (
-            typeof this.cache[locale] === 'undefined' ||
-            typeof this.cache[locale][group] === 'undefined'
+            typeof this.cache[parsed[1]] === 'undefined' ||
+            typeof this.cache[parsed[1]][group] === 'undefined'
         ) {
-            this.loadGroupSync(group, locale);
+            this.loadGroupSync(group, parsed[1]);
         }
 
-        const message = this.getMessage(group, line, locale);
+        const message = this.getMessage(group, line, parsed[1]);
 
-        return this.formatMessage(message || line, args);
+        return this.formatMessage(message || line, parsed[0]);
     }
 
     // ----------------------------------------------------
