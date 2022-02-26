@@ -18,8 +18,6 @@ export abstract class AbstractLanguage {
 
     locale: string;
 
-    useFileSystem: boolean;
-
     // ----------------------------------------------------
 
     protected constructor(options?: LanguageOptions) {
@@ -34,8 +32,6 @@ export abstract class AbstractLanguage {
         if (options.cache) {
             this.setCache(options.cache);
         }
-
-        this.useFileSystem = options.fs ?? true;
     }
 
     // ----------------------------------------------------
@@ -80,7 +76,7 @@ export abstract class AbstractLanguage {
         locale?: string,
     ) {
         const [file, line] = this.parse(key);
-        locale = locale ?? this.getLocale();
+        locale = locale || this.getLocale();
 
         this.initFileCache(file, locale);
 
@@ -107,14 +103,14 @@ export abstract class AbstractLanguage {
         args?: Record<string, any>,
         locale?: string,
     ) : Promise<string> {
-        args ??= {};
+        args = args || {};
 
         if (!key.includes('.')) {
             return this.formatMessage(key, args);
         }
 
         const [file, line] = this.parse(key);
-        locale = locale ?? this.getLocale();
+        locale = locale || this.getLocale();
 
         if (
             typeof this.cache[locale] === 'undefined' ||
@@ -125,7 +121,7 @@ export abstract class AbstractLanguage {
 
         const message = this.getMessage(file, line, locale);
 
-        return this.formatMessage(message ?? line, args);
+        return this.formatMessage(message || line, args);
     }
 
     getSync(
@@ -133,14 +129,14 @@ export abstract class AbstractLanguage {
         args?: Record<string, any>,
         locale?: string,
     ) : string {
-        args ??= {};
+        args = args || {};
 
         if (!key.includes('.')) {
             return this.formatMessage(key, args);
         }
 
         const [file, line] = this.parse(key);
-        locale = locale ?? this.getLocale();
+        locale = locale || this.getLocale();
 
         if (
             typeof this.cache[locale] === 'undefined' ||
@@ -151,7 +147,7 @@ export abstract class AbstractLanguage {
 
         const message = this.getMessage(file, line, locale);
 
-        return this.formatMessage(message ?? line, args);
+        return this.formatMessage(message || line, args);
     }
 
     // ----------------------------------------------------
@@ -173,7 +169,7 @@ export abstract class AbstractLanguage {
             return undefined;
         }
 
-        locale ??= this.getLocale();
+        locale = locale || this.getLocale();
 
         if (typeof this.cache[locale][file][line] === 'string') {
             return this.cache[locale][file][line] as string;
@@ -218,17 +214,17 @@ export abstract class AbstractLanguage {
     // ------------------------------------------
 
     protected isLoaded(file: string, locale?: string) : boolean {
-        locale ??= this.getLocale();
+        locale = locale || this.getLocale();
 
-        this.loaded[locale] ??= [];
+        this.loaded[locale] = this.loaded[locale] || [];
 
         return this.loaded[locale].indexOf(file) !== -1;
     }
 
     protected setIsLoaded(file: string, locale?: string) {
-        locale ??= this.getLocale();
+        locale = locale || this.getLocale();
 
-        this.loaded[locale] ??= [];
+        this.loaded[locale] = this.loaded[locale] || [];
 
         this.loaded[locale].push(file);
     }
@@ -240,10 +236,15 @@ export abstract class AbstractLanguage {
     // ------------------------------------------
 
     protected initFileCache(file: string, locale?: string) {
-        locale ??= this.getLocale();
+        locale = locale || this.getLocale();
 
-        this.cache[locale] ??= {};
-        this.cache[locale][file] ??= {};
+        if (typeof this.cache[locale] === 'undefined') {
+            this.cache[locale] = {};
+        }
+
+        if (typeof this.cache[locale][file] === 'undefined') {
+            this.cache[locale][file] = {};
+        }
     }
 
     protected setFileCache(
@@ -251,7 +252,7 @@ export abstract class AbstractLanguage {
         value: unknown,
         locale?: string,
     ) {
-        locale ??= this.getLocale();
+        locale = locale || this.getLocale();
 
         this.initFileCache(file, locale);
 

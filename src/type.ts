@@ -20,6 +20,4 @@ export type LanguageOptions = {
     locale?: string,
     // default: {}
     cache?: LanguageCache,
-    // default: true
-    fs?: boolean
 };

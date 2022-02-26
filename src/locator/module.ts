@@ -11,9 +11,9 @@ import { LocatorInfo, LocatorOptions } from './type';
 import { toArray } from '../utils';
 
 function buildOptions(options?: Partial<LocatorOptions>) : LocatorOptions {
-    options ??= {};
-    options.locale ??= 'en';
-    options.paths ??= [];
+    options = options || {};
+    options.locale = options.locale || 'en';
+    options.paths = options.paths || [];
     options.paths = toArray(options.paths);
     if (options.paths.length === 0) {
         options.paths.push(path.join(process.cwd(), 'language'));

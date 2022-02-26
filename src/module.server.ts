@@ -17,7 +17,7 @@ export class Language extends AbstractLanguage {
     }
 
     async loadFile(file: string, locale?: string) : Promise<Record<string, any>> {
-        locale ??= this.getLocale();
+        locale = locale || this.getLocale();
 
         // only load file once
         if (this.isLoaded(file, locale)) {
@@ -45,7 +45,7 @@ export class Language extends AbstractLanguage {
     }
 
     loadFileSync(file: string, locale?: string) : Record<string, any> {
-        locale ??= this.getLocale();
+        locale = locale || this.getLocale();
 
         if (this.isLoaded(file, locale)) {
             /* istanbul ignore next */
