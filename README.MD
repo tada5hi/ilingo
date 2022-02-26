@@ -165,7 +165,7 @@ The fist step, is to specify a configuration for the singleton instance if you d
 Options are only passed to the class if it is not created yet!
 
 ```typescript
-import {useIlingo} from "ilingo";
+import { useIlingo } from 'ilingo';
 
 useIlingo({
     /**
@@ -196,7 +196,7 @@ The helper always refers to the `default` singleton instance and should therefor
 if multiple singleton instances are used.
 
 ```typescript
-import { useIlingo } from "ilingo";
+import { useIlingo } from 'ilingo';
 
 (async () => {
     console.log(await useIlingo().getSync('app.key'));
@@ -230,7 +230,7 @@ module.exports = {
 The default locale, which is used by the singleton instance, can be `globally` overwritten after initialization:
 
 ```typescript
-import { useIlingo } from "ilingo";
+import { useIlingo } from 'ilingo';
 
 (async () => {
     const language = useIlingo();
@@ -251,7 +251,7 @@ Another option to **temporary** overwrite the default locale is to pass the loca
 to one of the helper or singleton methods:
 
 ```typescript
-import { useIlingo } from "ilingo";
+import { useIlingo } from 'ilingo';
 
 (async () => {
     const language = useIlingo({
@@ -277,7 +277,7 @@ import { useIlingo } from "ilingo";
 **`Async`**
 
 ```typescript
-import { useIlingo } from "ilingo";
+import { useIlingo } from 'ilingo';
 
 (async () => {
     console.log(await useIlingo().get('app.languageKey'));
@@ -290,7 +290,7 @@ import { useIlingo } from "ilingo";
 **`Sync`**
 
 ```typescript
-import { useIlingo } from "ilingo";
+import { useIlingo } from 'ilingo';
 
 console.log(useIlingo().getSync('app.languageKey'));
 
@@ -304,7 +304,7 @@ Another option is to either to not access the file system or
 add a few translations afterward.
 
 ```typescript
-import { useIlingo } from "ilingo";
+import { useIlingo } from 'ilingo';
 
 (async () => {
     const language = useIlingo({
