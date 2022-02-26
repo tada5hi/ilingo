@@ -7,10 +7,9 @@
 
 import template from 'lodash/template';
 import { LanguageCache, LanguageOptions } from './type';
-import { hasOwnProperty, isLanguageObject, toArray } from './utils';
-import { locateFile, locateFileSync } from './locator';
+import { isLanguageObject, toArray } from './utils';
 
-export class Language {
+export abstract class AbstractLanguage {
     cache : LanguageCache = {};
 
     loaded : Record<string, string[]> = {};
@@ -23,7 +22,7 @@ export class Language {
 
     // ----------------------------------------------------
 
-    constructor(options?: LanguageOptions) {
+    protected constructor(options?: LanguageOptions) {
         options = options || {};
 
         this.directories = options.directory ?
@@ -212,85 +211,13 @@ export class Language {
 
     // ---------------------------------------------------
 
-    async loadFile(file: string, locale?: string) : Promise<Record<string, any>> {
-        locale ??= this.getLocale();
+    abstract loadFile(file: string, locale?: string) : Promise<Record<string, any>>;
 
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        if (typeof window !== 'undefined' || !this.useFileSystem) {
-            console.log('skip fs');
-            this.setIsLoaded(file, locale);
-            return {};
-        }
-
-        // only load file once
-        if (this.isLoaded(file, locale)) {
-            /* istanbul ignore next */
-            return {};
-        }
-
-        this.initFileCache(file, locale);
-        this.setIsLoaded(file, locale);
-
-        const locatorInfo = await locateFile(file, {
-            locale,
-            paths: this.directories,
-        });
-
-        if (!locatorInfo) {
-            return {};
-        }
-
-        let { default: lang } = await import(locatorInfo.filePath);
-        lang = isLanguageObject(lang) ? lang : {};
-        this.cache[locale][file] = lang;
-
-        return this.cache[locale][file];
-    }
-
-    loadFileSync(file: string, locale?: string) : Record<string, any> {
-        locale ??= this.getLocale();
-
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        if (typeof window !== 'undefined' || !this.useFileSystem) {
-            console.log('skip fs');
-            this.setIsLoaded(file, locale);
-            return {};
-        }
-
-        if (this.isLoaded(file, locale)) {
-            /* istanbul ignore next */
-            return {};
-        }
-
-        this.initFileCache(file, locale);
-        this.setIsLoaded(file, locale);
-
-        const locatorInfo = locateFileSync(file, {
-            locale,
-            paths: this.directories,
-        });
-
-        if (!locatorInfo) {
-            return {};
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require,import/no-dynamic-require
-        let lang = require(locatorInfo.filePath);
-        if (hasOwnProperty(lang, 'default')) {
-            lang = lang.default;
-        }
-
-        lang = isLanguageObject(lang) ? lang : {};
-        this.cache[locale][file] = lang;
-
-        return this.cache[locale][file];
-    }
+    abstract loadFileSync(file: string, locale?: string) : Record<string, any>;
 
     // ------------------------------------------
 
-    private isLoaded(file: string, locale?: string) : boolean {
+    protected isLoaded(file: string, locale?: string) : boolean {
         locale ??= this.getLocale();
 
         this.loaded[locale] ??= [];
@@ -298,7 +225,7 @@ export class Language {
         return this.loaded[locale].indexOf(file) !== -1;
     }
 
-    private setIsLoaded(file: string, locale?: string) {
+    protected setIsLoaded(file: string, locale?: string) {
         locale ??= this.getLocale();
 
         this.loaded[locale] ??= [];
@@ -306,20 +233,20 @@ export class Language {
         this.loaded[locale].push(file);
     }
 
-    private resetIsLoaded() {
+    protected resetIsLoaded() {
         this.loaded = {};
     }
 
     // ------------------------------------------
 
-    private initFileCache(file: string, locale?: string) {
+    protected initFileCache(file: string, locale?: string) {
         locale ??= this.getLocale();
 
         this.cache[locale] ??= {};
         this.cache[locale][file] ??= {};
     }
 
-    private setFileCache(
+    protected setFileCache(
         file: string,
         value: unknown,
         locale?: string,
@@ -332,6 +259,8 @@ export class Language {
             this.cache[locale][file] = value;
         }
     }
+
+    // ------------------------------------------
 
     public setCache(cache: LanguageCache, extend = true) {
         if (!extend) {

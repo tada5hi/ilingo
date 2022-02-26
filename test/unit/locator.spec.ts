@@ -7,8 +7,8 @@
 
 
 import path from "path";
-import {locateFile, locateFileSync} from "../../src";
-import {LocatorInfo} from "../../src/locator/type";
+import {locateFile, locateFileSync} from "../../src/locator";
+import {LocatorInfo} from "../../src/locator";
 
 const basePath = path.join(__dirname, '..', 'data', 'language');
 
