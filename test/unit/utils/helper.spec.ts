@@ -5,14 +5,14 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {lang, langSync, useLanguage} from "../../../src/index.server";
+import {lang, langSync, useIlingo} from "../../../src/index.server";
 import path from "path";
 
 const basePath = path.join(__dirname, '..', '..', 'data', 'language');
 
 describe('src/module.ts', () => {
     it('should work with async helper', async () => {
-        useLanguage({
+        useIlingo({
             directory: basePath,
             locale: 'en'
         });
@@ -22,7 +22,7 @@ describe('src/module.ts', () => {
     });
 
     it('should work with sync helper', () => {
-        useLanguage({
+        useIlingo({
             directory: basePath,
             locale: 'en'
         });

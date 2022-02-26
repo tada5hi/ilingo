@@ -94,13 +94,13 @@ It is also possible to use `export default {...}` instead of `module.exports = {
 
 ### Basic
 
-The primary usage is just to create an instance of the `Language` class and either set one or more directories,
+The primary usage is just to create an instance of the `Ilingo` class and either set one or more directories,
 which should be scanned on the server-side.
 
 ```typescript
-import { Language } from "ilingo";
+import Ilingo from 'ilingo';
 
-const language = new Language({
+const language = new Ilingo({
     directory: [path.join(process.cwd(), 'language')],
     locale: 'en'
 })
@@ -110,9 +110,9 @@ The other option for client-side applications, which can also be used in additio
 instance creation or afterward by a method call.
 
 ```typescript
-import { Language } from "ilingo";
+import Ilingo from 'ilingo';
 
-const language = new Language({
+const language = new Ilingo({
     cache: {
         // locale: en
         en: {
@@ -143,9 +143,9 @@ To retrieve text from any of the language files, simply pass the filename/group 
 After that you can simply receive the locale string, like described in the following:
 
 ```typescript
-import { Language } from "ilingo";
+import Ilingo from 'ilingo';
 
-const language = new Language({...});
+const language = new Ilingo({...});
 
 console.log(language.getSync('app.key'));
 // The locale string to be shown.
@@ -165,9 +165,9 @@ The fist step, is to specify a configuration for the singleton instance if you d
 Options are only passed to the class if it is not created yet!
 
 ```typescript
-import {useLanguage} from "ilingo";
+import {useIlingo} from "ilingo";
 
-useLanguage({
+useIlingo({
     /**
      * Default: path.join(process.cwd(), 'language')
      */
@@ -178,11 +178,11 @@ useLanguage({
     locale: 'en'
 }, 'default');
 
-console.log(useLanguage().getSync('app.key'));
+console.log(useIlingo().getSync('app.key'));
 // The locale string to be shown.
 
 console.log(
-    useLanguage(undefined, 'default')
+    useIlingo(undefined, 'default')
         .getSync('app.key')
 );
 // The locale string to be shown.
@@ -196,10 +196,10 @@ The helper always refers to the `default` singleton instance and should therefor
 if multiple singleton instances are used.
 
 ```typescript
-import { useLanguage } from "ilingo";
+import { useIlingo } from "ilingo";
 
 (async () => {
-    console.log(await useLanguage().getSync('app.key'));
+    console.log(await useIlingo().getSync('app.key'));
 
     // lang is a helper function for fast access ;)
     console.log(await lang('app.key'));
@@ -230,10 +230,10 @@ module.exports = {
 The default locale, which is used by the singleton instance, can be `globally` overwritten after initialization:
 
 ```typescript
-import { useLanguage } from "ilingo";
+import { useIlingo } from "ilingo";
 
 (async () => {
-    const language = useLanguage();
+    const language = useIlingo();
 
     let output = await language.get('app.age', {age: 18});
     console.log(output);
@@ -251,10 +251,10 @@ Another option to **temporary** overwrite the default locale is to pass the loca
 to one of the helper or singleton methods:
 
 ```typescript
-import { useLanguage } from "ilingo";
+import { useIlingo } from "ilingo";
 
 (async () => {
-    const language = useLanguage({
+    const language = useIlingo({
         locale: 'en'
     });
 
@@ -277,10 +277,10 @@ import { useLanguage } from "ilingo";
 **`Async`**
 
 ```typescript
-import { useLanguage } from "ilingo";
+import { useIlingo } from "ilingo";
 
 (async () => {
-    console.log(await useLanguage().get('app.languageKey'));
+    console.log(await useIlingo().get('app.languageKey'));
 
     // lang is a helper function for fast access ;)
     console.log(await lang('app.languageKey'));
@@ -290,9 +290,9 @@ import { useLanguage } from "ilingo";
 **`Sync`**
 
 ```typescript
-import { useLanguage } from "ilingo";
+import { useIlingo } from "ilingo";
 
-console.log(useLanguage().getSync('app.languageKey'));
+console.log(useIlingo().getSync('app.languageKey'));
 
 // lang is a helper function for fast access ;)
 console.log(langSync('app.languageKey'));
@@ -304,10 +304,10 @@ Another option is to either to not access the file system or
 add a few translations afterward.
 
 ```typescript
-import { useLanguage } from "ilingo";
+import { useIlingo } from "ilingo";
 
 (async () => {
-    const language = useLanguage({
+    const language = useIlingo({
         locale: 'en'
     });
 

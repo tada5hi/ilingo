@@ -5,20 +5,23 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Language } from './module';
-import { LanguageOptions } from '../type';
-import { AbstractLanguage } from '../module';
+import { Ilingo } from './module';
+import { IlingoOptions } from '../type';
+import { AbstractIlingo } from '../module';
 
-const instances: Record<string, AbstractLanguage> = {};
+const instances: Record<string, AbstractIlingo> = {};
 
-export function useLanguage(options?: LanguageOptions, key?: string): AbstractLanguage {
+export function useIlingo(
+    options?: IlingoOptions,
+    key?: string,
+): AbstractIlingo {
     key = key || 'default';
 
     if (Object.prototype.hasOwnProperty.call(instances, key)) {
         return instances[key];
     }
 
-    const instance = new Language(options);
+    const instance = new Ilingo(options);
 
     instances[key] = instance;
 

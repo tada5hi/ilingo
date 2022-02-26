@@ -5,12 +5,12 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { AbstractLanguage } from '../module';
-import { LanguageOptions } from '../type';
+import { AbstractIlingo } from '../module';
+import { IlingoOptions } from '../type';
 
-export class Language extends AbstractLanguage {
+export class Ilingo extends AbstractIlingo {
     // eslint-disable-next-line no-useless-constructor,@typescript-eslint/no-useless-constructor
-    constructor(options?: LanguageOptions) {
+    constructor(options?: IlingoOptions) {
         super(options);
     }
 

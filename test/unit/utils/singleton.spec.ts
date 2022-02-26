@@ -5,14 +5,14 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { AbstractLanguage, useLanguage } from "../../../src/index.server";
+import { AbstractIlingo, useIlingo } from "../../../src/index.server";
 
 describe('src/utils/singleton.ts', () => {
     it('should create instance', () => {
-        let instance = useLanguage();
+        let instance = useIlingo();
 
-        expect(instance).toBeInstanceOf(AbstractLanguage);
+        expect(instance).toBeInstanceOf(AbstractIlingo);
 
-        expect(instance).toEqual(useLanguage());
+        expect(instance).toEqual(useIlingo());
     })
 })

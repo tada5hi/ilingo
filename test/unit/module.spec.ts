@@ -5,14 +5,14 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {Language} from "../../src/index.server";
+import {Ilingo} from "../../src/index.server";
 import path from "path";
 
 const basePath = path.join(__dirname, '..', 'data', 'language');
 
 describe('src/module.ts', () => {
     it('should get/set directory + locale + groups', () => {
-        const language = new Language({
+        const language = new Ilingo({
             cache: {
                 ru: {
                     foo: {
@@ -39,7 +39,7 @@ describe('src/module.ts', () => {
     });
 
     it('should work with lazy input', async () => {
-        const language = new Language();
+        const language = new Ilingo();
 
         let output = await language.get('{{foo}}', {foo: 'bar'});
         expect(output).toEqual('bar');
@@ -49,7 +49,7 @@ describe('src/module.ts', () => {
     });
 
     it('should set line on the fly', async () => {
-        const language = new Language();
+        const language = new Ilingo();
 
         language.set('foo.bar', 'value on the fly');
         let value = language.getSync('foo.bar');
@@ -61,7 +61,7 @@ describe('src/module.ts', () => {
     })
 
     it('should work with nested input', async () => {
-        const language = new Language({
+        const language = new Ilingo({
             directory: basePath,
             locale: 'en'
         });
@@ -90,7 +90,7 @@ describe('src/module.ts', () => {
     })
 
     it('should translate async', async () => {
-        const language = new Language({
+        const language = new Ilingo({
             directory: basePath
         });
 
@@ -117,7 +117,7 @@ describe('src/module.ts', () => {
     });
 
     it('should not translate async', async () => {
-        const language = new Language({
+        const language = new Ilingo({
             directory: basePath,
             locale: 'en'
         });
@@ -132,7 +132,7 @@ describe('src/module.ts', () => {
     // ------------------------------------------------
 
     it('should translate sync',  () => {
-        const language = new Language({
+        const language = new Ilingo({
             directory: basePath,
         });
 
@@ -159,7 +159,7 @@ describe('src/module.ts', () => {
     });
 
     it('should not translate sync', () => {
-        const language = new Language({
+        const language = new Ilingo({
             directory: basePath,
             locale: 'en'
         });

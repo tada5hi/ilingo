@@ -5,14 +5,14 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { useLanguage } from './singleton';
+import { useIlingo } from './singleton';
 
 export async function lang(
     input: string,
     args?: Record<string, any>,
     locale?: string,
 ) {
-    return useLanguage()
+    return useIlingo()
         .get(input, args, locale);
 }
 
@@ -21,6 +21,6 @@ export function langSync(
     args?: Record<string, any>,
     locale?: string,
 ) {
-    return useLanguage()
+    return useIlingo()
         .getSync(input, args, locale);
 }

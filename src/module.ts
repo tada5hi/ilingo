@@ -6,10 +6,10 @@
  */
 
 import template from 'lodash/template';
-import { LanguageCache, LanguageOptions } from './type';
+import { IlingoOptions, LanguageCache } from './type';
 import { isLineRecord, toArray } from './utils';
 
-export abstract class AbstractLanguage {
+export abstract class AbstractIlingo {
     cache : LanguageCache = {};
 
     loaded : Record<string, string[]> = {};
@@ -20,7 +20,7 @@ export abstract class AbstractLanguage {
 
     // ----------------------------------------------------
 
-    protected constructor(options?: LanguageOptions) {
+    protected constructor(options?: IlingoOptions) {
         options = options || {};
 
         this.directories = options.directory ?
