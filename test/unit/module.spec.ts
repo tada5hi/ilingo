@@ -11,7 +11,7 @@ import path from "path";
 const basePath = path.join(__dirname, '..', 'data', 'language');
 
 describe('src/module.ts', () => {
-    fit('should get/set directory + locale + groups', () => {
+    it('should get/set directory + locale + groups', () => {
         const language = new Language({
             cache: {
                 ru: {

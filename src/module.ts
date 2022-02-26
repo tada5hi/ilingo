@@ -19,6 +19,8 @@ export class Language {
 
     locale: string;
 
+    useFileSystem: boolean;
+
     // ----------------------------------------------------
 
     constructor(options?: LanguageOptions) {
@@ -33,6 +35,8 @@ export class Language {
         if (options.cache) {
             this.setCache(options.cache);
         }
+
+        this.useFileSystem = options.fs ?? true;
     }
 
     // ----------------------------------------------------
@@ -213,7 +217,8 @@ export class Language {
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' || !this.useFileSystem) {
+            console.log('skip fs');
             this.setIsLoaded(file, locale);
             return {};
         }
@@ -248,7 +253,8 @@ export class Language {
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' || !this.useFileSystem) {
+            console.log('skip fs');
             this.setIsLoaded(file, locale);
             return {};
         }
