@@ -6,7 +6,5 @@
  */
 
 export * from './has-own-property';
-export * from './helper';
 export * from './identify';
-export * from './singleton';
 export * from './to-array';

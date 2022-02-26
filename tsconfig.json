@@ -1,15 +1,17 @@
 {
     "compilerOptions": {
-        "strict": true,
-        "skipLibCheck": true,
-        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "declarationDir": "dist/types",
         "declaration": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
+        "strict": true,
+        "esModuleInterop": true,
         "lib": [
             "ESNext"
         ],
-        "module": "commonjs",
+        "module": "ESNext",
+        "moduleResolution": "node",
         "newLine": "LF",
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,
@@ -17,15 +19,15 @@
         "noImplicitThis": false,
         "noUnusedParameters": false,
         "noUnusedLocals": true,
-        "outDir": "dist",
         "sourceMap": true,
         "strictNullChecks": false,
-        "target": "es5"
+        "target": "ESNext",
     },
     "include": [
         "src/**/*.ts"
     ],
     "exclude": [
-        "node_modules/**/*"
+        "node_modules/**/*",
+        "dist"
     ]
 }

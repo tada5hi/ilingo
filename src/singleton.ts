@@ -5,8 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Language } from '../module';
-import { LanguageOptions } from '../type';
+import { Language } from './module';
+import { LanguageOptions } from './type';
 
 let instance : Language | undefined;
 

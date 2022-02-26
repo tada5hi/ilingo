@@ -27,8 +27,6 @@ describe('src/module.ts', () => {
             }
         });
 
-        console.log(language.getCache());
-
         expect(language.getSync('foo.line', undefined, 'ru')).toEqual('bar-baz');
         expect(language.getSync('foo.line')).toEqual('baz-boz')
 
