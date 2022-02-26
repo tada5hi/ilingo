@@ -8,29 +8,13 @@
 import path from 'path';
 import fs from 'fs';
 import { LocatorInfo, LocatorOptions } from './type';
-import { toArray } from '../utils';
-
-function buildOptions(options?: Partial<LocatorOptions>) : LocatorOptions {
-    options = options || {};
-    options.locale = options.locale || 'en';
-    options.paths = options.paths || [];
-    options.paths = toArray(options.paths);
-    if (options.paths.length === 0) {
-        options.paths.push(path.join(process.cwd(), 'language'));
-    }
-    options.paths = options.paths.map((item) => path.join(item, options.locale));
-
-    options.extensions = options.extensions ?
-        toArray(options.extensions) : ['.ts', '.js'];
-
-    return options as LocatorOptions;
-}
+import { buildLocatorOptions } from './utils';
 
 export async function locateFile(
     fileName: string,
     options?: Partial<LocatorOptions>,
 ) : Promise<LocatorInfo | undefined> {
-    options = buildOptions(options);
+    options = buildLocatorOptions(options);
 
     for (let i = 0; i < options.paths.length; i++) {
         const filePath = path.join(options.paths[i], fileName);
@@ -44,8 +28,6 @@ export async function locateFile(
                 return {
                     path: options.paths[i],
                     fileName,
-                    // we do not add .ts / .js extension so import/require can import the right file ;)
-                    filePath: path.join(options.paths[i], fileName),
                     fileExtension: options.extensions[j],
                 };
             } catch (e) {
@@ -61,7 +43,7 @@ export function locateFileSync(
     fileName: string,
     options?: Partial<LocatorOptions>,
 ) : LocatorInfo | undefined {
-    options = buildOptions(options);
+    options = buildLocatorOptions(options);
 
     for (let i = 0; i < options.paths.length; i++) {
         const filePath = path.join(options.paths[i], fileName);
@@ -75,7 +57,6 @@ export function locateFileSync(
                 return {
                     path: options.paths[i],
                     fileName,
-                    filePath: path.join(options.paths[i], fileName),
                     fileExtension: options.extensions[j],
                 };
             } catch (e) {

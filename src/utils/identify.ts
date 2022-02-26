@@ -5,7 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export function isLanguageObject(value: unknown) : value is Record<string, string> {
+import { Lines } from '../type';
+
+export function isLineRecord(value: unknown) : value is Lines {
     if (typeof value !== 'object') {
         return false;
     }
@@ -16,7 +18,7 @@ export function isLanguageObject(value: unknown) : value is Record<string, strin
         /* istanbul ignore next */
         if (
             typeof ob[keys[i]] !== 'string' &&
-            !isLanguageObject(ob[keys[i]])
+            !isLineRecord(ob[keys[i]])
         ) {
             return false;
         }

@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { isLanguageObject } from "../../../src/utils";
+import { isLineRecord } from "../../../src/utils";
 
 describe('src/utils/identify.ts', () => {
     it('should identify the value correctly', () => {
@@ -13,24 +13,24 @@ describe('src/utils/identify.ts', () => {
             'busy': 'I am busy as hell :P'
         };
 
-        expect(isLanguageObject(value)).toBeTruthy();
+        expect(isLineRecord(value)).toBeTruthy();
 
         value = {};
 
-        expect(isLanguageObject(value)).toBeTruthy();
+        expect(isLineRecord(value)).toBeTruthy();
     });
 
     it('should not identify the value correctly', () => {
         let value : unknown = true;
 
-        expect(isLanguageObject(value)).toBeFalsy();
+        expect(isLineRecord(value)).toBeFalsy();
 
         value = 1;
 
-        expect(isLanguageObject(value)).toBeFalsy();
+        expect(isLineRecord(value)).toBeFalsy();
 
         value = 'abc';
 
-        expect(isLanguageObject(value)).toBeFalsy();
+        expect(isLineRecord(value)).toBeFalsy();
     })
 });

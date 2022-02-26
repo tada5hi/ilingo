@@ -7,7 +7,7 @@
 
 import template from 'lodash/template';
 import { LanguageCache, LanguageOptions } from './type';
-import { isLanguageObject, toArray } from './utils';
+import { isLineRecord, toArray } from './utils';
 
 export abstract class AbstractLanguage {
     cache : LanguageCache = {};
@@ -75,12 +75,12 @@ export abstract class AbstractLanguage {
         value: any,
         locale?: string,
     ) {
-        const [file, line] = this.parse(key);
+        const [group, line] = this.parse(key);
         locale = locale || this.getLocale();
 
-        this.initFileCache(file, locale);
+        this.initLines(group, locale);
 
-        this.cache[locale][file][line] = value;
+        this.cache[locale][group][line] = value;
     }
 
     setGroup(
@@ -93,7 +93,7 @@ export abstract class AbstractLanguage {
             return;
         }
 
-        this.setFileCache(key, value, locale);
+        this.setLines(key, value, locale);
     }
 
     // ----------------------------------------------------
@@ -116,7 +116,7 @@ export abstract class AbstractLanguage {
             typeof this.cache[locale] === 'undefined' ||
             typeof this.cache[locale][file] === 'undefined'
         ) {
-            await this.loadFile(file, locale);
+            await this.loadGroup(file, locale);
         }
 
         const message = this.getMessage(file, line, locale);
@@ -135,17 +135,17 @@ export abstract class AbstractLanguage {
             return this.formatMessage(key, args);
         }
 
-        const [file, line] = this.parse(key);
+        const [group, line] = this.parse(key);
         locale = locale || this.getLocale();
 
         if (
             typeof this.cache[locale] === 'undefined' ||
-            typeof this.cache[locale][file] === 'undefined'
+            typeof this.cache[locale][group] === 'undefined'
         ) {
-            this.loadFileSync(file, locale);
+            this.loadGroupSync(group, locale);
         }
 
-        const message = this.getMessage(file, line, locale);
+        const message = this.getMessage(group, line, locale);
 
         return this.formatMessage(message || line, args);
     }
@@ -153,26 +153,26 @@ export abstract class AbstractLanguage {
     // ----------------------------------------------------
 
     parse(key: string) : [string, string] {
-        const file = key.substring(0, key.indexOf('.'));
-        const line = key.substring(file.length + 1);
+        const group = key.substring(0, key.indexOf('.'));
+        const line = key.substring(group.length + 1);
 
-        return [file, line];
+        return [group, line];
     }
 
     // ----------------------------------------------------
 
-    getMessage(file: string, line: string, locale?: string) : string | undefined {
+    getMessage(group: string, line: string, locale?: string) : string | undefined {
         if (
             typeof this.cache[locale] === 'undefined' ||
-            typeof this.cache[locale][file] === 'undefined'
+            typeof this.cache[locale][group] === 'undefined'
         ) {
             return undefined;
         }
 
         locale = locale || this.getLocale();
 
-        if (typeof this.cache[locale][file][line] === 'string') {
-            return this.cache[locale][file][line] as string;
+        if (typeof this.cache[locale][group][line] === 'string') {
+            return this.cache[locale][group][line] as string;
         }
 
         let current : unknown;
@@ -181,15 +181,15 @@ export abstract class AbstractLanguage {
         const parts = line.split('.');
         for (let i = 0; i < parts.length; i++) {
             if (typeof current === 'undefined') {
-                current = this.cache[locale][file];
+                current = this.cache[locale][group];
             }
 
-            output = isLanguageObject(current) ? current[parts[i]] : undefined;
+            output = isLineRecord(current) ? current[parts[i]] : undefined;
             if (typeof output === 'string') {
                 return output;
             }
 
-            if (isLanguageObject(output)) {
+            if (isLineRecord(output)) {
                 current = output;
             }
         }
@@ -207,26 +207,26 @@ export abstract class AbstractLanguage {
 
     // ---------------------------------------------------
 
-    abstract loadFile(file: string, locale?: string) : Promise<Record<string, any>>;
+    abstract loadGroup(group: string, locale?: string) : Promise<Record<string, any>>;
 
-    abstract loadFileSync(file: string, locale?: string) : Record<string, any>;
+    abstract loadGroupSync(group: string, locale?: string) : Record<string, any>;
 
     // ------------------------------------------
 
-    protected isLoaded(file: string, locale?: string) : boolean {
+    protected isLoaded(group: string, locale?: string) : boolean {
         locale = locale || this.getLocale();
 
         this.loaded[locale] = this.loaded[locale] || [];
 
-        return this.loaded[locale].indexOf(file) !== -1;
+        return this.loaded[locale].indexOf(group) !== -1;
     }
 
-    protected setIsLoaded(file: string, locale?: string) {
+    protected setIsLoaded(group: string, locale?: string) {
         locale = locale || this.getLocale();
 
         this.loaded[locale] = this.loaded[locale] || [];
 
-        this.loaded[locale].push(file);
+        this.loaded[locale].push(group);
     }
 
     protected resetIsLoaded() {
@@ -235,44 +235,44 @@ export abstract class AbstractLanguage {
 
     // ------------------------------------------
 
-    protected initFileCache(file: string, locale?: string) {
+    protected initLines(group: string, locale?: string) {
         locale = locale || this.getLocale();
 
         if (typeof this.cache[locale] === 'undefined') {
             this.cache[locale] = {};
         }
 
-        if (typeof this.cache[locale][file] === 'undefined') {
-            this.cache[locale][file] = {};
+        if (typeof this.cache[locale][group] === 'undefined') {
+            this.cache[locale][group] = {};
         }
     }
 
-    protected setFileCache(
-        file: string,
-        value: unknown,
+    protected setLines(
+        group: string,
+        lines: unknown,
         locale?: string,
     ) {
         locale = locale || this.getLocale();
 
-        this.initFileCache(file, locale);
+        this.initLines(group, locale);
 
-        if (isLanguageObject(value)) {
-            this.cache[locale][file] = value;
+        if (isLineRecord(lines)) {
+            this.cache[locale][group] = lines;
         }
     }
 
     // ------------------------------------------
 
-    public setCache(cache: LanguageCache, extend = true) {
+    public setCache(data: LanguageCache, extend = true) {
         if (!extend) {
             this.resetCache();
         }
 
-        const localeKeys = Object.keys(cache);
+        const localeKeys = Object.keys(data);
         for (let i = 0; i < localeKeys.length; i++) {
-            const localeGroups = Object.keys(cache[localeKeys[i]]);
+            const localeGroups = Object.keys(data[localeKeys[i]]);
             for (let j = 0; j < localeGroups.length; j++) {
-                this.setGroup(localeGroups[j], cache[localeKeys[i]][localeGroups[j]], localeKeys[i]);
+                this.setGroup(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
             }
         }
     }

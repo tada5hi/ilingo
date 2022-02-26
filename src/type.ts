@@ -5,13 +5,14 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export type LanguageCache = {
-    [locale: string] : {
-        [group: string]: {
-            [line: string]: unknown
-        }
-    }
+export type Groups = Record<string, Record<string, Lines>>;
+export type Lines = ValueOrNestedValue<string>;
+export type ValueOrNestedValue<T> = {
+    [key: string]: ValueOrNestedValue<T> | T
 };
+
+// default: Record<group, Record<locale, Lines>>
+export type LanguageCache = Record<string, Record<string, Lines>>;
 
 export type LanguageOptions = {
     // default: process.cw() + path.separator + 'languages';

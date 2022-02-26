@@ -27,7 +27,7 @@ module.exports = {
     collectCoverageFrom: [
         'src/**/*.{ts,tsx,js,jsx}',
         '!src/index.client.ts',
-        '!src/module.client.ts'
+        '!src/client/**'
     ],
     coverageThreshold: {
         global: {
