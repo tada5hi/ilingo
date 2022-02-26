@@ -14,30 +14,32 @@ const basePath = path.join(__dirname, '..', 'data', 'language');
 
 describe('src/locator.ts', () => {
     it('should locate file async', async () => {
+        let locatorInfo = await locateFile( 'form', {paths: basePath, locale: 'de'});
         let languageDir = path.join(basePath, 'de');
-        let locatorInfo = await locateFile(languageDir, 'form');
 
         expect(locatorInfo).toBeDefined();
         expect(locatorInfo).toEqual({
             path: languageDir,
             fileName: 'form',
+            filePath: path.join(languageDir, 'form'),
             fileExtension: '.ts'
         } as LocatorInfo);
 
+        locatorInfo = await locateFile( 'form', {paths: basePath});
         languageDir = path.join(basePath, 'en');
-        locatorInfo = await locateFile(languageDir, 'form');
 
         expect(locatorInfo).toBeDefined();
         expect(locatorInfo).toEqual({
             path: languageDir,
             fileName: 'form',
+            filePath: path.join(languageDir, 'form'),
             fileExtension: '.js'
         } as LocatorInfo);
     });
 
     it('should not locate file async', async () => {
         let languageDir = path.join(basePath, 'ru');
-        let locatorInfo = await locateFile(languageDir, 'form');
+        let locatorInfo = await locateFile( 'form', {paths: languageDir});
 
         expect(locatorInfo).toBeUndefined();
     });
@@ -45,31 +47,31 @@ describe('src/locator.ts', () => {
     // -----------------------------------------------------
 
     it('should locate file sync',  () => {
+        let locatorInfo = locateFileSync( 'form', {paths: basePath, locale: 'de'});
         let languageDir = path.join(basePath, 'de');
-        let locatorInfo = locateFileSync(languageDir, 'form');
 
         expect(locatorInfo).toBeDefined();
         expect(locatorInfo).toEqual({
             path: languageDir,
             fileName: 'form',
+            filePath: path.join(languageDir, 'form'),
             fileExtension: '.ts'
         } as LocatorInfo);
 
         languageDir = path.join(basePath, 'en');
-        locatorInfo = locateFileSync(languageDir, 'form');
+        locatorInfo = locateFileSync('form', {paths: basePath});
 
         expect(locatorInfo).toBeDefined();
         expect(locatorInfo).toEqual({
             path: languageDir,
             fileName: 'form',
+            filePath: path.join(languageDir, 'form'),
             fileExtension: '.js'
         } as LocatorInfo);
     });
 
     it('should not locate file sync', async () => {
-        let languageDir = path.join(basePath, 'ru');
-        let locatorInfo = locateFileSync(languageDir, 'form');
-
+        let locatorInfo = locateFileSync( 'form', {paths: basePath, locale: 'ru'});
         expect(locatorInfo).toBeUndefined();
     });
 });

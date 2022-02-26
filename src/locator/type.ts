@@ -8,5 +8,12 @@
 export type LocatorInfo = {
     path: string,
     fileName: string,
-    fileExtension: string
+    fileExtension: string,
+    filePath: string
+};
+
+export type LocatorOptions = {
+    extensions: string[] | string,
+    locale: string,
+    paths: string | string[],
 };

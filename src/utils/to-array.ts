@@ -5,8 +5,6 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export * from './has-own-property';
-export * from './helper';
-export * from './identify';
-export * from './singleton';
-export * from './to-array';
+export function toArray(input: string | string[]) : string[] {
+    return Array.isArray(input) ? input : [input];
+}

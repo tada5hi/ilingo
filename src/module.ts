@@ -6,9 +6,8 @@
  */
 
 import template from 'lodash/template';
-import * as path from 'path';
 import { LanguageCache, LanguageOptions } from './type';
-import { hasOwnProperty, isLanguageObject } from './utils';
+import { hasOwnProperty, isLanguageObject, toArray } from './utils';
 import { locateFile, locateFileSync } from './locator';
 
 export class Language {
@@ -16,36 +15,86 @@ export class Language {
 
     loaded : Record<string, string[]> = {};
 
-    options : LanguageOptions;
+    directories: string[];
+
+    locale: string;
 
     // ----------------------------------------------------
 
     constructor(options?: LanguageOptions) {
         options = options || {};
 
-        this.options = options;
+        this.directories = options.directory ?
+            toArray(options.directory) :
+            [];
+
+        this.locale = options.locale || 'en';
+
+        if (options.cache) {
+            this.setCache(options.cache);
+        }
     }
 
     // ----------------------------------------------------
 
-    setOptions(
-        options: Partial<LanguageOptions>,
-        extend = true,
+    setDirectory(
+        directory: string | string[],
+        extend = false,
     ) {
-        this.options = {
-            ...(extend ? this.options : {}),
-            ...options,
-        };
+        this.directories = [
+            ...(extend ? this.directories : []),
+            ...toArray(directory),
+        ];
     }
 
-    getOptions() {
-        return this.options;
+    getDirectory() : string | undefined {
+        if (this.directories.length > 0) {
+            return this.directories[0];
+        }
+
+        return undefined;
+    }
+
+    getDirectories() {
+        return this.directories;
     }
 
     // ----------------------------------------------------
+
+    setLocale(key: string) {
+        this.locale = key;
+    }
 
     getLocale() : string {
-        return this.options.locale || 'en';
+        return this.locale || 'en';
+    }
+
+    // ----------------------------------------------------
+
+    set(
+        key: string,
+        value: any,
+        locale?: string,
+    ) {
+        const [file, line] = this.parse(key);
+        locale = locale ?? this.getLocale();
+
+        this.initFileCache(file, locale);
+
+        this.cache[locale][file][line] = value;
+    }
+
+    setGroup(
+        key: string,
+        value: unknown,
+        locale?: string,
+    ) {
+        if (key.includes('.')) {
+            // key is not a group ...
+            return;
+        }
+
+        this.setFileCache(key, value, locale);
     }
 
     // ----------------------------------------------------
@@ -104,19 +153,6 @@ export class Language {
 
     // ----------------------------------------------------
 
-    set(
-        key: string,
-        value: any,
-        locale?: string,
-    ) {
-        const [file, line] = this.parse(key);
-        locale = locale ?? this.getLocale();
-
-        this.initCache(file, locale);
-
-        this.cache[locale][file][line] = value;
-    }
-
     parse(key: string) : [string, string] {
         const file = key.substring(0, key.indexOf('.'));
         const line = key.substring(file.length + 1);
@@ -127,10 +163,17 @@ export class Language {
     // ----------------------------------------------------
 
     getMessage(file: string, line: string, locale?: string) : string | undefined {
+        if (
+            typeof this.cache[locale] === 'undefined' ||
+            typeof this.cache[locale][file] === 'undefined'
+        ) {
+            return undefined;
+        }
+
         locale ??= this.getLocale();
 
         if (typeof this.cache[locale][file][line] === 'string') {
-            return this.cache[locale][file][line];
+            return this.cache[locale][file][line] as string;
         }
 
         let current : unknown;
@@ -168,21 +211,32 @@ export class Language {
     async loadFile(file: string, locale?: string) : Promise<Record<string, any>> {
         locale ??= this.getLocale();
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        if (typeof window !== 'undefined') {
+            this.setIsLoaded(file, locale);
+            return {};
+        }
+
         // only load file once
         if (this.isLoaded(file, locale)) {
             /* istanbul ignore next */
             return {};
         }
 
-        this.initCache(file, locale);
+        this.initFileCache(file, locale);
         this.setIsLoaded(file, locale);
 
-        const locatorInfo = await locateFile(this.buildDirectoryPaths(locale), file);
+        const locatorInfo = await locateFile(file, {
+            locale,
+            paths: this.directories,
+        });
+
         if (!locatorInfo) {
             return {};
         }
 
-        let { default: lang } = await import(path.join(locatorInfo.path, locatorInfo.fileName));
+        let { default: lang } = await import(locatorInfo.filePath);
         lang = isLanguageObject(lang) ? lang : {};
         this.cache[locale][file] = lang;
 
@@ -192,21 +246,32 @@ export class Language {
     loadFileSync(file: string, locale?: string) : Record<string, any> {
         locale ??= this.getLocale();
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        if (typeof window !== 'undefined') {
+            this.setIsLoaded(file, locale);
+            return {};
+        }
+
         if (this.isLoaded(file, locale)) {
             /* istanbul ignore next */
             return {};
         }
 
-        this.initCache(file, locale);
+        this.initFileCache(file, locale);
         this.setIsLoaded(file, locale);
 
-        const locatorInfo = locateFileSync(this.buildDirectoryPaths(locale), file);
+        const locatorInfo = locateFileSync(file, {
+            locale,
+            paths: this.directories,
+        });
+
         if (!locatorInfo) {
             return {};
         }
 
         // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require,import/no-dynamic-require
-        let lang = require(path.join(locatorInfo.path, locatorInfo.fileName));
+        let lang = require(locatorInfo.filePath);
         if (hasOwnProperty(lang, 'default')) {
             lang = lang.default;
         }
@@ -235,29 +300,53 @@ export class Language {
         this.loaded[locale].push(file);
     }
 
-    private initCache(file: string, locale?: string) {
+    private resetIsLoaded() {
+        this.loaded = {};
+    }
+
+    // ------------------------------------------
+
+    private initFileCache(file: string, locale?: string) {
         locale ??= this.getLocale();
 
         this.cache[locale] ??= {};
         this.cache[locale][file] ??= {};
     }
 
-    // --------------------------------------------------------
-
-    private buildDirectoryPaths(locale?: string) {
+    private setFileCache(
+        file: string,
+        value: unknown,
+        locale?: string,
+    ) {
         locale ??= this.getLocale();
 
-        let paths : string[];
+        this.initFileCache(file, locale);
 
-        if (this.options.directory) {
-            paths = Array.isArray(this.options.directory) ? this.options.directory : [this.options.directory];
-        } else {
-            /* istanbul ignore next */
-            paths = [
-                path.join(process.cwd(), 'language'),
-            ];
+        if (isLanguageObject(value)) {
+            this.cache[locale][file] = value;
+        }
+    }
+
+    public setCache(cache: LanguageCache, extend = true) {
+        if (!extend) {
+            this.resetCache();
         }
 
-        return paths.map((item) => path.join(item, locale));
+        const localeKeys = Object.keys(cache);
+        for (let i = 0; i < localeKeys.length; i++) {
+            const localeGroups = Object.keys(cache[localeKeys[i]]);
+            for (let j = 0; j < localeGroups.length; j++) {
+                this.setGroup(localeGroups[j], cache[localeKeys[i]][localeGroups[j]], localeKeys[i]);
+            }
+        }
+    }
+
+    public getCache() : LanguageCache {
+        return this.cache;
+    }
+
+    public resetCache() {
+        this.cache = {};
+        this.resetIsLoaded();
     }
 }

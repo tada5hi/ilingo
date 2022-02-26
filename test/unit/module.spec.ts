@@ -11,16 +11,33 @@ import path from "path";
 const basePath = path.join(__dirname, '..', 'data', 'language');
 
 describe('src/module.ts', () => {
-    it('should get/set options + locale', () => {
-        const language = new Language();
-        const options = {
-            directory: basePath,
-            locale: 'en'
-        };
-        language.setOptions(options);
+    fit('should get/set directory + locale + groups', () => {
+        const language = new Language({
+            cache: {
+                ru: {
+                    foo: {
+                        line: 'bar-baz'
+                    }
+                },
+                en: {
+                    foo: {
+                        line: 'baz-boz'
+                    }
+                }
+            }
+        });
 
-        const value = language.getOptions();
-        expect(value).toEqual(options);
+        console.log(language.getCache());
+
+        expect(language.getSync('foo.line', undefined, 'ru')).toEqual('bar-baz');
+        expect(language.getSync('foo.line')).toEqual('baz-boz')
+
+        language.setDirectory(basePath);
+        expect(language.getDirectories()).toEqual([basePath]);
+        expect(language.getDirectory()).toEqual(basePath);
+
+        language.setLocale('en');
+        expect(language.getLocale()).toEqual('en');
     });
 
     it('should work with lazy input', async () => {
@@ -46,8 +63,7 @@ describe('src/module.ts', () => {
     })
 
     it('should work with nested input', async () => {
-        const language = new Language();
-        language.setOptions({
+        const language = new Language({
             directory: basePath,
             locale: 'en'
         });
@@ -63,7 +79,7 @@ describe('src/module.ts', () => {
 
         // --------------------------------------------------
 
-        language.setOptions({locale: 'de'})
+        language.setLocale('de');
 
         output = language.getSync('form.nested.key');
         expect(output).toEqual('Ich bin verschachtelt');
@@ -76,10 +92,8 @@ describe('src/module.ts', () => {
     })
 
     it('should translate async', async () => {
-        const language = new Language();
-        language.setOptions({
-            directory: basePath,
-            locale: 'en'
+        const language = new Language({
+            directory: basePath
         });
 
         let line = await language.get('form.email');
@@ -97,9 +111,7 @@ describe('src/module.ts', () => {
         expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 5.');
 
-        language.setOptions({
-            locale: 'de'
-        })
+        language.setLocale('de');
 
         line = await language.get('form.maxLength', {max: 5});
         expect(line).toBeDefined();
@@ -122,10 +134,8 @@ describe('src/module.ts', () => {
     // ------------------------------------------------
 
     it('should translate sync',  () => {
-        const language = new Language();
-        language.setOptions({
+        const language = new Language({
             directory: basePath,
-            locale: 'en'
         });
 
         let line = language.getSync('form.email');
@@ -143,9 +153,7 @@ describe('src/module.ts', () => {
         expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 5.');
 
-        language.setOptions({
-            locale: 'de'
-        })
+        language.setLocale('de');
 
         line = language.getSync('form.maxLength', {max: 5});
         expect(line).toBeDefined();

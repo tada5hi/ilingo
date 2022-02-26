@@ -7,8 +7,8 @@
 
 export type LanguageCache = {
     [locale: string] : {
-        [file: string]: {
-            [line: string]: any
+        [group: string]: {
+            [line: string]: unknown
         }
     }
 };
@@ -16,6 +16,8 @@ export type LanguageCache = {
 export type LanguageOptions = {
     // default: process.cw() + path.separator + 'languages';
     directory?: string | string[],
-    // .en
-    locale?: string
+    // default: en
+    locale?: string,
+    // default: {}
+    cache?: LanguageCache
 };

@@ -7,33 +7,46 @@
 
 import path from 'path';
 import fs from 'fs';
-import { LocatorInfo } from './type';
+import { LocatorInfo, LocatorOptions } from './type';
+import { toArray } from '../utils';
 
-function toArray(input: string | string[]) : string[] {
-    return Array.isArray(input) ? input : [input];
+function buildOptions(options?: Partial<LocatorOptions>) : LocatorOptions {
+    options ??= {};
+    options.locale ??= 'en';
+    options.paths ??= [];
+    options.paths = toArray(options.paths);
+    if (options.paths.length === 0) {
+        options.paths.push(path.join(process.cwd(), 'language'));
+    }
+    options.paths = options.paths.map((item) => path.join(item, options.locale));
+
+    options.extensions = options.extensions ?
+        toArray(options.extensions) : ['.ts', '.js'];
+
+    return options as LocatorOptions;
 }
 
 export async function locateFile(
-    paths: string[] | string,
     fileName: string,
-    extensions?: string[] | string,
+    options?: Partial<LocatorOptions>,
 ) : Promise<LocatorInfo | undefined> {
-    paths = Array.isArray(paths) ? paths : [paths];
-    extensions = extensions ? toArray(extensions) : ['.ts', '.js'];
+    options = buildOptions(options);
 
-    for (let i = 0; i < paths.length; i++) {
-        const filePath = path.join(paths[i], fileName);
+    for (let i = 0; i < options.paths.length; i++) {
+        const filePath = path.join(options.paths[i], fileName);
 
-        for (let j = 0; j < extensions.length; j++) {
-            const filePathWithExtension = filePath + extensions[j];
+        for (let j = 0; j < options.extensions.length; j++) {
+            const filePathWithExtension = filePath + options.extensions[j];
 
             try {
                 await fs.promises.access(filePathWithExtension, fs.constants.R_OK | fs.constants.F_OK);
 
                 return {
-                    path: paths[i],
+                    path: options.paths[i],
                     fileName,
-                    fileExtension: extensions[j],
+                    // we do not add .ts / .js extension so import/require can import the right file ;)
+                    filePath: path.join(options.paths[i], fileName),
+                    fileExtension: options.extensions[j],
                 };
             } catch (e) {
                 // do nothing ;)
@@ -45,26 +58,25 @@ export async function locateFile(
 }
 
 export function locateFileSync(
-    paths: string[] | string,
     fileName: string,
-    extensions?: string | string[],
+    options?: Partial<LocatorOptions>,
 ) : LocatorInfo | undefined {
-    paths = Array.isArray(paths) ? paths : [paths];
-    extensions = extensions ? toArray(extensions) : ['.ts', '.js'];
+    options = buildOptions(options);
 
-    for (let i = 0; i < paths.length; i++) {
-        const filePath = path.join(paths[i], fileName);
+    for (let i = 0; i < options.paths.length; i++) {
+        const filePath = path.join(options.paths[i], fileName);
 
-        for (let j = 0; j < extensions.length; j++) {
-            const filePathWithExtension = filePath + extensions[j];
+        for (let j = 0; j < options.extensions.length; j++) {
+            const filePathWithExtension = filePath + options.extensions[j];
 
             try {
                 fs.accessSync(filePathWithExtension, fs.constants.R_OK | fs.constants.F_OK);
 
                 return {
-                    path: paths[i],
+                    path: options.paths[i],
                     fileName,
-                    fileExtension: extensions[j],
+                    filePath: path.join(options.paths[i], fileName),
+                    fileExtension: options.extensions[j],
                 };
             } catch (e) {
                 // do nothing ;)
