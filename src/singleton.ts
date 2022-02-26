@@ -8,14 +8,18 @@
 import { Language } from './module';
 import { LanguageOptions } from './type';
 
-let instance : Language | undefined;
+const instances : Record<string, Language> = {};
 
-export function useLanguage(options?: LanguageOptions) {
-    if (typeof instance !== 'undefined') {
-        return instance;
+export function useLanguage(options?: LanguageOptions, key?: string) : Language {
+    key = key || 'default';
+
+    if (Object.prototype.hasOwnProperty.call(instances, key)) {
+        return instances[key];
     }
 
-    instance = new Language(options);
+    const instance = new Language(options);
+
+    instances[key] = instance;
 
     return instance;
 }
