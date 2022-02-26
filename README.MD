@@ -54,11 +54,11 @@ Locale strings are stored in subdirectories as group for each supported language
 ├── ...
 └── language
     ├── de
-    │   ├── app.{js,ts}      # app group
-    │   └── forum.{js,ts}    # forum group
+    │   ├── app.{ts,js,json}      # app group
+    │   └── forum.{ts,js,json}    # forum group
     └── en
-        ├── app.{js,ts}      # app group
-        └── forum.{js,ts}    # forum group
+        ├── app.{ts,js,json}      # app group
+        └── forum.{ts,js,json}    # forum group
 ```
 
 To get started, create a language directory somewhere in your project.
@@ -67,11 +67,11 @@ Create a folder inside for each locale (e.g. en, de, ...), which should be suppo
 The created folder represents a locale group. These groups do not have to follow any specific naming convention.
 You should name the file logically to describe the type of content it holds (e.g. app, forum, ...).
 For example, let’s say you want to create a file containing error messages.
-You might simply name it: `error.{js,ts}`.
+You might simply name it: `error.{ts,js,json}`.
 
 Each file should return an object with a language key and a locale string.
 
-**`app.{ts,js}`**
+**`app.{ts,js,json}`**
 ```typescript
 module.exports = {
     'key': 'The locale string to be shown.'
@@ -210,7 +210,7 @@ import { useLanguage } from "ilingo";
 As a template delimiter a mustache like brackets `{{}}` interpolation is used.
 Data properties can be injected as second argument, e.g.
 
-**`app.{ts,js}`**
+**`app.{ts,js,json}`**
 ```typescript
 module.exports = {
     'age': 'I am {{age}} years old.'
@@ -277,7 +277,7 @@ import { useLanguage } from "ilingo";
 **`Async`**
 
 ```typescript
-import {useLanguage} from "ilingo";
+import { useLanguage } from "ilingo";
 
 (async () => {
     console.log(await useLanguage().get('app.languageKey'));
@@ -290,7 +290,7 @@ import {useLanguage} from "ilingo";
 **`Sync`**
 
 ```typescript
-import {useLanguage} from "ilingo";
+import { useLanguage } from "ilingo";
 
 console.log(useLanguage().getSync('app.languageKey'));
 
@@ -304,7 +304,7 @@ Another option is to either to not access the file system or
 add a few translations afterward.
 
 ```typescript
-import {useLanguage} from "ilingo";
+import { useLanguage } from "ilingo";
 
 (async () => {
     const language = useLanguage({
