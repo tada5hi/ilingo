@@ -6,7 +6,7 @@
  */
 
 import template from 'lodash/template';
-import { IlingoOptions, LanguageCache } from './type';
+import { IlingoOptions, LanguageCache, Lines } from './type';
 import { isLineRecord, toArray } from './utils';
 
 export abstract class AbstractIlingo {
@@ -72,7 +72,7 @@ export abstract class AbstractIlingo {
 
     set(
         key: string,
-        value: any,
+        value: string | Lines,
         locale?: string,
     ) {
         const [group, line] = this.parse(key);
@@ -81,19 +81,6 @@ export abstract class AbstractIlingo {
         this.initLines(group, locale);
 
         this.cache[locale][group][line] = value;
-    }
-
-    setGroup(
-        key: string,
-        value: unknown,
-        locale?: string,
-    ) {
-        if (key.includes('.')) {
-            // key is not a group ...
-            return;
-        }
-
-        this.setLines(key, value, locale);
     }
 
     // ----------------------------------------------------
@@ -247,18 +234,16 @@ export abstract class AbstractIlingo {
         }
     }
 
-    protected setLines(
+    public setLines(
         group: string,
-        lines: unknown,
+        lines: Lines,
         locale?: string,
     ) {
         locale = locale || this.getLocale();
 
         this.initLines(group, locale);
 
-        if (isLineRecord(lines)) {
-            this.cache[locale][group] = lines;
-        }
+        this.cache[locale][group] = lines;
     }
 
     // ------------------------------------------
@@ -272,7 +257,7 @@ export abstract class AbstractIlingo {
         for (let i = 0; i < localeKeys.length; i++) {
             const localeGroups = Object.keys(data[localeKeys[i]]);
             for (let j = 0; j < localeGroups.length; j++) {
-                this.setGroup(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
+                this.setLines(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
             }
         }
     }

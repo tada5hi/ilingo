@@ -32,7 +32,7 @@ npm install ilingo --save
 **Important NOTE**
 
 The library provides `sync` and `async` methods to receive a (compiled) locale key string. The reason
-for this is that on server side application, the library interacts with the file system, and this can be done in blocking and non-blocking way for the event-loop ⭐.
+for this is that on server side applications, the library interacts with the file system, and this can be done either in a blocking or non-blocking way ⭐.
 On client side applications, use the `sync` methods 🔥
 
 ---
@@ -48,7 +48,7 @@ by interacting with the library class instance.
 
 **`Server`**
 
-Locale strings are stored in subdirectories as group for each supported language (locale) on the server side.
+Locale strings are stored in subdirectories as a group for each supported language (locale) on the server side.
 
 ```bash
 ├── ...
@@ -62,14 +62,14 @@ Locale strings are stored in subdirectories as group for each supported language
 ```
 
 To get started, create a language directory somewhere in your project.
-Create a folder inside for each locale (e.g. en, de, ...), which should be supported.
+Inside this directory, create a folder for each locale (e.g. en, de, ...), which should be supported.
 
 The created folder represents a locale group. These groups do not have to follow any specific naming convention.
-You should name the file logically to describe the type of content it holds (e.g. app, forum, ...).
+You should name the file according to the type of content it holds (e.g. app, forum, ...).
 For example, let’s say you want to create a file containing error messages.
 You might simply name it: `error.{ts,js,json}`.
 
-Each file should return an object with a language key and a locale string.
+Each file should return an object containing an access key and a locale string.
 
 **`app.{ts,js,json}`**
 ```typescript
@@ -94,8 +94,8 @@ It is also possible to use `export default {...}` instead of `module.exports = {
 
 ### Basic
 
-The primary usage is just to create an instance of the `Ilingo` class and either set one or more directories,
-which should be scanned on the server-side.
+The primary usage on the serer-side is to create an instance of the `Ilingo` class and set one or more directories,
+which should be scanned for locale groups.
 
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -106,9 +106,8 @@ const language = new Ilingo({
 })
 ```
 
-The other option for client-side applications, which can also be used in addition on server side, is manipulating the cache, on
-instance creation or afterward by a method call.
-
+Client-side applications, rely on manipulating the cache. This can be done during instance creation or afterward using the `setCache` method.
+Using the cache is also supported for server-side applications.
 ```typescript
 import { Ilingo } from 'ilingo';
 
@@ -138,9 +137,9 @@ language.setCache({
 }, true);
 ```
 
-To retrieve text from any of the language files, simply pass the filename/group and the language key as the first parameter, separated by a period (.).
+To retrieve text from any of the language files, simply pass the filename/group and the access key as the first parameter, separated by a period (.).
 
-After that you can simply receive the locale string, like described in the following:
+After that you can simply access the locale string, as described in the following:
 
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -156,7 +155,7 @@ console.log(language.getSync('app.key', {}, 'de'));
 
 ### Singleton
 
-The library also supports build in singleton support. There can exist multiple side-by-side instances, by providing a **key** as an additional
+The library also supports built-in singleton support. There can be multiple side-by-side instances, by providing a **key** as an additional
 parameter for the singleton method.
 
 The default key is: `default`
@@ -189,8 +188,8 @@ console.log(
 ```
 
 ### Helper
-Besides, using the singleton instance, the library also provides helper functions
-for faster access.
+Besides using a singleton instance, the library also provides helper functions
+allowing faster access.
 
 The helper always refers to the `default` singleton instance and should therefore be used with caution
 if multiple singleton instances are used.
@@ -207,8 +206,8 @@ import { useIlingo } from 'ilingo';
 ```
 
 ### Parameters
-As a template delimiter a mustache like brackets `{{}}` interpolation is used.
-Data properties can be injected as second argument, e.g.
+As a template delimiter a mustache like `{{}}` interpolation is used.
+Data properties can be injected as a second argument, e.g.
 
 **`app.{ts,js,json}`**
 ```typescript
@@ -227,7 +226,7 @@ module.exports = {
 
 ### Locales
 
-The default locale, which is used by the singleton instance, can be `globally` overwritten after initialization:
+The default locale, which is used by the singleton instance, can be modified after initialization:
 
 ```typescript
 import { useIlingo } from 'ilingo';
@@ -247,8 +246,8 @@ import { useIlingo } from 'ilingo';
 })();
 ```
 
-Another option to **temporary** overwrite the default locale is to pass the locale as third argument
-to one of the helper or singleton methods:
+It also can be **temporarily** overwritten, by passing the locale as the third argument
+to one of the helper or supported singleton methods:
 
 ```typescript
 import { useIlingo } from 'ilingo';
@@ -300,8 +299,8 @@ console.log(langSync('app.languageKey'));
 
 ### Lazy
 
-Another option is to either to not access the file system or
-add a few translations afterward.
+Another option is to not access the file system and add
+translations afterwards.
 
 ```typescript
 import { useIlingo } from 'ilingo';
