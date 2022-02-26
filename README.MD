@@ -98,7 +98,7 @@ The primary usage is just to create an instance of the `Ilingo` class and either
 which should be scanned on the server-side.
 
 ```typescript
-import Ilingo from 'ilingo';
+import { Ilingo } from 'ilingo';
 
 const language = new Ilingo({
     directory: [path.join(process.cwd(), 'language')],
@@ -110,7 +110,7 @@ The other option for client-side applications, which can also be used in additio
 instance creation or afterward by a method call.
 
 ```typescript
-import Ilingo from 'ilingo';
+import { Ilingo } from 'ilingo';
 
 const language = new Ilingo({
     cache: {
@@ -143,7 +143,7 @@ To retrieve text from any of the language files, simply pass the filename/group 
 After that you can simply receive the locale string, like described in the following:
 
 ```typescript
-import Ilingo from 'ilingo';
+import { Ilingo } from 'ilingo';
 
 const language = new Ilingo({...});
 

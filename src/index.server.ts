@@ -5,10 +5,6 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Ilingo } from './server';
-
-export default Ilingo;
-
 export * from './module';
 export * from './server';
 export * from './utils';
