@@ -1,6 +1,6 @@
 {
     "name": "ilingo",
-    "version": "2.0.0-3",
+    "version": "2.0.0",
     "description": "This is a lightweight library for translation.",
     "author": {
         "name": "Peter Placzek",
