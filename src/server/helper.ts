@@ -9,18 +9,18 @@ import { useIlingo } from './singleton';
 
 export async function lang(
     input: string,
-    args?: Record<string, any>,
+    dataOrLocale?: Record<string, any> | string,
     locale?: string,
 ) {
     return useIlingo()
-        .get(input, args, locale);
+        .get(input, dataOrLocale, locale);
 }
 
 export function langSync(
     input: string,
-    args?: Record<string, any>,
+    dataOrLocale?: Record<string, any> | string,
     locale?: string,
 ) {
     return useIlingo()
-        .getSync(input, args, locale);
+        .getSync(input, dataOrLocale, locale);
 }

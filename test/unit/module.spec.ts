@@ -28,6 +28,7 @@ describe('src/module.ts', () => {
         });
 
         expect(language.getSync('foo.line', undefined, 'ru')).toEqual('bar-baz');
+        expect(language.getSync('foo.line', 'ru')).toEqual('bar-baz');
         expect(language.getSync('foo.line')).toEqual('baz-boz')
 
         language.setDirectory(basePath);

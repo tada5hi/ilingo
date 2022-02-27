@@ -39,7 +39,9 @@
         "bilingual",
         "internationalization",
         "locale",
-        "locales"
+        "locales",
+        "server-side",
+        "client-side"
     ],
     "bin": {
         "ilingo": "dist/cli/index.js"

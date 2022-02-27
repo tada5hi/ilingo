@@ -14,9 +14,14 @@ export function parseArgsToDataAndLocale(
     alt.data = alt.data || {};
     alt.locale = alt.locale || 'en';
 
-    if (typeof data === 'string') {
+    if (
+        typeof data === 'string' &&
+        typeof locale === 'undefined'
+    ) {
         return [{}, data];
     }
+
+    data = typeof data === 'string' ? {} : data;
 
     return [
         data || alt.data,

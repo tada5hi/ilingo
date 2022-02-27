@@ -5,13 +5,15 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { AbstractIlingo } from '../module';
-import { IlingoOptions } from '../type';
 import { Ilingo } from './module';
+import { IlingoOptions } from '../type';
 
-const instances: Record<string, AbstractIlingo> = {};
+const instances: Record<string, Ilingo> = {};
 
-export function useIlingo(options?: IlingoOptions, key?: string): AbstractIlingo {
+export function useIlingo(
+    options?: IlingoOptions,
+    key?: string,
+): Ilingo {
     key = key || 'default';
 
     if (Object.prototype.hasOwnProperty.call(instances, key)) {

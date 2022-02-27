@@ -86,17 +86,21 @@ export abstract class AbstractIlingo {
     // ----------------------------------------------------
 
     async get(
-        key: string,
-        data?: Record<string, any> | string,
+        input: string,
+        dataOrLocale?: Record<string, any> | string,
         locale?: string,
     ) : Promise<string> {
-        const parsed = parseArgsToDataAndLocale(data, locale, { locale: this.getLocale() });
+        const parsed = parseArgsToDataAndLocale(
+            dataOrLocale,
+            locale,
+            { locale: this.getLocale() },
+        );
 
-        if (!key.includes('.')) {
-            return this.formatMessage(key, parsed[0]);
+        if (!input.includes('.')) {
+            return this.formatMessage(input, parsed[0]);
         }
 
-        const [file, line] = this.parse(key);
+        const [file, line] = this.parse(input);
 
         if (
             typeof this.cache[parsed[1]] === 'undefined' ||
@@ -111,17 +115,21 @@ export abstract class AbstractIlingo {
     }
 
     getSync(
-        key: string,
-        data?: Record<string, any> | string,
+        input: string,
+        dataOrLocale?: Record<string, any> | string,
         locale?: string,
     ) : string {
-        const parsed = parseArgsToDataAndLocale(data, locale, { locale: this.getLocale() });
+        const parsed = parseArgsToDataAndLocale(
+            dataOrLocale,
+            locale,
+            { locale: this.getLocale() },
+        );
 
-        if (!key.includes('.')) {
-            return this.formatMessage(key, parsed[0]);
+        if (!input.includes('.')) {
+            return this.formatMessage(input, parsed[0]);
         }
 
-        const [group, line] = this.parse(key);
+        const [group, line] = this.parse(input);
 
         if (
             typeof this.cache[parsed[1]] === 'undefined' ||
@@ -147,14 +155,14 @@ export abstract class AbstractIlingo {
     // ----------------------------------------------------
 
     getMessage(group: string, line: string, locale?: string) : string | undefined {
+        locale = locale || this.getLocale();
+
         if (
             typeof this.cache[locale] === 'undefined' ||
             typeof this.cache[locale][group] === 'undefined'
         ) {
             return undefined;
         }
-
-        locale = locale || this.getLocale();
 
         if (typeof this.cache[locale][group][line] === 'string') {
             return this.cache[locale][group][line] as string;
@@ -244,9 +252,27 @@ export abstract class AbstractIlingo {
         this.cache[locale][group] = lines;
     }
 
+    public addLines(
+        group: string,
+        lines: Lines,
+        locale?: string,
+    ) {
+        locale = locale || this.getLocale();
+
+        this.initLines(group, locale);
+
+        this.cache[locale][group] = {
+            ...this.cache[locale][group],
+            ...lines,
+        };
+    }
+
     // ------------------------------------------
 
-    public setCache(data: LanguageCache, extend = true) {
+    public setCache(
+        data: LanguageCache,
+        extend = true,
+    ) {
         if (!extend) {
             this.resetCache();
         }
@@ -255,7 +281,11 @@ export abstract class AbstractIlingo {
         for (let i = 0; i < localeKeys.length; i++) {
             const localeGroups = Object.keys(data[localeKeys[i]]);
             for (let j = 0; j < localeGroups.length; j++) {
-                this.setLines(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
+                if (extend) {
+                    this.addLines(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
+                } else {
+                    this.setLines(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
+                }
             }
         }
     }

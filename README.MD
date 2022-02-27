@@ -2,8 +2,8 @@
 [![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=4KNSG8L13V)](https://codecov.io/gh/tada5hi/ilingo)
 [![Master Workflow](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo)
 
-# Ilingo 💬
-This is a lightweight library for translation and internationalization.
+# ilingo 💬
+Ilingo is a lightweight library for translation and internationalization.
 It can be used for client- & server-side applications 🔥.
 A bundled version exists for formats such as ESM, CommonJS, AMD, and IIFE-style scripts ⭐.
 
