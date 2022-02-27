@@ -38,7 +38,7 @@ export default [
             // Compile TypeScript/JavaScript files
             babel({
                 extensions,
-                babelHelpers: 'runtime',
+                babelHelpers: 'bundled',
                 include: [
                     'src/**/*',
                     '!src/index.client.ts',
@@ -74,7 +74,7 @@ export default [
             // Compile TypeScript/JavaScript files
             babel({
                 extensions,
-                babelHelpers: 'runtime',
+                babelHelpers: 'bundled',
                 include: [
                     'src/**/*',
                     '!src/index.server.ts',

@@ -5,6 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import 'regenerator-runtime';
+
 export * from './module';
 export * from './client';
 export * from './utils';
