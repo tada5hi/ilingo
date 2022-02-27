@@ -5,7 +5,6 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export type Groups = Record<string, Record<string, Lines>>;
 export type Lines = ValueOrNestedValue<string>;
 export type ValueOrNestedValue<T> = {
     [key: string]: ValueOrNestedValue<T> | T
