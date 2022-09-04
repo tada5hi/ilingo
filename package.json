@@ -60,7 +60,7 @@
         "@rollup/plugin-babel": "5.3.1",
         "@rollup/plugin-commonjs": "22.0.2",
         "@rollup/plugin-node-resolve": "13.3.0",
-        "@tada5hi/eslint-config-typescript": "^1.0.5",
+        "@tada5hi/eslint-config-typescript": "^1.0.6",
         "@types/jest": "^27.5.0",
         "@types/lodash": "^4.14.184",
         "@types/node": "^18.7.10",
