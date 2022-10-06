@@ -24,6 +24,8 @@ locale groups can also be hydrated by manipulating the cache.
   - [Locales](#locales)
   - [Async/Sync](#asyncsync)
   - [Lazy](#lazy)
+- [License](#license)
+
 ## Installation
 
 ```bash
@@ -324,3 +326,9 @@ import { useIlingo } from 'ilingo';
     // boz y
 })();
 ```
+
+## License
+
+Made with 💚
+
+Published under [MIT License](./LICENSE).
