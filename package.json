@@ -71,7 +71,7 @@
         "@rollup/plugin-node-resolve": "15.0.1",
         "@tada5hi/eslint-config-typescript": "^1.0.9",
         "@types/jest": "^27.5.0",
-        "@types/lodash": "^4.14.186",
+        "@types/lodash": "^4.14.189",
         "@types/node": "^18.11.7",
         "codecov": "^3.8.3",
         "coveralls": "^3.1.0",
