@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,
-        "declarationDir": "dist/types",
+        "declarationDir": "dist",
         "declaration": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,

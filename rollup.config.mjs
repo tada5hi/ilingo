@@ -7,8 +7,8 @@
 
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
-import babel from '@rollup/plugin-babel';
-import pkg from './package.json';
+import esbuild from 'rollup-plugin-esbuild';
+import pkg from './package.json' assert { type: "json" };
 
 const extensions = [
     '.js', '.jsx', '.ts', '.tsx',
@@ -36,24 +36,20 @@ export default [
             commonjs(),
 
             // Compile TypeScript/JavaScript files
-            babel({
-                extensions,
-                babelHelpers: 'bundled',
-                include: [
-                    'src/**/*',
-                    '!src/index.client.ts',
-                    '!src/client/**/*'
-                ],
+            esbuild({
+                minify: true
             }),
         ],
 
         output: [
             {
                 file: pkg.main,
-                format: 'cjs'
+                format: 'cjs',
+                sourcemap: true
             }, {
                 file: pkg.module,
-                format: 'esm'
+                format: 'esm',
+                sourcemap: true
             }
         ],
     },
@@ -72,27 +68,21 @@ export default [
             commonjs(),
 
             // Compile TypeScript/JavaScript files
-            babel({
-                extensions,
-                babelHelpers: 'bundled',
-                include: [
-                    'src/**/*',
-                    '!src/index.server.ts',
-                    '!src/server/**/*',
-                    '!src/loader/**/*',
-                    '!src/locator/**/*'
-                ],
+            esbuild({
+                minify: true
             }),
         ],
         output: [
             {
                 file: pkg.browser,
                 format: 'esm',
+                sourcemap: true
             },
             {
                 file: pkg.unpkg,
                 format: 'iife',
                 name,
+                sourcemap: true,
 
                 // https://rollupjs.org/guide/en/#outputglobals
                 globals: {
