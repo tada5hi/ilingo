@@ -48,7 +48,7 @@
     "license": "MIT",
     "dependencies": {
         "lodash": "^4.17.21",
-        "regenerator-runtime": "^0.13.10"
+        "regenerator-runtime": "^0.13.11"
     },
     "devDependencies": {
         "@commitlint/cli": "^17.1.2",
