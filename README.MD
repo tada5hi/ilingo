@@ -103,7 +103,7 @@ The primary usage on the serer-side is to create an instance of the `Ilingo` cla
 which should be scanned for locale groups.
 
 ```typescript
-import { Ilingo } from 'ilingo';
+import { Ilingo } from 'ilingo/server';
 
 const language = new Ilingo({
     directory: [path.join(process.cwd(), 'language')],
@@ -147,7 +147,7 @@ To retrieve text from any of the language files, simply pass the filename/group 
 After that you can simply access the locale string, as described in the following:
 
 ```typescript
-import { Ilingo } from 'ilingo';
+import { Ilingo } from 'ilingo/server';
 
 const language = new Ilingo({...});
 
@@ -169,7 +169,7 @@ The fist step, is to specify a configuration for the singleton instance if you d
 Options are only passed to the class if it is not created yet!
 
 ```typescript
-import { useIlingo } from 'ilingo';
+import { useIlingo } from 'ilingo/server';
 
 useIlingo({
     /**
@@ -200,10 +200,10 @@ The helper always refers to the `default` singleton instance and should therefor
 if multiple singleton instances are used.
 
 ```typescript
-import { useIlingo } from 'ilingo';
+import { useIlingo } from 'ilingo/server';
 
 (async () => {
-    console.log(await useIlingo().getSync('app.key'));
+    console.log(useIlingo().getSync('app.key'));
 
     // lang is a helper function for fast access ;)
     console.log(await lang('app.key'));

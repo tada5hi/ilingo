@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { template } from 'lodash';
+import lodash from 'lodash';
 import { IlingoOptions, LanguageCache, Lines } from './type';
 import { isLineRecord, parseArgsToDataAndLocale, toArray } from './utils';
 
@@ -193,7 +193,7 @@ export abstract class AbstractIlingo {
     }
 
     formatMessage(message: string, args: Record<string, any>) : string {
-        const compiled = template(message, {
+        const compiled = lodash.template(message, {
             interpolate: /{{([\s\S]+?)}}/g,
         });
 
