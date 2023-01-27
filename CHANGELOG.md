@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/tada5hi/ilingo/compare/v2.2.0...v2.2.1) (2023-01-27)
+
+
+### Bug Fixes
+
+* avoid named import of lodash ([64c7e55](https://github.com/tada5hi/ilingo/commit/64c7e551c6ea3b4c51ee13cb3dcaa82e266e7119))
+
 # [2.2.0](https://github.com/tada5hi/ilingo/compare/v2.1.1...v2.2.0) (2023-01-27)
 
 
