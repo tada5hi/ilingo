@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/tada5hi/ilingo/compare/v2.1.1...v2.2.0) (2023-01-27)
+
+
+### Features
+
+* replaced esbuild with swc ([7fd477a](https://github.com/tada5hi/ilingo/commit/7fd477a4a33e9936fe5133c7f928959aac52a8a3))
+
 ## [2.1.1](https://github.com/tada5hi/ilingo/compare/v2.1.0...v2.1.1) (2023-01-24)
 
 
