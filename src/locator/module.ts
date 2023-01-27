@@ -12,9 +12,9 @@ import { buildLocatorOptions } from './utils';
 
 export async function locateFile(
     fileName: string,
-    options?: Partial<LocatorOptions>,
+    input?: Partial<LocatorOptions>,
 ) : Promise<LocatorInfo | undefined> {
-    options = buildLocatorOptions(options);
+    const options = buildLocatorOptions(input);
 
     for (let i = 0; i < options.paths.length; i++) {
         const filePath = path.join(options.paths[i], fileName);
@@ -41,9 +41,9 @@ export async function locateFile(
 
 export function locateFileSync(
     fileName: string,
-    options?: Partial<LocatorOptions>,
+    input?: Partial<LocatorOptions>,
 ) : LocatorInfo | undefined {
-    options = buildLocatorOptions(options);
+    const options = buildLocatorOptions(input);
 
     for (let i = 0; i < options.paths.length; i++) {
         const filePath = path.join(options.paths[i], fileName);

@@ -5,19 +5,12 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
-import esbuild from 'rollup-plugin-esbuild';
+import { transform } from '@swc/core';
 import pkg from './package.json' assert { type: "json" };
 
 const extensions = [
-    '.js', '.jsx', '.ts', '.tsx',
-];
-
-const name = 'Ilingo';
-const external = [
-    'path',
-    'fs'
+    '.js', '.cjs', '.mjs', '.jsx', '.ts', '.tsx',
 ];
 
 export default [
@@ -26,19 +19,31 @@ export default [
 
         // Specify here external modules which you don't want to include in your bundle (for instance: 'lodash', 'moment' etc.)
         // https://rollupjs.org/guide/en/#external
-        external,
+        external: [
+            ...Object.keys(pkg.dependencies || {}),
+            ...Object.keys(pkg.peerDependencies || {}),
+        ],
 
         plugins: [
             // Allows node_modules resolution
             resolve({ extensions}),
 
-            // Allow bundling cjs modules. Rollup doesn't understand cjs
-            commonjs(),
-
             // Compile TypeScript/JavaScript files
-            esbuild({
-                minify: true
-            }),
+            {
+                name: 'swc',
+                transform(code) {
+                    return transform(code, {
+                        jsc: {
+                            target: 'es2016',
+                            parser: {
+                                syntax: 'typescript'
+                            },
+                            loose: true
+                        },
+                        sourceMaps: true
+                    });
+                }
+            },
         ],
 
         output: [
@@ -58,36 +63,37 @@ export default [
 
         // Specify here external modules which you don't want to include in your bundle (for instance: 'lodash', 'moment' etc.)
         // https://rollupjs.org/guide/en/#external
-        external: [],
+        external: [
+            ...Object.keys(pkg.dependencies || {}),
+            ...Object.keys(pkg.peerDependencies || {}),
+        ],
 
         plugins: [
             // Allows node_modules resolution
             resolve({ extensions}),
 
-            // Allow bundling cjs modules. Rollup doesn't understand cjs
-            commonjs(),
-
             // Compile TypeScript/JavaScript files
-            esbuild({
-                minify: true
-            }),
+            {
+                name: 'swc',
+                transform(code) {
+                    return transform(code, {
+                        jsc: {
+                            target: 'es2016',
+                            parser: {
+                                syntax: 'typescript'
+                            },
+                            loose: true
+                        },
+                        sourceMaps: true
+                    });
+                }
+            },
         ],
         output: [
             {
                 file: pkg.browser,
                 format: 'esm',
                 sourcemap: true
-            },
-            {
-                file: pkg.unpkg,
-                format: 'iife',
-                name,
-                sourcemap: true,
-
-                // https://rollupjs.org/guide/en/#outputglobals
-                globals: {
-
-                },
             }
         ]
     }

@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import template from 'lodash/template';
+import { template } from 'lodash';
 import { IlingoOptions, LanguageCache, Lines } from './type';
 import { isLineRecord, parseArgsToDataAndLocale, toArray } from './utils';
 
@@ -97,12 +97,13 @@ export abstract class AbstractIlingo {
         );
 
         if (!input.includes('.')) {
-            return this.formatMessage(input, parsed[0]);
+            return this.formatMessage(input, parsed[0] || {});
         }
 
         const [file, line] = this.parse(input);
 
         if (
+            !parsed[1] ||
             typeof this.cache[parsed[1]] === 'undefined' ||
             typeof this.cache[parsed[1]][file] === 'undefined'
         ) {
@@ -111,7 +112,7 @@ export abstract class AbstractIlingo {
 
         const message = this.getMessage(file, line, parsed[1]);
 
-        return this.formatMessage(message || line, parsed[0]);
+        return this.formatMessage(message || line, parsed[0] || {});
     }
 
     getSync(
@@ -126,12 +127,13 @@ export abstract class AbstractIlingo {
         );
 
         if (!input.includes('.')) {
-            return this.formatMessage(input, parsed[0]);
+            return this.formatMessage(input, parsed[0] || {});
         }
 
         const [group, line] = this.parse(input);
 
         if (
+            !parsed[1] ||
             typeof this.cache[parsed[1]] === 'undefined' ||
             typeof this.cache[parsed[1]][group] === 'undefined'
         ) {
@@ -140,7 +142,7 @@ export abstract class AbstractIlingo {
 
         const message = this.getMessage(group, line, parsed[1]);
 
-        return this.formatMessage(message || line, parsed[0]);
+        return this.formatMessage(message || line, parsed[0] || {});
     }
 
     // ----------------------------------------------------

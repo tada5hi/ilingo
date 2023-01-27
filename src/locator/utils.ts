@@ -9,7 +9,7 @@ import path from 'path';
 import { LocatorOptions } from './type';
 import { toArray } from '../utils';
 
-export function buildLocatorOptions(options?: Partial<LocatorOptions>) : LocatorOptions {
+export function buildLocatorOptions(options: Partial<LocatorOptions> = {}) : LocatorOptions {
     options = options || {};
     options.locale = options.locale || 'en';
     options.paths = options.paths || [];
@@ -17,7 +17,7 @@ export function buildLocatorOptions(options?: Partial<LocatorOptions>) : Locator
     if (options.paths.length === 0) {
         options.paths.push(path.join(process.cwd(), 'language'));
     }
-    options.paths = options.paths.map((item) => path.join(item, options.locale));
+    options.paths = options.paths.map((item) => path.join(item, options.locale || 'en'));
 
     options.extensions = options.extensions ?
         toArray(options.extensions) : ['.ts', '.js', '.json'];
