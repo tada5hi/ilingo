@@ -11,10 +11,22 @@
         "type": "git",
         "url": "https://github.com/tada5hi/ilingo.git"
     },
-    "main": "dist/index.cjs.js",
-    "module": "dist/index.esm.js",
-    "browser": "dist/index.browser.js",
-    "types": "dist/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs"
+        },
+        "./server": {
+            "types": "./dist/index.server.d.ts",
+            "import": "./dist/index.server.mjs",
+            "require": "./dist/index.server.cjs"
+        }
+    },
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
     "files": [
         "dist/"
     ],

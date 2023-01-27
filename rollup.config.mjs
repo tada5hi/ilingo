@@ -48,11 +48,11 @@ export default [
 
         output: [
             {
-                file: pkg.main,
+                file: 'dist/index.server.cjs',
                 format: 'cjs',
                 sourcemap: true
             }, {
-                file: pkg.module,
+                file: 'dist/index.server.mjs',
                 format: 'esm',
                 sourcemap: true
             }
@@ -91,7 +91,11 @@ export default [
         ],
         output: [
             {
-                file: pkg.browser,
+                file: pkg.main,
+                format: 'cjs',
+                sourcemap: true
+            }, {
+                file: pkg.module,
                 format: 'esm',
                 sourcemap: true
             }

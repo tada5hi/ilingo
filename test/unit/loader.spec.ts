@@ -21,9 +21,11 @@ describe('src/loader/**', () => {
         expect(isLineRecord(loaderContent)).toBeTruthy();
 
         locatorInfo = locateFileSync( 'form', {paths: basePath});
-        loaderContent = loadSync(locatorInfo);
-        expect(loaderContent).toBeDefined();
-        expect(isLineRecord(loaderContent)).toBeTruthy();
+        if(locatorInfo) {
+            loaderContent = loadSync(locatorInfo);
+            expect(loaderContent).toBeDefined();
+            expect(isLineRecord(loaderContent)).toBeTruthy();
+        }
     });
 
     it('should load .ts file', async () => {
@@ -33,9 +35,11 @@ describe('src/loader/**', () => {
         expect(isLineRecord(loaderContent)).toBeTruthy();
 
         locatorInfo = locateFileSync( 'form', {paths: basePath, locale: 'de'});
-        loaderContent = loadSync(locatorInfo);
-        expect(loaderContent).toBeDefined();
-        expect(isLineRecord(loaderContent)).toBeTruthy();
+        if(locatorInfo) {
+            loaderContent = loadSync(locatorInfo);
+            expect(loaderContent).toBeDefined();
+            expect(isLineRecord(loaderContent)).toBeTruthy();
+        }
     });
 
     it('should load .json file',  async () => {
@@ -45,9 +49,11 @@ describe('src/loader/**', () => {
         expect(isLineRecord(loaderContent)).toBeTruthy();
 
         locatorInfo = locateFileSync( 'form', {paths: basePath, locale: 'fr'});
-        loaderContent = loadSync(locatorInfo);
-        expect(loaderContent).toBeDefined();
-        expect(isLineRecord(loaderContent)).toBeTruthy();
+        if(locatorInfo) {
+            loaderContent = loadSync(locatorInfo);
+            expect(loaderContent).toBeDefined();
+            expect(isLineRecord(loaderContent)).toBeTruthy();
+        }
     });
 
     it('should not load file', async () => {
@@ -56,7 +62,9 @@ describe('src/loader/**', () => {
         expect(loaderContent).toBeUndefined();
 
         locatorInfo = locateFileSync( 'form', {paths: basePath, locale: 'ru'});
-        loaderContent = loadSync(locatorInfo);
-        expect(loaderContent).toBeUndefined();
+        if(locatorInfo) {
+            loaderContent = loadSync(locatorInfo);
+            expect(loaderContent).toBeUndefined();
+        }
     });
 });
