@@ -8,24 +8,26 @@
 import type { Config, ConfigInput } from './type';
 import { buildConfig } from './utils';
 
-const instances : Record<string, Config> = {};
+let instance : Config | undefined;
 
-export function useConfig(alias?: string) : Config {
-    alias = alias || 'default';
-
-    if (Object.prototype.hasOwnProperty.call(instances, alias)) {
-        return instances[alias];
+export function useConfig() : Config {
+    if (typeof instance !== 'undefined') {
+        return instance;
     }
 
-    instances[alias] = buildConfig();
+    instance = buildConfig();
 
-    return instances[alias];
+    return instance;
 }
 
-export function setConfig(config: ConfigInput, alias?: string) {
-    instances[alias || 'default'] = buildConfig(config);
+export function setConfig(config: ConfigInput) {
+    instance = buildConfig(config);
 }
 
-export function hasConfig(alias?: string) {
-    return Object.prototype.hasOwnProperty.call(instances, alias || 'default');
+export function hasConfig() {
+    return typeof instance !== 'undefined';
+}
+
+export function unsetConfig() {
+    instance = undefined;
 }

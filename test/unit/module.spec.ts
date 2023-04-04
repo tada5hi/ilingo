@@ -141,17 +141,14 @@ describe('src/module.ts', () => {
         expect(line).toEqual('Die Eingabe muss eine gültige E-Mail sein.');
 
         line = language.getSync('form.maxLength', {max: 10});
-        expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 10.');
 
         line = language.getSync('form.maxLength', {max: 5});
-        expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 5.');
 
         language.setLocale('de');
 
         line = language.getSync('form.maxLength', {max: 5});
-        expect(line).toBeDefined();
         expect(line).toEqual('Die Länge der Eingabe muss kleiner als 5 sein.');
     });
 
@@ -166,5 +163,17 @@ describe('src/module.ts', () => {
 
         line = language.getSync('form.foo', {});
         expect(line).toEqual('foo');
+    });
+
+    it('should set directory', () => {
+        const ilingo = new Ilingo();
+
+        let line = ilingo.getSync('form.email');
+        expect(line).toEqual('email');
+
+        ilingo.setDirectory('test/data/language');
+
+        line = ilingo.getSync('form.email');
+        expect(line).toEqual('The input must be a valid email address.');
     })
 })

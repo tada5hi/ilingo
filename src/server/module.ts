@@ -82,10 +82,17 @@ export class Ilingo extends AbstractIlingo {
     }
 
     protected buildLocatorOptions(locale?: string) : LocatorOptions {
-        return {
-            path: this.directories.map(
+        let directory: string[];
+        if (this.directories.length === 0) {
+            directory = [locale || 'en'];
+        } else {
+            directory = this.directories.map(
                 (directory) => path.join(directory, locale || 'en'),
-            ),
+            );
+        }
+
+        return {
+            path: directory,
             ignore: [],
         };
     }

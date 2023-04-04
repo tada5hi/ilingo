@@ -49,6 +49,27 @@ export abstract class AbstractIlingo {
 
     // ----------------------------------------------------
 
+    setDirectory(input: string | string[]) {
+        const directories = Array.isArray(input) ?
+            input :
+            [input];
+
+        this.directories = [
+            ...new Set([
+                ...this.directories,
+                ...directories,
+            ]),
+        ];
+
+        this.resetIsLoaded();
+    }
+
+    getDirectory() : string[] {
+        return this.directories;
+    }
+
+    // ----------------------------------------------------
+
     set(
         key: string,
         value: string | Lines,
@@ -81,13 +102,7 @@ export abstract class AbstractIlingo {
 
         const [file, line] = this.parse(input);
 
-        if (
-            !parsed[1] ||
-            typeof this.cache[parsed[1]] === 'undefined' ||
-            typeof this.cache[parsed[1]][file] === 'undefined'
-        ) {
-            await this.loadGroup(file, parsed[1]);
-        }
+        await this.loadGroup(file, parsed[1]);
 
         const message = this.getMessage(file, line, parsed[1]);
 
@@ -111,13 +126,7 @@ export abstract class AbstractIlingo {
 
         const [group, line] = this.parse(input);
 
-        if (
-            !parsed[1] ||
-            typeof this.cache[parsed[1]] === 'undefined' ||
-            typeof this.cache[parsed[1]][group] === 'undefined'
-        ) {
-            this.loadGroupSync(group, parsed[1]);
-        }
+        this.loadGroupSync(group, parsed[1]);
 
         const message = this.getMessage(group, line, parsed[1]);
 

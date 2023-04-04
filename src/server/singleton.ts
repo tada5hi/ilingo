@@ -8,19 +8,19 @@
 import { useConfig } from '../config';
 import { Ilingo } from './module';
 
-const instances: Record<string, Ilingo> = {};
+let instance : Ilingo | undefined;
 
-export function useIlingo(key?: string): Ilingo {
-    key = key || 'default';
-
-    if (Object.prototype.hasOwnProperty.call(instances, key)) {
-        return instances[key];
+export function useIlingo(): Ilingo {
+    if (typeof instance !== 'undefined') {
+        return instance;
     }
 
-    const config = useConfig(key);
-    const instance = new Ilingo(config);
-
-    instances[key] = instance;
+    const config = useConfig();
+    instance = new Ilingo(config);
 
     return instance;
+}
+
+export function setIlingo(value: Ilingo) {
+    instance = value;
 }
