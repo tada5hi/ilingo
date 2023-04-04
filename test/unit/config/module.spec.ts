@@ -12,7 +12,7 @@ describe('src/config', function () {
         let config = buildConfig();
         expect(config).toBeDefined();
         expect(config.locale).toEqual('en');
-        expect(config.cache).toEqual({});
+        expect(config.data).toEqual({});
         expect(config.directory).toEqual([]);
 
         config = buildConfig({

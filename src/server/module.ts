@@ -10,12 +10,13 @@ import {
     getModuleExport,
     load,
     loadSync,
-    locate,
-    locateSync,
+    locateMany,
+    locateManySync,
 } from 'locter';
-import path from 'path';
+import path from 'node:path';
 import type { ConfigInput } from '../config';
 import { AbstractIlingo } from '../module';
+import type { Lines } from '../type';
 import { isLineRecord } from '../utils';
 
 export class Ilingo extends AbstractIlingo {
@@ -36,21 +37,27 @@ export class Ilingo extends AbstractIlingo {
         this.initLines(file, locale);
         this.setIsLoaded(file, locale);
 
-        const locatorInfo = await locate(
+        const locations = await locateMany(
             this.addExtensionPattern(file),
             this.buildLocatorOptions(locale),
         );
 
-        if (!locatorInfo) {
+        const loadPromises = locations.map(
+            (location) => load(location)
+                .then((output) => {
+                    const { value: data } = getModuleExport(output);
+                    return data;
+                }),
+        );
+
+        const files = await Promise.all(loadPromises);
+        if (files.length === 0) {
             return {};
         }
 
-        const fileContent = await load(locatorInfo);
-        const { value: data } = getModuleExport(fileContent);
+        this.data[locale][file] = this.mergeFiles(files);
 
-        this.cache[locale][file] = isLineRecord(data) ? data : {};
-
-        return this.cache[locale][file];
+        return this.data[locale][file];
     }
 
     loadGroupSync(file: string, locale?: string) : Record<string, any> {
@@ -64,21 +71,25 @@ export class Ilingo extends AbstractIlingo {
         this.initLines(file, locale);
         this.setIsLoaded(file, locale);
 
-        const locatorInfo = locateSync(
+        const locations = locateManySync(
             this.addExtensionPattern(file),
             this.buildLocatorOptions(locale),
         );
 
-        if (!locatorInfo) {
+        if (locations.length === 0) {
             return {};
         }
 
-        const fileContent = loadSync(locatorInfo);
-        const { value: data } = getModuleExport(fileContent);
+        const files = [];
+        for (let i = 0; i < locations.length; i++) {
+            const file = loadSync(locations[i]);
+            const { value: data } = getModuleExport(file);
+            files.push(data);
+        }
 
-        this.cache[locale][file] = isLineRecord(data) ? data : {};
+        this.data[locale][file] = this.mergeFiles(files);
 
-        return this.cache[locale][file];
+        return this.data[locale][file];
     }
 
     protected buildLocatorOptions(locale?: string) : LocatorOptions {
@@ -99,5 +110,18 @@ export class Ilingo extends AbstractIlingo {
 
     protected addExtensionPattern(name: string) {
         return `${name}.{js,mjs,cjs,ts,mts,mjs,json,conf}`;
+    }
+
+    protected mergeFiles(files: unknown[]) {
+        const lineRecord : Lines = {};
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            if (isLineRecord(file)) {
+                this.merger(lineRecord, file);
+            }
+        }
+
+        return lineRecord;
     }
 }

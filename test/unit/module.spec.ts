@@ -13,7 +13,7 @@ const basePath = path.join(__dirname, '..', 'data', 'language');
 describe('src/module.ts', () => {
     it('should get/set directory + locale + groups', () => {
         const ilingo = new Ilingo({
-            cache: {
+            data: {
                 ru: {
                     foo: {
                         line: 'bar-baz'
@@ -175,5 +175,18 @@ describe('src/module.ts', () => {
 
         line = ilingo.getSync('form.email');
         expect(line).toEqual('The input must be a valid email address.');
+    });
+
+    it('should reset lines', () => {
+        const ilingo = new Ilingo();
+        ilingo.setLines('group', {
+            key: 'foo'
+        })
+
+        expect(ilingo.getSync('group.key')).toEqual('foo');
+
+        ilingo.resetLines('group', 'en');
+
+        expect(ilingo.getSync('group.key')).toEqual('key');
     })
 })

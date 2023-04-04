@@ -111,7 +111,7 @@ const language = new Ilingo({
 })
 ```
 
-Client-side applications, rely on manipulating the cache. This can be done during instance creation or afterward using the `setCache` method.
+Client-side applications, rely on manipulating the cache. This can be done during instance creation or afterward using the `setMany` method.
 Using the cache is also supported for server-side applications.
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -129,9 +129,7 @@ const language = new Ilingo({
     locale: 'en'
 });
 
-// The second parameter specifies,
-// if the cache should be extended or overwritten.
-language.setCache({
+language.setMany({
     // locale: de
     de: {
         // group: app
@@ -139,7 +137,7 @@ language.setCache({
             key: 'Der anzuzeigende string.'
         }
     }
-}, true);
+});
 ```
 
 To retrieve text from any of the language files, simply pass the filename/group and the access key as the first parameter, separated by a period (.).

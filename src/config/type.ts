@@ -1,4 +1,4 @@
-import type { LanguageCache } from '../type';
+import type { LanguageData } from '../type';
 
 export type Config = {
     // default: process.cw() + path.separator + 'languages';
@@ -6,9 +6,9 @@ export type Config = {
     // default: en
     locale: string,
     // default: {}
-    cache: LanguageCache,
+    data: LanguageData,
 };
 
 export type ConfigInput = {
     directory?: string | string[],
-} & Partial<Pick<Config, 'cache' | 'locale'>>;
+} & Partial<Pick<Config, 'data' | 'locale'>>;

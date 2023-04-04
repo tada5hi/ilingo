@@ -20,6 +20,6 @@ export function buildConfig(input?: ConfigInput) : Config {
     return {
         locale: input.locale || 'en',
         directory,
-        cache: input.cache || {},
+        data: input.data || {},
     };
 }

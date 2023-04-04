@@ -5,9 +5,11 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import { createMerger, isObject } from 'smob';
+import type { Merger } from 'smob';
 import { buildConfig } from './config';
 import type { ConfigInput } from './config';
-import type { LanguageCache, Lines } from './type';
+import type { LanguageData, Lines } from './type';
 import {
     isLineRecord,
     parseArgsToDataAndLocale,
@@ -15,7 +17,7 @@ import {
 } from './utils';
 
 export abstract class AbstractIlingo {
-    protected cache : LanguageCache;
+    protected data : LanguageData;
 
     protected loaded : Record<string, string[]>;
 
@@ -23,18 +25,25 @@ export abstract class AbstractIlingo {
 
     protected locale: string;
 
+    protected merger : Merger;
+
     // ----------------------------------------------------
 
     protected constructor(input?: ConfigInput) {
         const config = buildConfig(input);
 
-        this.cache = {};
+        this.data = {};
         this.loaded = {};
 
         this.directories = config.directory;
         this.locale = config.locale;
 
-        this.setCache(config.cache);
+        this.merger = createMerger({
+            array: true,
+            arrayDistinct: true,
+        });
+
+        this.setMany(config.data);
     }
 
     // ----------------------------------------------------
@@ -80,7 +89,17 @@ export abstract class AbstractIlingo {
 
         this.initLines(group, locale);
 
-        this.cache[locale][group][line] = value;
+        this.data[locale][group][line] = value;
+    }
+
+    public setMany(data: LanguageData) {
+        const localeKeys = Object.keys(data);
+        for (let i = 0; i < localeKeys.length; i++) {
+            const localeGroups = Object.keys(data[localeKeys[i]]);
+            for (let j = 0; j < localeGroups.length; j++) {
+                this.setLines(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
+            }
+        }
     }
 
     // ----------------------------------------------------
@@ -148,14 +167,14 @@ export abstract class AbstractIlingo {
         locale = locale || this.getLocale();
 
         if (
-            typeof this.cache[locale] === 'undefined' ||
-            typeof this.cache[locale][group] === 'undefined'
+            typeof this.data[locale] === 'undefined' ||
+            typeof this.data[locale][group] === 'undefined'
         ) {
             return undefined;
         }
 
-        if (typeof this.cache[locale][group][line] === 'string') {
-            return this.cache[locale][group][line] as string;
+        if (typeof this.data[locale][group][line] === 'string') {
+            return this.data[locale][group][line] as string;
         }
 
         let current : unknown;
@@ -164,7 +183,7 @@ export abstract class AbstractIlingo {
         const parts = line.split('.');
         for (let i = 0; i < parts.length; i++) {
             if (typeof current === 'undefined') {
-                current = this.cache[locale][group];
+                current = this.data[locale][group];
             }
 
             output = isLineRecord(current) ? current[parts[i]] : undefined;
@@ -217,12 +236,12 @@ export abstract class AbstractIlingo {
     protected initLines(group: string, locale?: string) {
         locale = locale || this.getLocale();
 
-        if (typeof this.cache[locale] === 'undefined') {
-            this.cache[locale] = {};
+        if (typeof this.data[locale] === 'undefined') {
+            this.data[locale] = {};
         }
 
-        if (typeof this.cache[locale][group] === 'undefined') {
-            this.cache[locale][group] = {};
+        if (typeof this.data[locale][group] === 'undefined') {
+            this.data[locale][group] = {};
         }
     }
 
@@ -235,53 +254,24 @@ export abstract class AbstractIlingo {
 
         this.initLines(group, locale);
 
-        this.cache[locale][group] = lines;
+        this.data[locale][group] = this.merger(
+            {},
+            lines,
+            this.data[locale][group],
+        );
     }
 
-    public addLines(
+    public resetLines(
         group: string,
-        lines: Lines,
         locale?: string,
     ) {
         locale = locale || this.getLocale();
 
-        this.initLines(group, locale);
-
-        this.cache[locale][group] = {
-            ...this.cache[locale][group],
-            ...lines,
-        };
-    }
-
-    // ------------------------------------------
-
-    public setCache(
-        data: LanguageCache,
-        extend = true,
-    ) {
-        if (!extend) {
-            this.resetCache();
+        if (
+            isObject(this.data[locale]) &&
+            typeof this.data[locale][group] !== 'undefined'
+        ) {
+            delete this.data[locale][group];
         }
-
-        const localeKeys = Object.keys(data);
-        for (let i = 0; i < localeKeys.length; i++) {
-            const localeGroups = Object.keys(data[localeKeys[i]]);
-            for (let j = 0; j < localeGroups.length; j++) {
-                if (extend) {
-                    this.addLines(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
-                } else {
-                    this.setLines(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
-                }
-            }
-        }
-    }
-
-    public getCache() : LanguageCache {
-        return this.cache;
-    }
-
-    public resetCache() {
-        this.cache = {};
-        this.resetIsLoaded();
     }
 }

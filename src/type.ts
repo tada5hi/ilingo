@@ -11,4 +11,4 @@ export type ValueOrNestedValue<T> = {
 };
 
 // default: Record<group, Record<locale, Lines>>
-export type LanguageCache = Record<string, Record<string, Lines>>;
+export type LanguageData = Record<string, Record<string, Lines>>;
