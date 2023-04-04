@@ -106,7 +106,7 @@ which should be scanned for locale groups.
 import { Ilingo } from 'ilingo/server';
 
 const language = new Ilingo({
-    directory: [path.join(process.cwd(), 'language')],
+    directory: 'language',
     locale: 'en'
 })
 ```
@@ -173,9 +173,9 @@ import { setConfig, useIlingo } from 'ilingo/server';
 
 setConfig({
     /**
-     * Default: path.join(process.cwd(), 'language')
+     * Default: process.cwd()
      */
-    directory: [path.join(process.cwd(), 'language')],
+    directory: 'language',
     /**
      * Default: en
      */
