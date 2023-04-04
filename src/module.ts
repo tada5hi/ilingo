@@ -48,6 +48,24 @@ export abstract class AbstractIlingo {
 
     // ----------------------------------------------------
 
+    applyConfig(config?: ConfigInput) {
+        config = config || {};
+
+        if (config.locale) {
+            this.setLocale(config.locale);
+        }
+
+        if (config.directory) {
+            this.setDirectory(config.directory);
+        }
+
+        if (config.data) {
+            this.setMany(config.data);
+        }
+    }
+
+    // ----------------------------------------------------
+
     setLocale(key: string) {
         this.locale = key;
     }

@@ -5,25 +5,36 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {setConfig} from "../../../src";
-import {lang, langSync} from "../../../src/server";
+import {lang, langSync, useIlingo} from "../../../src/server";
 import path from "node:path";
 
 const basePath = path.join(__dirname, '..', '..', 'data', 'language');
 
 describe('src/module.ts', () => {
     it('should work with async helper', async () => {
-        setConfig({
+        useIlingo().applyConfig({
             directory: basePath,
-            locale: 'en'
+            locale: 'en',
+            data: {
+                ra: {
+                    form: {
+                        nested: {
+                            key: 'RA'
+                        }
+                    }
+                }
+            }
         });
 
         let output = await lang('form.nested.key');
         expect(output).toEqual('I am nested');
+
+        output = await lang('form.nested.key', 'ra');
+        expect(output).toEqual('RA');
     });
 
     it('should work with sync helper', () => {
-        setConfig({
+        useIlingo().applyConfig({
             directory: basePath,
             locale: 'en'
         });

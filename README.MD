@@ -11,7 +11,7 @@ It can be used for client- & server-side applications 🔥.
 A bundled version exists for formats such as ESM, CommonJS, AMD, and IIFE-style scripts ⭐.
 
 The file-system access is only available on server-side applications but
-locale groups can also be hydrated by manipulating the cache.
+locale groups can also be hydrated by manipulating the stored data.
 
 **Table of Contents**
 
@@ -105,19 +105,20 @@ which should be scanned for locale groups.
 ```typescript
 import { Ilingo } from 'ilingo/server';
 
-const language = new Ilingo({
+const ilingo = new Ilingo({
     directory: 'language',
     locale: 'en'
 })
 ```
 
-Client-side applications, rely on manipulating the cache. This can be done during instance creation or afterward using the `setMany` method.
-Using the cache is also supported for server-side applications.
+Client-side applications, rely on manipulating the stored data.
+This can be done during instance creation or afterward using the `setMany` method.
+Using the stored data is also supported for server-side applications.
 ```typescript
 import { Ilingo } from 'ilingo';
 
 const language = new Ilingo({
-    cache: {
+    data: {
         // locale: en
         en: {
             // group: app
@@ -140,7 +141,8 @@ language.setMany({
 });
 ```
 
-To retrieve text from any of the language files, simply pass the filename/group and the access key as the first parameter, separated by a period (.).
+To retrieve text from any of the language files, simply pass the filename/group and the access key
+as the first parameter, separated by a period (.).
 
 After that you can simply access the locale string, as described in the following:
 
@@ -158,44 +160,36 @@ console.log(language.getSync('app.key', {}, 'de'));
 
 ### Singleton
 
-The library also supports built-in singleton support. There can be multiple side-by-side instances, by providing a **key** as an additional
-parameter for the singleton method.
-
-The default key is: `default`
-
-The fist step, is to specify a configuration for the singleton instance if you do not want to use the default ones.
-Options are only passed to the class if it is not created yet!
+The library also supports built-in singleton support.
 
 ```typescript
-import { setConfig, useIlingo } from 'ilingo/server';
+import { useIlingo } from 'ilingo/server';
 
-setConfig({
-    /**
-     * Default: process.cwd()
-     */
-    directory: 'language',
-    /**
-     * Default: en
-     */
-    locale: 'en'
-}, 'default');
+const ilinigo = useIlingo();
 
-console.log(useIlingo().getSync('app.key'));
-// The locale string to be shown.
+/**
+ * default: en
+ */
+ilingo.setLocale('en');
 
-console.log(
-    useIlingo('default')
-        .getSync('app.key')
-);
-// The locale string to be shown.
+/**
+ * default: proccess.cwd()
+ */
+ilingo.setDirectory('language');
+
+
+ilingo.set('app.key', 'Hi {{name}}!');
+
+console.log(ilingo.getSync('app.key', {name: 'Peter'}));
+// Hi Peter!
+
 ```
 
 ### Helper
 Besides using a singleton instance, the library also provides helper functions
 allowing faster access.
 
-The helper always refers to the `default` singleton instance and should therefore be used with caution
-if multiple singleton instances are used.
+The helper always refers singleton instance.
 
 ```typescript
 import { useIlingo } from 'ilingo/server';
@@ -235,13 +229,13 @@ The default locale, which is used by the singleton instance, can be modified aft
 import { useIlingo } from 'ilingo';
 
 (async () => {
-    const language = useIlingo();
+    const ilingo = useIlingo();
 
-    let output = await language.get('app.age', {age: 18});
+    let output = await ilingo.get('app.age', {age: 18});
     console.log(output);
     // I am 18 yeas old
 
-    language.setLocale('de');
+    ilingo.setLocale('de');
 
     output = await lang('app.age', {age: 18});
     console.log(output);
@@ -256,13 +250,13 @@ to one of the helper or supported singleton methods:
 import { useIlingo } from 'ilingo';
 
 (async () => {
-    const language = useIlingo();
+    const ilingo = useIlingo();
 
-    let output = await language.get('app.age', {age: 18});
+    let output = await ilingo.get('app.age', {age: 18});
     console.log(output);
     // I am 18 yeas old
 
-    output = await language.get('app.age', {age: 18}, 'fr');
+    output = await ilingo.get('app.age', {age: 18}, 'fr');
     console.log(output);
     // J'ai 18 ans
 
@@ -307,16 +301,16 @@ translations afterward.
 import { useIlingo } from 'ilingo';
 
 (async () => {
-    const language = useIlingo();
+    const ilingo = useIlingo();
 
-    language.set('foo.bar', 'baz {{param}}');
-    language.set('foo.bar', 'boz {{param}}', 'de');
+    ilingo.set('foo.bar', 'baz {{param}}');
+    ilingo.set('foo.bar', 'boz {{param}}', 'de');
 
-    let output = await language.get('foo.bar', {param: 'x'});
+    let output = await ilingo.get('foo.bar', {param: 'x'});
     console.log(output);
     // baz x
 
-    output = await language.get('foo.bar', {param: 'y'}, 'de');
+    output = await ilingo.get('foo.bar', {param: 'y'}, 'de');
     console.log(output);
     // boz y
 })();

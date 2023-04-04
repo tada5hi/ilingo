@@ -5,8 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { setIlingo, useIlingo } from "../../../src/server";
-import { Ilingo} from "../../../src/server";
+import {unsetIlingo, useIlingo} from "../../../src/server";
 import { AbstractIlingo,  } from "../../../src";
 
 describe('src/utils/singleton.ts', () => {
@@ -23,7 +22,7 @@ describe('src/utils/singleton.ts', () => {
         instance.setDirectory('foo');
         expect(instance.getDirectory()).toEqual(['foo'])
 
-        setIlingo(new Ilingo({directory: []}));
+        unsetIlingo();
 
         const instanceTwo = useIlingo();
         expect(instanceTwo.getDirectory()).toEqual([])

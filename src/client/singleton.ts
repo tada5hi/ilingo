@@ -5,7 +5,6 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { useConfig } from '../config';
 import { Ilingo } from './module';
 
 let instance : Ilingo | undefined;
@@ -15,12 +14,11 @@ export function useIlingo(): Ilingo {
         return instance;
     }
 
-    const config = useConfig();
-    instance = new Ilingo(config);
+    instance = new Ilingo();
 
     return instance;
 }
 
-export function setIlingo(value: Ilingo) {
-    instance = value;
+export function unsetIlingo() {
+    instance = undefined;
 }

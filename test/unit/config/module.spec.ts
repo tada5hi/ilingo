@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {buildConfig, hasConfig, setConfig, unsetConfig, useConfig} from "../../../src";
+import { buildConfig } from "../../../src";
 
 describe('src/config', function () {
     it('should build config', () => {
@@ -21,18 +21,4 @@ describe('src/config', function () {
         expect(config).toBeDefined();
         expect(config.directory).toEqual(['test/data']);
     });
-
-    it('should set & get singleton instance', () => {
-        unsetConfig();
-
-        expect(hasConfig()).toBeFalsy();
-
-        setConfig({directory: ['test/data']});
-        expect(hasConfig()).toBeTruthy();
-
-        const config = useConfig();
-        expect(config.directory).toEqual(['test/data']);
-
-        unsetConfig();
-    })
 });
