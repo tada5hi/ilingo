@@ -1,3 +1,39 @@
+## v2.3.0
+
+[compare changes](https://github.com/tada5hi/ilingo/compare/v2.2.1...v2.3.0)
+
+
+### 🚀 Enhancements
+
+  - Soft format translation mesasge + replaced lodash with lodash.template ([c58826c](https://github.com/tada5hi/ilingo/commit/c58826c))
+
+### 📦 Build
+
+  - **deps-dev:** Bump rollup from 3.11.0 to 3.12.1 ([#223](https://github.com/tada5hi/ilingo/pull/223))
+  - **deps-dev:** Bump @swc/core from 1.3.29 to 1.3.32 ([#222](https://github.com/tada5hi/ilingo/pull/222))
+  - **deps-dev:** Bump typescript from 4.9.4 to 4.9.5 ([#219](https://github.com/tada5hi/ilingo/pull/219))
+  - **deps-dev:** Bump eslint from 8.32.0 to 8.33.0 ([#216](https://github.com/tada5hi/ilingo/pull/216))
+  - **deps-dev:** Bump @tada5hi/eslint-config-typescript ([#234](https://github.com/tada5hi/ilingo/pull/234))
+  - **deps-dev:** Bump eslint from 8.33.0 to 8.34.0 ([#230](https://github.com/tada5hi/ilingo/pull/230))
+  - **deps-dev:** Bump @types/node from 18.11.18 to 18.14.0 ([#233](https://github.com/tada5hi/ilingo/pull/233))
+  - **deps-dev:** Bump @swc/core from 1.3.32 to 1.3.35 ([#229](https://github.com/tada5hi/ilingo/pull/229))
+  - **deps-dev:** Bump rollup from 3.12.1 to 3.20.2 ([#249](https://github.com/tada5hi/ilingo/pull/249))
+  - Simplified commitlint configuration ([0212f6c](https://github.com/tada5hi/ilingo/commit/0212f6c))
+  - **deps-dev:** Update depedendencies ([c351bc1](https://github.com/tada5hi/ilingo/commit/c351bc1))
+  - **deps-dev:** Bump jest & ts-jest ([a5ae22a](https://github.com/tada5hi/ilingo/commit/a5ae22a))
+  - Remove rootDir from jest config ([c0f6925](https://github.com/tada5hi/ilingo/commit/c0f6925))
+  - Replaced semantic-release with changelogen ([342da88](https://github.com/tada5hi/ilingo/commit/342da88))
+  - Run tests on macos ([ba4a54f](https://github.com/tada5hi/ilingo/commit/ba4a54f))
+  - Try ubuntu-20.04 for running workflow jobs ([d8abdc4](https://github.com/tada5hi/ilingo/commit/d8abdc4))
+
+### ✅ Tests
+
+  - Adjusted jest transform path ([f87d29d](https://github.com/tada5hi/ilingo/commit/f87d29d))
+
+### ❤️  Contributors
+
+- Tada5hi <peter.placzek1996@gmail.com>
+
 ## [2.2.1](https://github.com/tada5hi/ilingo/compare/v2.2.0...v2.2.1) (2023-01-27)
 
 
