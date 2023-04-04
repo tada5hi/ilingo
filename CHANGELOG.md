@@ -1,3 +1,16 @@
+## v2.4.0
+
+[compare changes](https://github.com/tada5hi/ilingo/compare/v2.3.1...v2.4.0)
+
+
+### 🚀 Enhancements
+
+  - Only replace template var if it exists ([8960e7f](https://github.com/tada5hi/ilingo/commit/8960e7f))
+
+### ❤️  Contributors
+
+- Tada5hi <peter.placzek1996@gmail.com>
+
 ## v2.3.1
 
 [compare changes](https://github.com/tada5hi/ilingo/compare/v2.3.0...v2.3.1)
