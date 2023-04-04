@@ -7,4 +7,5 @@
 
 export * from './args';
 export * from './identify';
+export * from './object-path';
 export * from './template';

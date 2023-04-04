@@ -188,5 +188,15 @@ describe('src/module.ts', () => {
         ilingo.resetLines('group', 'en');
 
         expect(ilingo.getSync('group.key')).toEqual('key');
+    });
+
+    it('should set and overwrite deep nested paths', () => {
+        const ilingo = new Ilingo();
+        ilingo.set('app.nested.key', 'foo');
+
+        expect(ilingo.getLines('app')).toEqual({nested: {key: 'foo' }});
+
+        ilingo.set('app.nested.key.bar', 'baz');
+        expect(ilingo.getLines('app')).toEqual({nested: {key: {bar: 'baz' }}});
     })
 })

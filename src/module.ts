@@ -12,7 +12,7 @@ import type { ConfigInput } from './config';
 import type { LanguageData, Lines } from './type';
 import {
     isLineRecord,
-    parseArgsToDataAndLocale,
+    parseArgsToDataAndLocale, setObjectPathProperty,
     template,
 } from './utils';
 
@@ -107,7 +107,7 @@ export abstract class AbstractIlingo {
 
         this.initLines(group, locale);
 
-        this.data[locale][group][line] = value;
+        setObjectPathProperty(this.data[locale][group], line, value);
     }
 
     public setMany(data: LanguageData) {
@@ -277,6 +277,14 @@ export abstract class AbstractIlingo {
             lines,
             this.data[locale][group],
         );
+    }
+
+    public getLines(group: string, locale?: string) {
+        locale = locale || this.getLocale();
+
+        this.initLines(group, locale);
+
+        return this.data[locale][group];
     }
 
     public resetLines(
