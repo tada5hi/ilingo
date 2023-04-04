@@ -9,3 +9,4 @@ writable/coverage
 npm-debug.log*
 .idea
 reports
+.env
