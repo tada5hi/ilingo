@@ -5,9 +5,10 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import template from 'lodash.template';
 import type { IlingoOptions, LanguageCache, Lines } from './type';
-import { isLineRecord, parseArgsToDataAndLocale, toArray } from './utils';
+import {
+    isLineRecord, parseArgsToDataAndLocale, template, toArray,
+} from './utils';
 
 export abstract class AbstractIlingo {
     cache : LanguageCache = {};
@@ -193,15 +194,7 @@ export abstract class AbstractIlingo {
     }
 
     formatMessage(message: string, args?: Record<string, any>) : string {
-        try {
-            const compiled = template(message, {
-                interpolate: /{{([\s\S]+?)}}/g,
-            });
-
-            return compiled(args || {});
-        } catch (e) {
-            return message;
-        }
+        return template(message, args || {});
     }
 
     // ---------------------------------------------------

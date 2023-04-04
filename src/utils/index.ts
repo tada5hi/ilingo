@@ -9,3 +9,4 @@ export * from './args';
 export * from './has-own-property';
 export * from './identify';
 export * from './to-array';
+export * from './template';

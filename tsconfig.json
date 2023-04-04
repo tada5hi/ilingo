@@ -9,6 +9,7 @@
         "module": "ESNext",
         "moduleResolution": "node",
         "target": "ESNext",
+        "esModuleInterop": true
     },
     "include": [
         "src/**/*.ts"

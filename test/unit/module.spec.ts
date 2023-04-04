@@ -5,8 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {Ilingo} from "../../src/index.server";
-import path from "path";
+import {Ilingo} from "../../src/server";
+import path from "node:path";
 
 const basePath = path.join(__dirname, '..', 'data', 'language');
 
