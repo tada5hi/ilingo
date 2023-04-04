@@ -1,3 +1,16 @@
+## v2.3.1
+
+[compare changes](https://github.com/tada5hi/ilingo/compare/v2.3.0...v2.3.1)
+
+
+### 🩹 Fixes
+
+  - Remove and replaced lodash template with internal implementation ([558ca28](https://github.com/tada5hi/ilingo/commit/558ca28))
+
+### ❤️  Contributors
+
+- Tada5hi <peter.placzek1996@gmail.com>
+
 ## v2.3.0
 
 [compare changes](https://github.com/tada5hi/ilingo/compare/v2.2.1...v2.3.0)
