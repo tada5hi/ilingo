@@ -5,16 +5,16 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import type { ConfigInput } from '../config';
 import { AbstractIlingo } from '../module';
-import { IlingoOptions } from '../type';
 import { locateFile, locateFileSync } from '../locator';
 import { load, loadSync } from '../loader';
 import { isLineRecord } from '../utils';
 
 export class Ilingo extends AbstractIlingo {
     // eslint-disable-next-line no-useless-constructor,@typescript-eslint/no-useless-constructor
-    constructor(options?: IlingoOptions) {
-        super(options);
+    constructor(config?: ConfigInput) {
+        super(config);
     }
 
     async loadGroup(file: string, locale?: string) : Promise<Record<string, any>> {

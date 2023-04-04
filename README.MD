@@ -169,9 +169,9 @@ The fist step, is to specify a configuration for the singleton instance if you d
 Options are only passed to the class if it is not created yet!
 
 ```typescript
-import { useIlingo } from 'ilingo/server';
+import { setConfig, useIlingo } from 'ilingo/server';
 
-useIlingo({
+setConfig({
     /**
      * Default: path.join(process.cwd(), 'language')
      */
@@ -186,7 +186,7 @@ console.log(useIlingo().getSync('app.key'));
 // The locale string to be shown.
 
 console.log(
-    useIlingo(undefined, 'default')
+    useIlingo('default')
         .getSync('app.key')
 );
 // The locale string to be shown.
@@ -258,9 +258,7 @@ to one of the helper or supported singleton methods:
 import { useIlingo } from 'ilingo';
 
 (async () => {
-    const language = useIlingo({
-        locale: 'en'
-    });
+    const language = useIlingo();
 
     let output = await language.get('app.age', {age: 18});
     console.log(output);
@@ -305,15 +303,13 @@ console.log(langSync('app.languageKey'));
 ### Lazy
 
 Another option is to not access the file system and add
-translations afterwards.
+translations afterward.
 
 ```typescript
 import { useIlingo } from 'ilingo';
 
 (async () => {
-    const language = useIlingo({
-        locale: 'en'
-    });
+    const language = useIlingo();
 
     language.set('foo.bar', 'baz {{param}}');
     language.set('foo.bar', 'boz {{param}}', 'de');

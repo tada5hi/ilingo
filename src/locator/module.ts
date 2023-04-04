@@ -5,9 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import path from 'path';
+import path from 'node:path';
 import fs from 'fs';
-import { LocatorInfo, LocatorOptions } from './type';
+import type { LocatorInfo, LocatorOptions } from './type';
 import { buildLocatorOptions } from './utils';
 
 export async function locateFile(

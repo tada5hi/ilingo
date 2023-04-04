@@ -12,12 +12,3 @@ export type ValueOrNestedValue<T> = {
 
 // default: Record<group, Record<locale, Lines>>
 export type LanguageCache = Record<string, Record<string, Lines>>;
-
-export type IlingoOptions = {
-    // default: process.cw() + path.separator + 'languages';
-    directory?: string | string[],
-    // default: en
-    locale?: string,
-    // default: {}
-    cache?: LanguageCache,
-};

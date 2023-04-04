@@ -5,58 +5,36 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { IlingoOptions, LanguageCache, Lines } from './type';
+import { buildConfig } from './config';
+import type { ConfigInput } from './config';
+import type { LanguageCache, Lines } from './type';
 import {
-    isLineRecord, parseArgsToDataAndLocale, template, toArray,
+    isLineRecord,
+    parseArgsToDataAndLocale,
+    template,
 } from './utils';
 
 export abstract class AbstractIlingo {
-    cache : LanguageCache = {};
+    protected cache : LanguageCache;
 
-    loaded : Record<string, string[]> = {};
+    protected loaded : Record<string, string[]>;
 
-    directories: string[];
+    protected directories: string[];
 
-    locale: string;
-
-    // ----------------------------------------------------
-
-    protected constructor(options?: IlingoOptions) {
-        options = options || {};
-
-        this.directories = options.directory ?
-            toArray(options.directory) :
-            [];
-
-        this.locale = options.locale || 'en';
-
-        if (options.cache) {
-            this.setCache(options.cache);
-        }
-    }
+    protected locale: string;
 
     // ----------------------------------------------------
 
-    setDirectory(
-        directory: string | string[],
-        extend = false,
-    ) {
-        this.directories = [
-            ...(extend ? this.directories : []),
-            ...toArray(directory),
-        ];
-    }
+    protected constructor(input?: ConfigInput) {
+        const config = buildConfig(input);
 
-    getDirectory() : string | undefined {
-        if (this.directories.length > 0) {
-            return this.directories[0];
-        }
+        this.cache = {};
+        this.loaded = {};
 
-        return undefined;
-    }
+        this.directories = config.directory;
+        this.locale = config.locale;
 
-    getDirectories() {
-        return this.directories;
+        this.setCache(config.cache);
     }
 
     // ----------------------------------------------------
@@ -66,7 +44,7 @@ export abstract class AbstractIlingo {
     }
 
     getLocale() : string {
-        return this.locale || 'en';
+        return this.locale;
     }
 
     // ----------------------------------------------------

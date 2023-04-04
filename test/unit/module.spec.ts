@@ -12,7 +12,7 @@ const basePath = path.join(__dirname, '..', 'data', 'language');
 
 describe('src/module.ts', () => {
     it('should get/set directory + locale + groups', () => {
-        const language = new Ilingo({
+        const ilingo = new Ilingo({
             cache: {
                 ru: {
                     foo: {
@@ -27,16 +27,12 @@ describe('src/module.ts', () => {
             }
         });
 
-        expect(language.getSync('foo.line', undefined, 'ru')).toEqual('bar-baz');
-        expect(language.getSync('foo.line', 'ru')).toEqual('bar-baz');
-        expect(language.getSync('foo.line')).toEqual('baz-boz')
+        expect(ilingo.getSync('foo.line', undefined, 'ru')).toEqual('bar-baz');
+        expect(ilingo.getSync('foo.line', 'ru')).toEqual('bar-baz');
+        expect(ilingo.getSync('foo.line')).toEqual('baz-boz')
 
-        language.setDirectory(basePath);
-        expect(language.getDirectories()).toEqual([basePath]);
-        expect(language.getDirectory()).toEqual(basePath);
-
-        language.setLocale('en');
-        expect(language.getLocale()).toEqual('en');
+        ilingo.setLocale('en');
+        expect(ilingo.getLocale()).toEqual('en');
     });
 
     it('should work with lazy input', async () => {
