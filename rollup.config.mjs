@@ -70,7 +70,7 @@ export default [
 
         plugins: [
             // Allows node_modules resolution
-            resolve({ extensions}),
+            resolve({ extensions }),
 
             // Compile TypeScript/JavaScript files
             {

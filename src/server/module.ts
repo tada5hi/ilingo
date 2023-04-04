@@ -5,10 +5,17 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import type { LocatorOptions } from 'locter';
+import {
+    getModuleExport,
+    load,
+    loadSync,
+    locate,
+    locateSync,
+} from 'locter';
+import path from 'path';
 import type { ConfigInput } from '../config';
 import { AbstractIlingo } from '../module';
-import { locateFile, locateFileSync } from '../locator';
-import { load, loadSync } from '../loader';
 import { isLineRecord } from '../utils';
 
 export class Ilingo extends AbstractIlingo {
@@ -29,16 +36,17 @@ export class Ilingo extends AbstractIlingo {
         this.initLines(file, locale);
         this.setIsLoaded(file, locale);
 
-        const locatorInfo = await locateFile(file, {
-            locale,
-            paths: this.directories,
-        });
+        const locatorInfo = await locate(
+            this.addExtensionPattern(file),
+            this.buildLocatorOptions(locale),
+        );
 
         if (!locatorInfo) {
             return {};
         }
 
-        const data = await load(locatorInfo);
+        const fileContent = await load(locatorInfo);
+        const { value: data } = getModuleExport(fileContent);
 
         this.cache[locale][file] = isLineRecord(data) ? data : {};
 
@@ -56,19 +64,33 @@ export class Ilingo extends AbstractIlingo {
         this.initLines(file, locale);
         this.setIsLoaded(file, locale);
 
-        const locatorInfo = locateFileSync(file, {
-            locale,
-            paths: this.directories,
-        });
+        const locatorInfo = locateSync(
+            this.addExtensionPattern(file),
+            this.buildLocatorOptions(locale),
+        );
 
         if (!locatorInfo) {
             return {};
         }
 
-        const data = loadSync(locatorInfo);
+        const fileContent = loadSync(locatorInfo);
+        const { value: data } = getModuleExport(fileContent);
 
         this.cache[locale][file] = isLineRecord(data) ? data : {};
 
         return this.cache[locale][file];
+    }
+
+    protected buildLocatorOptions(locale?: string) : LocatorOptions {
+        return {
+            path: this.directories.map(
+                (directory) => path.join(directory, locale || 'en'),
+            ),
+            ignore: [],
+        };
+    }
+
+    protected addExtensionPattern(name: string) {
+        return `${name}.{js,mjs,cjs,ts,mts,mjs,json,conf}`;
     }
 }

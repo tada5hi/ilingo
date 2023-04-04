@@ -59,11 +59,11 @@ Locale strings are stored in subdirectories as a group for each supported langua
 ├── ...
 └── language
     ├── de
-    │   ├── app.{ts,js,json}      # app group
-    │   └── forum.{ts,js,json}    # forum group
+    │   ├── app.{ts,js,json,conf}      # app group
+    │   └── forum.{ts,js,json,conf}    # forum group
     └── en
-        ├── app.{ts,js,json}      # app group
-        └── forum.{ts,js,json}    # forum group
+        ├── app.{ts,js,json,conf}      # app group
+        └── forum.{ts,js,json,conf}    # forum group
 ```
 
 To get started, create a language directory somewhere in your project.

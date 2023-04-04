@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { isLineRecord } from "../../../src/utils";
+import { isLineRecord } from "../../../src";
 
 describe('src/utils/identify.ts', () => {
     it('should identify the value correctly', () => {
