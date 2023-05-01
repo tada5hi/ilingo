@@ -30,3 +30,24 @@ export function setObjectPathProperty(
         setObjectPathProperty(record[prefix], parts.join('.') as any, value as any);
     }
 }
+
+export function getObjectPathProperty(
+    data: Record<string, any>,
+    key: string,
+) : any {
+    const dotIndex = key.indexOf('.');
+    const currentKey = dotIndex === -1 ?
+        key :
+        key.substring(0, dotIndex);
+
+    if (dotIndex === -1) {
+        return data[currentKey];
+    }
+
+    if (!isObject(data[currentKey])) {
+        return undefined;
+    }
+
+    const nextKey = key.substring(currentKey.length + 1);
+    return getObjectPathProperty(data[currentKey], nextKey);
+}
