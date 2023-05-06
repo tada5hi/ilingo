@@ -6,21 +6,38 @@
  */
 
 import { useIlingo } from './singleton';
+import type { DotKey, GroupContext, LocaleContext } from './type';
 
-export async function lang(
-    input: string,
-    dataOrLocale?: Record<string, any> | string,
-    locale?: string,
-) {
-    return useIlingo()
-        .get(input, dataOrLocale, locale);
+export async function lang(keyWithGroup: DotKey, locale?: string) : Promise<string | undefined>;
+
+export async function lang(keyWithGroup: DotKey, context?: LocaleContext) : Promise<string | undefined>;
+
+export async function lang(keyWithGroup: DotKey, data?: Record<string, any>) : Promise<string | undefined>;
+
+export async function lang(keyWithGroup: DotKey, data?: Record<string, any>, locale?: string) : Promise<string | undefined>;
+
+export async function lang(key: string, context: GroupContext & Partial<LocaleContext>) : Promise<string | undefined>;
+
+export async function lang(key: string, data: Record<string, any>, context: GroupContext & Partial<LocaleContext>) : Promise<string | undefined>;
+export async function lang(...input: any[]): Promise<string | undefined> {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return useIlingo().get(...input);
 }
 
-export function langSync(
-    input: string,
-    dataOrLocale?: Record<string, any> | string,
-    locale?: string,
-) {
-    return useIlingo()
-        .getSync(input, dataOrLocale, locale);
+export function langSync(keyWithGroup: DotKey, locale?: string) : string | undefined;
+
+export function langSync(keyWithGroup: DotKey, context?: LocaleContext) : string | undefined;
+
+export function langSync(keyWithGroup: DotKey, data?: Record<string, any>) : string | undefined;
+
+export function langSync(keyWithGroup: DotKey, data?: Record<string, any>, locale?: string) : string | undefined;
+
+export function langSync(key: string, context: GroupContext & Partial<LocaleContext>) : string | undefined;
+
+export function langSync(key: string, data: Record<string, any>, context: GroupContext & Partial<LocaleContext>) : string | undefined;
+export function langSync(...input: any[]) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return useIlingo().getSync(...input);
 }

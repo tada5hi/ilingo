@@ -6,6 +6,7 @@
  */
 
 import { buildConfig } from "../../../src";
+import {MemoryStore} from "../../../src/store/memory";
 
 describe('src/config', function () {
     it('should build config', () => {
@@ -13,12 +14,6 @@ describe('src/config', function () {
         expect(config).toBeDefined();
         expect(config.locale).toEqual('en');
         expect(config.data).toEqual({});
-        expect(config.directory).toEqual([]);
-
-        config = buildConfig({
-            directory: 'test/data'
-        });
-        expect(config).toBeDefined();
-        expect(config.directory).toEqual(['test/data']);
+        expect(config.store).toBeInstanceOf(MemoryStore);
     });
 });

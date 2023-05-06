@@ -5,63 +5,45 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { createMerger, isObject } from 'smob';
-import type { Merger } from 'smob';
 import { buildConfig } from './config';
 import type { ConfigInput } from './config';
-import type { LanguageData, Lines } from './type';
+import { LOCALE_DEFAULT } from './constants';
+import type { Store } from './store';
+import type {
+    DotKey,
+    GroupContext,
+    GroupsRecord, LinesRecord, LocaleContext, LocalesRecord,
+} from './type';
 import {
-    isLineRecord,
-    parseArgsToDataAndLocale, setObjectPathProperty,
+    parseGetArguments,
+    parseSetArguments,
     template,
 } from './utils';
 
-export abstract class AbstractIlingo {
-    protected data : LanguageData;
-
-    protected loaded : Record<string, string[]>;
-
-    protected directories: string[];
+export class Ilingo {
+    protected store : Store;
 
     protected locale: string;
 
-    protected merger : Merger;
-
     // ----------------------------------------------------
 
-    protected constructor(input?: ConfigInput) {
+    constructor(input?: ConfigInput) {
         const config = buildConfig(input);
 
-        this.data = {};
-        this.loaded = {};
-
-        this.directories = config.directory;
         this.locale = config.locale;
+        this.store = config.store;
 
-        this.merger = createMerger({
-            array: true,
-            arrayDistinct: true,
-        });
-
-        this.setMany(config.data);
+        this.setSync(config.data);
     }
 
     // ----------------------------------------------------
 
-    applyConfig(config?: ConfigInput) {
-        config = config || {};
+    setStore(store: Store) {
+        this.store = store;
+    }
 
-        if (config.locale) {
-            this.setLocale(config.locale);
-        }
-
-        if (config.directory) {
-            this.setDirectory(config.directory);
-        }
-
-        if (config.data) {
-            this.setMany(config.data);
-        }
+    getStore() : Store {
+        return this.store;
     }
 
     // ----------------------------------------------------
@@ -70,234 +52,128 @@ export abstract class AbstractIlingo {
         this.locale = key;
     }
 
+    resetLocale() {
+        this.locale = LOCALE_DEFAULT;
+    }
+
     getLocale() : string {
         return this.locale;
     }
 
     // ----------------------------------------------------
 
-    setDirectory(input: string | string[]) {
-        const directories = Array.isArray(input) ?
-            input :
-            [input];
+    async set(localesRecord: LocalesRecord) : Promise<void>;
 
-        this.directories = [
-            ...new Set([
-                ...this.directories,
-                ...directories,
-            ]),
-        ];
+    async set(groupsRecord: GroupsRecord, groupOrLocale?: string) : Promise<void>;
 
-        this.resetIsLoaded();
-    }
+    async set(groupsRecord: GroupsRecord, context?: LocaleContext) : Promise<void>;
 
-    getDirectory() : string[] {
-        return this.directories;
+    async set(linesRecord: LinesRecord, context: Partial<LocaleContext> & GroupContext) : Promise<void>;
+
+    async set(keyWithGroup: DotKey, value: string | LinesRecord, context?: LocaleContext) : Promise<void>;
+
+    async set(key: string, value: string, context: Partial<LocaleContext> & GroupContext) : Promise<void>;
+
+    async set(...input: any[]) {
+        const parsed = parseSetArguments(...input);
+        const promises : Promise<void>[] = [];
+        for (let i = 0; i < parsed.length; i++) {
+            promises.push(this.store.set({
+                ...parsed[i],
+                locale: parsed[i].locale || this.getLocale(),
+            }));
+        }
+
+        await Promise.all(promises);
     }
 
     // ----------------------------------------------------
 
-    set(
-        key: string,
-        value: string | Lines,
-        locale?: string,
-    ) {
-        const [group, line] = this.parse(key);
-        locale = locale || this.getLocale();
+    setSync(data: Record<string, any>) : void;
 
-        this.initLines(group, locale);
+    setSync(groupsRecord: GroupsRecord, groupOrLocale?: string) : void;
 
-        setObjectPathProperty(this.data[locale][group], line, value);
-    }
+    setSync(groupsRecord: GroupsRecord, context?: LocaleContext) : void;
 
-    public setMany(data: LanguageData) {
-        const localeKeys = Object.keys(data);
-        for (let i = 0; i < localeKeys.length; i++) {
-            const localeGroups = Object.keys(data[localeKeys[i]]);
-            for (let j = 0; j < localeGroups.length; j++) {
-                this.setLines(localeGroups[j], data[localeKeys[i]][localeGroups[j]], localeKeys[i]);
-            }
+    setSync(linesRecord: LinesRecord, context: Partial<LocaleContext> & GroupContext) : void;
+
+    setSync(keyWithGroup: DotKey, value: string | LinesRecord, context?: LocaleContext) : void;
+
+    setSync(key: string, value: string, context: Partial<LocaleContext> & GroupContext) : void;
+
+    setSync(...input: any[]) {
+        const parsed = parseSetArguments(...input);
+
+        for (let i = 0; i < parsed.length; i++) {
+            this.store.setSync({
+                ...parsed[i],
+                locale: parsed[i].locale || this.getLocale(),
+            });
         }
     }
 
     // ----------------------------------------------------
 
-    async get(
-        input: string,
-        dataOrLocale?: Record<string, any> | string,
-        locale?: string,
-    ) : Promise<string> {
-        const parsed = parseArgsToDataAndLocale(
-            dataOrLocale,
-            locale,
-            { locale: this.getLocale() },
-        );
+    async get(keyWithGroup: DotKey, locale?: string) : Promise<string | undefined>;
 
-        if (!input.includes('.')) {
-            return this.formatMessage(input, parsed[0] || {});
-        }
+    async get(keyWithGroup: DotKey, context?: LocaleContext) : Promise<string | undefined>;
 
-        const [file, line] = this.parse(input);
+    async get(keyWithGroup: DotKey, data?: Record<string, any>) : Promise<string | undefined>;
 
-        await this.loadGroup(file, parsed[1]);
+    async get(keyWithGroup: DotKey, data?: Record<string, any>, locale?: string) : Promise<string | undefined>;
 
-        const message = this.getMessage(file, line, parsed[1]);
+    async get(key: string, context: GroupContext & Partial<LocaleContext>) : Promise<string | undefined>;
 
-        return this.formatMessage(message || line, parsed[0] || {});
-    }
+    async get(key: string, data: Record<string, any>, context: GroupContext & Partial<LocaleContext>) : Promise<string | undefined>;
 
-    getSync(
-        input: string,
-        dataOrLocale?: Record<string, any> | string,
-        locale?: string,
-    ) : string {
-        const parsed = parseArgsToDataAndLocale(
-            dataOrLocale,
-            locale,
-            { locale: this.getLocale() },
-        );
-
-        if (!input.includes('.')) {
-            return this.formatMessage(input, parsed[0] || {});
-        }
-
-        const [group, line] = this.parse(input);
-
-        this.loadGroupSync(group, parsed[1]);
-
-        const message = this.getMessage(group, line, parsed[1]);
-
-        return this.formatMessage(message || line, parsed[0] || {});
-    }
-
-    // ----------------------------------------------------
-
-    parse(key: string) : [string, string] {
-        const group = key.substring(0, key.indexOf('.'));
-        const line = key.substring(group.length + 1);
-
-        return [group, line];
-    }
-
-    // ----------------------------------------------------
-
-    getMessage(group: string, line: string, locale?: string) : string | undefined {
-        locale = locale || this.getLocale();
-
-        if (
-            typeof this.data[locale] === 'undefined' ||
-            typeof this.data[locale][group] === 'undefined'
-        ) {
+    async get(...input: any[]) : Promise<string | undefined> {
+        const parsed = parseGetArguments(...input);
+        if (!parsed) {
             return undefined;
         }
 
-        if (typeof this.data[locale][group][line] === 'string') {
-            return this.data[locale][group][line] as string;
+        const message = await this.store.get({
+            locale: parsed.locale || this.getLocale(),
+            group: parsed.group,
+            key: parsed.key,
+        });
+
+        return this.format(message || parsed.key, parsed.data || {});
+    }
+
+    // ----------------------------------------------------
+
+    getSync(keyWithGroup: DotKey, locale?: string) : string | undefined;
+
+    getSync(keyWithGroup: DotKey, context?: LocaleContext) : string | undefined;
+
+    getSync(keyWithGroup: DotKey, data?: Record<string, any>) : string | undefined;
+
+    getSync(keyWithGroup: DotKey, data?: Record<string, any>, locale?: string) : string | undefined;
+
+    getSync(key: string, context: GroupContext & Partial<LocaleContext>) : string | undefined;
+
+    getSync(key: string, data: Record<string, any>, context: GroupContext & Partial<LocaleContext>) : string | undefined;
+
+    getSync(...input: any[]) : string | undefined {
+        const parsed = parseGetArguments(...input);
+
+        if (!parsed) {
+            return undefined;
         }
 
-        let current : unknown;
-        let output : unknown;
+        const message = this.store.getSync({
+            locale: parsed.locale || this.getLocale(),
+            group: parsed.group,
+            key: parsed.key,
+        });
 
-        const parts = line.split('.');
-        for (let i = 0; i < parts.length; i++) {
-            if (typeof current === 'undefined') {
-                current = this.data[locale][group];
-            }
-
-            output = isLineRecord(current) ? current[parts[i]] : undefined;
-            if (typeof output === 'string') {
-                return output;
-            }
-
-            if (isLineRecord(output)) {
-                current = output;
-            }
-        }
-
-        return undefined;
+        return this.format(message || parsed.key, parsed.data || {});
     }
 
-    formatMessage(message: string, args?: Record<string, any>) : string {
-        return template(message, args || {});
-    }
+    // ----------------------------------------------------
 
-    // ---------------------------------------------------
-
-    abstract loadGroup(group: string, locale?: string) : Promise<Record<string, any>>;
-
-    abstract loadGroupSync(group: string, locale?: string) : Record<string, any>;
-
-    // ------------------------------------------
-
-    protected isLoaded(group: string, locale?: string) : boolean {
-        locale = locale || this.getLocale();
-
-        this.loaded[locale] = this.loaded[locale] || [];
-
-        return this.loaded[locale].indexOf(group) !== -1;
-    }
-
-    protected setIsLoaded(group: string, locale?: string) {
-        locale = locale || this.getLocale();
-
-        this.loaded[locale] = this.loaded[locale] || [];
-
-        this.loaded[locale].push(group);
-    }
-
-    protected resetIsLoaded() {
-        this.loaded = {};
-    }
-
-    // ------------------------------------------
-
-    protected initLines(group: string, locale?: string) {
-        locale = locale || this.getLocale();
-
-        if (typeof this.data[locale] === 'undefined') {
-            this.data[locale] = {};
-        }
-
-        if (typeof this.data[locale][group] === 'undefined') {
-            this.data[locale][group] = {};
-        }
-    }
-
-    public setLines(
-        group: string,
-        lines: Lines,
-        locale?: string,
-    ) {
-        locale = locale || this.getLocale();
-
-        this.initLines(group, locale);
-
-        this.data[locale][group] = this.merger(
-            {},
-            lines,
-            this.data[locale][group],
-        );
-    }
-
-    public getLines(group: string, locale?: string) {
-        locale = locale || this.getLocale();
-
-        this.initLines(group, locale);
-
-        return this.data[locale][group];
-    }
-
-    public resetLines(
-        group: string,
-        locale?: string,
-    ) {
-        locale = locale || this.getLocale();
-
-        if (
-            isObject(this.data[locale]) &&
-            typeof this.data[locale][group] !== 'undefined'
-        ) {
-            delete this.data[locale][group];
-        }
+    format(input: string, data: Record<string, any>) {
+        return template(input, data || {});
     }
 }

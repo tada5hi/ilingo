@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Ilingo } from './client/module';
+import { Ilingo } from './module';
 
 let instance : Ilingo | undefined;
 

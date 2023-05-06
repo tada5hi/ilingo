@@ -7,11 +7,6 @@
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
 Ilingo is a lightweight library for translation and internationalization.
-It can be used for client- & server-side applications 🔥.
-A bundled version exists for formats such as ESM, CommonJS, AMD, and IIFE-style scripts ⭐.
-
-The file-system access is only available on server-side applications but
-locale groups can also be hydrated by manipulating the stored data.
 
 **Table of Contents**
 
@@ -25,6 +20,8 @@ locale groups can also be hydrated by manipulating the stored data.
   - [Locales](#locales)
   - [Async/Sync](#asyncsync)
   - [Lazy](#lazy)
+- [Store](#store)
+  - [FileSystem](#filesystem-store)
 - [License](#license)
 
 ## Installation
@@ -37,83 +34,29 @@ npm install ilingo --save
 **Important NOTE**
 
 The library provides `sync` and `async` methods to receive a (compiled) locale key string. The reason
-for this is that on server side applications, the library interacts with the file system, and this can be done either in a blocking or non-blocking way ⭐.
-On client side applications, use the `sync` methods 🔥
+for this is that a store can be accessed in a blocking or non-blocking way ⭐.
 
 ---
 
 ## Configuration
 While full localization of an application is a complex subject,
 swapping out strings in your application for different supported languages/locales is simple.
-
-**`Client`**
-
-On the client side, no configuration is required. The different locale strings for translation are provided
-by interacting with the library class instance.
-
-**`Server`**
-
-Locale strings are stored in subdirectories as a group for each supported language (locale) on the server side.
-
-```bash
-├── ...
-└── language
-    ├── de
-    │   ├── app.{ts,js,json,conf}      # app group
-    │   └── forum.{ts,js,json,conf}    # forum group
-    └── en
-        ├── app.{ts,js,json,conf}      # app group
-        └── forum.{ts,js,json,conf}    # forum group
-```
-
-To get started, create a language directory somewhere in your project.
-Inside this directory, create a folder for each locale (e.g. en, de, ...), which should be supported.
-
-The created folder represents a locale group. These groups do not have to follow any specific naming convention.
-You should name the file according to the type of content it holds (e.g. app, forum, ...).
-For example, let’s say you want to create a file containing error messages.
-You might simply name it: `error.{ts,js,json}`.
-
-Each file should return an object containing an access key and a locale string.
-
-**`app.{ts,js,json}`**
-```typescript
-module.exports = {
-    'key': 'The locale string to be shown.'
-}
-```
-
-The object can also be (deeply) nested ⚡.
-
-**`app.{ts,js,json}`**
-```typescript
-module.exports = {
-    'nested': {
-        'key': 'The locale string to be shown.'
-    }
-}
-```
-It is also possible to use `export default {...}` instead of `module.exports = {...}` for script files.
+The different locale strings for translation are provided  by interacting with the library class instance.
 
 ## Usage
 
 ### Basic
 
-The primary usage on the serer-side is to create an instance of the `Ilingo` class and set one or more directories,
-which should be scanned for locale groups.
-
 ```typescript
 import { Ilingo } from 'ilingo/server';
 
 const ilingo = new Ilingo({
-    directory: 'language',
     locale: 'en'
 })
 ```
 
-Client-side applications, rely on manipulating the stored data.
-This can be done during instance creation or afterward using the `setMany` method.
-Using the stored data is also supported for server-side applications.
+The (memory-) store can be initialized with some default data.
+This can be done during instance creation or afterward using the `set` method.
 ```typescript
 import { Ilingo } from 'ilingo';
 
@@ -130,7 +73,7 @@ const language = new Ilingo({
     locale: 'en'
 });
 
-language.setMany({
+language.set({
     // locale: de
     de: {
         // group: app
@@ -206,19 +149,15 @@ import { useIlingo } from 'ilingo/server';
 As a template delimiter a mustache like `{{}}` interpolation is used.
 Data properties can be injected as a second argument, e.g.
 
-**`app.{ts,js,json}`**
 ```typescript
-module.exports = {
-    'age': 'I am {{age}} years old.'
-}
-```
+import { lang, useIlingo } from 'ilingo';
 
-```typescript
-(async () => {
-    const output = await lang('app.age', {age: 18});
-    console.log(output);
-    // I am 18 yeas old
-});
+const ilingo = useIlingo();
+ilingo.set('app.age', 'I am {{age}} years old.');
+
+const output = await lang('app.age', {age: 18});
+console.log(output);
+// I am 18 yeas old
 ```
 
 ### Locales
@@ -228,19 +167,17 @@ The default locale, which is used by the singleton instance, can be modified aft
 ```typescript
 import { useIlingo } from 'ilingo';
 
-(async () => {
-    const ilingo = useIlingo();
+const ilingo = useIlingo();
 
-    let output = await ilingo.get('app.age', {age: 18});
-    console.log(output);
-    // I am 18 yeas old
+let output = await ilingo.get('app.age', {age: 18});
+console.log(output);
+// I am 18 yeas old
 
-    ilingo.setLocale('de');
+ilingo.setLocale('de');
 
-    output = await lang('app.age', {age: 18});
-    console.log(output);
-    // Ich bin 18 Jahre alt
-})();
+output = await lang('app.age', {age: 18});
+console.log(output);
+// Ich bin 18 Jahre alt
 ```
 
 It also can be **temporarily** overwritten, by passing the locale as the third argument
@@ -249,21 +186,19 @@ to one of the helper or supported singleton methods:
 ```typescript
 import { useIlingo } from 'ilingo';
 
-(async () => {
-    const ilingo = useIlingo();
+const ilingo = useIlingo();
 
-    let output = await ilingo.get('app.age', {age: 18});
-    console.log(output);
-    // I am 18 yeas old
+let output = await ilingo.get('app.age', {age: 18});
+console.log(output);
+// I am 18 yeas old
 
-    output = await ilingo.get('app.age', {age: 18}, 'fr');
-    console.log(output);
-    // J'ai 18 ans
+output = await ilingo.get('app.age', {age: 18}, 'fr');
+console.log(output);
+// J'ai 18 ans
 
-    output = await lang('app.age', {age: 18}, 'de');
-    console.log(output);
-    // Ich bin 18 Jahre alt
-})();
+output = await lang('app.age', {age: 18}, 'de');
+console.log(output);
+// Ich bin 18 Jahre alt
 ```
 
 ### Async/Sync
@@ -273,12 +208,10 @@ import { useIlingo } from 'ilingo';
 ```typescript
 import { useIlingo } from 'ilingo';
 
-(async () => {
-    console.log(await useIlingo().get('app.languageKey'));
+console.log(await useIlingo().get('app.languageKey'));
 
-    // lang is a helper function for fast access ;)
-    console.log(await lang('app.languageKey'));
-})();
+// lang is a helper function for fast access ;)
+console.log(await lang('app.languageKey'));
 ```
 
 **`Sync`**
@@ -315,6 +248,51 @@ import { useIlingo } from 'ilingo';
     // boz y
 })();
 ```
+
+## Store
+
+### Filesystem Store
+Locale strings should be stored in subdirectories as a group for each supported language (locale).
+
+```bash
+├── ...
+└── language
+    ├── de
+    │   ├── app.{ts,js,json,conf}      # app group
+    │   └── forum.{ts,js,json,conf}    # forum group
+    └── en
+        ├── app.{ts,js,json,conf}      # app group
+        └── forum.{ts,js,json,conf}    # forum group
+```
+
+To get started, create e.g. a language directory somewhere in your project.
+Inside this directory, create a folder for each locale (e.g. en, de, ...), which should be supported.
+
+The created folder represents a locale group. These groups do not have to follow any specific naming convention.
+You should name the file according to the type of content it holds (e.g. app, forum, ...).
+For example, let’s say you want to create a file containing error messages.
+You might simply name it: `error.{ts,js,json}`.
+
+Each file should return an object containing an access key and a locale string.
+
+**`app.{ts,js,json}`**
+```typescript
+module.exports = {
+    'key': 'The locale string to be shown.'
+}
+```
+
+The object can also be (deeply) nested ⚡.
+
+**`app.{ts,js,json}`**
+```typescript
+module.exports = {
+    'nested': {
+        'key': 'The locale string to be shown.'
+    }
+}
+```
+It is also possible to use `export default {...}` instead of `module.exports = {...}` for script files.
 
 ## License
 

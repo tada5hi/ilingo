@@ -5,10 +5,10 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { isObject } from 'smob';
-import type { Lines } from '../type';
+import { hasOwnProperty, isObject } from 'smob';
+import type { GroupContext, LinesRecord, LocaleContext } from '../type';
 
-export function isLineRecord(value: unknown) : value is Lines {
+export function isLineRecord(value: unknown) : value is LinesRecord {
     if (!isObject(value)) {
         return false;
     }
@@ -26,4 +26,14 @@ export function isLineRecord(value: unknown) : value is Lines {
     }
 
     return true;
+}
+
+export function isLocaleContext(input: unknown) : input is LocaleContext {
+    return isObject(input) &&
+        hasOwnProperty(input, 'locale');
+}
+
+export function isGroupContext(input: unknown) : input is GroupContext {
+    return isObject(input) &&
+        hasOwnProperty(input, 'group');
 }

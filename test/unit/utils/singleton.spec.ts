@@ -5,26 +5,25 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {unsetIlingo, useIlingo} from "../../../src/server";
-import { AbstractIlingo,  } from "../../../src";
+import {useIlingo, Ilingo, unsetIlingo,} from "../../../src";
 
 describe('src/utils/singleton.ts', () => {
     it('should create instance', () => {
         let instance = useIlingo();
 
-        expect(instance).toBeInstanceOf(AbstractIlingo);
+        expect(instance).toBeInstanceOf(Ilingo);
 
         expect(instance).toEqual(useIlingo());
     });
 
     it('should overwrite instance', () => {
         const instance =  useIlingo();
-        instance.setDirectory('foo');
-        expect(instance.getDirectory()).toEqual(['foo'])
+        instance.setLocale('de');
+        expect(instance.getLocale()).toEqual('de')
 
         unsetIlingo();
 
         const instanceTwo = useIlingo();
-        expect(instanceTwo.getDirectory()).toEqual([])
+        expect(instanceTwo.getLocale()).toEqual('en');
     })
 })

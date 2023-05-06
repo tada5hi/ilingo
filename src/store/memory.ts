@@ -1,15 +1,26 @@
-import type { LanguageData } from '../type';
+/*
+ * Copyright (c) 2023.
+ * Author Peter Placzek (tada5hi)
+ * For the full copyright and license information,
+ * view the LICENSE file that was distributed with this source code.
+ */
+
+import type { LocalesRecord } from '../type';
 import { getObjectPathProperty, setObjectPathProperty } from '../utils';
 import type { Store, StoreGetContext, StoreSetContext } from './type';
 
 export class MemoryStore implements Store {
-    protected data : LanguageData;
+    protected data : LocalesRecord;
 
     constructor() {
         this.data = {};
     }
 
     async get(context: StoreGetContext): Promise<string | undefined> {
+        return this.getSync(context);
+    }
+
+    getSync(context: StoreGetContext): string | undefined {
         if (
             !this.data[context.locale] ||
             !this.data[context.locale][context.group]
@@ -30,6 +41,10 @@ export class MemoryStore implements Store {
     }
 
     async set(context: StoreSetContext): Promise<void> {
+        this.setSync(context);
+    }
+
+    setSync(context: StoreSetContext): void {
         this.initLines(context.group, context.locale);
 
         setObjectPathProperty(

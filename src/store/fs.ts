@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022.
+ * Copyright (c) 2023.
  * Author Peter Placzek (tada5hi)
  * For the full copyright and license information,
  * view the LICENSE file that was distributed with this source code.
@@ -7,27 +7,79 @@
 
 import type { LocatorOptions } from 'locter';
 import {
-    getModuleExport,
-    load,
-    loadSync,
-    locateMany,
-    locateManySync,
+    getModuleExport, load, loadSync, locateMany, locateManySync,
 } from 'locter';
 import path from 'node:path';
-import type { ConfigInput } from '../config';
-import { AbstractIlingo } from '../module';
-import type { Lines } from '../type';
+import type { Merger } from 'smob';
+import { createMerger } from 'smob';
+import type { LinesRecord } from '../type';
 import { isLineRecord } from '../utils';
+import { MemoryStore } from './memory';
+import type { StoreGetContext, StoreSetContext } from './type';
 
-export class Ilingo extends AbstractIlingo {
-    // eslint-disable-next-line no-useless-constructor,@typescript-eslint/no-useless-constructor
-    constructor(config?: ConfigInput) {
-        super(config);
+export class FileSystemStore extends MemoryStore {
+    protected loaded : Record<string, string[]>;
+
+    protected directories : string[];
+
+    protected merger : Merger;
+
+    constructor(directory: string) {
+        super();
+
+        this.loaded = {};
+        this.directories = Array.isArray(directory) ?
+            directory :
+            [directory];
+
+        this.merger = createMerger({
+            array: true,
+            arrayDistinct: true,
+        });
     }
 
-    async loadGroup(file: string, locale?: string) : Promise<Record<string, any>> {
-        locale = locale || this.getLocale();
+    // ------------------------------------------
+    override async get(context: StoreGetContext): Promise<string | undefined> {
+        await this.loadGroup(context.group, context.locale);
 
+        return super.get(context);
+    }
+
+    override getSync(context: StoreGetContext): string | undefined {
+        this.loadGroupSync(context.group, context.locale);
+
+        return super.getSync(context);
+    }
+
+    override async set(context: StoreSetContext): Promise<void> {
+        return super.set(context);
+
+        // todo: write to file!
+    }
+
+    override setSync(context: StoreSetContext): void {
+        return super.setSync(context);
+
+        // todo: write to file!
+    }
+
+    // ------------------------------------------
+
+    protected isLoaded(group: string, locale: string) : boolean {
+        this.loaded[locale] = this.loaded[locale] || [];
+
+        return this.loaded[locale].indexOf(group) !== -1;
+    }
+
+    protected setIsLoaded(group: string, locale: string) {
+        this.loaded[locale] = this.loaded[locale] || [];
+
+        this.loaded[locale].push(group);
+    }
+
+    // ------------------------------------------
+
+    async loadGroup(file: string, locale: string) : Promise<Record<string, any>> {
         // only load file once
         if (this.isLoaded(file, locale)) {
             /* istanbul ignore next */
@@ -60,9 +112,7 @@ export class Ilingo extends AbstractIlingo {
         return this.data[locale][file];
     }
 
-    loadGroupSync(file: string, locale?: string) : Record<string, any> {
-        locale = locale || this.getLocale();
-
+    loadGroupSync(file: string, locale: string) : Record<string, any> {
         if (this.isLoaded(file, locale)) {
             /* istanbul ignore next */
             return {};
@@ -113,7 +163,7 @@ export class Ilingo extends AbstractIlingo {
     }
 
     protected mergeFiles(files: unknown[]) {
-        const lineRecord : Lines = {};
+        const lineRecord : LinesRecord = {};
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
 

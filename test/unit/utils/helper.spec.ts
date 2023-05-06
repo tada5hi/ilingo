@@ -5,41 +5,42 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {lang, langSync, useIlingo} from "../../../src/server";
-import path from "node:path";
-
-const basePath = path.join(__dirname, '..', '..', 'data', 'language');
+import {lang, langSync, unsetIlingo, useIlingo} from "../../../src";
 
 describe('src/module.ts', () => {
     it('should work with async helper', async () => {
-        useIlingo().applyConfig({
-            directory: basePath,
-            locale: 'en',
-            data: {
-                ra: {
+        unsetIlingo();
+
+        await useIlingo()
+            .set({
+                ru: {
+                form: {
+                    nested: {
+                        key: 'RA'
+                    }
+                }
+            }
+        })
+
+        const output = await lang('form.nested.key', 'ru');
+        expect(output).toEqual('RA');
+    });
+
+    it('should work with sync helper', () => {
+        unsetIlingo();
+
+        useIlingo()
+            .setSync({
+                ru: {
                     form: {
                         nested: {
                             key: 'RA'
                         }
                     }
                 }
-            }
-        });
+            })
 
-        let output = await lang('form.nested.key');
-        expect(output).toEqual('I am nested');
-
-        output = await lang('form.nested.key', 'ra');
+        const output = langSync('form.nested.key', 'ru');
         expect(output).toEqual('RA');
-    });
-
-    it('should work with sync helper', () => {
-        useIlingo().applyConfig({
-            directory: basePath,
-            locale: 'en'
-        });
-
-        let output = langSync('form.nested.key');
-        expect(output).toEqual('I am nested');
     });
 });

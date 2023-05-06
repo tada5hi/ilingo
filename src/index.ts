@@ -6,7 +6,8 @@
  */
 
 export * from './config';
+export * from './helper';
 export * from './module';
-export * from './client';
+export * from './singleton';
 export * from './utils';
 export * from './type';

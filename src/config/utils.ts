@@ -5,21 +5,16 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import { LOCALE_DEFAULT } from '../constants';
+import { MemoryStore } from '../store';
 import type { Config, ConfigInput } from './type';
 
 export function buildConfig(input?: ConfigInput) : Config {
     input = input || {};
 
-    let directory : string[] = [];
-    if (input.directory) {
-        directory = Array.isArray(input.directory) ?
-            input.directory :
-            [input.directory];
-    }
-
     return {
-        locale: input.locale || 'en',
-        directory,
+        locale: input.locale || LOCALE_DEFAULT,
         data: input.data || {},
+        store: input.store || new MemoryStore(),
     };
 }

@@ -5,10 +5,37 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export type Lines = ValueOrNestedValue<string>;
 export type ValueOrNestedValue<T> = {
     [key: string]: ValueOrNestedValue<T> | T
 };
 
 // default: Record<group, Record<locale, Lines>>
-export type LanguageData = Record<string, Record<string, Lines>>;
+export type LinesRecord = ValueOrNestedValue<string>;
+// default: Record<group, Lines>
+export type GroupsRecord = Record<string, LinesRecord>;
+// default: Record<locale, Groups>
+export type LocalesRecord = Record<string, GroupsRecord>;
+
+export type LocaleContext = {
+    locale: string
+};
+
+export type DotKey = `${string}.${string}`;
+
+export type GroupContext = {
+    group: string
+};
+
+export type SetInputParsed = {
+    locale?: string,
+    group: string,
+    key: string,
+    value: string
+};
+
+export type GetInputParsed = {
+    data?: Record<string, string>
+    locale?: string,
+    group: string,
+    key: string,
+};

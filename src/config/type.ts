@@ -1,14 +1,12 @@
-import type { LanguageData } from '../type';
+import type { Store } from '../store';
+import type { LocalesRecord } from '../type';
 
 export type Config = {
-    // default: process.cw() + path.separator + 'languages';
-    directory: string[],
+    store: Store,
     // default: en
     locale: string,
     // default: {}
-    data: LanguageData,
+    data: LocalesRecord,
 };
 
-export type ConfigInput = {
-    directory?: string | string[],
-} & Partial<Pick<Config, 'data' | 'locale'>>;
+export type ConfigInput = Partial<Config>;
