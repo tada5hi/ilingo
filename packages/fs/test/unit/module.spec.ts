@@ -9,7 +9,7 @@ import path from "node:path";
 import {Ilingo} from "ilingo";
 import {FileSystemStore} from "../../src";
 
-const basePath = path.join(__dirname, '..', '..', 'data', 'language');
+const basePath = path.join(__dirname, '..', 'data', 'language');
 
 describe('src/store/file-system', function () {
     let store : FileSystemStore;
