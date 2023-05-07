@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.0.0-alpha.1](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.0...v3.0.0-alpha.1) (2023-05-07)
+
+
+### Bug Fixes
+
+* make fs package public ([35a87b1](https://github.com/tada5hi/ilingo/commit/35a87b13d0f7e75ed11400280506aa4a2d31569b))
+
+
+
+
+
 # [3.0.0-alpha.0](https://github.com/tada5hi/ilingo/compare/v2.4.0...v3.0.0-alpha.0) (2023-05-07)
 
 
