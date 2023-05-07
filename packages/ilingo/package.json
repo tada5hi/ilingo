@@ -51,5 +51,6 @@
     "license": "MIT",
     "dependencies": {
         "smob": "^1.0.0"
-    }
+    },
+    "gitHead": "e0db40b8067d33add80b3582cab8d24149dacec9"
 }
