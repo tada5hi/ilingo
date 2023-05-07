@@ -34,7 +34,7 @@ ilingo package.
 
 ## Usage
 
-Create an instance with the default locale.
+Create an instance and set the default locale.
 
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -48,8 +48,7 @@ The **default** (memory-) store can be initialized with some default data.
 This can be done during instance creation or afterward using the `set` method.
 
 ```typescript
-import {Ilingo} from 'ilingo';
-import ilingo from "ilingo/src";
+import { Ilingo } from 'ilingo';
 
 const ilingo = new Ilingo({
     data: {

@@ -48,7 +48,7 @@ The different locale strings for translation are provided  by interacting with t
 
 ### Basic
 
-Create an instance.
+Create an instance and set the default locale.
 
 ```typescript
 import { Ilingo } from 'ilingo';
