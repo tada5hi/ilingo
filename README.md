@@ -21,7 +21,7 @@ The repository contains the following packages:
 This package contains the base library 
 for translation and internationalization
 
-[Documentation](packages/ilingo/README.md)
+[Documentation](./packages/ilingo/README.md)
 
 ### FS 🗃️
 
@@ -30,7 +30,7 @@ for translation and internationalization
 This package contains a file-system store for the
 ilingo package.
 
-[Documentation](packages/fs/README.md)
+[Documentation](./packages/fs/README.md)
 
 ## Usage
 
@@ -81,7 +81,7 @@ console.log(language.getSync('app.key', {}, 'de'));
 // Der anzuzeigende string.
 ```
 
-To learn more about usage, inspect the [README.md](./packages/ilingo/README.MD) of the core package.
+To learn more about usage, inspect the [README.md](./packages/ilingo/README.md) of the core package.
 
 ## License
 
