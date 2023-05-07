@@ -7,13 +7,19 @@
 
 import type { LocatorOptions } from 'locter';
 import {
-    getModuleExport, load, loadSync, locateMany, locateManySync,
+    getModuleExport,
+    load,
+    loadSync,
+    locateMany,
+    locateManySync,
 } from 'locter';
 import path from 'node:path';
 import type { Merger } from 'smob';
 import { createMerger } from 'smob';
 import type { LinesRecord, StoreGetContext, StoreSetContext } from 'ilingo';
 import { MemoryStore, isLineRecord } from 'ilingo';
+import type { ConfigInput } from './types';
+import { buildConfig } from './utils';
 
 export class FileSystemStore extends MemoryStore {
     protected loaded : Record<string, string[]>;
@@ -22,13 +28,13 @@ export class FileSystemStore extends MemoryStore {
 
     protected merger : Merger;
 
-    constructor(directory: string) {
+    constructor(input?: ConfigInput) {
         super();
 
+        const options = buildConfig(input);
+
         this.loaded = {};
-        this.directories = Array.isArray(directory) ?
-            directory :
-            [directory];
+        this.directories = options.directory;
 
         this.merger = createMerger({
             array: true,

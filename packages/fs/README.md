@@ -28,7 +28,7 @@ import FileSystemStore from '@ilingo/fs';
 
 const directory = 'language';
 const ilingo = new Ilingo({
-    store: new FileSystemStore(directory), 
+    store: new FileSystemStore({ directory }), 
 })
 ```
 

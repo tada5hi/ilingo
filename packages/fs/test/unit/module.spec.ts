@@ -15,7 +15,7 @@ describe('src/store/file-system', function () {
     let store : FileSystemStore;
 
     beforeAll(() => {
-        store = new FileSystemStore(basePath);
+        store = new FileSystemStore({directory: basePath});
     })
 
     it('should set/get store', () => {

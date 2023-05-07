@@ -19,6 +19,10 @@ export function useIlingo(): Ilingo {
     return instance;
 }
 
+export function setIlingo(input: Ilingo) {
+    instance = input;
+}
+
 export function unsetIlingo() {
     instance = undefined;
 }
