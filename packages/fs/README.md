@@ -1,4 +1,4 @@
-# @ilingo/fs
+# @ilingo/fs 🗃️
 
 [![npm version](https://badge.fury.io/js/@ilingo%2Ffs.svg)](https://badge.fury.io/js/@ilingo%2Ffs)
 [![main](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml)
@@ -26,8 +26,9 @@ npm install @ilingo/fs --save
 import { Ilingo } from 'ilingo';
 import FileSystemStore from '@ilingo/fs';
 
+const directory = 'language';
 const ilingo = new Ilingo({
-    store: new FileSystemStore(), 
+    store: new FileSystemStore(directory), 
 })
 ```
 

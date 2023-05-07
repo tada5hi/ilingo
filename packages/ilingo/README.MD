@@ -47,15 +47,17 @@ The different locale strings for translation are provided  by interacting with t
 
 ### Basic
 
+Create an instance.
+
 ```typescript
-import { Ilingo } from 'ilingo/server';
+import { Ilingo } from 'ilingo';
 
 const ilingo = new Ilingo({
     locale: 'en'
 })
 ```
 
-The (memory-) store can be initialized with some default data.
+The **default** (memory-) store can be initialized with some default data.
 This can be done during instance creation or afterward using the `set` method.
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -90,7 +92,7 @@ as the first parameter, separated by a period (.).
 After that you can simply access the locale string, as described in the following:
 
 ```typescript
-import { Ilingo } from 'ilingo/server';
+import { Ilingo } from 'ilingo';
 
 const language = new Ilingo({...});
 
@@ -106,7 +108,7 @@ console.log(language.getSync('app.key', {}, 'de'));
 The library also supports built-in singleton support.
 
 ```typescript
-import { useIlingo } from 'ilingo/server';
+import { useIlingo } from 'ilingo';
 
 const ilinigo = useIlingo();
 
@@ -135,7 +137,7 @@ allowing faster access.
 The helper always refers singleton instance.
 
 ```typescript
-import { useIlingo } from 'ilingo/server';
+import { useIlingo } from 'ilingo';
 
 (async () => {
     console.log(useIlingo().getSync('app.key'));

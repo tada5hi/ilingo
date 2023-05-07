@@ -50,6 +50,7 @@
     "license": "MIT",
     "dependencies": {
         "ilingo": "^2.4.0",
-        "locter": "^1.1.0"
+        "locter": "^1.1.0",
+        "smob": "^1.0.0"
     }
 }
