@@ -34,7 +34,7 @@ ilingo package.
 
 ## Usage
 
-Create an instance.
+Create an instance with the default locale.
 
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -48,19 +48,35 @@ The **default** (memory-) store can be initialized with some default data.
 This can be done during instance creation or afterward using the `set` method.
 
 ```typescript
-import { Ilingo } from 'ilingo';
+import {Ilingo} from 'ilingo';
+import ilingo from "ilingo/src";
 
-const language = new Ilingo({
+const ilingo = new Ilingo({
     data: {
-        // locale: en
-        en: {
+        // locale: de
+        de: {
             // group: app
             app: {
-                key: 'The locale string to be shown.'
+                key: 'Hallo mein Name ist {{name}}'
+            }
+        },
+        // locale: en
+        en: {
+            app: {
+                key: 'Hello my name is {{name}}'
             }
         }
     },
     locale: 'en'
+});
+
+ilingo.set({
+    // locale: fr
+    fr: {
+        app: {
+            key: "Je m'appelle {{name}}"
+        }
+    }
 });
 ```
 
@@ -69,17 +85,42 @@ as the first parameter, separated by a period (.).
 
 After that you can simply access the locale string, as described in the following:
 
+**`Sync`**
 ```typescript
 import { Ilingo } from 'ilingo';
 
-const language = new Ilingo({...});
+const ilingo = new Ilingo({
+    // ...
+});
 
-console.log(language.getSync('app.key'));
-// The locale string to be shown.
+console.log(ilingo.getSync('app.key'));
+// Hello my name is {{name}}
 
-console.log(language.getSync('app.key', {}, 'de'));
-// Der anzuzeigende string.
+console.log(ilingo.getSync('app.key', { name: 'Peter' }));
+// Hello my name is Peter
+
+console.log(ilingo.getSync('app.key', { name: 'Peter' }, 'de'));
+// Hallo mein Name ist Peter
 ```
+
+**`Async`**
+```typescript
+import { Ilingo } from 'ilingo';
+
+const ilingo = new Ilingo({
+    // ...
+});
+
+console.log(await ilingo.get('app.key'));
+// Hello my name is {{name}}
+
+console.log(await ilingo.get('app.key', { name: 'Peter' }));
+// Hello my name is Peter
+
+console.log(await ilingo.get('app.key', { name: 'Peter' }, 'de'));
+// Hallo mein Name ist Peter
+```
+
 
 To learn more about usage, inspect the [README.md](./packages/ilingo/README.md) of the core package.
 

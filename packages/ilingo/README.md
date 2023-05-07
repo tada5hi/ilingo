@@ -21,7 +21,8 @@ Ilingo is a lightweight library for translation and internationalization.
   - [Async/Sync](#asyncsync)
   - [Lazy](#lazy)
 - [Store](#store)
-  - [FileSystem](#filesystem-store)
+  - [Memory](#memory-store)
+  - [FileSystem](#fs-store)
 - [License](#license)
 
 ## Installation
@@ -62,25 +63,30 @@ This can be done during instance creation or afterward using the `set` method.
 ```typescript
 import { Ilingo } from 'ilingo';
 
-const language = new Ilingo({
+const ilingo = new Ilingo({
     data: {
-        // locale: en
-        en: {
+        // locale: de
+        de: {
             // group: app
             app: {
-                key: 'The locale string to be shown.'
+                key: 'Hallo mein Name ist {{name}}'
+            }
+        },
+        // locale: en
+        en: {
+            app: {
+                key: 'Hello my name is {{name}}'
             }
         }
     },
     locale: 'en'
 });
 
-language.set({
-    // locale: de
-    de: {
-        // group: app
+ilingo.set({
+    // locale: fr
+    fr: {
         app: {
-            key: 'Der anzuzeigende string.'
+            key: "Je m'appelle {{name}}"
         }
     }
 });
@@ -91,16 +97,40 @@ as the first parameter, separated by a period (.).
 
 After that you can simply access the locale string, as described in the following:
 
+**`Sync`**
 ```typescript
 import { Ilingo } from 'ilingo';
 
-const language = new Ilingo({...});
+const ilingo = new Ilingo({
+    // ...
+});
 
-console.log(language.getSync('app.key'));
-// The locale string to be shown.
+console.log(ilingo.getSync('app.key'));
+// Hello my name is {{name}}
 
-console.log(language.getSync('app.key', {}, 'de'));
-// Der anzuzeigende string.
+console.log(ilingo.getSync('app.key', { name: 'Peter' }));
+// Hello my name is Peter
+
+console.log(ilingo.getSync('app.key', { name: 'Peter' }, 'de'));
+// Hallo mein Name ist Peter
+```
+
+**`Async`**
+```typescript
+import { Ilingo } from 'ilingo';
+
+const ilingo = new Ilingo({
+    // ...
+});
+
+console.log(await ilingo.get('app.key'));
+// Hello my name is {{name}}
+
+console.log(await ilingo.get('app.key', { name: 'Peter' }));
+// Hello my name is Peter
+
+console.log(await ilingo.get('app.key', { name: 'Peter' }, 'de'));
+// Hallo mein Name ist Peter
 ```
 
 ### Singleton
@@ -116,12 +146,6 @@ const ilinigo = useIlingo();
  * default: en
  */
 ilingo.setLocale('en');
-
-/**
- * default: proccess.cwd()
- */
-ilingo.setDirectory('language');
-
 
 ilingo.set('app.key', 'Hi {{name}}!');
 
@@ -258,9 +282,9 @@ import { useIlingo } from 'ilingo';
 The Memory Store is the default store and is set if no
 other Store is specified manually.
 
-### Filesystem Store
+### FS Store
 
-The [FileSystemStore](../fs/README.md) is a Store which access
+The [FSStore](../fs/README.md) is a Store which access
 the FileSystem for locating group files of different locales.
 
 

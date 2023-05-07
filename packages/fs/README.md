@@ -24,11 +24,11 @@ npm install @ilingo/fs --save
 
 ```typescript
 import { Ilingo } from 'ilingo';
-import FileSystemStore from '@ilingo/fs';
+import FSStore from '@ilingo/fs';
 
 const directory = 'language';
 const ilingo = new Ilingo({
-    store: new FileSystemStore({ directory }), 
+    store: new FSStore({ directory }), 
 })
 ```
 

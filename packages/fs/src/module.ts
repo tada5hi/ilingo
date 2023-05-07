@@ -21,7 +21,7 @@ import { MemoryStore, isLineRecord } from 'ilingo';
 import type { ConfigInput } from './types';
 import { buildConfig } from './utils';
 
-export class FileSystemStore extends MemoryStore {
+export class FSStore extends MemoryStore {
     protected loaded : Record<string, string[]>;
 
     protected directories : string[];

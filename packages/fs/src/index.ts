@@ -5,8 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { FileSystemStore } from './module';
+import { FSStore } from './module';
 
 export * from './module';
 export * from './types';
-export default FileSystemStore;
+export default FSStore;

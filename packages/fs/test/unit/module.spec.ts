@@ -7,15 +7,15 @@
 
 import path from "node:path";
 import {Ilingo} from "ilingo";
-import {FileSystemStore} from "../../src";
+import {FSStore} from "../../src";
 
 const basePath = path.join(__dirname, '..', 'data', 'language');
 
 describe('src/store/file-system', function () {
-    let store : FileSystemStore;
+    let store : FSStore;
 
     beforeAll(() => {
-        store = new FileSystemStore({directory: basePath});
+        store = new FSStore({directory: basePath});
     })
 
     it('should set/get store', () => {
