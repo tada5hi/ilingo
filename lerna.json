@@ -1,0 +1,18 @@
+{
+  "packages": [
+    "packages/*"
+  ],
+  "command": {
+    "version": {
+      "ignoreChanges": [
+        "**/*.spec.ts",
+        "**/*.spec.js",
+        "**/*.md"
+      ],
+      "conventionalCommits": true,
+      "message": "chore(release): %s"
+    }
+  },
+  "version": "2.4.0",
+  "useWorkspaces": true
+}

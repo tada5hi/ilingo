@@ -6,99 +6,82 @@
  */
 
 import resolve from '@rollup/plugin-node-resolve';
-import { transform } from '@swc/core';
-import pkg from './package.json' assert { type: "json" };
+
+import { merge } from 'smob';
+
+import { builtinModules } from 'node:module';
+import { transform } from "@swc/core";
+import json from "@rollup/plugin-json";
 
 const extensions = [
-    '.js', '.cjs', '.mjs', '.jsx', '.ts', '.tsx',
+    '.js', '.mjs', '.cjs', '.ts', '.mts', '.cts'
 ];
 
-export default [
+const swcOptions = {
+    jsc: {
+        target: 'es2020',
+        parser: {
+            syntax: 'typescript',
+            decorators: true
+        },
+        transform: {
+            decoratorMetadata: true,
+            legacyDecorator: true
+        },
+        loose: true
+    },
+    sourceMaps: true
+}
+
+export function createConfig(
     {
-        input: './src/index.server.ts',
+        pkg,
+        pluginsPre = [],
+        pluginsPost = [],
+        external = [],
+        defaultExport = false,
+        swc = {}
+    }
+) {
+    external = Object.keys(pkg.dependencies || {})
+        .concat(Object.keys(pkg.peerDependencies || {}))
+        .concat(builtinModules)
+        .concat(external);
 
-        // Specify here external modules which you don't want to include in your bundle (for instance: 'lodash', 'moment' etc.)
-        // https://rollupjs.org/guide/en/#external
-        external: [
-            ...Object.keys(pkg.dependencies || {}),
-            ...Object.keys(pkg.peerDependencies || {}),
+    return {
+        input: 'src/index.ts',
+        external,
+        output: [
+            {
+                format: 'cjs',
+                file: pkg.main,
+                exports: 'named',
+                ...(defaultExport ? { footer: 'module.exports = Object.assign(exports.default, exports);' } : {}),
+                sourcemap: true
+            },
+            {
+                format: 'es',
+                file: pkg.module,
+                sourcemap: true
+            }
         ],
-
         plugins: [
+            ...pluginsPre,
+
             // Allows node_modules resolution
             resolve({ extensions}),
 
-            // Compile TypeScript/JavaScript files
-            {
-                name: 'swc',
-                transform(code) {
-                    return transform(code, {
-                        jsc: {
-                            target: 'es2016',
-                            parser: {
-                                syntax: 'typescript'
-                            },
-                            loose: true
-                        },
-                        sourceMaps: true
-                    });
-                }
-            },
-        ],
-
-        output: [
-            {
-                file: 'dist/index.server.cjs',
-                format: 'cjs',
-                sourcemap: true
-            }, {
-                file: 'dist/index.server.mjs',
-                format: 'esm',
-                sourcemap: true
-            }
-        ],
-    },
-    {
-        input: './src/index.ts',
-
-        // Specify here external modules which you don't want to include in your bundle (for instance: 'lodash', 'moment' etc.)
-        // https://rollupjs.org/guide/en/#external
-        external: [
-            ...Object.keys(pkg.dependencies || {}),
-            ...Object.keys(pkg.peerDependencies || {}),
-        ],
-
-        plugins: [
-            // Allows node_modules resolution
-            resolve({ extensions }),
+            json(),
 
             // Compile TypeScript/JavaScript files
             {
                 name: 'swc',
                 transform(code) {
-                    return transform(code, {
-                        jsc: {
-                            target: 'es2016',
-                            parser: {
-                                syntax: 'typescript'
-                            },
-                            loose: true
-                        },
-                        sourceMaps: true
-                    });
+                    return transform(code, merge({}, swc, swcOptions));
                 }
             },
-        ],
-        output: [
-            {
-                file: pkg.main,
-                format: 'cjs',
-                sourcemap: true
-            }, {
-                file: pkg.module,
-                format: 'esm',
-                sourcemap: true
-            }
+
+            ...pluginsPost
         ]
-    }
-];
+    };
+}
