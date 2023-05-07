@@ -6,7 +6,7 @@
  */
 
 import { buildConfig } from "../../../src";
-import {MemoryStore} from "../../../src/store/memory";
+import {MemoryStore} from "../../../src/store";
 
 describe('src/config', function () {
     it('should build config', () => {

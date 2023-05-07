@@ -6,26 +6,68 @@
  */
 
 import resolve from '@rollup/plugin-node-resolve';
-import { transform } from '@swc/core';
-import pkg from './package.json' assert { type: "json" };
+
+import { merge } from 'smob';
+
+import { builtinModules } from 'node:module';
+import { transform } from "@swc/core";
 import json from "@rollup/plugin-json";
 
 const extensions = [
-    '.js', '.cjs', '.mjs', '.jsx', '.ts', '.tsx',
+    '.js', '.mjs', '.cjs', '.ts', '.mts', '.cts'
 ];
 
-export default [
+const swcOptions = {
+    jsc: {
+        target: 'es2020',
+        parser: {
+            syntax: 'typescript',
+            decorators: true
+        },
+        transform: {
+            decoratorMetadata: true,
+            legacyDecorator: true
+        },
+        loose: true
+    },
+    sourceMaps: true
+}
+
+export function createConfig(
     {
-        input: './src/index.ts',
+        pkg,
+        pluginsPre = [],
+        pluginsPost = [],
+        external = [],
+        defaultExport = false,
+        swc = {}
+    }
+) {
+    external = Object.keys(pkg.dependencies || {})
+        .concat(Object.keys(pkg.peerDependencies || {}))
+        .concat(builtinModules)
+        .concat(external);
 
-        // Specify here external modules which you don't want to include in your bundle (for instance: 'lodash', 'moment' etc.)
-        // https://rollupjs.org/guide/en/#external
-        external: [
-            ...Object.keys(pkg.dependencies || {}),
-            ...Object.keys(pkg.peerDependencies || {}),
+    return {
+        input: 'src/index.ts',
+        external,
+        output: [
+            {
+                format: 'cjs',
+                file: pkg.main,
+                exports: 'named',
+                ...(defaultExport ? { footer: 'module.exports = Object.assign(exports.default, exports);' } : {}),
+                sourcemap: true
+            },
+            {
+                format: 'es',
+                file: pkg.module,
+                sourcemap: true
+            }
         ],
-
         plugins: [
+            ...pluginsPre,
+
             // Allows node_modules resolution
             resolve({ extensions}),
 
@@ -35,75 +77,11 @@ export default [
             {
                 name: 'swc',
                 transform(code) {
-                    return transform(code, {
-                        jsc: {
-                            target: 'es2020',
-                            parser: {
-                                syntax: 'typescript'
-                            },
-                            loose: true
-                        },
-                        sourceMaps: true
-                    });
+                    return transform(code, merge({}, swc, swcOptions));
                 }
             },
-        ],
 
-        output: [
-            {
-                file: pkg.main,
-                format: 'cjs',
-                sourcemap: true
-            }, {
-                file: pkg.module,
-                format: 'esm',
-                sourcemap: true
-            }
-        ],
-    },
-    {
-        input: './src/store/fs.ts',
-
-        // Specify here external modules which you don't want to include in your bundle (for instance: 'lodash', 'moment' etc.)
-        // https://rollupjs.org/guide/en/#external
-        external: [
-            ...Object.keys(pkg.dependencies || {}),
-            ...Object.keys(pkg.peerDependencies || {}),
-        ],
-
-        plugins: [
-            // Allows node_modules resolution
-            resolve({ extensions }),
-
-            json(),
-
-            // Compile TypeScript/JavaScript files
-            {
-                name: 'swc',
-                transform(code) {
-                    return transform(code, {
-                        jsc: {
-                            target: 'es2020',
-                            parser: {
-                                syntax: 'typescript'
-                            },
-                            loose: true
-                        },
-                        sourceMaps: true
-                    });
-                }
-            },
-        ],
-        output: [
-            {
-                file: pkg.exports["./fs"].require,
-                format: 'cjs',
-                sourcemap: true
-            }, {
-                file: pkg.exports["./fs"].import,
-                format: 'esm',
-                sourcemap: true
-            }
+            ...pluginsPost
         ]
-    }
-];
+    };
+}

@@ -12,10 +12,8 @@ import {
 import path from 'node:path';
 import type { Merger } from 'smob';
 import { createMerger } from 'smob';
-import type { LinesRecord } from '../type';
-import { isLineRecord } from '../utils';
-import { MemoryStore } from './memory';
-import type { StoreGetContext, StoreSetContext } from './type';
+import type { LinesRecord, StoreGetContext, StoreSetContext } from 'ilingo';
+import { MemoryStore, isLineRecord } from 'ilingo';
 
 export class FileSystemStore extends MemoryStore {
     protected loaded : Record<string, string[]>;

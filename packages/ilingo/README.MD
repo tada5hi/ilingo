@@ -251,48 +251,16 @@ import { useIlingo } from 'ilingo';
 
 ## Store
 
+### Memory Store
+
+The Memory Store is the default store and is set if no
+other Store is specified manually.
+
 ### Filesystem Store
-Locale strings should be stored in subdirectories as a group for each supported language (locale).
 
-```bash
-├── ...
-└── language
-    ├── de
-    │   ├── app.{ts,js,json,conf}      # app group
-    │   └── forum.{ts,js,json,conf}    # forum group
-    └── en
-        ├── app.{ts,js,json,conf}      # app group
-        └── forum.{ts,js,json,conf}    # forum group
-```
+The [FileSystemStore](../fs/README.md) is a Store which access
+the FileSystem for locating group files of different locales.
 
-To get started, create e.g. a language directory somewhere in your project.
-Inside this directory, create a folder for each locale (e.g. en, de, ...), which should be supported.
-
-The created folder represents a locale group. These groups do not have to follow any specific naming convention.
-You should name the file according to the type of content it holds (e.g. app, forum, ...).
-For example, let’s say you want to create a file containing error messages.
-You might simply name it: `error.{ts,js,json}`.
-
-Each file should return an object containing an access key and a locale string.
-
-**`app.{ts,js,json}`**
-```typescript
-module.exports = {
-    'key': 'The locale string to be shown.'
-}
-```
-
-The object can also be (deeply) nested ⚡.
-
-**`app.{ts,js,json}`**
-```typescript
-module.exports = {
-    'nested': {
-        'key': 'The locale string to be shown.'
-    }
-}
-```
-It is also possible to use `export default {...}` instead of `module.exports = {...}` for script files.
 
 ## License
 

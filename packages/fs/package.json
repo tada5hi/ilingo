@@ -1,0 +1,55 @@
+{
+    "name": "@ilingo/fs",
+    "version": "2.4.0",
+    "description": "This is a lightweight library for translation.",
+    "author": {
+        "name": "Peter Placzek",
+        "email": "contact@tada5hi.net",
+        "url": "https://github.com/tada5hi"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tada5hi/ilingo.git",
+        "directory": "packages/fs"
+    },
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist/"
+    ],
+    "scripts": {
+        "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+        "build:js": "rollup -c",
+        "build": "rimraf dist && npm run build:types && npm run build:js",
+        "lint": "eslint --ext .js,.vue,.ts ./src",
+        "lint:fix": "npm run lint -- --fix",
+        "test": "cross-env NODE_ENV=test jest --config ./test/jest.config.js",
+        "test:coverage": "npm run test -- --coverage"
+    },
+    "keywords": [
+        "i18n",
+        "language",
+        "translate",
+        "translation",
+        "bilingual",
+        "internationalization",
+        "locale",
+        "locales",
+        "server-side",
+        "client-side"
+    ],
+    "license": "MIT",
+    "dependencies": {
+        "ilingo": "^2.4.0",
+        "locter": "^1.1.0"
+    }
+}
