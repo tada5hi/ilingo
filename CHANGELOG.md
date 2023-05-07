@@ -1,3 +1,36 @@
+# Change Log
+
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+# [3.0.0-alpha.0](https://github.com/tada5hi/ilingo/compare/v2.4.0...v3.0.0-alpha.0) (2023-05-07)
+
+
+### Bug Fixes
+
+* renamed fs-store class + better basic usage example(s) ([a6389fa](https://github.com/tada5hi/ilingo/commit/a6389fab956a2b6fd43c376f900045c6632e3bde))
+
+
+### Features
+
+* add applyConfig class method + README.md update ([8aba25c](https://github.com/tada5hi/ilingo/commit/8aba25c5e3bb2201867abb05725f8506ee6b2081))
+* cleanup public api ([508d968](https://github.com/tada5hi/ilingo/commit/508d968a1c6df3e24a7459b368929da074f77947))
+* contextualize fs-store options + add default export for core package ([c72c355](https://github.com/tada5hi/ilingo/commit/c72c355c7cd9fbe1d4d879f01c902c667f350c63))
+* memory-/fs-store & api refactoring ([#277](https://github.com/tada5hi/ilingo/issues/277)) ([27efe29](https://github.com/tada5hi/ilingo/commit/27efe2987e24269b53baa88ada336de5068a2180))
+* reduce singelton instances to one ([3ecb568](https://github.com/tada5hi/ilingo/commit/3ecb568e45ff14d38b25e9a76863b273227076d7))
+* refactor singleton management + implemented config management ([25defe6](https://github.com/tada5hi/ilingo/commit/25defe66f52973d8ba53db1ebc72bdcd72cca1b0))
+* set and overwrite deep nested key paths ([aa0ed0c](https://github.com/tada5hi/ilingo/commit/aa0ed0c45a66f180d3b89846dda342e736ab5ed7))
+* use locter for file locating and loading ([52439d9](https://github.com/tada5hi/ilingo/commit/52439d90187533b646056dc3c60020f4d90393fd))
+
+
+### BREAKING CHANGES
+
+* singelton management api changed
+
+
+
+
+
 ## v2.4.0
 
 [compare changes](https://github.com/tada5hi/ilingo/compare/v2.3.1...v2.4.0)
