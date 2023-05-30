@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.0.0-alpha.2](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.1...v3.0.0-alpha.2) (2023-05-30)
+
+
+### Bug Fixes
+
+* bump smob to v1.4.x + updated usage ([f142b03](https://github.com/tada5hi/ilingo/commit/f142b038ac0b506369aac15052fba51b6997a1e4))
+
+
+
+
+
 # [3.0.0-alpha.1](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.0...v3.0.0-alpha.1) (2023-05-07)
 
 

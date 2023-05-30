@@ -1,6 +1,6 @@
 {
     "name": "@ilingo/fs",
-    "version": "3.0.0-alpha.1",
+    "version": "3.0.0-alpha.2",
     "description": "This is a lightweight library for translation.",
     "author": {
         "name": "Peter Placzek",
@@ -49,7 +49,7 @@
     ],
     "license": "MIT",
     "dependencies": {
-        "ilingo": "^3.0.0-alpha.1",
+        "ilingo": "^3.0.0-alpha.2",
         "locter": "^1.1.2",
         "pathe": "^1.1.0",
         "smob": "^1.4.0"
