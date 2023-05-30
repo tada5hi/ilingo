@@ -37,6 +37,7 @@ export class FSStore extends MemoryStore {
         this.directories = options.directory;
 
         this.merger = createMerger({
+            inPlace: true,
             array: true,
             arrayDistinct: true,
         });

@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { merge } from 'smob';
+import { assign } from 'smob';
 import type { LinesRecord } from '../type';
 
 export function flattenLinesRecord(input: LinesRecord, prefix = '') {
@@ -21,7 +21,7 @@ export function flattenLinesRecord(input: LinesRecord, prefix = '') {
                 output[keys[i]] = value;
             }
         } else {
-            merge(output, flattenLinesRecord(value, prefix ? `${prefix}.${keys[i]}` : keys[i]));
+            assign(output, flattenLinesRecord(value, prefix ? `${prefix}.${keys[i]}` : keys[i]));
         }
     }
 
