@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.0.0](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.2...v3.0.0) (2023-05-31)
+
+
+### Bug Fixes
+
+* remove store getter/setter ([1def83c](https://github.com/tada5hi/ilingo/commit/1def83cef5e0e88704461d06fc671d2556989ea7))
+
+
+
+
+
 # [3.0.0-alpha.2](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.1...v3.0.0-alpha.2) (2023-05-30)
 
 
