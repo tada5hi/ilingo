@@ -18,16 +18,6 @@ describe('src/store/file-system', function () {
         store = new FSStore({directory: basePath});
     })
 
-    it('should set/get store', () => {
-        const language = new Ilingo();
-
-        expect(language.getStore()).not.toEqual(store);
-
-        language.setStore(store);
-
-        expect(language.getStore()).toEqual(store);
-    })
-
     it('should work with nested input', async () => {
         const language = new Ilingo({ store });
 

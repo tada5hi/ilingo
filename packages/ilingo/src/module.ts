@@ -38,16 +38,6 @@ export class Ilingo {
 
     // ----------------------------------------------------
 
-    setStore(store: Store) {
-        this.store = store;
-    }
-
-    getStore() : Store {
-        return this.store;
-    }
-
-    // ----------------------------------------------------
-
     setLocale(key: string) {
         this.locale = key;
     }
