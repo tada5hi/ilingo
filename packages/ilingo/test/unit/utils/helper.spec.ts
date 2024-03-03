@@ -5,12 +5,10 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {Ilingo, lang, langSync, setIlingo, unsetIlingo, useIlingo} from "../../../src";
+import {Ilingo, lang, langSync, setIlingo, useIlingo} from "../../../src";
 
 describe('src/module.ts', () => {
     it('should work with async helper', async () => {
-        unsetIlingo();
-
         const instance = new Ilingo();
         await instance.set({
             ru: {
@@ -22,15 +20,13 @@ describe('src/module.ts', () => {
             }
         });
 
-         setIlingo(instance);
+        setIlingo(instance);
 
         const output = await lang('form.nested.key', 'ru');
         expect(output).toEqual('RA');
     })
 
     it('should work with sync helper', () => {
-        unsetIlingo();
-
         useIlingo()
             .setSync({
                 ru: {
