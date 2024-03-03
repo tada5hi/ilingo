@@ -48,7 +48,7 @@
         "nx": "^16.7.4",
         "rimraf": "^5.0.5",
         "rollup": "^3.23.0",
-        "typescript": "5.0.4",
+        "typescript": "5.3.3",
         "ts-jest": "^29.1.0"
     },
     "scripts": {
