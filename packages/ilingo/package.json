@@ -52,5 +52,8 @@
     "dependencies": {
         "smob": "^1.4.1"
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "gitHead": "e0db40b8067d33add80b3582cab8d24149dacec9"
 }
