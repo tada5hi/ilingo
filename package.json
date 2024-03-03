@@ -31,7 +31,7 @@
     "devDependencies": {
         "@rollup/plugin-node-resolve": "^15.1.0",
         "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-terser": "^0.4.3",
+        "@rollup/plugin-terser": "^0.4.4",
         "@swc/core": "^1.4.2",
         "@swc/jest": "^0.2.26",
         "@tada5hi/commitlint-config": "^1.1.7",
