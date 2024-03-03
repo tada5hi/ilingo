@@ -46,7 +46,7 @@
         "lerna": "^6.6.1",
         "lint-staged": "^13.2.1",
         "nx": "^16.7.4",
-        "rimraf": "^5.0.1",
+        "rimraf": "^5.0.5",
         "rollup": "^3.23.0",
         "typescript": "5.0.4",
         "ts-jest": "^29.1.0"
