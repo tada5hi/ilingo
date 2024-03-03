@@ -51,7 +51,7 @@
     "dependencies": {
         "ilingo": "^3.0.0",
         "locter": "^1.1.2",
-        "pathe": "^1.1.0",
+        "pathe": "^1.1.1",
         "smob": "^1.4.0"
     },
     "gitHead": "e0db40b8067d33add80b3582cab8d24149dacec9",
