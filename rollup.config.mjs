@@ -6,6 +6,7 @@
  */
 
 import resolve from '@rollup/plugin-node-resolve';
+import vue from '@vitejs/plugin-vue';
 
 import { merge } from 'smob';
 
@@ -72,6 +73,8 @@ export function createConfig(
             resolve({ extensions}),
 
             json(),
+
+            vue(),
 
             // Compile TypeScript/JavaScript files
             {

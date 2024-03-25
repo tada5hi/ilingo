@@ -5,24 +5,21 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import { singa } from 'singa';
 import { Ilingo } from './module';
 
-let instance : Ilingo | undefined;
+const singleton = singa({
+    name: 'ilingo',
+    factory: () => new Ilingo(),
+});
 
+export function hasIlingo() : boolean {
+    return singleton.has();
+}
 export function useIlingo(): Ilingo {
-    if (typeof instance !== 'undefined') {
-        return instance;
-    }
-
-    instance = new Ilingo();
-
-    return instance;
+    return singleton.use();
 }
 
-export function setIlingo(input: Ilingo) {
-    instance = input;
-}
-
-export function unsetIlingo() {
-    instance = undefined;
+export function setIlingo(instance: Ilingo) {
+    singleton.set(instance);
 }

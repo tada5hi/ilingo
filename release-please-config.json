@@ -9,6 +9,9 @@
         },
         "packages/fs": {
             "component": "fs"
+        },
+        "packages/vue": {
+            "component": "vue"
         }
     },
     "plugins": [
@@ -21,7 +24,8 @@
             "groupName": "main",
             "components": [
                 "ilingo",
-                "fs"
+                "fs",
+                "vue"
             ]
         }
     ],

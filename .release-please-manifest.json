@@ -1,4 +1,5 @@
 {
     "packages/ilingo": "3.0.0",
-    "packages/fs": "3.0.0"
+    "packages/fs": "3.0.0",
+    "packages/vue": "3.0.0"
 }
