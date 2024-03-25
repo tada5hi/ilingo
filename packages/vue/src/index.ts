@@ -7,7 +7,7 @@
 
 import { useIlingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
-import { ITranslate } from './component';
+import ITranslate from './component.vue';
 import { provideLocale } from './locale';
 import { provideIlingo } from './module';
 import type { Options } from './types';
@@ -29,7 +29,7 @@ export default {
     install,
 } satisfies Plugin<Options | undefined>;
 
-export * from './component';
+export { default as ITranslate } from './component.vue';
 export * from './locale';
 export * from './module';
 export * from './types';
