@@ -8,14 +8,14 @@
 import type { DotKey } from 'ilingo';
 import type { PropType } from 'vue';
 import {
-    defineComponent, ref, watch,
+    defineComponent, h, ref, watch,
 } from 'vue';
 import { injectLocale } from './locale';
 import { injectIlingo } from './module';
 
 const ITranslate = defineComponent({
     props: {
-        key: {
+        dotKey: {
             type: String as PropType<DotKey>,
             required: true,
         },
@@ -30,13 +30,13 @@ const ITranslate = defineComponent({
         const output = ref('');
 
         const translate = async () => {
-            const value = await translator.get(props.key, props.data, locale.value);
+            const value = await translator.get(props.dotKey, props.data, locale.value);
             if (value) {
                 output.value = value;
                 return;
             }
 
-            output.value = props.key;
+            output.value = props.dotKey;
         };
 
         await translate();
@@ -46,7 +46,11 @@ const ITranslate = defineComponent({
                 .then(() => translate());
         });
 
-        return () => output;
+        console.log(output.value);
+
+        return () => h('div', [
+            'bar',
+        ]);
     },
 });
 

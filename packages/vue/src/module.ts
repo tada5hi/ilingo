@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Ilingo } from 'ilingo/src';
+import { Ilingo } from 'ilingo';
 import {
     inject, provide,
 } from 'vue';
