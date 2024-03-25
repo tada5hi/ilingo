@@ -47,7 +47,7 @@
         "lint-staged": "^15.2.2",
         "nx": "^18.1.2",
         "rimraf": "^5.0.5",
-        "rollup": "^3.23.0",
+        "rollup": "^4.13.0",
         "ts-jest": "^29.1.0",
         "typescript": "5.4.3",
         "workspaces-publish": "^1.4.2"
