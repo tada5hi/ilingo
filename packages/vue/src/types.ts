@@ -7,6 +7,4 @@
 
 import type { ConfigInput } from 'ilingo';
 
-export type Options = ConfigInput & {
-
-};
+export type Options = ConfigInput;
