@@ -13,6 +13,9 @@ const singleton = singa({
     factory: () => new Ilingo(),
 });
 
+export function hasIlingo() : boolean {
+    return singleton.has();
+}
 export function useIlingo(): Ilingo {
     return singleton.use();
 }

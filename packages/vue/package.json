@@ -1,0 +1,54 @@
+{
+    "name": "@ilingo/vue",
+    "version": "0.0.0",
+    "description": "This package contains the vue package of ilingo.",
+    "main": "dist/index.cjs",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist/"
+    ],
+    "scripts": {
+        "build:types": "vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json",
+        "build:js": "cross-env NODE_ENV=production rollup -c",
+        "build": "rimraf ./dist && npm run build:js && npm run build:types",
+        "build:watch": "npm run build -- --watch"
+    },
+    "keywords": [],
+    "author": {
+        "name": "Peter Placzek",
+        "email": "contact@tada5hi.net",
+        "url": "https://github.com/tada5hi"
+    },
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tada5hi/ilingo.git",
+        "directory": "packages/ilingo"
+    },
+    "bugs": {
+        "url": "https://github.com/authup/ilingo/issues"
+    },
+    "homepage": "https://github.com/authup/ilingo#readme",
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^5.0.4",
+        "ilingo": "^3.0.0",
+        "vue": "^3.4.21",
+        "vue-tsc": "^1.8.26"
+    },
+    "peerDependencies": {
+        "ilingo": "^3.0.0",
+        "vue": "^3.x"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}
