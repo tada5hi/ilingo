@@ -7,7 +7,6 @@
 
 import type { LocatorOptions } from 'locter';
 import {
-    getModuleExport,
     load,
     loadSync,
     locateMany,
@@ -101,10 +100,7 @@ export class FSStore extends MemoryStore {
 
         const loadPromises = locations.map(
             (location) => load(location)
-                .then((output) => {
-                    const { value: data } = getModuleExport(output);
-                    return data;
-                }),
+                .then((data) => (data && data.default ? data.default : data)),
         );
 
         const files = await Promise.all(loadPromises);
@@ -138,8 +134,11 @@ export class FSStore extends MemoryStore {
         const files = [];
         for (let i = 0; i < locations.length; i++) {
             const file = loadSync(locations[i]);
-            const { value: data } = getModuleExport(file);
-            files.push(data);
+            if (file && file.default) {
+                files.push(file.default);
+            } else {
+                files.push(file);
+            }
         }
 
         this.data[locale][file] = this.mergeFiles(files);
