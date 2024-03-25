@@ -40,7 +40,6 @@
     },
     "homepage": "https://github.com/authup/ilingo#readme",
     "devDependencies": {
-        "@vitejs/plugin-vue": "^5.0.4",
         "ilingo": "^3.0.0",
         "vite": "^5.2.6",
         "vue": "^3.4.21",
