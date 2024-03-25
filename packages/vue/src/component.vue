@@ -2,14 +2,13 @@
 import type { DotKey } from 'ilingo';
 import type { PropType } from 'vue';
 import {
-    defineComponent, h, ref, watch,
+    defineComponent
 } from 'vue';
-import { injectLocale } from './locale';
-import { injectIlingo } from './module';
+import { useTranslation } from './composables';
 
 export default defineComponent({
     props: {
-        dotKey: {
+        path: {
             type: String as PropType<DotKey>,
             required: true,
         },
@@ -18,28 +17,7 @@ export default defineComponent({
         },
     },
     setup(props) {
-        const translator = injectIlingo();
-        const locale = injectLocale();
-
-        const text = ref('');
-
-        const translate = () => {
-            const value = translator.getSync(props.dotKey, props.data, locale.value);
-            if (value) {
-                text.value = value;
-                return;
-            }
-
-            text.value = props.dotKey;
-        };
-
-        translate();
-
-        watch(locale, (val, oldValue) => {
-            if(val !== oldValue) {
-                translate();
-            }
-        });
+        const text = useTranslation(props.path, props.data);
 
         return {
             text

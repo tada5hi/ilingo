@@ -8,8 +8,7 @@
 import { useIlingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
 import ITranslate from './component.vue';
-import { provideLocale } from './locale';
-import { provideIlingo } from './module';
+import { provideIlingo, provideLocale } from './composables';
 import type { Options } from './types';
 
 export function install(app: App, options: Options = {}) : void {
@@ -30,6 +29,5 @@ export default {
 } satisfies Plugin<Options | undefined>;
 
 export { default as ITranslate } from './component.vue';
-export * from './locale';
-export * from './module';
+export * from './composables';
 export * from './types';

@@ -23,7 +23,7 @@ export default defineComponent({
 </script>
 <template>
     <div>
-        <ITranslate dot-key="app.key" :data="{'name': 'Peter'}"></ITranslate>
+        <ITranslate path="app.key" :data="{'name': 'Peter'}"></ITranslate>
     </div>
     <button type="button" @click.prevent="toggle">
         Toggle
