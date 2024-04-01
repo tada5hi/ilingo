@@ -21,4 +21,7 @@ export interface Store {
 
     set(context: StoreSetContext) : Promise<void>;
     setSync(context: StoreSetContext) : void;
+
+    getLocales() : Promise<string[]>;
+    getLocalesSync(): string[];
 }

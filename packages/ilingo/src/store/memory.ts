@@ -63,4 +63,12 @@ export class MemoryStore implements Store {
             this.data[locale][group] = {};
         }
     }
+
+    async getLocales(): Promise<string[] | undefined> {
+        return this.getLocalesSync();
+    }
+
+    getLocalesSync(): string[] | undefined {
+        return Object.keys(this.data);
+    }
 }

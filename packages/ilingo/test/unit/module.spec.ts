@@ -32,6 +32,26 @@ describe('src/module.ts', () => {
         expect(ilingo.getLocale()).toEqual('en');
     });
 
+    it('should get locales', async () => {
+        const ilingo = new Ilingo({
+            data: {
+                ru: {
+                    foo: {
+                        line: 'bar-baz'
+                    }
+                },
+                en: {
+                    foo: {
+                        line: 'baz-boz'
+                    }
+                }
+            }
+        });
+
+        expect(await ilingo.getLocales()).toEqual(['ru', 'en']);
+        expect(ilingo.getLocalesSync()).toEqual(['ru', 'en']);
+    })
+
     it('should set/unset locale', () => {
         const ilingo = new Ilingo();
 
