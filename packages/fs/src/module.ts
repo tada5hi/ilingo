@@ -83,18 +83,18 @@ export class FSStore extends MemoryStore {
 
     // ------------------------------------------
 
-    async loadGroup(file: string, locale: string) : Promise<Record<string, any>> {
+    async loadGroup(group: string, locale: string) : Promise<Record<string, any>> {
         // only load file once
-        if (this.isLoaded(file, locale)) {
+        if (this.isLoaded(group, locale)) {
             /* istanbul ignore next */
             return {};
         }
 
-        this.initLines(file, locale);
-        this.setIsLoaded(file, locale);
+        this.initLines(group, locale);
+        this.setIsLoaded(group, locale);
 
         const locations = await locateMany(
-            this.addExtensionPattern(file),
+            this.addExtensionPattern(group),
             this.buildLocatorOptions(locale),
         );
 
@@ -108,9 +108,9 @@ export class FSStore extends MemoryStore {
             return {};
         }
 
-        this.data[locale][file] = this.mergeFiles(files);
+        this.data[locale][group] = this.mergeFiles(files);
 
-        return this.data[locale][file];
+        return this.data[locale][group];
     }
 
     loadGroupSync(file: string, locale: string) : Record<string, any> {
