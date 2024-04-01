@@ -1,9 +1,29 @@
-# Change Log
+# Changelog
+
+## [3.1.0](https://github.com/tada5hi/ilingo/compare/fs-v3.0.0...fs-v3.1.0) (2024-04-01)
+
+
+### Bug Fixes
+
+* bump locter to v2.0.2 ([73bb252](https://github.com/tada5hi/ilingo/commit/73bb25284e64e8486d7f6e38caf8ecc270199a0e))
+* **deps:** bump pathe from 1.1.0 to 1.1.1 ([#319](https://github.com/tada5hi/ilingo/issues/319)) ([6c385e2](https://github.com/tada5hi/ilingo/commit/6c385e242225dba5b2944ae7ddd1735db795789b))
+* **deps:** bump pathe from 1.1.1 to 1.1.2 ([#360](https://github.com/tada5hi/ilingo/issues/360)) ([9e0f11c](https://github.com/tada5hi/ilingo/commit/9e0f11c358a19f0b1ccd13be88c8eac704409a1a))
+* **deps:** bump smob from 1.4.0 to 1.4.1 ([#368](https://github.com/tada5hi/ilingo/issues/368)) ([28ed320](https://github.com/tada5hi/ilingo/commit/28ed3202f59c5e6c0f5c1a5ed223caf7678a3882))
+* **deps:** bump smob from 1.4.1 to 1.5.0 ([#409](https://github.com/tada5hi/ilingo/issues/409)) ([d819dc2](https://github.com/tada5hi/ilingo/commit/d819dc2e715a0a8ad03191a32121e5d04c26e8b6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^3.0.0 to ^3.1.0
+
+## Change Log
 
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
-# [3.0.0](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.2...v3.0.0) (2023-05-31)
+## [3.0.0](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.2...v3.0.0) (2023-05-31)
 
 
 ### Bug Fixes
@@ -14,7 +34,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
-# [3.0.0-alpha.2](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.1...v3.0.0-alpha.2) (2023-05-30)
+## [3.0.0-alpha.2](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.1...v3.0.0-alpha.2) (2023-05-30)
 
 
 ### Bug Fixes
@@ -26,7 +46,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
-# [3.0.0-alpha.1](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.0...v3.0.0-alpha.1) (2023-05-07)
+## [3.0.0-alpha.1](https://github.com/tada5hi/ilingo/compare/v3.0.0-alpha.0...v3.0.0-alpha.1) (2023-05-07)
 
 
 ### Bug Fixes
@@ -37,7 +57,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 
 
-# [3.0.0-alpha.0](https://github.com/tada5hi/ilingo/compare/v2.4.0...v3.0.0-alpha.0) (2023-05-07)
+## [3.0.0-alpha.0](https://github.com/tada5hi/ilingo/compare/v2.4.0...v3.0.0-alpha.0) (2023-05-07)
 
 
 ### Bug Fixes
