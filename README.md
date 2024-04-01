@@ -7,6 +7,7 @@ Ilingo is a lightweight library for translation and internationalization
 - [Packages](#packages)
   - [Core](#core-)
   - [FS](#fs-)
+  - [Vue](#vue-)
 - [Usage](#usage)
 - [License](#license)
   
