@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Ilingo } from 'ilingo';
+import { useIlingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
 import ITranslate from './component.vue';
 import { provideIlingo, provideLocale } from './composables';
@@ -14,7 +14,7 @@ import type { Options } from './types';
 export function install(app: App, options: Options = {}) : void {
     provideLocale(options.locale || 'en', app);
 
-    const instance = new Ilingo();
+    const instance = useIlingo();
     if (options.data) {
         instance.setSync(options.data);
     }
