@@ -11,22 +11,35 @@ import { ref, watch } from 'vue';
 import { injectIlingo } from './instance';
 import { injectLocale } from './locale';
 
-export function useTranslation(key: DotKey, data?: Record<string, any>) : Ref<string> {
+export function useTranslation(
+    key: DotKey,
+    data: Record<string, any> = {},
+) : Ref<string> {
     const instance = injectIlingo();
     const locale = injectLocale();
 
     const text = ref('');
 
-    const translate = () : string => {
-        const value = instance.getSync(key, data, locale.value);
-        return value ?? key;
+    const translating = ref(false);
+    const translate = async () : Promise<void> => {
+        if (translating.value) return;
+        translating.value = true;
+
+        try {
+            const value = await instance.get(key, data, locale.value);
+            text.value = value ?? key;
+        } finally {
+            translating.value = false;
+        }
     };
 
-    text.value = translate();
+    Promise.resolve()
+        .then(() => translate());
 
     watch(locale, (val, oldValue) => {
         if (val !== oldValue) {
-            text.value = translate();
+            Promise.resolve()
+                .then(() => translate());
         }
     });
 
