@@ -34,7 +34,7 @@
         "@rollup/plugin-terser": "^0.4.4",
         "@swc/core": "^1.4.11",
         "@swc/jest": "^0.2.36",
-        "@tada5hi/commitlint-config": "^1.1.7",
+        "@tada5hi/commitlint-config": "^1.2.0",
         "@tada5hi/eslint-config-vue-typescript": "^1.2.9",
         "@tada5hi/tsconfig": "^0.5.1",
         "@types/jest": "^29.5.12",
