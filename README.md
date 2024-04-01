@@ -32,6 +32,14 @@ ilingo package.
 
 [Documentation](./packages/fs/README.md)
 
+### Vue 🖌️
+
+**`@ilingo/vue`**
+
+This package contains an adapter for vue.
+
+[Documentation](./packages/vue/README.md)
+
 ## Usage
 
 Create an instance and set the default locale.
