@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.2.0](https://github.com/tada5hi/ilingo/compare/vue-v3.1.0...vue-v3.2.0) (2024-04-02)
+
+
+### Miscellaneous Chores
+
+* **vue:** Synchronize main versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * ilingo bumped from ^3.1.0 to ^3.2.0
+  * peerDependencies
+    * ilingo bumped from ^3.1.0 to ^3.2.0
+
 ## [3.1.0](https://github.com/tada5hi/ilingo/compare/vue-v3.0.0...vue-v3.1.0) (2024-04-01)
 
 
