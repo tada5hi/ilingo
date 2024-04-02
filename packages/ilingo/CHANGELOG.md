@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.2.0](https://github.com/tada5hi/ilingo/compare/ilingo-v3.1.0...ilingo-v3.2.0) (2024-04-02)
+
+
+### Features
+
+* implemented getLocales(Sync) to receive available locales ([#411](https://github.com/tada5hi/ilingo/issues/411)) ([a37c8bb](https://github.com/tada5hi/ilingo/commit/a37c8bb45f820d8480701f9737cb2248c9f6fb50))
+
 ## [3.1.0](https://github.com/tada5hi/ilingo/compare/ilingo-v3.0.0...ilingo-v3.1.0) (2024-04-01)
 
 
