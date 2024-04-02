@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { LocatorOptions } from 'locter';
+import type { LocatorOptionsInput } from 'locter';
 import {
     load,
     loadSync,
@@ -16,7 +16,7 @@ import path from 'node:path';
 import type { Merger } from 'smob';
 import { createMerger } from 'smob';
 import type { LinesRecord, StoreGetContext, StoreSetContext } from 'ilingo';
-import { MemoryStore, isLineRecord } from 'ilingo';
+import { MemoryStore, isBCP47LanguageCode, isLineRecord } from 'ilingo';
 import type { ConfigInput } from './types';
 import { buildConfig } from './utils';
 
@@ -69,6 +69,30 @@ export class FSStore extends MemoryStore {
 
     // ------------------------------------------
 
+    override async getLocales() : Promise<string[]> {
+        const locations = await locateMany(['*'], {
+            path: this.directories,
+            onlyDirectories: true,
+        });
+
+        return locations
+            .filter((location) => isBCP47LanguageCode(location.name))
+            .map((location) => location.name);
+    }
+
+    override getLocalesSync() : string[] {
+        const locations = locateManySync(['*'], {
+            path: this.directories,
+            onlyDirectories: true,
+        });
+
+        return locations
+            .filter((location) => isBCP47LanguageCode(location.name))
+            .map((location) => location.name);
+    }
+
+    // ------------------------------------------
+
     protected isLoaded(group: string, locale: string) : boolean {
         this.loaded[locale] = this.loaded[locale] || [];
 
@@ -95,7 +119,7 @@ export class FSStore extends MemoryStore {
 
         const locations = await locateMany(
             this.addExtensionPattern(group),
-            this.buildLocatorOptions(locale),
+            this.buildLocatorOptionsForLocale(locale),
         );
 
         const loadPromises = locations.map(
@@ -124,7 +148,7 @@ export class FSStore extends MemoryStore {
 
         const locations = locateManySync(
             this.addExtensionPattern(file),
-            this.buildLocatorOptions(locale),
+            this.buildLocatorOptionsForLocale(locale),
         );
 
         if (locations.length === 0) {
@@ -146,7 +170,7 @@ export class FSStore extends MemoryStore {
         return this.data[locale][file];
     }
 
-    protected buildLocatorOptions(locale?: string) : LocatorOptions {
+    protected buildLocatorOptionsForLocale(locale?: string) : LocatorOptionsInput {
         let directory: string[];
         if (this.directories.length === 0) {
             directory = [locale || 'en'];
