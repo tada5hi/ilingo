@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { LocatorOptions } from 'locter';
+import type { LocatorOptionsInput } from 'locter';
 import {
     load,
     loadSync,
@@ -16,7 +16,7 @@ import path from 'node:path';
 import type { Merger } from 'smob';
 import { createMerger } from 'smob';
 import type { LinesRecord, StoreGetContext, StoreSetContext } from 'ilingo';
-import { MemoryStore, isLineRecord } from 'ilingo';
+import { MemoryStore, isBCP47LanguageCode, isLineRecord } from 'ilingo';
 import type { ConfigInput } from './types';
 import { buildConfig } from './utils';
 
@@ -69,6 +69,30 @@ export class FSStore extends MemoryStore {
 
     // ------------------------------------------
 
+    override async getLocales() : Promise<string[]> {
+        const locations = await locateMany(['*'], {
+            path: this.directories,
+            onlyDirectories: true,
+        });
+
+        return locations
+            .filter((location) => isBCP47LanguageCode(location.name))
+            .map((location) => location.name);
+    }
+
+    override getLocalesSync() : string[] {
+        const locations = locateManySync(['*'], {
+            path: this.directories,
+            onlyDirectories: true,
+        });
+
+        return locations
+            .filter((location) => isBCP47LanguageCode(location.name))
+            .map((location) => location.name);
+    }
+
+    // ------------------------------------------
+
     protected isLoaded(group: string, locale: string) : boolean {
         this.loaded[locale] = this.loaded[locale] || [];
 
@@ -83,19 +107,19 @@ export class FSStore extends MemoryStore {
 
     // ------------------------------------------
 
-    async loadGroup(file: string, locale: string) : Promise<Record<string, any>> {
+    async loadGroup(group: string, locale: string) : Promise<Record<string, any>> {
         // only load file once
-        if (this.isLoaded(file, locale)) {
+        if (this.isLoaded(group, locale)) {
             /* istanbul ignore next */
             return {};
         }
 
-        this.initLines(file, locale);
-        this.setIsLoaded(file, locale);
+        this.initLines(group, locale);
+        this.setIsLoaded(group, locale);
 
         const locations = await locateMany(
-            this.addExtensionPattern(file),
-            this.buildLocatorOptions(locale),
+            this.addExtensionPattern(group),
+            this.buildLocatorOptionsForLocale(locale),
         );
 
         const loadPromises = locations.map(
@@ -108,9 +132,9 @@ export class FSStore extends MemoryStore {
             return {};
         }
 
-        this.data[locale][file] = this.mergeFiles(files);
+        this.data[locale][group] = this.mergeFiles(files);
 
-        return this.data[locale][file];
+        return this.data[locale][group];
     }
 
     loadGroupSync(file: string, locale: string) : Record<string, any> {
@@ -124,7 +148,7 @@ export class FSStore extends MemoryStore {
 
         const locations = locateManySync(
             this.addExtensionPattern(file),
-            this.buildLocatorOptions(locale),
+            this.buildLocatorOptionsForLocale(locale),
         );
 
         if (locations.length === 0) {
@@ -146,7 +170,7 @@ export class FSStore extends MemoryStore {
         return this.data[locale][file];
     }
 
-    protected buildLocatorOptions(locale?: string) : LocatorOptions {
+    protected buildLocatorOptionsForLocale(locale?: string) : LocatorOptionsInput {
         let directory: string[];
         if (this.directories.length === 0) {
             directory = [locale || 'en'];

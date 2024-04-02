@@ -18,6 +18,16 @@ describe('src/store/file-system', function () {
         store = new FSStore({directory: basePath});
     })
 
+    it('should get locales', async () => {
+        const language = new Ilingo({ store });
+        expect(await language.getLocales()).toEqual(['de', 'en', 'fr']);
+    });
+
+    it('should get locales sync',  () => {
+        const language = new Ilingo({ store });
+        expect(language.getLocalesSync()).toEqual(['de', 'en', 'fr']);
+    });
+
     it('should work with nested input', async () => {
         const language = new Ilingo({ store });
 

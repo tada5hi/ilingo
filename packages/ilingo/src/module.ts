@@ -52,6 +52,16 @@ export class Ilingo {
 
     // ----------------------------------------------------
 
+    getLocales() : Promise<string[]> {
+        return this.store.getLocales();
+    }
+
+    getLocalesSync() :string[] {
+        return this.store.getLocalesSync();
+    }
+
+    // ----------------------------------------------------
+
     async set(localesRecord: LocalesRecord) : Promise<void>;
 
     async set(groupsRecord: GroupsRecord, groupOrLocale?: string) : Promise<void>;
