@@ -39,3 +39,10 @@ export type GetInputParsed = {
     group: string,
     key: string,
 };
+
+export type StoreOptions = {
+    /**
+     * Set store in read only mode.
+     */
+    locked: boolean,
+};

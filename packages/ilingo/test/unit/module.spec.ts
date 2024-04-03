@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import {Ilingo} from "../../src";
+import {Ilingo, MemoryStore} from "../../src";
 
 describe('src/module.ts', () => {
     it('should get/set directory + locale + groups', () => {
@@ -64,6 +64,15 @@ describe('src/module.ts', () => {
 
         expect(ilingo.getLocale()).toEqual('en');
     });
+
+    it('should set/get store', () => {
+        const store = new MemoryStore();
+        const ilingo = new Ilingo();
+
+        ilingo.setStore(store);
+
+        expect(ilingo.getStore()).toEqual(store);
+    })
 
     it('should set/get locales record', () => {
         const language = new Ilingo();

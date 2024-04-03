@@ -27,13 +27,23 @@ export class Ilingo {
 
     // ----------------------------------------------------
 
-    constructor(input?: ConfigInput) {
+    constructor(input: ConfigInput = {}) {
         const config = buildConfig(input);
 
         this.locale = config.locale;
         this.store = config.store;
 
         this.setSync(config.data);
+    }
+
+    // ----------------------------------------------------
+
+    setStore(value: Store) {
+        this.store = value;
+    }
+
+    getStore() : Store {
+        return this.store;
     }
 
     // ----------------------------------------------------
