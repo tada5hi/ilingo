@@ -43,7 +43,7 @@ export function useValidationMessages(
             const ruleResult = (result as Record<string, any>)[rule];
 
             const value = await instance.get(
-                `${prefix.value || 'validation'}.${rule}`,
+                `${prefix.value || 'vuelidate'}.${rule}`,
                 ruleResult.$params,
                 locale.value,
             );

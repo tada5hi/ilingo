@@ -28,7 +28,7 @@ import { createApp } from 'vue';
 
 const app = createApp(/* */);
 install(app, {
-    prefix: 'validation',
+    prefix: 'vuelidate',
     data: {
         // locale: de
         de: {
@@ -40,7 +40,7 @@ install(app, {
         },
         // locale: en
         en: {
-            validation: {
+            vuelidate: {
                 maxLength: 'The length of the input must be less than {{max}}.',
                 minLength: 'The length of the input must be greater than {{min}}.',
             },

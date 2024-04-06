@@ -33,7 +33,7 @@ export function providePrefix(
 export function injectPrefix() : Ref<string> {
     const value = inject<string | Ref<string>>(symbol);
     if (!value) {
-        return ref('validation');
+        return ref('vuelidate');
     }
 
     return isRef(value) ? value : ref(value);
