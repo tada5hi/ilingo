@@ -33,7 +33,7 @@ install(app, {
         // locale: de
         de: {
             // group: app
-            validation: {
+            vuelidate: {
                 maxLength: 'Die Länge der Eingabe muss kleiner als {{max}} sein.',
                 minLength: 'Die Länge der Eingabe muss größer als {{min}} sein.',
             },
