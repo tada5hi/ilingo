@@ -17,11 +17,8 @@ export type StoreSetContext = StoreGetContext & {
 
 export interface Store {
     get(context: StoreGetContext) : Promise<string | undefined>;
-    getSync(context: StoreGetContext) : string | undefined;
 
     set(context: StoreSetContext) : Promise<void>;
-    setSync(context: StoreSetContext) : void;
 
     getLocales() : Promise<string[]>;
-    getLocalesSync(): string[];
 }

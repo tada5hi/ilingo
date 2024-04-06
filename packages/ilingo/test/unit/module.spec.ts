@@ -8,7 +8,7 @@
 import {Ilingo, MemoryStore} from "../../src";
 
 describe('src/module.ts', () => {
-    it('should get/set directory + locale + groups', () => {
+    it('should get/set directory + locale + groups', async () => {
         const ilingo = new Ilingo({
             data: {
                 ru: {
@@ -24,9 +24,9 @@ describe('src/module.ts', () => {
             }
         });
 
-        expect(ilingo.getSync('foo.line', undefined, 'ru')).toEqual('bar-baz');
-        expect(ilingo.getSync('foo.line', 'ru')).toEqual('bar-baz');
-        expect(ilingo.getSync('foo.line')).toEqual('baz-boz')
+        expect(await ilingo.get('foo.line', undefined, 'ru')).toEqual('bar-baz');
+        expect(await ilingo.get('foo.line', 'ru')).toEqual('bar-baz');
+        expect(await ilingo.get('foo.line')).toEqual('baz-boz')
 
         ilingo.setLocale('en');
         expect(ilingo.getLocale()).toEqual('en');
@@ -49,7 +49,6 @@ describe('src/module.ts', () => {
         });
 
         expect(await ilingo.getLocales()).toEqual(['ru', 'en']);
-        expect(ilingo.getLocalesSync()).toEqual(['ru', 'en']);
     })
 
     it('should set/unset locale', () => {
@@ -61,7 +60,6 @@ describe('src/module.ts', () => {
         expect(ilingo.getLocale()).toEqual('ru');
 
         ilingo.resetLocale();
-
         expect(ilingo.getLocale()).toEqual('en');
     });
 
@@ -74,10 +72,10 @@ describe('src/module.ts', () => {
         expect(ilingo.getStore()).toEqual(store);
     })
 
-    it('should set/get locales record', () => {
+    it('should set/get locales record', async () => {
         const language = new Ilingo();
 
-        language.setSync({
+        await language.set({
             en: {
                 group: {
                     foo: 'My name is {{name}}'
@@ -92,45 +90,45 @@ describe('src/module.ts', () => {
 
         // {{group.foo}}
 
-        expect(language.getSync('group.foo')).toEqual('My name is {{name}}');
-        expect(language.getSync('group.foo', 'de')).toEqual('Mein Name ist {{name}}');
+        expect(await language.get('group.foo')).toEqual('My name is {{name}}');
+        expect(await language.get('group.foo', 'de')).toEqual('Mein Name ist {{name}}');
 
-        expect(language.getSync('group.foo', {name: 'Peter'})).toEqual('My name is Peter');
-        expect(language.getSync('group.foo', {name: 'Peter'}, 'de')).toEqual('Mein Name ist Peter');
+        expect(await language.get('group.foo', {name: 'Peter'})).toEqual('My name is Peter');
+        expect(await language.get('group.foo', {name: 'Peter'}, 'de')).toEqual('Mein Name ist Peter');
     });
 
-    it('should set groups record', () => {
+    it('should set groups record', async () => {
         const language = new Ilingo();
 
-        language.setSync({
+        await language.set({
             group: {
                 foo: 'My name is {{name}}'
             }
         }, 'en');
 
-        language.setSync({
+        await language.set({
             group: {
                 foo: 'Mein Name ist {{name}}'
             }
         }, {locale: 'de'});
 
-        language.setSync({
+        await language.set({
             foo: 'Mon nom est {{name}}'
         }, { locale: 'fr', group: 'group'});
 
-        expect(language.getSync('group.foo')).toEqual('My name is {{name}}');
-        expect(language.getSync('foo', {group: 'group', locale: 'de'})).toEqual('Mein Name ist {{name}}');
-        expect(language.getSync('group.foo', {locale: 'fr'})).toEqual('Mon nom est {{name}}');
+        expect(await language.get('group.foo')).toEqual('My name is {{name}}');
+        expect(await language.get('foo', {group: 'group', locale: 'de'})).toEqual('Mein Name ist {{name}}');
+        expect(await language.get('group.foo', {locale: 'fr'})).toEqual('Mon nom est {{name}}');
     })
 
     it('should set on the fly', async () => {
         const language = new Ilingo();
 
-        language.setSync('foo.bar', 'value on the fly');
-        let value = language.getSync('foo.bar');
+        await language.set('foo.bar', 'value on the fly');
+        let value = await language.get('foo.bar');
         expect(value).toEqual('value on the fly');
 
-        language.setSync('foo.baz', 'value with param {{param}} on the fly');
+        await language.set('foo.baz', 'value with param {{param}} on the fly');
         value = await language.get('foo.baz', {param: 'lorem'});
         expect(value).toEqual('value with param lorem on the fly');
     });
