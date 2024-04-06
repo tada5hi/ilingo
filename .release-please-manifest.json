@@ -1,5 +1,6 @@
 {
     "packages/ilingo": "3.2.0",
     "packages/fs": "3.2.0",
-    "packages/vue": "3.2.0"
+    "packages/vue": "3.2.0",
+    "packages/vuelidate": "0.0.0"
 }

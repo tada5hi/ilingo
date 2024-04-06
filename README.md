@@ -41,6 +41,14 @@ This package contains an adapter for vue.
 
 [Documentation](./packages/vue/README.md)
 
+### Vue 🖌️
+
+**`@ilingo/vuelidate`**
+
+This package contains an adapter for the vuelidate library.
+
+[Documentation](./packages/vuelidate/README.md)
+
 ## Usage
 
 Create an instance and set the default locale.

@@ -12,6 +12,9 @@
         },
         "packages/vue": {
             "component": "vue"
+        },
+        "packages/vuelidate": {
+            "component": "vue"
         }
     },
     "plugins": [
@@ -25,7 +28,8 @@
             "components": [
                 "ilingo",
                 "fs",
-                "vue"
+                "vue",
+                "vuelidate"
             ]
         }
     ],
