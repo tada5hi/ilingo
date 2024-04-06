@@ -23,9 +23,9 @@ describe('src/store/file-system', function () {
         expect(await language.getLocales()).toEqual(['de', 'en', 'fr']);
     });
 
-    it('should get locales sync',  () => {
+    it('should get locales sync',  async () => {
         const language = new Ilingo({ store });
-        expect(language.getLocalesSync()).toEqual(['de', 'en', 'fr']);
+        expect(await language.getLocales()).toEqual(['de', 'en', 'fr']);
     });
 
     it('should work with nested input', async () => {
@@ -44,13 +44,13 @@ describe('src/store/file-system', function () {
 
         language.setLocale('de');
 
-        output = language.getSync('form.nested.key');
+        output = await language.get('form.nested.key');
         expect(output).toEqual('Ich bin verschachtelt');
 
-        output = language.getSync('form.nested.deep.key');
+        output = await language.get('form.nested.deep.key');
         expect(output).toEqual('Ich bin tief verschachtelt');
 
-        output = language.getSync('form.nested.keyWithParam', {param: 'foo'});
+        output = await language.get('form.nested.keyWithParam', {param: 'foo'});
         expect(output).toEqual('Ich bin mit parameter foo verschachtelt');
     })
 
@@ -88,38 +88,4 @@ describe('src/store/file-system', function () {
         line = await language.get('form.foo', {});
         expect(line).toEqual('foo');
     })
-
-    // ------------------------------------------------
-
-    it('should translate sync',  () => {
-        const language = new Ilingo({ store  });
-
-        let line = language.getSync('form.email');
-        expect(line).toBeDefined();
-        expect(line).toEqual('The input must be a valid email address.');
-
-        line = language.getSync('form.email', 'de');
-        expect(line).toEqual('Die Eingabe muss eine gültige E-Mail sein.');
-
-        line = language.getSync('form.maxLength', {max: 10});
-        expect(line).toEqual('The length of the input must be less than 10.');
-
-        line = language.getSync('form.maxLength', {max: 5});
-        expect(line).toEqual('The length of the input must be less than 5.');
-
-        language.setLocale('de');
-
-        line = language.getSync('form.maxLength', {max: 5});
-        expect(line).toEqual('Die Länge der Eingabe muss kleiner als 5 sein.');
-    });
-
-    it('should not translate sync', () => {
-        const language = new Ilingo({ store });
-
-        let line = language.getSync('form.maxLength', {max: 5}, 'ru');
-        expect(line).toEqual('maxLength');
-
-        line = language.getSync('form.foo', {});
-        expect(line).toEqual('foo');
-    });
 });

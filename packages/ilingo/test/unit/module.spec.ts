@@ -10,7 +10,7 @@ import {Ilingo, MemoryStore} from "../../src";
 describe('src/module.ts', () => {
     it('should get/set directory + locale + groups', async () => {
         const ilingo = new Ilingo({
-            data: {
+            store: new MemoryStore({
                 ru: {
                     foo: {
                         line: 'bar-baz'
@@ -21,7 +21,7 @@ describe('src/module.ts', () => {
                         line: 'baz-boz'
                     }
                 }
-            }
+            })
         });
 
         expect(await ilingo.get('foo.line', undefined, 'ru')).toEqual('bar-baz');
@@ -34,7 +34,7 @@ describe('src/module.ts', () => {
 
     it('should get locales', async () => {
         const ilingo = new Ilingo({
-            data: {
+            store: new MemoryStore({
                 ru: {
                     foo: {
                         line: 'bar-baz'
@@ -45,7 +45,7 @@ describe('src/module.ts', () => {
                         line: 'baz-boz'
                     }
                 }
-            }
+            })
         });
 
         expect(await ilingo.getLocales()).toEqual(['ru', 'en']);

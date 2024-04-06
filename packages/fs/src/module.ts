@@ -8,9 +8,7 @@
 import type { LocatorOptionsInput } from 'locter';
 import {
     load,
-    loadSync,
     locateMany,
-    locateManySync,
 } from 'locter';
 import path from 'node:path';
 import type { Merger } from 'smob';
@@ -49,20 +47,8 @@ export class FSStore extends MemoryStore {
         return super.get(context);
     }
 
-    override getSync(context: StoreGetContext): string | undefined {
-        this.loadGroupSync(context.group, context.locale);
-
-        return super.getSync(context);
-    }
-
     override async set(context: StoreSetContext): Promise<void> {
         return super.set(context);
-
-        // todo: write to file!
-    }
-
-    override setSync(context: StoreSetContext): void {
-        return super.setSync(context);
 
         // todo: write to file!
     }
@@ -71,17 +57,6 @@ export class FSStore extends MemoryStore {
 
     override async getLocales() : Promise<string[]> {
         const locations = await locateMany(['*'], {
-            path: this.directories,
-            onlyDirectories: true,
-        });
-
-        return locations
-            .filter((location) => isBCP47LanguageCode(location.name))
-            .map((location) => location.name);
-    }
-
-    override getLocalesSync() : string[] {
-        const locations = locateManySync(['*'], {
             path: this.directories,
             onlyDirectories: true,
         });
@@ -135,39 +110,6 @@ export class FSStore extends MemoryStore {
         this.data[locale][group] = this.mergeFiles(files);
 
         return this.data[locale][group];
-    }
-
-    loadGroupSync(file: string, locale: string) : Record<string, any> {
-        if (this.isLoaded(file, locale)) {
-            /* istanbul ignore next */
-            return {};
-        }
-
-        this.initLines(file, locale);
-        this.setIsLoaded(file, locale);
-
-        const locations = locateManySync(
-            this.addExtensionPattern(file),
-            this.buildLocatorOptionsForLocale(locale),
-        );
-
-        if (locations.length === 0) {
-            return {};
-        }
-
-        const files = [];
-        for (let i = 0; i < locations.length; i++) {
-            const file = loadSync(locations[i]);
-            if (file && file.default) {
-                files.push(file.default);
-            } else {
-                files.push(file);
-            }
-        }
-
-        this.data[locale][file] = this.mergeFiles(files);
-
-        return this.data[locale][file];
     }
 
     protected buildLocatorOptionsForLocale(locale?: string) : LocatorOptionsInput {

@@ -5,26 +5,29 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import { MemoryStore } from 'ilingo';
 import { createApp } from 'vue';
 import App from './App.vue';
 import { install } from '../src';
 
 const app = createApp(App);
 install(app, {
-    data: {
-        // locale: de
-        de: {
-            // group: app
-            app: {
-                key: 'Hallo mein Name ist {{name}}',
+    store: new MemoryStore({
+        data: {
+            // locale: de
+            de: {
+                // group: app
+                app: {
+                    key: 'Hallo mein Name ist {{name}}',
+                },
+            },
+            // locale: en
+            en: {
+                app: {
+                    key: 'Hello my name is {{name}}',
+                },
             },
         },
-        // locale: en
-        en: {
-            app: {
-                key: 'Hello my name is {{name}}',
-            },
-        },
-    },
+    }),
 });
 app.mount('#app');

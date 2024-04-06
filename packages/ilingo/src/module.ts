@@ -32,8 +32,6 @@ export class Ilingo {
 
         this.locale = config.locale;
         this.store = config.store;
-
-        // todo: set data as data to sync
     }
 
     // ----------------------------------------------------
