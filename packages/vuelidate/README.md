@@ -1,4 +1,4 @@
-# @ilingo/vuelidate 🖌️
+# @ilingo/vuelidate 🎉
 
 [![npm version](https://badge.fury.io/js/@ilingo%2Fvuelidate.svg)](https://badge.fury.io/js/@ilingo%2Fvuelidate)
 [![main](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml)
@@ -23,7 +23,7 @@ npm install @ilingo/vuelidate --save
 ## Usage
 
 ```typescript
-import { install } from '@ilingo/vue';
+import { install } from '@ilingo/vuelidate';
 import { createApp } from 'vue';
 
 const app = createApp(/* */);

@@ -40,7 +40,7 @@ export function useValidationMessages(
 
         for (let i = 0; i < rules.value.length; i++) {
             const rule = rules.value[i];
-            const ruleResult = result[rule];
+            const ruleResult = (result as Record<string, any>)[rule];
 
             const value = await instance.get(
                 `${prefix.value || 'validation'}.${rule}`,

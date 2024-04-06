@@ -8,6 +8,7 @@ Ilingo is a lightweight library for translation and internationalization
   - [Core](#core-)
   - [FS](#fs-)
   - [Vue](#vue-)
+  - [Vuelidate](#vuelidate-)
 - [Usage](#usage)
 - [License](#license)
   
@@ -41,7 +42,7 @@ This package contains an adapter for vue.
 
 [Documentation](./packages/vue/README.md)
 
-### Vue 🖌️
+### Vuelidate 🎉
 
 **`@ilingo/vuelidate`**
 
