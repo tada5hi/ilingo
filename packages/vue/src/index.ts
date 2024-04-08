@@ -15,9 +15,6 @@ export function install(app: App, options: Options = {}) : void {
     provideLocale(options.locale || 'en', app);
 
     const instance = useIlingo();
-    if (options.data) {
-        instance.setSync(options.data);
-    }
 
     app.component('ITranslate', ITranslate);
 

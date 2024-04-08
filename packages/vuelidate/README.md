@@ -32,7 +32,7 @@ install(app, {
     data: {
         // locale: de
         de: {
-            // group: app
+            // group: vuelidate
             vuelidate: {
                 maxLength: 'Die Länge der Eingabe muss kleiner als {{max}} sein.',
                 minLength: 'Die Länge der Eingabe muss größer als {{min}} sein.',
@@ -83,10 +83,6 @@ app.mount('#app');
         <div>
             <IVuelidate :validation="v$.text" />
         </div>
-    </div>
-    <div>
-        {{ translation }}
-        <!-- Hello my name is Paul -->
     </div>
     <button type="button" @click.prevent="set('en')">
         en

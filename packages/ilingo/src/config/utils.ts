@@ -9,12 +9,9 @@ import { LOCALE_DEFAULT } from '../constants';
 import { MemoryStore } from '../store';
 import type { Config, ConfigInput } from './type';
 
-export function buildConfig(input?: ConfigInput) : Config {
-    input = input || {};
-
+export function buildConfig(input: ConfigInput = {}) : Config {
     return {
         locale: input.locale || LOCALE_DEFAULT,
-        data: input.data || {},
         store: input.store || new MemoryStore(),
     };
 }

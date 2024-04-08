@@ -24,20 +24,3 @@ export async function lang(...input: any[]): Promise<string | undefined> {
     // @ts-ignore
     return useIlingo().get(...input);
 }
-
-export function langSync(keyWithGroup: DotKey, locale?: string) : string | undefined;
-
-export function langSync(keyWithGroup: DotKey, context?: LocaleContext) : string | undefined;
-
-export function langSync(keyWithGroup: DotKey, data?: Record<string, any>) : string | undefined;
-
-export function langSync(keyWithGroup: DotKey, data?: Record<string, any>, locale?: string) : string | undefined;
-
-export function langSync(key: string, context: GroupContext & Partial<LocaleContext>) : string | undefined;
-
-export function langSync(key: string, data: Record<string, any>, context: GroupContext & Partial<LocaleContext>) : string | undefined;
-export function langSync(...input: any[]) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    return useIlingo().getSync(...input);
-}

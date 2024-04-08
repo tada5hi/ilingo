@@ -12,15 +12,11 @@ import type { Store, StoreGetContext, StoreSetContext } from './type';
 export class MemoryStore implements Store {
     protected data : LocalesRecord;
 
-    constructor() {
-        this.data = {};
+    constructor(data?: LocalesRecord) {
+        this.data = data || {};
     }
 
     async get(context: StoreGetContext): Promise<string | undefined> {
-        return this.getSync(context);
-    }
-
-    getSync(context: StoreGetContext): string | undefined {
         if (
             !this.data[context.locale] ||
             !this.data[context.locale][context.group]
@@ -41,10 +37,6 @@ export class MemoryStore implements Store {
     }
 
     async set(context: StoreSetContext): Promise<void> {
-        this.setSync(context);
-    }
-
-    setSync(context: StoreSetContext): void {
         this.initLines(context.group, context.locale);
 
         setObjectPathProperty(
@@ -65,10 +57,6 @@ export class MemoryStore implements Store {
     }
 
     async getLocales(): Promise<string[] | undefined> {
-        return this.getLocalesSync();
-    }
-
-    getLocalesSync(): string[] | undefined {
         return Object.keys(this.data);
     }
 }

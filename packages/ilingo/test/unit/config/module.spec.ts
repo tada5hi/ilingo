@@ -6,14 +6,13 @@
  */
 
 import { buildConfig } from "../../../src";
-import {MemoryStore} from "../../../src/store";
+import {MemoryStore} from "../../../src";
 
 describe('src/config', function () {
     it('should build config', () => {
         let config = buildConfig();
         expect(config).toBeDefined();
         expect(config.locale).toEqual('en');
-        expect(config.data).toEqual({});
         expect(config.store).toBeInstanceOf(MemoryStore);
     });
 });

@@ -32,8 +32,6 @@ export class Ilingo {
 
         this.locale = config.locale;
         this.store = config.store;
-
-        this.setSync(config.data);
     }
 
     // ----------------------------------------------------
@@ -66,10 +64,6 @@ export class Ilingo {
         return this.store.getLocales();
     }
 
-    getLocalesSync() :string[] {
-        return this.store.getLocalesSync();
-    }
-
     // ----------------------------------------------------
 
     async set(localesRecord: LocalesRecord) : Promise<void>;
@@ -99,31 +93,6 @@ export class Ilingo {
 
     // ----------------------------------------------------
 
-    setSync(data: Record<string, any>) : void;
-
-    setSync(groupsRecord: GroupsRecord, groupOrLocale?: string) : void;
-
-    setSync(groupsRecord: GroupsRecord, context?: LocaleContext) : void;
-
-    setSync(linesRecord: LinesRecord, context: Partial<LocaleContext> & GroupContext) : void;
-
-    setSync(keyWithGroup: DotKey, value: string | LinesRecord, context?: LocaleContext) : void;
-
-    setSync(key: string, value: string, context: Partial<LocaleContext> & GroupContext) : void;
-
-    setSync(...input: any[]) {
-        const parsed = parseSetArguments(...input);
-
-        for (let i = 0; i < parsed.length; i++) {
-            this.store.setSync({
-                ...parsed[i],
-                locale: parsed[i].locale || this.getLocale(),
-            });
-        }
-    }
-
-    // ----------------------------------------------------
-
     async get(keyWithGroup: DotKey, locale?: string) : Promise<string | undefined>;
 
     async get(keyWithGroup: DotKey, context?: LocaleContext) : Promise<string | undefined>;
@@ -143,36 +112,6 @@ export class Ilingo {
         }
 
         const message = await this.store.get({
-            locale: parsed.locale || this.getLocale(),
-            group: parsed.group,
-            key: parsed.key,
-        });
-
-        return this.format(message || parsed.key, parsed.data || {});
-    }
-
-    // ----------------------------------------------------
-
-    getSync(keyWithGroup: DotKey, locale?: string) : string | undefined;
-
-    getSync(keyWithGroup: DotKey, context?: LocaleContext) : string | undefined;
-
-    getSync(keyWithGroup: DotKey, data?: Record<string, any>) : string | undefined;
-
-    getSync(keyWithGroup: DotKey, data?: Record<string, any>, locale?: string) : string | undefined;
-
-    getSync(key: string, context: GroupContext & Partial<LocaleContext>) : string | undefined;
-
-    getSync(key: string, data: Record<string, any>, context: GroupContext & Partial<LocaleContext>) : string | undefined;
-
-    getSync(...input: any[]) : string | undefined {
-        const parsed = parseGetArguments(...input);
-
-        if (!parsed) {
-            return undefined;
-        }
-
-        const message = this.store.getSync({
             locale: parsed.locale || this.getLocale(),
             group: parsed.group,
             key: parsed.key,
