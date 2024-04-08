@@ -63,12 +63,11 @@ const ilingo = new Ilingo({
 ```
 
 The **default** (memory-) store can be initialized with some default data.
-This can be done during instance creation or afterward using the `set` method.
 
 ```typescript
-import { Ilingo } from 'ilingo';
+import { Ilingo, MemoryStore } from 'ilingo';
 
-const ilingo = new Ilingo({
+const store = new MemoryStore({
     data: {
         // locale: de
         de: {
@@ -82,18 +81,13 @@ const ilingo = new Ilingo({
             app: {
                 key: 'Hello my name is {{name}}'
             }
-        }
-    },
-    locale: 'en'
+        },
+    }
 });
 
-ilingo.set({
-    // locale: fr
-    fr: {
-        app: {
-            key: "Je m'appelle {{name}}"
-        }
-    }
+const ilingo = new Ilingo({
+    store,
+    locale: 'en'
 });
 ```
 
@@ -110,13 +104,13 @@ const ilingo = new Ilingo({
     // ...
 });
 
-console.log(ilingo.getSync('app.key'));
+console.log(await ilingo.get('app.key'));
 // Hello my name is {{name}}
 
-console.log(ilingo.getSync('app.key', { name: 'Peter' }));
+console.log(await ilingo.get('app.key', { name: 'Peter' }));
 // Hello my name is Peter
 
-console.log(ilingo.getSync('app.key', { name: 'Peter' }, 'de'));
+console.log(await ilingo.get('app.key', { name: 'Peter' }, 'de'));
 // Hallo mein Name ist Peter
 ```
 
@@ -137,7 +131,6 @@ console.log(await ilingo.get('app.key', { name: 'Peter' }));
 console.log(await ilingo.get('app.key', { name: 'Peter' }, 'de'));
 // Hallo mein Name ist Peter
 ```
-
 
 To learn more about usage, inspect the [README.md](./packages/ilingo/README.md) of the core package.
 

@@ -31,14 +31,6 @@ Ilingo is a lightweight library for translation and internationalization.
 npm install ilingo --save
 ```
 
----
-**Important NOTE**
-
-The library provides `sync` and `async` methods to receive a (compiled) locale key string. The reason
-for this is that a store can be accessed in a blocking or non-blocking way ⭐.
-
----
-
 ## Configuration
 While full localization of an application is a complex subject,
 swapping out strings in your application for different supported languages/locales is simple.
@@ -59,11 +51,10 @@ const ilingo = new Ilingo({
 ```
 
 The **default** (memory-) store can be initialized with some default data.
-This can be done during instance creation or afterward using the `set` method.
 ```typescript
 import { Ilingo } from 'ilingo';
 
-const ilingo = new Ilingo({
+const store = new MemoryStore({
     data: {
         // locale: de
         de: {
@@ -77,18 +68,13 @@ const ilingo = new Ilingo({
             app: {
                 key: 'Hello my name is {{name}}'
             }
-        }
-    },
-    locale: 'en'
+        },
+    }
 });
 
-ilingo.set({
-    // locale: fr
-    fr: {
-        app: {
-            key: "Je m'appelle {{name}}"
-        }
-    }
+const ilingo = new Ilingo({
+    store,
+    locale: 'en'
 });
 ```
 
@@ -97,25 +83,6 @@ as the first parameter, separated by a period (.).
 
 After that you can simply access the locale string, as described in the following:
 
-**`Sync`**
-```typescript
-import { Ilingo } from 'ilingo';
-
-const ilingo = new Ilingo({
-    // ...
-});
-
-console.log(ilingo.getSync('app.key'));
-// Hello my name is {{name}}
-
-console.log(ilingo.getSync('app.key', { name: 'Peter' }));
-// Hello my name is Peter
-
-console.log(ilingo.getSync('app.key', { name: 'Peter' }, 'de'));
-// Hallo mein Name ist Peter
-```
-
-**`Async`**
 ```typescript
 import { Ilingo } from 'ilingo';
 
@@ -164,9 +131,6 @@ The helper always refers singleton instance.
 import { useIlingo } from 'ilingo';
 
 (async () => {
-    console.log(useIlingo().getSync('app.key'));
-
-    // lang is a helper function for fast access ;)
     console.log(await lang('app.key'));
 })();
 ```
@@ -179,7 +143,7 @@ Data properties can be injected as a second argument, e.g.
 import { lang, useIlingo } from 'ilingo';
 
 const ilingo = useIlingo();
-ilingo.set('app.age', 'I am {{age}} years old.');
+await ilingo.set('app.age', 'I am {{age}} years old.');
 
 const output = await lang('app.age', {age: 18});
 console.log(output);
@@ -227,34 +191,9 @@ console.log(output);
 // Ich bin 18 Jahre alt
 ```
 
-### Async/Sync
-
-**`Async`**
-
-```typescript
-import { useIlingo } from 'ilingo';
-
-console.log(await useIlingo().get('app.languageKey'));
-
-// lang is a helper function for fast access ;)
-console.log(await lang('app.languageKey'));
-```
-
-**`Sync`**
-
-```typescript
-import { useIlingo } from 'ilingo';
-
-console.log(useIlingo().getSync('app.languageKey'));
-
-// lang is a helper function for fast access ;)
-console.log(langSync('app.languageKey'));
-```
-
 ### Lazy
 
-Another option is to not access the file system and add
-translations afterward.
+Another option is to add translations on the fly and access them afterwards.
 
 ```typescript
 import { useIlingo } from 'ilingo';
@@ -262,8 +201,8 @@ import { useIlingo } from 'ilingo';
 (async () => {
     const ilingo = useIlingo();
 
-    ilingo.set('foo.bar', 'baz {{param}}');
-    ilingo.set('foo.bar', 'boz {{param}}', 'de');
+    await ilingo.set('foo.bar', 'baz {{param}}');
+    await ilingo.set('foo.bar', 'boz {{param}}', 'de');
 
     let output = await ilingo.get('foo.bar', {param: 'x'});
     console.log(output);
