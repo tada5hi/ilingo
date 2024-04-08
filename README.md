@@ -4,51 +4,13 @@ Ilingo is a lightweight library for translation and internationalization
 
 **Table of Contents**
 
+- [Usage](#usage)
 - [Packages](#packages)
   - [Core](#core-)
   - [FS](#fs-)
   - [Vue](#vue-)
   - [Vuelidate](#vuelidate-)
-- [Usage](#usage)
 - [License](#license)
-  
-## Packages
-
-The repository contains the following packages:
-
-### Core 💬
-
-**`ilingo`**
-
-This package contains the base library 
-for translation and internationalization
-
-[Documentation](./packages/ilingo/README.md)
-
-### FS 🗃️
-
-**`@ilingo/fs`**
-
-This package contains a file-system store for the
-ilingo package.
-
-[Documentation](./packages/fs/README.md)
-
-### Vue 🖌️
-
-**`@ilingo/vue`**
-
-This package contains an adapter for vue.
-
-[Documentation](./packages/vue/README.md)
-
-### Vuelidate 🎉
-
-**`@ilingo/vuelidate`**
-
-This package contains an adapter for the vuelidate library.
-
-[Documentation](./packages/vuelidate/README.md)
 
 ## Usage
 
@@ -96,7 +58,6 @@ as the first parameter, separated by a period (.).
 
 After that you can simply access the locale string, as described in the following:
 
-**`Sync`**
 ```typescript
 import { Ilingo } from 'ilingo';
 
@@ -114,25 +75,45 @@ console.log(await ilingo.get('app.key', { name: 'Peter' }, 'de'));
 // Hallo mein Name ist Peter
 ```
 
-**`Async`**
-```typescript
-import { Ilingo } from 'ilingo';
+To learn more about usage, inspect the [README.md](./packages/ilingo/README.md) of the core package.  
 
-const ilingo = new Ilingo({
-    // ...
-});
+## Packages
 
-console.log(await ilingo.get('app.key'));
-// Hello my name is {{name}}
+The repository contains the following packages:
 
-console.log(await ilingo.get('app.key', { name: 'Peter' }));
-// Hello my name is Peter
+### Core 💬
 
-console.log(await ilingo.get('app.key', { name: 'Peter' }, 'de'));
-// Hallo mein Name ist Peter
-```
+**`ilingo`**
 
-To learn more about usage, inspect the [README.md](./packages/ilingo/README.md) of the core package.
+This package contains the base library 
+for translation and internationalization
+
+[Documentation](./packages/ilingo/README.md)
+
+### FS 🗃️
+
+**`@ilingo/fs`**
+
+This package contains a file-system store for the
+ilingo package.
+
+[Documentation](./packages/fs/README.md)
+
+### Vue 🖌️
+
+**`@ilingo/vue`**
+
+This package contains an adapter for vue.
+
+[Documentation](./packages/vue/README.md)
+
+### Vuelidate 🎉
+
+**`@ilingo/vuelidate`**
+
+This package contains an adapter for the vuelidate library.
+
+[Documentation](./packages/vuelidate/README.md)
 
 ## License
 
