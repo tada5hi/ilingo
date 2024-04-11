@@ -5,19 +5,16 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { install as installVue } from '@ilingo/vue';
+import { useIlingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
 import { providePrefix } from './di';
 import type { Options } from './types';
 
 export function install(app: App, options: Options = {}) : void {
-    const { prefix, ...opts } = options;
+    const prefix = options.prefix || 'vuelidate';
+    providePrefix(prefix, app);
 
-    installVue(app, opts);
-
-    if (prefix) {
-        providePrefix(prefix, app);
-    }
+    // todo: register translations (en,de)
 }
 
 export default {

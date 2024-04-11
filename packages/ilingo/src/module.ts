@@ -7,7 +7,7 @@
 
 import { buildConfig } from './config';
 import type { ConfigInput } from './config';
-import { LOCALE_DEFAULT } from './constants';
+import { LOCALE_DEFAULT, STORE_DEFAULT } from './constants';
 import type { Store } from './store';
 import type {
     DotKey,
@@ -21,7 +21,7 @@ import {
 } from './utils';
 
 export class Ilingo {
-    protected store : Store;
+    public readonly stores : Map<string | symbol, Store>;
 
     protected locale: string;
 
@@ -31,17 +31,9 @@ export class Ilingo {
         const config = buildConfig(input);
 
         this.locale = config.locale;
-        this.store = config.store;
-    }
 
-    // ----------------------------------------------------
-
-    setStore(value: Store) {
-        this.store = value;
-    }
-
-    getStore() : Store {
-        return this.store;
+        this.stores = new Map<string | symbol, Store>();
+        this.stores.set(STORE_DEFAULT, config.store);
     }
 
     // ----------------------------------------------------
@@ -60,8 +52,19 @@ export class Ilingo {
 
     // ----------------------------------------------------
 
-    getLocales() : Promise<string[]> {
-        return this.store.getLocales();
+    async getLocales() : Promise<string[]> {
+        const locales : string[] = [];
+        const entries = this.stores.values();
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const store = entries.next();
+            if (store.done) {
+                break;
+            }
+
+            locales.push(...await store.value.getLocales());
+        }
+        return Array.from(new Set(locales));
     }
 
     // ----------------------------------------------------
@@ -81,8 +84,10 @@ export class Ilingo {
     async set(...input: any[]) {
         const parsed = parseSetArguments(...input);
         const promises : Promise<void>[] = [];
+
+        const store = this.stores.get(STORE_DEFAULT);
         for (let i = 0; i < parsed.length; i++) {
-            promises.push(this.store.set({
+            promises.push(store.set({
                 ...parsed[i],
                 locale: parsed[i].locale || this.getLocale(),
             }));
@@ -111,11 +116,25 @@ export class Ilingo {
             return undefined;
         }
 
-        const message = await this.store.get({
-            locale: parsed.locale || this.getLocale(),
-            group: parsed.group,
-            key: parsed.key,
-        });
+        let message : string | undefined;
+        const entries = this.stores.values();
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const store = entries.next();
+            if (store.done) {
+                break;
+            }
+
+            message = await store.value.get({
+                locale: parsed.locale || this.getLocale(),
+                group: parsed.group,
+                key: parsed.key,
+            });
+
+            if (message) {
+                break;
+            }
+        }
 
         return this.format(message || parsed.key, parsed.data || {});
     }

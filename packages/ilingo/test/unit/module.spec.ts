@@ -63,15 +63,6 @@ describe('src/module.ts', () => {
         expect(ilingo.getLocale()).toEqual('en');
     });
 
-    it('should set/get store', () => {
-        const store = new MemoryStore();
-        const ilingo = new Ilingo();
-
-        ilingo.setStore(store);
-
-        expect(ilingo.getStore()).toEqual(store);
-    })
-
     it('should set/get locales record', async () => {
         const language = new Ilingo();
 
