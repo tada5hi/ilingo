@@ -1,22 +1,19 @@
 <script>
-import { IVuelidate } from "../src";
-import {defineComponent, reactive} from "vue";
-import useVuelidate from "@vuelidate/core";
-import { minLength, maxLength } from "@vuelidate/validators";
-import {injectLocale} from "@ilingo/vue";
+import { defineComponent, reactive } from 'vue';
+import useVuelidate from '@vuelidate/core';
+import { maxLength, minLength } from '@vuelidate/validators';
+import { injectLocale } from '@ilingo/vue';
+import { IVuelidate } from '../src';
 
 export default defineComponent({
     components: {
-        IVuelidate
+        IVuelidate,
     },
     setup() {
         const locale = injectLocale();
-
-        const toggle = () => {
-            locale.value = locale.value === 'de' ?
-                'en' :
-                'de';
-        }
+        const set = (value) => {
+            locale.value = value;
+        };
 
         const form = reactive({
             text: 'foo',
@@ -31,24 +28,51 @@ export default defineComponent({
 
         return {
             form,
-            toggle,
+            set,
             v$,
         };
-    }
-})
+    },
+});
 </script>
 <template>
     <div>
         <div>
-            <input type="text" v-model="form.text" />
+            <div>
+                <input
+                    v-model="form.text"
+                    type="text"
+                >
+            </div>
+            <div>
+                <IVuelidate :validation="v$.text" />
+            </div>
         </div>
         <div>
-            <IVuelidate :validation="v$.text" />
+            <button
+                type="button"
+                @click.prevent="set('de')"
+            >
+                de
+            </button>
+            <button
+                type="button"
+                @click.prevent="set('en')"
+            >
+                en
+            </button>
+
+            <button
+                type="button"
+                @click.prevent="set('es')"
+            >
+                es
+            </button>
+            <button
+                type="button"
+                @click.prevent="set('fr')"
+            >
+                fr
+            </button>
         </div>
-    </div>
-    <div>
-        <button type="button" @click.prevent="toggle">
-            Toggle
-        </button>
     </div>
 </template>

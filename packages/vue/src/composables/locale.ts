@@ -6,7 +6,8 @@
  */
 
 import {
-    inject, isRef, provide, ref,
+    inject,
+    isRef, provide, ref,
 } from 'vue';
 
 import type {
@@ -18,7 +19,7 @@ const LocaleSymbol = Symbol.for('ILocale');
 
 export function provideLocale(
     locale: string | Ref<string>,
-    app: App,
+    app?: App,
 ) {
     const value = isRef(locale) ? locale : ref(locale);
 
@@ -30,10 +31,12 @@ export function provideLocale(
     app.provide(LocaleSymbol, value);
 }
 
-export function injectLocale() : Ref<string> {
-    const locale = inject<string | Ref<string>>(LocaleSymbol);
+export function injectLocale(app?: App) : Ref<string> {
+    let locale = inject<string | Ref<string>>(LocaleSymbol);
     if (!locale) {
-        return ref('en');
+        locale = ref('en');
+        provideLocale(locale, app);
+        return locale;
     }
 
     return isRef(locale) ? locale : ref(locale);

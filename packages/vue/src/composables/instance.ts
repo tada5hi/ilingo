@@ -5,14 +5,15 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Ilingo } from 'ilingo';
+import type { Ilingo } from 'ilingo';
 import {
-    inject, provide,
+    provide,
 } from 'vue';
 
 import type {
     App,
 } from 'vue';
+import { inject } from '../utils';
 
 const IlingoSymbol = Symbol.for('Ilingo');
 
@@ -28,11 +29,15 @@ export function provideIlingo(
     app.provide(IlingoSymbol, ilingo);
 }
 
-export function injectIlingo() : Ilingo {
-    const instance = inject<Ilingo>(IlingoSymbol);
+export function injectIlingo(app?: App) : Ilingo {
+    const instance = inject<Ilingo>(IlingoSymbol, app);
     if (!instance) {
-        return new Ilingo();
+        throw new Error('An ilingo instance is not injected in the vue context.');
     }
 
     return instance;
+}
+
+export function injectIlingoSafe(app?: App) : Ilingo | undefined {
+    return inject<Ilingo>(IlingoSymbol, app);
 }

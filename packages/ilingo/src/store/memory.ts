@@ -12,8 +12,8 @@ import type { Store, StoreGetContext, StoreSetContext } from './type';
 export class MemoryStore implements Store {
     protected data : LocalesRecord;
 
-    constructor(data?: LocalesRecord) {
-        this.data = data || {};
+    constructor(data: LocalesRecord = {}) {
+        this.data = data;
     }
 
     async get(context: StoreGetContext): Promise<string | undefined> {
@@ -56,7 +56,7 @@ export class MemoryStore implements Store {
         }
     }
 
-    async getLocales(): Promise<string[] | undefined> {
+    async getLocales(): Promise<string[]> {
         return Object.keys(this.data);
     }
 }

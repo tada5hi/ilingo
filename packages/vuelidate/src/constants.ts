@@ -5,11 +5,4 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { createApp } from 'vue';
-import App from './App.vue';
-import { install } from '../src';
-
-const app = createApp(App);
-install(app);
-
-app.mount('#app');
+export const VUELIDATE_STORE_KEY = Symbol.for('VuelidateStore');

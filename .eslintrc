@@ -17,6 +17,7 @@
         }],
         "no-shadow": "off",
         "no-use-before-define": "off",
+        "no-underscore-dangle": "off",
 
         "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/no-use-before-define": "off"

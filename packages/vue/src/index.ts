@@ -8,13 +8,16 @@
 import { useIlingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
 import ITranslate from './component.vue';
-import { provideIlingo, provideLocale } from './composables';
+import { injectIlingoSafe, provideIlingo, provideLocale } from './composables';
 import type { Options } from './types';
 
 export function install(app: App, options: Options = {}) : void {
     provideLocale(options.locale || 'en', app);
 
-    const instance = useIlingo();
+    let instance = injectIlingoSafe(app);
+    if (!instance) {
+        instance = useIlingo();
+    }
 
     app.component('ITranslate', ITranslate);
 
@@ -28,3 +31,4 @@ export default {
 export { default as ITranslate } from './component.vue';
 export * from './composables';
 export * from './types';
+export * from './utils';

@@ -10,7 +10,6 @@ import { injectIlingo, injectLocale } from '@ilingo/vue';
 import type { BaseValidation } from '@vuelidate/core';
 import type { Ref } from 'vue';
 import { computed } from 'vue';
-import { injectPrefix } from './di';
 import { isValidationRuleResult } from './utils';
 
 export function useValidationMessages(
@@ -33,7 +32,6 @@ export function useValidationMessages(
 
     const instance = injectIlingo();
     const locale = injectLocale();
-    const prefix = injectPrefix();
 
     return computedAsync(async () => {
         const output : Record<string, string> = {};
@@ -43,7 +41,7 @@ export function useValidationMessages(
             const ruleResult = (result as Record<string, any>)[rule];
 
             const value = await instance.get(
-                `${prefix.value || 'vuelidate'}.${rule}`,
+                `vuelidate.${rule}`,
                 ruleResult.$params,
                 locale.value,
             );
