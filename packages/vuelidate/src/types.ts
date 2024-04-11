@@ -6,10 +6,12 @@
  */
 
 import type { RuleResultWithParams } from '@vuelidate/core';
-import type { ConfigInput } from 'ilingo';
+import type { LinesRecord, LocalesRecord } from 'ilingo';
 
-export type Options = ConfigInput & {
-    prefix?: string
+export type Options = {
+    prefix?: string,
+    locale?: string,
+    data?: LocalesRecord
 };
 
 export type ValidationRuleResult = Omit<RuleResultWithParams, '$params'> & {
