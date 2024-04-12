@@ -65,13 +65,29 @@ const ilingo = new Ilingo({
     // ...
 });
 
-console.log(await ilingo.get('app.key'));
+await ilingo.get({ 
+    group: 'app', 
+    key: 'key'
+});
 // Hello my name is {{name}}
 
-console.log(await ilingo.get('app.key', { name: 'Peter' }));
+await ilingo.get({ 
+    group: 'app', 
+    key: 'key', 
+    data: {
+        name: 'Peter'
+    }
+});
 // Hello my name is Peter
 
-console.log(await ilingo.get('app.key', { name: 'Peter' }, 'de'));
+await ilingo.get({
+    group: 'app',
+    key: 'key',
+    data: {
+        name: 'Peter'
+    },
+    locale: 'de'
+});
 // Hallo mein Name ist Peter
 ```
 

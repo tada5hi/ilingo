@@ -40,11 +40,12 @@ export function useValidationMessages(
             const rule = rules.value[i];
             const ruleResult = (result as Record<string, any>)[rule];
 
-            const value = await instance.get(
-                `vuelidate.${rule}`,
-                ruleResult.$params,
-                locale.value,
-            );
+            const value = await instance.get({
+                group: 'vuelidate',
+                key: rule,
+                data: ruleResult.$params,
+                locale: locale.value,
+            });
 
             output[rule] = value || rule;
         }

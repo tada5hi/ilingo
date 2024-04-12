@@ -15,10 +15,8 @@ Ilingo is a lightweight library for translation and internationalization.
 - [Usage](#usage)
   - [Basic](#basic)
   - [Singleton](#singleton)
-  - [Helper](#helper)
   - [Parameters](#parameters)
   - [Locales](#locales)
-  - [Async/Sync](#asyncsync)
   - [Lazy](#lazy)
 - [Store](#store)
   - [Memory](#memory-store)
@@ -90,13 +88,29 @@ const ilingo = new Ilingo({
     // ...
 });
 
-console.log(await ilingo.get('app.key'));
+await ilingo.get({
+    group: 'app',
+    key: 'key'
+});
 // Hello my name is {{name}}
 
-console.log(await ilingo.get('app.key', { name: 'Peter' }));
+await ilingo.get({
+    group: 'app',
+    key: 'key',
+    data: {
+        name: 'Peter'
+    }
+});
 // Hello my name is Peter
 
-console.log(await ilingo.get('app.key', { name: 'Peter' }, 'de'));
+await ilingo.get({
+    group: 'app',
+    key: 'key',
+    data: {
+        name: 'Peter'
+    },
+    locale: 'de'
+});
 // Hallo mein Name ist Peter
 ```
 
@@ -114,25 +128,21 @@ const ilinigo = useIlingo();
  */
 ilingo.setLocale('en');
 
-ilingo.set('app.key', 'Hi {{name}}!');
+await ilingo.set({
+    group: 'app', 
+    key: 'key', 
+    value: 'Hi {{name}}!'
+});
 
-console.log(ilingo.getSync('app.key', {name: 'Peter'}));
+await ilingo.get({
+    group: 'app',
+    key: 'key',
+    data: {
+        name: 'Peter'
+    }
+});
 // Hi Peter!
 
-```
-
-### Helper
-Besides using a singleton instance, the library also provides helper functions
-allowing faster access.
-
-The helper always refers singleton instance.
-
-```typescript
-import { useIlingo } from 'ilingo';
-
-(async () => {
-    console.log(await lang('app.key'));
-})();
 ```
 
 ### Parameters
@@ -143,10 +153,19 @@ Data properties can be injected as a second argument, e.g.
 import { lang, useIlingo } from 'ilingo';
 
 const ilingo = useIlingo();
-await ilingo.set('app.age', 'I am {{age}} years old.');
+await ilingo.set({
+    group: 'app',
+    key: 'age',
+    value: 'I am {{age}} years old.'
+});
 
-const output = await lang('app.age', {age: 18});
-console.log(output);
+await ilingo.get({
+    group: 'app',
+    key: 'age',
+    data: {
+        age: 18
+    }
+});
 // I am 18 yeas old
 ```
 
@@ -159,14 +178,24 @@ import { useIlingo } from 'ilingo';
 
 const ilingo = useIlingo();
 
-let output = await ilingo.get('app.age', {age: 18});
-console.log(output);
+await ilingo.get({
+    group: 'app',
+    key: 'age',
+    data: {
+        age: 18
+    }
+});
 // I am 18 yeas old
 
 ilingo.setLocale('de');
 
-output = await lang('app.age', {age: 18});
-console.log(output);
+await ilingo.get({
+    group: 'app',
+    key: 'age',
+    data: {
+        age: 18
+    }
+});
 // Ich bin 18 Jahre alt
 ```
 
@@ -178,15 +207,35 @@ import { useIlingo } from 'ilingo';
 
 const ilingo = useIlingo();
 
-let output = await ilingo.get('app.age', {age: 18});
+let output = await ilingo.get({
+    group: 'app',
+    key: 'age',
+    data: {
+        age: 18
+    }
+});
 console.log(output);
 // I am 18 yeas old
 
-output = await ilingo.get('app.age', {age: 18}, 'fr');
+output = await ilingo.get({
+    group: 'app',
+    key: 'age',
+    data: {
+        age: 18
+    },
+    locale: 'fr'
+});
 console.log(output);
 // J'ai 18 ans
 
-output = await lang('app.age', {age: 18}, 'de');
+output = await ilingo.get({
+    group: 'app',
+    key: 'age',
+    data: {
+        age: 18
+    },
+    locale: 'de'
+});
 console.log(output);
 // Ich bin 18 Jahre alt
 ```
@@ -198,20 +247,38 @@ Another option is to add translations on the fly and access them afterwards.
 ```typescript
 import { useIlingo } from 'ilingo';
 
-(async () => {
-    const ilingo = useIlingo();
+const ilingo = useIlingo();
 
-    await ilingo.set('foo.bar', 'baz {{param}}');
-    await ilingo.set('foo.bar', 'boz {{param}}', 'de');
+await ilingo.set({
+    group: 'foo', 
+    key: 'bar', 
+    value: 'baz {{param}}'
+});
+await ilingo.set({
+    group: 'foo',
+    key: 'bar',
+    value: 'boz {{param}}',
+    locale: 'de'
+});
 
-    let output = await ilingo.get('foo.bar', {param: 'x'});
-    console.log(output);
-    // baz x
+await ilingo.get({
+    group: 'foo',
+    key: 'bar', 
+    data: {
+        param: 'x'
+    }
+});
+// baz x
 
-    output = await ilingo.get('foo.bar', {param: 'y'}, 'de');
-    console.log(output);
-    // boz y
-})();
+await ilingo.get({
+    group: 'foo',
+    key: 'bar',
+    data: {
+        param: 'y'
+    },
+    locale: 'de'
+});
+// boz y
 ```
 
 ## Store

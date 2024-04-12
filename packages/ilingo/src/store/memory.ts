@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { LocalesRecord } from '../type';
+import type { LocalesRecord } from '../types';
 import { getObjectPathProperty, setObjectPathProperty } from '../utils';
 import type { Store, StoreGetContext, StoreSetContext } from './type';
 

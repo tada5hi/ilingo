@@ -11,18 +11,19 @@ describe('src/module.ts', () => {
     it('should work with async helper', async () => {
         const instance = new Ilingo();
         await instance.set({
-            ru: {
-                form: {
-                    nested: {
-                        key: 'RA'
-                    }
-                }
-            }
+            locale: 'ru',
+            group: 'form',
+            key: 'nested.key',
+            value: 'RA'
         });
 
         setIlingo(instance);
 
-        const output = await lang('form.nested.key', 'ru');
+        const output = await lang({
+            locale: 'ru',
+            group: 'form',
+            key: 'nested.key'
+        });
         expect(output).toEqual('RA');
     })
 });

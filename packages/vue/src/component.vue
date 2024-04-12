@@ -2,7 +2,7 @@
 import type { DotKey } from 'ilingo';
 import type { PropType } from 'vue';
 import {
-    defineComponent
+    defineComponent,
 } from 'vue';
 import { useTranslation } from './composables';
 
@@ -17,10 +17,28 @@ export default defineComponent({
         },
     },
     setup(props) {
-        const text = useTranslation(props.path, props.data);
+        const parseKey = (key: string) : [string, string] => {
+            const index = key.indexOf('.');
+            if (index === -1) {
+                throw new SyntaxError('The key with required group prefix could not be parsed.');
+            }
+
+            const group = key.substring(0, index);
+            const line = key.substring(group.length + 1);
+
+            return [group, line];
+        };
+
+        const [group, key] = parseKey(props.path);
+
+        const text = useTranslation({
+            group,
+            key,
+            data: props.data as Record<string, any> | undefined,
+        });
 
         return {
-            text
+            text,
         };
     },
 });

@@ -57,7 +57,7 @@ app.mount('#app');
         locale.value = value;
     }
     
-    const translation = useTranslation('app.key', {name: 'Paul'});
+    const translation = useTranslation('app', 'key', {name: 'Paul'});
 </script>
 <template>
     <div>

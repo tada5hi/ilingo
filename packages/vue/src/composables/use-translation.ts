@@ -6,22 +6,22 @@
  */
 
 import { computedAsync } from '@vueuse/core';
-import type { DotKey } from 'ilingo';
+import type { GetInputParsed } from 'ilingo';
 import type { Ref } from 'vue';
 import { injectIlingo } from './instance';
 import { injectLocale } from './locale';
 
-export function useTranslation(
-    key: DotKey,
-    data: Record<string, any> = {},
-) : Ref<string> {
+export function useTranslation(ctx: GetInputParsed) : Ref<string> {
     const instance = injectIlingo();
     const locale = injectLocale();
 
     return computedAsync(
         async () => {
-            const value = await instance.get(key, data, locale.value);
-            return value || key;
+            const value = await instance.get({
+                ...ctx,
+                locale: locale.value,
+            });
+            return value || `${ctx.group}.${ctx.key}`;
         },
         '',
     );
