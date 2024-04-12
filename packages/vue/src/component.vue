@@ -30,7 +30,12 @@ export default defineComponent({
         };
 
         const [group, key] = parseKey(props.path);
-        const text = useTranslation({ group, key, data: props.data });
+
+        const text = useTranslation({
+            group,
+            key,
+            data: props.data as Record<string, any> | undefined,
+        });
 
         return {
             text,
