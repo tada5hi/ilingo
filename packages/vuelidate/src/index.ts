@@ -6,12 +6,10 @@
  */
 
 import { injectIlingoSafe, provideIlingo } from '@ilingo/vue';
-import { MemoryStore, useIlingo } from 'ilingo';
+import { useIlingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
 import { VUELIDATE_STORE_KEY } from './constants';
-import {
-    useEnglishTranslation, useFrenchTranslation, useGermanTranslation, useSpanishTranslation,
-} from './translations';
+import { createVuelidateStore } from './store';
 
 export function install(app: App) : void {
     let instance = injectIlingoSafe(app);
@@ -20,14 +18,7 @@ export function install(app: App) : void {
     }
 
     if (!instance.stores.has(VUELIDATE_STORE_KEY)) {
-        const memoryStore = new MemoryStore({
-            en: { vuelidate: useEnglishTranslation() },
-            de: { vuelidate: useGermanTranslation() },
-            fr: { vuelidate: useFrenchTranslation() },
-            es: { vuelidate: useSpanishTranslation() },
-        });
-
-        instance.stores.set(VUELIDATE_STORE_KEY, memoryStore);
+        instance.stores.set(VUELIDATE_STORE_KEY, createVuelidateStore());
     }
 
     provideIlingo(instance, app);
