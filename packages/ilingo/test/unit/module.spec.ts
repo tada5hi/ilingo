@@ -24,9 +24,8 @@ describe('src/module.ts', () => {
             })
         });
 
-        expect(await ilingo.get('foo.line', undefined, 'ru')).toEqual('bar-baz');
-        expect(await ilingo.get('foo.line', 'ru')).toEqual('bar-baz');
-        expect(await ilingo.get('foo.line')).toEqual('baz-boz')
+        expect(await ilingo.get({group: 'foo', key: 'line', locale: 'ru'})).toEqual('bar-baz');
+        expect(await ilingo.get({group: 'foo', key: 'line'})).toEqual('baz-boz')
 
         ilingo.setLocale('en');
         expect(ilingo.getLocale()).toEqual('en');
@@ -67,61 +66,33 @@ describe('src/module.ts', () => {
         const language = new Ilingo();
 
         await language.set({
-            en: {
-                group: {
-                    foo: 'My name is {{name}}'
-                }
-            },
-            de: {
-                group: {
-                    foo: 'Mein Name ist {{name}}'
-                }
-            }
+            locale: 'en',
+            group: 'group',
+            key: 'foo',
+            value: 'My name is {{name}}'
         });
 
-        // {{group.foo}}
-
-        expect(await language.get('group.foo')).toEqual('My name is {{name}}');
-        expect(await language.get('group.foo', 'de')).toEqual('Mein Name ist {{name}}');
-
-        expect(await language.get('group.foo', {name: 'Peter'})).toEqual('My name is Peter');
-        expect(await language.get('group.foo', {name: 'Peter'}, 'de')).toEqual('Mein Name ist Peter');
-    });
-
-    it('should set groups record', async () => {
-        const language = new Ilingo();
+        await language.set({
+            locale: 'de',
+            group: 'group',
+            key: 'foo',
+            value: 'Mein Name ist {{name}}'
+        });
 
         await language.set({
-            group: {
-                foo: 'My name is {{name}}'
-            }
-        }, 'en');
+            locale: 'fr',
+            group: 'group',
+            key: 'foo',
+            value: 'Mon nom est {{name}}'
+        });
 
-        await language.set({
-            group: {
-                foo: 'Mein Name ist {{name}}'
-            }
-        }, {locale: 'de'});
+        expect(await language.get({group: 'group', key: 'foo'})).toEqual('My name is {{name}}');
+        expect(await language.get({group: 'group', key: 'foo', locale: 'de'})).toEqual('Mein Name ist {{name}}');
+        expect(await language.get({group: 'group', key: 'foo', locale: 'fr'})).toEqual('Mon nom est {{name}}');
 
-        await language.set({
-            foo: 'Mon nom est {{name}}'
-        }, { locale: 'fr', group: 'group'});
-
-        expect(await language.get('group.foo')).toEqual('My name is {{name}}');
-        expect(await language.get('foo', {group: 'group', locale: 'de'})).toEqual('Mein Name ist {{name}}');
-        expect(await language.get('group.foo', {locale: 'fr'})).toEqual('Mon nom est {{name}}');
-    })
-
-    it('should set on the fly', async () => {
-        const language = new Ilingo();
-
-        await language.set('foo.bar', 'value on the fly');
-        let value = await language.get('foo.bar');
-        expect(value).toEqual('value on the fly');
-
-        await language.set('foo.baz', 'value with param {{param}} on the fly');
-        value = await language.get('foo.baz', {param: 'lorem'});
-        expect(value).toEqual('value with param lorem on the fly');
+        expect(await language.get({group: 'group', key: 'foo', data: {name: 'Peter'}})).toEqual('My name is Peter');
+        expect(await language.get({group: 'group', key: 'foo', locale: 'de', data: {name: 'Peter'}})).toEqual('Mein Name ist Peter');
+        expect(await language.get({group: 'group', key: 'foo', locale: 'fr', data: {name: 'Peter'}})).toEqual('Mon nom est Peter');
     });
 
     it('should format input string', async () => {

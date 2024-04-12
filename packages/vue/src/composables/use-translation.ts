@@ -6,13 +6,13 @@
  */
 
 import { computedAsync } from '@vueuse/core';
-import type { DotKey } from 'ilingo';
 import type { Ref } from 'vue';
 import { injectIlingo } from './instance';
 import { injectLocale } from './locale';
 
 export function useTranslation(
-    key: DotKey,
+    group: string,
+    key: string,
     data: Record<string, any> = {},
 ) : Ref<string> {
     const instance = injectIlingo();
@@ -20,7 +20,12 @@ export function useTranslation(
 
     return computedAsync(
         async () => {
-            const value = await instance.get(key, data, locale.value);
+            const value = await instance.get({
+                group,
+                key,
+                data,
+                locale: locale.value,
+            });
             return value || key;
         },
         '',

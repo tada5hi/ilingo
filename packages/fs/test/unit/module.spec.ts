@@ -31,50 +31,99 @@ describe('src/store/file-system', function () {
     it('should work with nested input', async () => {
         const language = new Ilingo({ store });
 
-        let output = await language.get('form.nested.key');
+        let output = await language.get({
+            group: 'form',
+            key: 'nested.key'
+        });
         expect(output).toEqual('I am nested');
 
-        output = await language.get('form.nested.deep.key');
+        output = await language.get({
+            group: 'form',
+            key: 'nested.deep.key'
+        });
         expect(output).toEqual('I am deep nested');
 
-        output = await language.get('form.nested.keyWithParam', {param: 'foo'});
+        output = await language.get({
+            group: 'form',
+            key: 'nested.keyWithParam',
+            data: {
+                param: 'foo'
+            }
+        });
         expect(output).toEqual('I am nested with param foo');
 
         // --------------------------------------------------
 
         language.setLocale('de');
 
-        output = await language.get('form.nested.key');
+        output = await language.get({
+            group: 'form',
+            key: 'nested.key'
+        });
         expect(output).toEqual('Ich bin verschachtelt');
 
-        output = await language.get('form.nested.deep.key');
+        output = await language.get({
+            group: 'form',
+            key: 'nested.deep.key'
+        });
         expect(output).toEqual('Ich bin tief verschachtelt');
 
-        output = await language.get('form.nested.keyWithParam', {param: 'foo'});
+        output = await language.get({
+            group: 'form',
+            key: 'nested.keyWithParam',
+            data: {
+                param: 'foo'
+            }
+        });
         expect(output).toEqual('Ich bin mit parameter foo verschachtelt');
     })
 
     it('should translate async', async () => {
         const language = new Ilingo({ store });
 
-        let line = await language.get('form.email');
+        let line = await language.get({
+            group: 'form',
+            key: 'email'
+        });
         expect(line).toBeDefined();
         expect(line).toEqual('The input must be a valid email address.');
 
-        line = await language.get('form.email', 'de');
+        line = await language.get({
+            group: 'form',
+            key: 'email',
+            locale: 'de'
+        });
         expect(line).toEqual('Die Eingabe muss eine gültige E-Mail sein.');
 
-        line = await language.get('form.maxLength', {max: 10});
+        line = await language.get({
+            group: 'form',
+            key: 'maxLength',
+            data: {
+                max: 10
+            }
+        });
         expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 10.');
 
-        line = await language.get('form.maxLength', {max: 5});
+        line = await language.get({
+            group: 'form',
+            key: 'maxLength',
+            data: {
+                max: 5
+            }
+        });
         expect(line).toBeDefined();
         expect(line).toEqual('The length of the input must be less than 5.');
 
         language.setLocale('de');
 
-        line = await language.get('form.maxLength', {max: 5});
+        line = await language.get({
+            group: 'form',
+            key: 'maxLength',
+            data: {
+                max: 5
+            }
+        });
         expect(line).toBeDefined();
         expect(line).toEqual('Die Länge der Eingabe muss kleiner als 5 sein.');
     });
@@ -82,10 +131,20 @@ describe('src/store/file-system', function () {
     it('should not translate async', async () => {
         const language = new Ilingo({ store });
 
-        let line = await language.get('form.maxLength', {max: 5}, 'ru');
+        let line = await language.get({
+            group: 'form',
+            key: 'maxLength',
+            data: {
+                max: 10
+            },
+            locale: 'ru'
+        });
         expect(line).toEqual('maxLength');
 
-        line = await language.get('form.foo', {});
+        line = await language.get({
+            group: 'form',
+            key: 'foo'
+        });
         expect(line).toEqual('foo');
     })
 });

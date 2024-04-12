@@ -6,9 +6,6 @@
  */
 
 export * from './identify';
-export * from './key-parse';
 export * from './language';
-export * from './get-arguments-parse';
-export * from './set-arguments-parse';
 export * from './object-path';
 export * from './template';
