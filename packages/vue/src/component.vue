@@ -1,6 +1,5 @@
 <script lang="ts">
 import type { DotKey } from 'ilingo';
-import { parseKey } from 'ilingo';
 import type { PropType } from 'vue';
 import {
     defineComponent,
@@ -18,6 +17,18 @@ export default defineComponent({
         },
     },
     setup(props) {
+        const parseKey = (key: string) : [string, string] => {
+            const index = key.indexOf('.');
+            if (index === -1) {
+                throw new SyntaxError('The key with required group prefix could not be parsed.');
+            }
+
+            const group = key.substring(0, index);
+            const line = key.substring(group.length + 1);
+
+            return [group, line];
+        };
+
         const [group, key] = parseKey(props.path);
         const text = useTranslation(group, key, props.data);
 
