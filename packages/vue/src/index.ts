@@ -5,28 +5,70 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { useIlingo } from 'ilingo';
+import { Ilingo, generateId } from 'ilingo';
 import type { App, Plugin } from 'vue';
+import { ref } from 'vue';
 import ITranslate from './component.vue';
-import { injectIlingoSafe, provideIlingo, provideLocale } from './composables';
+import {
+    injectIlingoSafe,
+    injectLocaleSafe,
+    provideIlingo,
+    provideLocale,
+} from './composables';
 import type { Options } from './types';
 
-export function install(app: App, options: Options = {}) : void {
-    provideLocale(options.locale || 'en', app);
-
+export function applyInstallInput(
+    app: App,
+    input?: Options | Ilingo,
+) : Ilingo {
+    let locale = injectLocaleSafe(app);
     let instance = injectIlingoSafe(app);
-    if (!instance) {
-        instance = useIlingo();
+
+    if (!input) {
+        instance = new Ilingo();
+    } else if (input instanceof Ilingo) {
+        if (instance) {
+            instance.merge(input);
+        } else {
+            instance = input;
+        }
+
+        if (!locale) {
+            locale = ref(instance.getLocale());
+        }
+    } else {
+        if (!locale && input.locale) {
+            locale = ref(input.locale);
+        }
+
+        if (instance) {
+            instance.stores.set(generateId(), input.store);
+        } else {
+            instance = new Ilingo({
+                store: input.store,
+            });
+        }
     }
 
-    app.component('ITranslate', ITranslate);
+    if (!locale) {
+        locale = ref('en');
+    }
 
+    provideLocale(locale, app);
     provideIlingo(instance, app);
+
+    return instance;
+}
+
+export function install(app: App, input: Options | Ilingo) : void {
+    applyInstallInput(app, input);
+
+    app.component('ITranslate', ITranslate);
 }
 
 export default {
     install,
-} satisfies Plugin<Options | undefined>;
+} satisfies Plugin<Options | Ilingo>;
 
 export { default as ITranslate } from './component.vue';
 export * from './composables';

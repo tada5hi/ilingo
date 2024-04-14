@@ -15,6 +15,7 @@ import type {
     SetInputParsed,
 } from './types';
 import {
+    generateId,
     template,
 } from './utils';
 
@@ -32,6 +33,28 @@ export class Ilingo {
 
         this.stores = new Map<string | symbol, Store>();
         this.stores.set(STORE_DEFAULT, config.store);
+    }
+
+    // ----------------------------------------------------
+
+    merge(instance: Ilingo) {
+        const ownEntries = Array.from(this.stores.values());
+        const foreignEntries = Array.from(instance.stores.values());
+
+        let foreignEntriesIndex = -1;
+        for (let i = 0; i < foreignEntries.length; i++) {
+            foreignEntriesIndex = -1;
+            for (let j = 0; j < ownEntries.length; j++) {
+                if (ownEntries[j] === foreignEntries[i]) {
+                    foreignEntriesIndex = j;
+                    break;
+                }
+            }
+
+            if (foreignEntriesIndex === -1) {
+                this.stores.set(generateId(), foreignEntries[i]);
+            }
+        }
     }
 
     // ----------------------------------------------------
@@ -98,7 +121,11 @@ export class Ilingo {
             }
         }
 
-        return this.format(message || ctx.key, ctx.data || {});
+        if (!message) {
+            return undefined;
+        }
+
+        return this.format(message, ctx.data || {});
     }
 
     // ----------------------------------------------------

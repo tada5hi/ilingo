@@ -101,4 +101,30 @@ describe('src/module.ts', () => {
         let output = language.format('{{foo}}', {foo: 'bar'});
         expect(output).toEqual('bar');
     });
+
+    it('should merge stores', async () => {
+        const storeA = new MemoryStore({
+            en: {
+                app: {
+                    foo: 'bar'
+                }
+            }
+        });
+
+        const storeB = new MemoryStore({
+            en: {
+                app: {
+                    bar: 'boz'
+                }
+            }
+        });
+
+        const instanceA = new Ilingo({store: storeA});
+        const instanceB = new Ilingo({store: storeB});
+
+        instanceA.merge(instanceB);
+
+        expect(await instanceA.get({group: 'app', key: 'foo'})).toEqual('bar');
+        expect(await instanceA.get({group: 'app', key: 'bar'})).toEqual('boz');
+    })
 })

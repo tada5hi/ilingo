@@ -6,14 +6,16 @@
  */
 
 import {
-    inject,
-    isRef, provide, ref,
+    isRef,
+    provide,
+    ref,
 } from 'vue';
 
 import type {
     App,
     Ref,
 } from 'vue';
+import { inject } from '../utils';
 
 const LocaleSymbol = Symbol.for('ILocale');
 
@@ -32,12 +34,14 @@ export function provideLocale(
 }
 
 export function injectLocale(app?: App) : Ref<string> {
-    let locale = inject<string | Ref<string>>(LocaleSymbol);
+    const locale = inject<Ref<string>>(LocaleSymbol, app);
     if (!locale) {
-        locale = ref('en');
-        provideLocale(locale, app);
-        return locale;
+        throw new Error('An ilingo locale is not present in the vue context.');
     }
 
-    return isRef(locale) ? locale : ref(locale);
+    return locale;
+}
+
+export function injectLocaleSafe(app?: App) : Ref<string> | undefined {
+    return inject<Ref<string>>(LocaleSymbol, app);
 }

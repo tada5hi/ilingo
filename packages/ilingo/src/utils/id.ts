@@ -5,9 +5,6 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Store } from 'ilingo';
-
-export type Options = {
-    store: Store,
-    locale?: string
-};
+export function generateId() : string {
+    return Math.random().toString(36).substring(2);
+}

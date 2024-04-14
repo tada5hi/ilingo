@@ -5,16 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { useIlingo } from './singleton';
-
-const ilingo = useIlingo();
-
 export * from './config';
-export * from './helper';
 export * from './module';
-export * from './singleton';
 export * from './store';
 export * from './utils';
 export * from './types';
-
-export default ilingo;

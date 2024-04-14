@@ -32,7 +32,7 @@ export function provideIlingo(
 export function injectIlingo(app?: App) : Ilingo {
     const instance = inject<Ilingo>(IlingoSymbol, app);
     if (!instance) {
-        throw new Error('An ilingo instance is not injected in the vue context.');
+        throw new Error('An ilingo instance is not present in the vue context.');
     }
 
     return instance;

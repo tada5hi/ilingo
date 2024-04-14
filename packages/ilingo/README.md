@@ -119,9 +119,11 @@ await ilingo.get({
 The library also supports built-in singleton support.
 
 ```typescript
-import { useIlingo } from 'ilingo';
+import { Ilingo } from 'ilingo';
 
-const ilinigo = useIlingo();
+const ilingo = new Ilingo({
+    // ...
+});
 
 /**
  * default: en
@@ -150,9 +152,12 @@ As a template delimiter a mustache like `{{}}` interpolation is used.
 Data properties can be injected as a second argument, e.g.
 
 ```typescript
-import { lang, useIlingo } from 'ilingo';
+import { Ilingo } from 'ilingo';
 
-const ilingo = useIlingo();
+const ilingo = new Ilingo({
+    // ...
+});
+
 await ilingo.set({
     group: 'app',
     key: 'age',
@@ -174,9 +179,11 @@ await ilingo.get({
 The default locale, which is used by the singleton instance, can be modified after initialization:
 
 ```typescript
-import { useIlingo } from 'ilingo';
+import { Ilingo } from 'ilingo';
 
-const ilingo = useIlingo();
+const ilingo = new Ilingo({
+    // ...
+});
 
 await ilingo.get({
     group: 'app',
@@ -203,21 +210,22 @@ It also can be **temporarily** overwritten, by passing the locale as the third a
 to one of the helper or supported singleton methods:
 
 ```typescript
-import { useIlingo } from 'ilingo';
+import { Ilingo } from 'ilingo';
 
-const ilingo = useIlingo();
+const ilingo = new Ilingo({
+    // ...
+});
 
-let output = await ilingo.get({
+await ilingo.get({
     group: 'app',
     key: 'age',
     data: {
         age: 18
     }
 });
-console.log(output);
 // I am 18 yeas old
 
-output = await ilingo.get({
+await ilingo.get({
     group: 'app',
     key: 'age',
     data: {
@@ -225,10 +233,9 @@ output = await ilingo.get({
     },
     locale: 'fr'
 });
-console.log(output);
 // J'ai 18 ans
 
-output = await ilingo.get({
+await ilingo.get({
     group: 'app',
     key: 'age',
     data: {
@@ -236,7 +243,6 @@ output = await ilingo.get({
     },
     locale: 'de'
 });
-console.log(output);
 // Ich bin 18 Jahre alt
 ```
 
@@ -245,9 +251,11 @@ console.log(output);
 Another option is to add translations on the fly and access them afterwards.
 
 ```typescript
-import { useIlingo } from 'ilingo';
+import { Ilingo } from 'ilingo';
 
-const ilingo = useIlingo();
+const ilingo = new Ilingo({
+    // ...
+});
 
 await ilingo.set({
     group: 'foo', 

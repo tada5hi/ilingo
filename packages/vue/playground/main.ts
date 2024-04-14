@@ -13,19 +13,17 @@ import { install } from '../src';
 const app = createApp(App);
 install(app, {
     store: new MemoryStore({
-        data: {
-            // locale: de
-            de: {
-                // group: app
-                app: {
-                    key: 'Hallo mein Name ist {{name}}',
-                },
+        // locale: de
+        de: {
+            // group: app
+            app: {
+                key: 'Hallo mein Name ist {{name}}',
             },
-            // locale: en
-            en: {
-                app: {
-                    key: 'Hello my name is {{name}}',
-                },
+        },
+        // locale: en
+        en: {
+            app: {
+                key: 'Hello my name is {{name}}',
             },
         },
     }),
