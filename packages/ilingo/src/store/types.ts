@@ -5,6 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import type { LocalesRecord } from '../types';
+
 export type StoreGetContext = {
     locale: string,
     group: string,
@@ -22,3 +24,7 @@ export interface Store {
 
     getLocales() : Promise<string[]>;
 }
+
+export type MemoryStoreOptions = {
+    data: LocalesRecord
+};

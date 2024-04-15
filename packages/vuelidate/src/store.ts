@@ -16,10 +16,12 @@ import {
 export class VuelidateStore extends MemoryStore {
     constructor() {
         super({
-            en: { vuelidate: useEnglishTranslation() },
-            de: { vuelidate: useGermanTranslation() },
-            fr: { vuelidate: useFrenchTranslation() },
-            es: { vuelidate: useSpanishTranslation() },
+            data: {
+                en: { vuelidate: useEnglishTranslation() },
+                de: { vuelidate: useGermanTranslation() },
+                fr: { vuelidate: useFrenchTranslation() },
+                es: { vuelidate: useSpanishTranslation() },
+            },
         });
     }
 }

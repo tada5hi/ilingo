@@ -11,14 +11,16 @@ describe('src/module.ts', () => {
     it('should get/set directory + locale + groups', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                ru: {
-                    foo: {
-                        line: 'bar-baz'
-                    }
-                },
-                en: {
-                    foo: {
-                        line: 'baz-boz'
+                data: {
+                    ru: {
+                        foo: {
+                            line: 'bar-baz'
+                        }
+                    },
+                    en: {
+                        foo: {
+                            line: 'baz-boz'
+                        }
                     }
                 }
             })
@@ -34,14 +36,16 @@ describe('src/module.ts', () => {
     it('should get locales', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                ru: {
-                    foo: {
-                        line: 'bar-baz'
-                    }
-                },
-                en: {
-                    foo: {
-                        line: 'baz-boz'
+                data: {
+                    ru: {
+                        foo: {
+                            line: 'bar-baz'
+                        }
+                    },
+                    en: {
+                        foo: {
+                            line: 'baz-boz'
+                        }
                     }
                 }
             })
@@ -65,19 +69,21 @@ describe('src/module.ts', () => {
     it('should set/get locales record', async () => {
         const language = new Ilingo({
             store: new MemoryStore({
-                en: {
-                    group: {
-                        foo: 'My name is {{name}}'
-                    }
-                },
-                de: {
-                    group: {
-                        foo: 'Mein Name ist {{name}}'
-                    }
-                },
-                fr: {
-                    group: {
-                        foo: 'Mon nom est {{name}}'
+                data: {
+                    en: {
+                        group: {
+                            foo: 'My name is {{name}}'
+                        }
+                    },
+                    de: {
+                        group: {
+                            foo: 'Mein Name ist {{name}}'
+                        }
+                    },
+                    fr: {
+                        group: {
+                            foo: 'Mon nom est {{name}}'
+                        }
                     }
                 }
             })
@@ -101,17 +107,21 @@ describe('src/module.ts', () => {
 
     it('should merge stores', async () => {
         const storeA = new MemoryStore({
-            en: {
-                app: {
-                    foo: 'bar'
+            data: {
+                en: {
+                    app: {
+                        foo: 'bar'
+                    }
                 }
             }
         });
 
         const storeB = new MemoryStore({
-            en: {
-                app: {
-                    bar: 'boz'
+            data: {
+                en: {
+                    app: {
+                        bar: 'boz'
+                    }
                 }
             }
         });

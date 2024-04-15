@@ -28,19 +28,21 @@ import { MemoryStore } from 'ilingo';
 import { createApp } from 'vue';
 
 const store = new MemoryStore({
-    // locale: de
-    de: {
-        // group: app
-        app: {
-            key: 'Hallo mein Name ist {{name}}',
+    data: {
+        // locale: de
+        de: {
+            // group: app
+            app: {
+                key: 'Hallo mein Name ist {{name}}',
+            },
         },
-    },
-    // locale: en
-    en: {
-        app: {
-            key: 'Hello my name is {{name}}',
+        // locale: en
+        en: {
+            app: {
+                key: 'Hello my name is {{name}}',
+            },
         },
-    },
+    }
 })
 
 const app = createApp(/* */);

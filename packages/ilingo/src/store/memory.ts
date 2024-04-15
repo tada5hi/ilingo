@@ -7,13 +7,18 @@
 
 import type { LocalesRecord } from '../types';
 import { getObjectPathProperty, setObjectPathProperty } from '../utils';
-import type { Store, StoreGetContext, StoreSetContext } from './type';
+import type {
+    MemoryStoreOptions,
+    Store,
+    StoreGetContext,
+    StoreSetContext,
+} from './types';
 
 export class MemoryStore implements Store {
     protected data : LocalesRecord;
 
-    constructor(data: LocalesRecord = {}) {
-        this.data = data;
+    constructor(options: MemoryStoreOptions) {
+        this.data = options.data;
     }
 
     async get(context: StoreGetContext): Promise<string | undefined> {

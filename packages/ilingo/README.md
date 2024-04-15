@@ -123,9 +123,11 @@ import { Ilingo, MemoryStore } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new MemoryStore({
-        en: {
-            app: {
-                age: 'I am {{age}} years old.'
+        data: {
+            en: {
+                app: {
+                    age: 'I am {{age}} years old.'
+                }
             }
         }
     })
@@ -222,14 +224,16 @@ import { Ilingo, MemoryStore } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new MemoryStore({
-        en: {
-            foo: {
-                bar: 'baz {{param}}'
-            }
-        },
-        de: {
-            foo: {
-                bar: 'boz {{param}}'
+        data: {
+            en: {
+                foo: {
+                    bar: 'baz {{param}}'
+                }
+            },
+            de: {
+                foo: {
+                    bar: 'boz {{param}}'
+                }
             }
         }
     })

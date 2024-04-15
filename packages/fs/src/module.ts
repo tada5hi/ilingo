@@ -26,7 +26,7 @@ export class FSStore extends MemoryStore {
     protected merger : Merger;
 
     constructor(input?: ConfigInput) {
-        super();
+        super({ data: {} });
 
         const options = buildConfig(input);
 
