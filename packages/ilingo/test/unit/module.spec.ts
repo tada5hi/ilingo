@@ -63,27 +63,24 @@ describe('src/module.ts', () => {
     });
 
     it('should set/get locales record', async () => {
-        const language = new Ilingo();
-
-        await language.set({
-            locale: 'en',
-            group: 'group',
-            key: 'foo',
-            value: 'My name is {{name}}'
-        });
-
-        await language.set({
-            locale: 'de',
-            group: 'group',
-            key: 'foo',
-            value: 'Mein Name ist {{name}}'
-        });
-
-        await language.set({
-            locale: 'fr',
-            group: 'group',
-            key: 'foo',
-            value: 'Mon nom est {{name}}'
+        const language = new Ilingo({
+            store: new MemoryStore({
+                en: {
+                    group: {
+                        foo: 'My name is {{name}}'
+                    }
+                },
+                de: {
+                    group: {
+                        foo: 'Mein Name ist {{name}}'
+                    }
+                },
+                fr: {
+                    group: {
+                        foo: 'Mon nom est {{name}}'
+                    }
+                }
+            })
         });
 
         expect(await language.get({group: 'group', key: 'foo'})).toEqual('My name is {{name}}');

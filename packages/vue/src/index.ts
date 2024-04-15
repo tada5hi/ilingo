@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Ilingo, generateId } from 'ilingo';
+import { Ilingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
 import { ref } from 'vue';
 import ITranslate from './component.vue';
@@ -42,7 +42,7 @@ export function applyInstallInput(
         }
 
         if (instance) {
-            instance.stores.set(generateId(), input.store);
+            instance.stores.add(input.store);
         } else {
             instance = new Ilingo({
                 store: input.store,

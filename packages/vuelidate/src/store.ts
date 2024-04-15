@@ -13,11 +13,17 @@ import {
     useSpanishTranslation,
 } from './translations';
 
-export function createVuelidateStore() : MemoryStore {
-    return new MemoryStore({
-        en: { vuelidate: useEnglishTranslation() },
-        de: { vuelidate: useGermanTranslation() },
-        fr: { vuelidate: useFrenchTranslation() },
-        es: { vuelidate: useSpanishTranslation() },
-    });
+export class VuelidateStore extends MemoryStore {
+    constructor() {
+        super({
+            en: { vuelidate: useEnglishTranslation() },
+            de: { vuelidate: useGermanTranslation() },
+            fr: { vuelidate: useFrenchTranslation() },
+            es: { vuelidate: useSpanishTranslation() },
+        });
+    }
+}
+
+export function createVuelidateStore() : VuelidateStore {
+    return new VuelidateStore();
 }

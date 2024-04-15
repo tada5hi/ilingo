@@ -6,7 +6,6 @@
  */
 
 export * from './identify';
-export * from './id';
 export * from './language';
 export * from './object-path';
 export * from './template';

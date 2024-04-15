@@ -114,54 +114,21 @@ await ilingo.get({
 // Hallo mein Name ist Peter
 ```
 
-### Singleton
-
-The library also supports built-in singleton support.
-
-```typescript
-import { Ilingo } from 'ilingo';
-
-const ilingo = new Ilingo({
-    // ...
-});
-
-/**
- * default: en
- */
-ilingo.setLocale('en');
-
-await ilingo.set({
-    group: 'app', 
-    key: 'key', 
-    value: 'Hi {{name}}!'
-});
-
-await ilingo.get({
-    group: 'app',
-    key: 'key',
-    data: {
-        name: 'Peter'
-    }
-});
-// Hi Peter!
-
-```
-
 ### Parameters
 As a template delimiter a mustache like `{{}}` interpolation is used.
 Data properties can be injected as a second argument, e.g.
 
 ```typescript
-import { Ilingo } from 'ilingo';
+import { Ilingo, MemoryStore } from 'ilingo';
 
 const ilingo = new Ilingo({
-    // ...
-});
-
-await ilingo.set({
-    group: 'app',
-    key: 'age',
-    value: 'I am {{age}} years old.'
+    store: new MemoryStore({
+        en: {
+            app: {
+                age: 'I am {{age}} years old.'
+            }
+        }
+    })
 });
 
 await ilingo.get({
@@ -251,27 +218,26 @@ await ilingo.get({
 Another option is to add translations on the fly and access them afterwards.
 
 ```typescript
-import { Ilingo } from 'ilingo';
+import { Ilingo, MemoryStore } from 'ilingo';
 
 const ilingo = new Ilingo({
-    // ...
-});
-
-await ilingo.set({
-    group: 'foo', 
-    key: 'bar', 
-    value: 'baz {{param}}'
-});
-await ilingo.set({
-    group: 'foo',
-    key: 'bar',
-    value: 'boz {{param}}',
-    locale: 'de'
+    store: new MemoryStore({
+        en: {
+            foo: {
+                bar: 'baz {{param}}'
+            }
+        },
+        de: {
+            foo: {
+                bar: 'boz {{param}}'
+            }
+        }
+    })
 });
 
 await ilingo.get({
     group: 'foo',
-    key: 'bar', 
+    key: 'bar',
     data: {
         param: 'x'
     }

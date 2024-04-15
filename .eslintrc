@@ -15,6 +15,7 @@
         "import/no-cycle": [2, {
             "maxDepth": 1
         }],
+        "no-constant-condition": "off",
         "no-shadow": "off",
         "no-use-before-define": "off",
         "no-underscore-dangle": "off",

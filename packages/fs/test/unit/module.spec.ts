@@ -139,12 +139,12 @@ describe('src/store/file-system', function () {
             },
             locale: 'ru'
         });
-        expect(line).toEqual('maxLength');
+        expect(line).toBeUndefined();
 
         line = await language.get({
             group: 'form',
             key: 'foo'
         });
-        expect(line).toEqual('foo');
+        expect(line).toBeUndefined();
     })
 });

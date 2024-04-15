@@ -6,19 +6,32 @@
  */
 
 import type { Options } from '@ilingo/vue';
-import { applyInstallInput, injectIlingoSafe, provideIlingo } from '@ilingo/vue';
+import { applyInstallInput, provideIlingo } from '@ilingo/vue';
 import type { Ilingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
-import { VUELIDATE_STORE_KEY } from './constants';
-import { createVuelidateStore } from './store';
+import { VuelidateStore, createVuelidateStore } from './store';
 
 export function install(
     app: App,
     input?: Options | Ilingo,
 ) : void {
     const instance = applyInstallInput(app, input);
-    if (!instance.stores.has(VUELIDATE_STORE_KEY)) {
-        instance.stores.set(VUELIDATE_STORE_KEY, createVuelidateStore());
+    const stores = instance.stores.values();
+    let found = false;
+    while (true) {
+        const storeIterator = stores.next();
+        if (storeIterator.done) {
+            break;
+        }
+
+        if (storeIterator.value instanceof VuelidateStore) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        instance.stores.add(createVuelidateStore());
     }
 
     provideIlingo(instance, app);

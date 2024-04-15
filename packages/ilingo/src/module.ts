@@ -5,34 +5,30 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { buildConfig } from './config';
 import type { ConfigInput } from './config';
-import { LOCALE_DEFAULT, STORE_DEFAULT } from './constants';
-import type { Store, StoreGetContext } from './store';
+import { LOCALE_DEFAULT } from './constants';
+import type { Store } from './store';
 import type {
-    DotKey,
     GetInputParsed,
-    SetInputParsed,
 } from './types';
 import {
-    generateId,
     template,
 } from './utils';
 
 export class Ilingo {
-    public readonly stores : Map<string | symbol, Store>;
+    public readonly stores : Set<Store>;
 
     protected locale: string;
 
     // ----------------------------------------------------
 
     constructor(input: ConfigInput = {}) {
-        const config = buildConfig(input);
+        this.locale = input.locale || LOCALE_DEFAULT;
 
-        this.locale = config.locale;
-
-        this.stores = new Map<string | symbol, Store>();
-        this.stores.set(STORE_DEFAULT, config.store);
+        this.stores = new Set<Store>();
+        if (input.store) {
+            this.stores.add(input.store);
+        }
     }
 
     // ----------------------------------------------------
@@ -52,7 +48,7 @@ export class Ilingo {
             }
 
             if (foreignEntriesIndex === -1) {
-                this.stores.set(generateId(), foreignEntries[i]);
+                this.stores.add(foreignEntries[i]);
             }
         }
     }
@@ -86,16 +82,6 @@ export class Ilingo {
             locales.push(...await store.value.getLocales());
         }
         return Array.from(new Set(locales));
-    }
-
-    // ----------------------------------------------------
-
-    async set(ctx: SetInputParsed) {
-        const store = this.stores.get(STORE_DEFAULT);
-        return store.set({
-            ...ctx,
-            locale: ctx.locale || this.getLocale(),
-        });
     }
 
     // ----------------------------------------------------
