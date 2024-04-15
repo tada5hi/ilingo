@@ -27,26 +27,7 @@ import { install } from '@ilingo/vuelidate';
 import { createApp } from 'vue';
 
 const app = createApp(/* */);
-install(app, {
-    prefix: 'vuelidate',
-    data: {
-        // locale: de
-        de: {
-            // group: vuelidate
-            vuelidate: {
-                maxLength: 'Die Länge der Eingabe muss kleiner als {{max}} sein.',
-                minLength: 'Die Länge der Eingabe muss größer als {{min}} sein.',
-            },
-        },
-        // locale: en
-        en: {
-            vuelidate: {
-                maxLength: 'The length of the input must be less than {{max}}.',
-                minLength: 'The length of the input must be greater than {{min}}.',
-            },
-        },
-    },
-});
+install(app);
 app.mount('#app');
 ```
 

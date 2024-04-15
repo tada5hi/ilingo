@@ -24,25 +24,28 @@ npm install @ilingo/vue --save
 
 ```typescript
 import { install } from '@ilingo/vue';
+import { MemoryStore } from 'ilingo';
 import { createApp } from 'vue';
+
+const store = new MemoryStore({
+    // locale: de
+    de: {
+        // group: app
+        app: {
+            key: 'Hallo mein Name ist {{name}}',
+        },
+    },
+    // locale: en
+    en: {
+        app: {
+            key: 'Hello my name is {{name}}',
+        },
+    },
+})
 
 const app = createApp(/* */);
 install(app, {
-    data: {
-        // locale: de
-        de: {
-            // group: app
-            app: {
-                key: 'Hallo mein Name ist {{name}}',
-            },
-        },
-        // locale: en
-        en: {
-            app: {
-                key: 'Hello my name is {{name}}',
-            },
-        },
-    },
+    store,
 });
 app.mount('#app');
 ```
@@ -57,7 +60,13 @@ app.mount('#app');
         locale.value = value;
     }
     
-    const translation = useTranslation('app', 'key', {name: 'Paul'});
+    const translation = useTranslation({
+        group: 'app', 
+        key: 'key', 
+        data: {
+            name: 'Paul'
+        }
+    });
 </script>
 <template>
     <div>
