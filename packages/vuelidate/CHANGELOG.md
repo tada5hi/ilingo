@@ -1,5 +1,24 @@
 # Changelog
 
+## [4.1.0](https://github.com/tada5hi/ilingo/compare/vue-v4.0.0...vue-v4.1.0) (2024-04-19)
+
+
+### Features
+
+* add vue export path ([969e1cb](https://github.com/tada5hi/ilingo/commit/969e1cb3bec1a65879d103d2829891acde197718))
+* new helper for nested validations ([4656e47](https://github.com/tada5hi/ilingo/commit/4656e470fb9e3c8b793f08d0670253e4e129846d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/vue bumped from ^4.0.0 to ^4.1.0
+    * ilingo bumped from ^4.0.0 to ^4.1.0
+  * peerDependencies
+    * @ilingo/vue bumped from ^4.0.0 to ^4.1.0
+    * ilingo bumped from ^4.0.0 to ^4.1.0
+
 ## 4.0.0 (2024-04-19)
 
 

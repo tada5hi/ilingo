@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.1.0](https://github.com/tada5hi/ilingo/compare/fs-v4.0.0...fs-v4.1.0) (2024-04-19)
+
+
+### Features
+
+* enable export paths ([4a4e48a](https://github.com/tada5hi/ilingo/commit/4a4e48af5100abcfc533d91ca9b116fa93bf6b68))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^4.0.0 to ^4.1.0
+
 ## [4.0.0](https://github.com/tada5hi/ilingo/compare/fs-v3.2.0...fs-v4.0.0) (2024-04-19)
 
 

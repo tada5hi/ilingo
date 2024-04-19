@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.0](https://github.com/tada5hi/ilingo/compare/ilingo-v4.0.0...ilingo-v4.1.0) (2024-04-19)
+
+
+### Features
+
+* enable export paths ([4a4e48a](https://github.com/tada5hi/ilingo/commit/4a4e48af5100abcfc533d91ca9b116fa93bf6b68))
+
 ## [4.0.0](https://github.com/tada5hi/ilingo/compare/ilingo-v3.2.0...ilingo-v4.0.0) (2024-04-19)
 
 

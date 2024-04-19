@@ -1,6 +1,6 @@
 {
-    "packages/ilingo": "4.0.0",
-    "packages/fs": "4.0.0",
-    "packages/vue": "4.0.0",
-    "packages/vuelidate": "4.0.0"
+    "packages/ilingo": "4.1.0",
+    "packages/fs": "4.1.0",
+    "packages/vue": "4.1.0",
+    "packages/vuelidate": "4.1.0"
 }
