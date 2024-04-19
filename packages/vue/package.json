@@ -12,19 +12,20 @@
             "import": "./dist/index.mjs",
             "require": "./dist/index.cjs"
         },
-        "./ilingo": {
+        "./core": {
             "import": {
-                "types": "./ilingo/index.d.ts",
-                "default": "./ilingo/index.mjs"
+                "types": "./core/index.d.ts",
+                "default": "./core/index.mjs"
             },
             "require": {
-                "types": "./ilingo/index.d.ts",
-                "default": "./ilingo/index.js"
+                "types": "./core/index.d.ts",
+                "default": "./core/index.js"
             }
         }
     },
     "files": [
-        "dist/"
+        "core",
+        "dist"
     ],
     "scripts": {
         "dev": "vite",

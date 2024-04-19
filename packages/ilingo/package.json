@@ -18,16 +18,6 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs",
             "require": "./dist/index.cjs"
-        },
-        "./ilingo": {
-            "import": {
-                "types": "./ilingo/index.d.ts",
-                "default": "./ilingo/index.mjs"
-            },
-            "require": {
-                "types": "./ilingo/index.d.ts",
-                "default": "./ilingo/index.js"
-            }
         }
     },
     "main": "./dist/index.cjs",
