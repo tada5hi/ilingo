@@ -1,5 +1,24 @@
 # Changelog
 
+## [4.0.0](https://github.com/tada5hi/ilingo/compare/ilingo-v3.2.0...ilingo-v4.0.0) (2024-04-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* Public API changed
+
+### Features
+
+* add ilingo package as export path ([0aeea39](https://github.com/tada5hi/ilingo/commit/0aeea39f054ed7e66529cb756554a8e4e0024686))
+* add setter/getter for store ([b17a716](https://github.com/tada5hi/ilingo/commit/b17a7169399917e8c34947f8fd836073b43fc2ac))
+* avoid multiple di provision & simplified vuelidate plugin ([399d3d3](https://github.com/tada5hi/ilingo/commit/399d3d3c676ee89b7e5470453813c9fafde931b8))
+* change memory store constructor ([9e9759b](https://github.com/tada5hi/ilingo/commit/9e9759b98eb85afeaa7f6ee4984246937c88337d))
+* multiple stores & vuelidate translations ([#437](https://github.com/tada5hi/ilingo/issues/437)) ([f6087c5](https://github.com/tada5hi/ilingo/commit/f6087c5baead7a59df07cc22400423a30ce9b652))
+* remove setter for ilingo class + use set instead of map ([f9da1dd](https://github.com/tada5hi/ilingo/commit/f9da1dd82df396674ad693770bb7b681140218d0))
+* remove singleton feature + optimized vue/vuelidate plugin install ([e87b1cb](https://github.com/tada5hi/ilingo/commit/e87b1cbc8b671f34906dda6f53d1113f8e1e2811))
+* remove synchronous setter/getter ([#425](https://github.com/tada5hi/ilingo/issues/425)) ([23221b0](https://github.com/tada5hi/ilingo/commit/23221b07c7cac865adc2cdb98c55e7904f15fd40))
+* simplify get/set api ([#438](https://github.com/tada5hi/ilingo/issues/438)) ([989f31a](https://github.com/tada5hi/ilingo/commit/989f31a3d38b6c08a776e9afe9db2df3e05fd44c))
+
 ## [3.2.0](https://github.com/tada5hi/ilingo/compare/ilingo-v3.1.0...ilingo-v3.2.0) (2024-04-02)
 
 
