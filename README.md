@@ -1,6 +1,6 @@
 # ilingo 📚
 
-Ilingo is a lightweight library for translation and internationalization
+A lightweight library for translation and internationalization.
 
 **Table of Contents**
 
