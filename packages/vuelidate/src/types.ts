@@ -6,7 +6,11 @@
  */
 
 import type { RuleResultWithParams } from '@vuelidate/core';
+import type { Ref } from 'vue';
 
-export type ValidationRuleResult = Omit<RuleResultWithParams, '$params'> & {
+export type RuleResult = Omit<RuleResultWithParams, '$params'> & {
     $params?: RuleResultWithParams['$params']
 };
+
+export type BaseValidationTranslations = Ref<Record<string, string>>;
+export type NestedValidationsTranslations<T = unknown> = Record<keyof T, BaseValidationTranslations>;

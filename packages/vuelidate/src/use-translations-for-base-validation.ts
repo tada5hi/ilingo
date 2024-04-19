@@ -7,20 +7,24 @@
 
 import { computedAsync } from '@vueuse/core';
 import { injectIlingo, injectLocale } from '@ilingo/vue';
-import type { BaseValidation } from '@vuelidate/core';
+import type { BaseValidation, ValidationRuleCollection } from '@vuelidate/core';
 import type { Ref } from 'vue';
 import { computed } from 'vue';
-import { isValidationRuleResult } from './utils';
+import type { BaseValidationTranslations } from './types';
+import { isRuleResult } from './utils';
 
-export function useValidationMessages(
-    result: BaseValidation,
-) : Ref<Record<string, string>> {
+export function useTranslationsForBaseValidation<
+    T = unknown,
+    V extends ValidationRuleCollection<T> | undefined = undefined,
+>(
+    result: BaseValidation<T, V>,
+) : BaseValidationTranslations {
     const rules = computed<string[]>(() => {
         const output : string[] = [];
         const keys = Object.keys(result);
         for (let i = 0; i < keys.length; i++) {
             const item = (result as Record<string, any>)[keys[i]];
-            if (!item || !item.$invalid || !isValidationRuleResult(item)) {
+            if (!item || !item.$invalid || !isRuleResult(item)) {
                 continue;
             }
 

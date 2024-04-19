@@ -13,7 +13,7 @@ import {
     useSpanishTranslation,
 } from './translations';
 
-export class VuelidateStore extends MemoryStore {
+export class Store extends MemoryStore {
     constructor() {
         super({
             data: {
@@ -26,6 +26,6 @@ export class VuelidateStore extends MemoryStore {
     }
 }
 
-export function createVuelidateStore() : VuelidateStore {
-    return new VuelidateStore();
+export function createStore() : Store {
+    return new Store();
 }

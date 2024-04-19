@@ -9,7 +9,7 @@ import type { Options } from '@ilingo/vue';
 import { applyInstallInput, provideIlingo } from '@ilingo/vue';
 import type { Ilingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
-import { VuelidateStore, createVuelidateStore } from './store';
+import { Store, createStore } from './store';
 
 export function install(
     app: App,
@@ -24,14 +24,14 @@ export function install(
             break;
         }
 
-        if (storeIterator.value instanceof VuelidateStore) {
+        if (storeIterator.value instanceof Store) {
             found = true;
             break;
         }
     }
 
     if (!found) {
-        instance.stores.add(createVuelidateStore());
+        instance.stores.add(createStore());
     }
 
     provideIlingo(instance, app);
@@ -42,5 +42,6 @@ export default {
 } satisfies Plugin<Options | Ilingo | undefined>;
 
 export { default as IVuelidate } from './component.vue';
-export * from './use-validation-messages';
+export * from './use-translations-for-nested-validations';
+export * from './use-translations-for-base-validation';
 export * from './types';

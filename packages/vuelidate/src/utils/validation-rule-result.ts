@@ -7,9 +7,9 @@
 
 import { isObject } from './object';
 import { hasOwnProperty } from './has-own-property';
-import type { ValidationRuleResult } from '../types';
+import type { RuleResult } from '../types';
 
-export function isValidationRuleResult(input: unknown) : input is ValidationRuleResult {
+export function isRuleResult(input: unknown) : input is RuleResult {
     return isObject(input) &&
         hasOwnProperty(input, '$message') &&
         hasOwnProperty(input, '$pending') &&

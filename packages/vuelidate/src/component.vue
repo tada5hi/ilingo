@@ -5,7 +5,7 @@ import {
     defineComponent,
     toRef,
 } from 'vue';
-import { useValidationMessages } from './use-validation-messages';
+import { useTranslationsForBaseValidation } from './use-translations-for-base-validation';
 
 export default defineComponent({
     props: {
@@ -16,7 +16,7 @@ export default defineComponent({
     },
     setup(props) {
         const validation = toRef(props, 'validation');
-        const messages = useValidationMessages((validation as Record<string, any>).value);
+        const messages = useTranslationsForBaseValidation((validation as Record<string, any>).value);
 
         return {
             messages,
