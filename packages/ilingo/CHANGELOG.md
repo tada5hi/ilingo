@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.1](https://github.com/tada5hi/ilingo/compare/ilingo-v4.1.0...ilingo-v4.1.1) (2024-04-20)
+
+
+### Bug Fixes
+
+* typing of get method ([fc231ae](https://github.com/tada5hi/ilingo/commit/fc231ae8816748da0395563c9d02f3d5d34022c2))
+
 ## [4.1.0](https://github.com/tada5hi/ilingo/compare/ilingo-v4.0.0...ilingo-v4.1.0) (2024-04-19)
 
 

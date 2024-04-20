@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.1.1](https://github.com/tada5hi/ilingo/compare/vue-v4.1.0...vue-v4.1.1) (2024-04-20)
+
+
+### Miscellaneous Chores
+
+* **vue:** Synchronize main versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/vue bumped from ^4.1.0 to ^4.1.1
+    * ilingo bumped from ^4.1.0 to ^4.1.1
+  * peerDependencies
+    * @ilingo/vue bumped from ^4.1.0 to ^4.1.1
+    * ilingo bumped from ^4.1.0 to ^4.1.1
+
 ## [4.1.0](https://github.com/tada5hi/ilingo/compare/vue-v4.0.0...vue-v4.1.0) (2024-04-19)
 
 
