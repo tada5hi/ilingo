@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.1.1](https://github.com/tada5hi/ilingo/compare/vue-v4.1.0...vue-v4.1.1) (2024-04-20)
+
+
+### Bug Fixes
+
+* default value of use-translation composable ([68c802d](https://github.com/tada5hi/ilingo/commit/68c802dbf781bc7e9ad6cc7d578cee5db9b89bf8))
+* typing of get method ([fc231ae](https://github.com/tada5hi/ilingo/commit/fc231ae8816748da0395563c9d02f3d5d34022c2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * ilingo bumped from ^4.1.0 to ^4.1.1
+  * peerDependencies
+    * ilingo bumped from ^4.1.0 to ^4.1.1
+
 ## [4.1.0](https://github.com/tada5hi/ilingo/compare/vue-v4.0.0...vue-v4.1.0) (2024-04-19)
 
 

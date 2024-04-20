@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.1.1](https://github.com/tada5hi/ilingo/compare/fs-v4.1.0...fs-v4.1.1) (2024-04-20)
+
+
+### Miscellaneous Chores
+
+* **fs:** Synchronize main versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^4.1.0 to ^4.1.1
+
 ## [4.1.0](https://github.com/tada5hi/ilingo/compare/fs-v4.0.0...fs-v4.1.0) (2024-04-19)
 
 
