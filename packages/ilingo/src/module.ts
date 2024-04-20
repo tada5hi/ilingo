@@ -9,7 +9,7 @@ import type { ConfigInput } from './config';
 import { LOCALE_DEFAULT } from './constants';
 import type { Store } from './store';
 import type {
-    GetInputParsed,
+    GetContext,
 } from './types';
 import {
     template,
@@ -86,7 +86,7 @@ export class Ilingo {
 
     // ----------------------------------------------------
 
-    async get(ctx: GetInputParsed) : Promise<string | undefined> {
+    async get(ctx: GetContext) : Promise<string | undefined> {
         let message : string | undefined;
         const entries = this.stores.values();
         // eslint-disable-next-line no-constant-condition

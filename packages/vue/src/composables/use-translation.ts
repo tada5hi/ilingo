@@ -6,12 +6,12 @@
  */
 
 import { computedAsync } from '@vueuse/core';
-import type { GetInputParsed } from 'ilingo';
+import type { GetContext } from 'ilingo';
 import type { Ref } from 'vue';
 import { injectIlingo } from './instance';
 import { injectLocale } from './locale';
 
-export function useTranslation(ctx: GetInputParsed) : Ref<string> {
+export function useTranslation(ctx: GetContext) : Ref<string> {
     const instance = injectIlingo();
     const locale = injectLocale();
 
