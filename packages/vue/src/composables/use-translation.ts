@@ -15,14 +15,16 @@ export function useTranslation(ctx: GetInputParsed) : Ref<string> {
     const instance = injectIlingo();
     const locale = injectLocale();
 
+    const defaultValue = `${ctx.group}.${ctx.key}`;
+
     return computedAsync(
         async () => {
-            const value = await instance.get({
-                ...ctx,
-                locale: locale.value,
-            });
-            return value || `${ctx.group}.${ctx.key}`;
+            if (typeof ctx.locale === 'undefined') {
+                ctx.locale = locale.value;
+            }
+            const value = await instance.get(ctx);
+            return value || defaultValue;
         },
-        '',
+        defaultValue,
     );
 }
