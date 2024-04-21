@@ -18,8 +18,10 @@ export type LocalesRecord = Record<string, GroupsRecord>;
 
 export type DotKey = `${string}.${string}`;
 
+export type Data = Record<string, string | number>;
+
 export type GetContext = {
-    data?: Record<string, string | number>
+    data?: Data,
     locale?: string,
     group: string,
     key: string,

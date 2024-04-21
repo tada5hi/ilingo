@@ -13,7 +13,7 @@ import {
 import type {
     App,
 } from 'vue';
-import { inject } from '../utils';
+import { inject } from '../helpers';
 
 const IlingoSymbol = Symbol.for('Ilingo');
 

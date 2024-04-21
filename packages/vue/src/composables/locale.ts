@@ -15,7 +15,7 @@ import type {
     App,
     Ref,
 } from 'vue';
-import { inject } from '../utils';
+import { inject } from '../helpers';
 
 const LocaleSymbol = Symbol.for('ILocale');
 

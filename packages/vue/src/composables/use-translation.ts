@@ -8,6 +8,7 @@
 import { computedAsync } from '@vueuse/core';
 import type { GetContext } from 'ilingo';
 import type { Ref } from 'vue';
+import { extractReactiveData } from './utils';
 import { injectIlingo } from './instance';
 import { injectLocale } from './locale';
 
@@ -19,10 +20,14 @@ export function useTranslation(ctx: GetContext) : Ref<string> {
 
     return computedAsync(
         async () => {
-            if (typeof ctx.locale === 'undefined') {
-                ctx.locale = locale.value;
-            }
-            const value = await instance.get(ctx);
+            const value = await instance.get({
+                locale: ctx.locale ? ctx.locale : locale.value,
+                data: ctx.data ?
+                    extractReactiveData(ctx.data) :
+                    undefined,
+                group: ctx.group,
+                key: ctx.key,
+            });
             return value || defaultValue;
         },
         defaultValue,

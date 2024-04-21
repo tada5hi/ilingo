@@ -6,8 +6,11 @@
  */
 
 import type { Store } from 'ilingo';
+import type { MaybeRef } from 'vue';
 
 export type Options = {
     store: Store,
     locale?: string
 };
+
+export type DataMaybeRef = Record<string, MaybeRef<string | number>>;
