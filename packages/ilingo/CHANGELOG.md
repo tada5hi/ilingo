@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.0](https://github.com/tada5hi/ilingo/compare/ilingo-v4.1.1...ilingo-v4.2.0) (2024-04-21)
+
+
+### Features
+
+* reactive data input for use-translation helper ([#455](https://github.com/tada5hi/ilingo/issues/455)) ([2b2ec64](https://github.com/tada5hi/ilingo/commit/2b2ec64550cf4e0e42d73e8f9d8713e59cf06c84))
+
 ## [4.1.1](https://github.com/tada5hi/ilingo/compare/ilingo-v4.1.0...ilingo-v4.1.1) (2024-04-20)
 
 
