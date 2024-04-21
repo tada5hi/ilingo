@@ -73,4 +73,4 @@ export default {
 export { default as ITranslate } from './component.vue';
 export * from './composables';
 export * from './types';
-export * from './utils';
+export * from './helpers';
