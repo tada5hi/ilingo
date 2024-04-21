@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Store } from 'ilingo';
+import type { GetContext, Store } from 'ilingo';
 import type { MaybeRef } from 'vue';
 
 export type Options = {
@@ -14,3 +14,7 @@ export type Options = {
 };
 
 export type DataMaybeRef = Record<string, MaybeRef<string | number>>;
+
+export type GetContextReactive = Omit<GetContext, 'data'> & {
+    data: DataMaybeRef
+};
