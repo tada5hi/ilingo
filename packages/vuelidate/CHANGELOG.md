@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.3.1](https://github.com/tada5hi/ilingo/compare/vue-v4.3.0...vue-v4.3.1) (2024-04-22)
+
+
+### Bug Fixes
+
+* typings for severity helper and composable ([f69c2de](https://github.com/tada5hi/ilingo/commit/f69c2de4db3dc986cb1fe9d4d962b1590870ce82))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/vue bumped from ^4.3.0 to ^4.3.1
+    * ilingo bumped from ^4.3.0 to ^4.3.1
+  * peerDependencies
+    * @ilingo/vue bumped from ^4.3.0 to ^4.3.1
+    * ilingo bumped from ^4.3.0 to ^4.3.1
+
 ## [4.3.0](https://github.com/tada5hi/ilingo/compare/vue-v4.2.0...vue-v4.3.0) (2024-04-22)
 
 
