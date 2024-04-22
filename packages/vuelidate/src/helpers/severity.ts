@@ -5,11 +5,14 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { BaseValidation } from '@vuelidate/core';
+import type { BaseValidation, ValidationRuleCollection } from '@vuelidate/core';
 import { Severity } from '../constants';
 
-export function getSeverity(validation: BaseValidation) : `${Severity}` | undefined {
-    if (validation.$invalid) {
+export function getSeverity<
+    T = unknown,
+    V extends ValidationRuleCollection<T> | undefined = undefined,
+>(validation: BaseValidation<T, V>) : `${Severity}` | undefined {
+    if (validation && validation.$invalid) {
         if (validation.$dirty) {
             return Severity.ERROR;
         }

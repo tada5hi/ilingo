@@ -5,14 +5,17 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { BaseValidation } from '@vuelidate/core';
+import type { BaseValidation, ValidationRuleCollection } from '@vuelidate/core';
 import type { ComputedRef, MaybeRef } from 'vue';
 import { computed, unref } from 'vue';
 import type { Severity } from '../constants';
 import { getSeverity } from '../helpers';
 
-export function useSeverity(
-    input: MaybeRef<BaseValidation>,
+export function useSeverity<
+    T = unknown,
+    V extends ValidationRuleCollection<T> | undefined = undefined,
+>(
+    input: MaybeRef<BaseValidation<T, V>>,
 ) : ComputedRef<`${Severity}` | undefined> {
     return computed(() => {
         const validation = unref(input);
