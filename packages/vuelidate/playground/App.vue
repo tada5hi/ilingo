@@ -39,12 +39,18 @@ export default defineComponent({
         <div>
             <div>
                 <input
-                    v-model="form.text"
+                    v-model="v$.text.$model"
                     type="text"
                 >
             </div>
             <div>
-                <IVuelidate :validation="v$.text" />
+                <IVuelidate :validation="v$.text">
+                    <template #default="props">
+                        <template v-for="(item) in props.data">
+                            {{ item.key }}({{ props.severity }}): {{ item.value }}
+                        </template>
+                    </template>
+                </IVuelidate>
             </div>
         </div>
         <div>

@@ -41,7 +41,7 @@ export default {
     install,
 } satisfies Plugin<Options | Ilingo | undefined>;
 
-export { default as IVuelidate } from './component.vue';
-export * from './use-translations-for-nested-validations';
-export * from './use-translations-for-base-validation';
+export * from './component';
+export * from './composables';
+export * from './helpers';
 export * from './types';

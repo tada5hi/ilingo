@@ -8,10 +8,9 @@
 import { computedAsync } from '@vueuse/core';
 import { injectIlingo, injectLocale } from '@ilingo/vue';
 import type { BaseValidation, ValidationRuleCollection } from '@vuelidate/core';
-import type { Ref } from 'vue';
 import { computed } from 'vue';
-import type { BaseValidationTranslations } from './types';
-import { isRuleResult } from './utils';
+import type { BaseValidationTranslations } from '../types';
+import { isRuleResult } from '../utils';
 
 export function useTranslationsForBaseValidation<
     T = unknown,

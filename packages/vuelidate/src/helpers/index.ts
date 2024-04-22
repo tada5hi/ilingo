@@ -5,11 +5,4 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export enum Severity {
-    WARNING = 'warning',
-    ERROR = 'error',
-}
-
-export enum SlotName {
-    DEFAULT = 'default',
-}
+export * from './severity';
