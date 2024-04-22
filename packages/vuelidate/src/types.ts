@@ -7,6 +7,7 @@
 
 import type { RuleResultWithParams } from '@vuelidate/core';
 import type { Ref } from 'vue';
+import type { Severity } from './constants';
 
 export type RuleResult = Omit<RuleResultWithParams, '$params'> & {
     $params?: RuleResultWithParams['$params']
@@ -14,3 +15,12 @@ export type RuleResult = Omit<RuleResultWithParams, '$params'> & {
 
 export type BaseValidationTranslations = Ref<Record<string, string>>;
 export type NestedValidationsTranslations<T = unknown> = Record<keyof T, BaseValidationTranslations>;
+
+export type KeyValue<T = any> = {
+    key: string,
+    value: T
+};
+export type SlotProps = {
+    severity?: `${Severity}`,
+    data: KeyValue<string>[]
+};
