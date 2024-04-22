@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.3.0](https://github.com/tada5hi/ilingo/compare/vue-v4.2.0...vue-v4.3.0) (2024-04-22)
+
+
+### Features
+
+* severity implementation with composables + component slots ([#461](https://github.com/tada5hi/ilingo/issues/461)) ([986cf04](https://github.com/tada5hi/ilingo/commit/986cf04e67c334b296f10cbad8edad6bfa42d8c2))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/vue bumped from ^4.2.0 to ^4.3.0
+    * ilingo bumped from ^4.2.0 to ^4.3.0
+  * peerDependencies
+    * @ilingo/vue bumped from ^4.2.0 to ^4.3.0
+    * ilingo bumped from ^4.2.0 to ^4.3.0
+
 ## [4.2.0](https://github.com/tada5hi/ilingo/compare/vue-v4.1.1...vue-v4.2.0) (2024-04-21)
 
 
