@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.1](https://github.com/tada5hi/ilingo/compare/ilingo-v4.3.0...ilingo-v4.3.1) (2024-04-22)
+
+
+### Miscellaneous Chores
+
+* **ilingo:** Synchronize main versions
+
 ## [4.3.0](https://github.com/tada5hi/ilingo/compare/ilingo-v4.2.0...ilingo-v4.3.0) (2024-04-22)
 
 
