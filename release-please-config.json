@@ -15,23 +15,13 @@
             "component": "vue"
         },
         "packages/vuelidate": {
-            "component": "vue"
+            "component": "vuelidate"
         }
     },
     "plugins": [
         {
             "type": "node-workspace",
             "updatePeerDependencies": true
-        },
-        {
-            "type": "linked-versions",
-            "groupName": "main",
-            "components": [
-                "ilingo",
-                "fs",
-                "vue",
-                "vuelidate"
-            ]
         }
     ],
     "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"

@@ -23,7 +23,7 @@ const IVuelidate = defineComponent({
     }>,
     props: {
         validation: {
-            type: Object as PropType<BaseValidation>,
+            type: Object as PropType<Record<string, any>>,
             required: true,
         },
     },
@@ -45,7 +45,7 @@ const IVuelidate = defineComponent({
             return output;
         });
 
-        const severity = useSeverity(validation);
+        const severity = useSeverity(validation as any);
 
         return () => {
             if (typeof slots[SlotName.DEFAULT] === 'undefined') {
