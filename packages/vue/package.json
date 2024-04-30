@@ -54,13 +54,13 @@
         "@vueuse/core": "^10.9.0",
         "ilingo": "^4.3.1",
         "vite": "^5.2.9",
-        "vue": "^3.4.23",
+        "vue": "^3.4.26",
         "vue-tsc": "^2.0.13"
     },
     "peerDependencies": {
         "@vueuse/core": "^10.9.0",
         "ilingo": "^4.3.1",
-        "vue": "^3.4.23"
+        "vue": "^3.4.26"
     },
     "publishConfig": {
         "access": "public"
