@@ -13,7 +13,7 @@ import { getSeverity } from '../helpers';
 
 export function useSeverity<
     T = unknown,
-    V extends ValidationRuleCollection<T> | undefined = undefined,
+    V extends ValidationRuleCollection<T> = ValidationRuleCollection<T>,
 >(
     input: MaybeRef<BaseValidation<T, V>>,
 ) : ComputedRef<`${Severity}` | undefined> {

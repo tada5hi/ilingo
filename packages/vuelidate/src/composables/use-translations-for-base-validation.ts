@@ -14,7 +14,7 @@ import { isRuleResult } from '../utils';
 
 export function useTranslationsForBaseValidation<
     T = unknown,
-    V extends ValidationRuleCollection<T> | undefined = undefined,
+    V extends ValidationRuleCollection<T> = ValidationRuleCollection<T>,
 >(
     result: BaseValidation<T, V>,
 ) : BaseValidationTranslations {
