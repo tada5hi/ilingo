@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/tada5hi/ilingo/compare/vuelidate-v5.0.0...vuelidate-v5.0.1) (2024-05-10)
+
+
+### Bug Fixes
+
+* typings for composables ([705bbf9](https://github.com/tada5hi/ilingo/commit/705bbf930290bfb9f9f2e31812bd59f90c82f3cd))
+
 ## [5.0.0](https://github.com/tada5hi/ilingo/compare/vuelidate-v4.3.1...vuelidate-v5.0.0) (2024-04-22)
 
 
