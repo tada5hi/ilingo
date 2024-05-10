@@ -10,7 +10,7 @@ import { Severity } from '../constants';
 
 export function getSeverity<
     T = unknown,
-    V extends ValidationRuleCollection<T> | undefined = undefined,
+    V extends ValidationRuleCollection<T> = ValidationRuleCollection<T>,
 >(validation: BaseValidation<T, V>) : `${Severity}` | undefined {
     if (validation && validation.$invalid) {
         if (validation.$dirty) {
