@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.2](https://github.com/tada5hi/ilingo/compare/vuelidate-v5.0.1...vuelidate-v5.0.2) (2024-05-10)
+
+
+### Bug Fixes
+
+* getSeverity composable signature ([9cc7625](https://github.com/tada5hi/ilingo/commit/9cc76254131de363c6c466ef54a26767095d88eb))
+
 ## [5.0.1](https://github.com/tada5hi/ilingo/compare/vuelidate-v5.0.0...vuelidate-v5.0.1) (2024-05-10)
 
 
