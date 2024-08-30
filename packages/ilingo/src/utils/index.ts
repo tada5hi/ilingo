@@ -7,5 +7,4 @@
 
 export * from './identify';
 export * from './language';
-export * from './object-path';
 export * from './template';

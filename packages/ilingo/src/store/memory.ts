@@ -5,8 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import { getPathValue, setPathValue } from 'pathtrace';
 import type { LocalesRecord } from '../types';
-import { getObjectPathProperty, setObjectPathProperty } from '../utils';
 import type {
     MemoryStoreOptions,
     Store,
@@ -29,7 +29,7 @@ export class MemoryStore implements Store {
             return undefined;
         }
 
-        const output = getObjectPathProperty(
+        const output = getPathValue(
             this.data[context.locale][context.group],
             context.key,
         );
@@ -44,7 +44,7 @@ export class MemoryStore implements Store {
     async set(context: StoreSetContext): Promise<void> {
         this.initLines(context.group, context.locale);
 
-        setObjectPathProperty(
+        setPathValue(
             this.data[context.locale][context.group],
             context.key,
             context.value,
