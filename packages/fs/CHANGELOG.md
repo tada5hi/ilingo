@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.3.2](https://github.com/tada5hi/ilingo/compare/fs-v4.3.1...fs-v4.3.2) (2024-09-02)
+
+
+### Bug Fixes
+
+* **deps:** bump locter from 2.1.0 to 2.1.1 ([#647](https://github.com/tada5hi/ilingo/issues/647)) ([e266925](https://github.com/tada5hi/ilingo/commit/e266925988ea1947663b0d12578bc8f251da2534))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^4.3.1 to ^4.4.0
+
 ## [4.3.1](https://github.com/tada5hi/ilingo/compare/fs-v4.3.0...fs-v4.3.1) (2024-04-22)
 
 

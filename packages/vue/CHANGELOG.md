@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.3.2](https://github.com/tada5hi/ilingo/compare/vue-v4.3.1...vue-v4.3.2) (2024-09-02)
+
+
+### Bug Fixes
+
+* don't inject instance and locale multiple times ([928d483](https://github.com/tada5hi/ilingo/commit/928d483603f141feb43a38acd2b9aea855a500bc))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * ilingo bumped from ^4.3.1 to ^4.4.0
+  * peerDependencies
+    * ilingo bumped from ^4.3.1 to ^4.4.0
+
 ## [4.3.1](https://github.com/tada5hi/ilingo/compare/vue-v4.3.0...vue-v4.3.1) (2024-04-22)
 
 
