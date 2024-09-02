@@ -22,7 +22,9 @@ export function applyInstallInput(
     input?: Options | Ilingo,
 ) : Ilingo {
     let locale = injectLocaleSafe(app);
+    const localeExisted = typeof locale !== 'undefined' && !!locale.value;
     let instance = injectIlingoSafe(app);
+    const instanceExisted = typeof instance !== 'undefined';
 
     if (!input) {
         instance = new Ilingo();
@@ -54,8 +56,13 @@ export function applyInstallInput(
         locale = ref('en');
     }
 
-    provideLocale(locale, app);
-    provideIlingo(instance, app);
+    if (!localeExisted) {
+        provideLocale(locale, app);
+    }
+
+    if (!instanceExisted) {
+        provideIlingo(instance, app);
+    }
 
     return instance;
 }

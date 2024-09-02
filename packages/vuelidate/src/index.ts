@@ -6,7 +6,7 @@
  */
 
 import type { Options } from '@ilingo/vue';
-import { applyInstallInput, provideIlingo } from '@ilingo/vue';
+import { applyInstallInput } from '@ilingo/vue';
 import type { Ilingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
 import { Store, createStore } from './store';
@@ -33,8 +33,6 @@ export function install(
     if (!found) {
         instance.stores.add(createStore());
     }
-
-    provideIlingo(instance, app);
 }
 
 export default {
