@@ -48,7 +48,7 @@
         "nx": "^19.6.4",
         "rimraf": "^6.0.1",
         "rollup": "^4.21.2",
-        "ts-jest": "^29.1.0",
+        "ts-jest": "^29.2.5",
         "typescript": "5.4.5",
         "workspaces-publish": "^1.4.4"
     },
