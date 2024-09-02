@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.4.0](https://github.com/tada5hi/ilingo/compare/ilingo-v4.3.1...ilingo-v4.4.0) (2024-09-02)
+
+
+### Features
+
+* replace internal path helÃpers with pathtrace ([cbb6017](https://github.com/tada5hi/ilingo/commit/cbb60173b75b3345196fa549e8321d50971f5260))
+
+
+### Bug Fixes
+
+* **deps:** bump pathtrace from 1.0.0-beta.2 to 1.0.0 ([#648](https://github.com/tada5hi/ilingo/issues/648)) ([2370b4c](https://github.com/tada5hi/ilingo/commit/2370b4ce54558ef787e6bdf655aeb2333e9c4588))
+
 ## [4.3.1](https://github.com/tada5hi/ilingo/compare/ilingo-v4.3.0...ilingo-v4.3.1) (2024-04-22)
 
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## [5.0.3](https://github.com/tada5hi/ilingo/compare/vuelidate-v5.0.2...vuelidate-v5.0.3) (2024-09-02)
+
+
+### Bug Fixes
+
+* don't inject instance and locale multiple times ([928d483](https://github.com/tada5hi/ilingo/commit/928d483603f141feb43a38acd2b9aea855a500bc))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/vue bumped from ^4.3.1 to ^4.3.2
+    * ilingo bumped from ^4.3.1 to ^4.4.0
+  * peerDependencies
+    * @ilingo/vue bumped from ^4.3.1 to ^4.3.2
+    * ilingo bumped from ^4.3.1 to ^4.4.0
+
 ## [5.0.2](https://github.com/tada5hi/ilingo/compare/vuelidate-v5.0.1...vuelidate-v5.0.2) (2024-05-10)
 
 
