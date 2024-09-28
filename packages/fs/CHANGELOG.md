@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.3](https://github.com/tada5hi/ilingo/compare/fs-v4.3.2...fs-v4.3.3) (2024-09-28)
+
+
+### Bug Fixes
+
+* **deps:** bump locter from 2.1.1 to 2.1.2 ([#698](https://github.com/tada5hi/ilingo/issues/698)) ([8ec3320](https://github.com/tada5hi/ilingo/commit/8ec332039934ed9340ec99ec8b2ba3ff4d97c30c))
+
 ## [4.3.2](https://github.com/tada5hi/ilingo/compare/fs-v4.3.1...fs-v4.3.2) (2024-09-02)
 
 
