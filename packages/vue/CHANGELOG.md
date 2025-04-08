@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.3.3](https://github.com/tada5hi/ilingo/compare/vue-v4.3.2...vue-v4.3.3) (2025-04-08)
+
+
+### Bug Fixes
+
+* **deps:** bump the minorandpatch group across 1 directory with 16 updates ([#816](https://github.com/tada5hi/ilingo/issues/816)) ([b336691](https://github.com/tada5hi/ilingo/commit/b33669162152e82e079791955f53d9ba2538b6b3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * ilingo bumped from ^4.4.0 to ^4.4.1
+  * peerDependencies
+    * ilingo bumped from ^4.4.0 to ^4.4.1
+
 ## [4.3.2](https://github.com/tada5hi/ilingo/compare/vue-v4.3.1...vue-v4.3.2) (2024-09-02)
 
 
