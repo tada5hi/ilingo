@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.3.3](https://github.com/tada5hi/ilingo/compare/fs-v4.3.2...fs-v4.3.3) (2025-04-08)
+
+
+### Bug Fixes
+
+* **deps:** bump locter from 2.1.1 to 2.1.2 ([#698](https://github.com/tada5hi/ilingo/issues/698)) ([8ec3320](https://github.com/tada5hi/ilingo/commit/8ec332039934ed9340ec99ec8b2ba3ff4d97c30c))
+* **deps:** bump pathe from 1.1.2 to 2.0.3 in the majorprod group ([#809](https://github.com/tada5hi/ilingo/issues/809)) ([9e10704](https://github.com/tada5hi/ilingo/commit/9e10704a7fa546618a591c2d8b498a4b04d4fe1d))
+* **deps:** bump the minorandpatch group across 1 directory with 16 updates ([#816](https://github.com/tada5hi/ilingo/issues/816)) ([b336691](https://github.com/tada5hi/ilingo/commit/b33669162152e82e079791955f53d9ba2538b6b3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^4.4.0 to ^4.4.1
+
 ## [4.3.2](https://github.com/tada5hi/ilingo/compare/fs-v4.3.1...fs-v4.3.2) (2024-09-02)
 
 

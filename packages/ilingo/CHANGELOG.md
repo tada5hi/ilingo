@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.4.1](https://github.com/tada5hi/ilingo/compare/ilingo-v4.4.0...ilingo-v4.4.1) (2025-04-08)
+
+
+### Bug Fixes
+
+* **deps:** bump the minorandpatch group across 1 directory with 16 updates ([#816](https://github.com/tada5hi/ilingo/issues/816)) ([b336691](https://github.com/tada5hi/ilingo/commit/b33669162152e82e079791955f53d9ba2538b6b3))
+
 ## [4.4.0](https://github.com/tada5hi/ilingo/compare/ilingo-v4.3.1...ilingo-v4.4.0) (2024-09-02)
 
 
