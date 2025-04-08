@@ -12,8 +12,30 @@ updates:
       schedule:
           interval: "daily"
       versioning-strategy: "increase"
+      target-branch: "master"
       open-pull-requests-limit: 20
       commit-message:
           prefix: "fix"
           prefix-development: "build"
           include: "scope"
+      groups:
+          majorProd:
+              applies-to: version-updates
+              dependency-type: production
+              exclude-patterns:
+                  - "prom-client"
+                  - "nanoid"
+              update-types:
+                  - "major"
+          majorDev:
+              applies-to: version-updates
+              dependency-type: development
+              exclude-patterns:
+                  - "eslint"
+              update-types:
+                  - "major"
+          minorAndPatch:
+              applies-to: version-updates
+              update-types:
+                  - "patch"
+                  - "minor"
