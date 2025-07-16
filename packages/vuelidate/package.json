@@ -67,9 +67,9 @@
         "@vuelidate/validators": "^2.0.4",
         "@vueuse/core": "^13.4.0",
         "ilingo": "^4.4.1",
-        "vite": "^6.2.5",
+        "vite": "^7.0.4",
         "vue": "^3.5.17",
-        "vue-tsc": "^2.2.8"
+        "vue-tsc": "^3.0.1"
     },
     "peerDependencies": {
         "@ilingo/vue": "^4.3.3",
