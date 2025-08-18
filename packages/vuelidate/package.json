@@ -65,18 +65,18 @@
         "@ilingo/vue": "^4.3.3",
         "@vuelidate/core": "^2.0.3",
         "@vuelidate/validators": "^2.0.4",
-        "@vueuse/core": "^13.5.0",
+        "@vueuse/core": "^13.6.0",
         "ilingo": "^4.4.1",
-        "vite": "^7.0.4",
-        "vue": "^3.5.17",
-        "vue-tsc": "^3.0.1"
+        "vite": "^7.1.2",
+        "vue": "^3.5.18",
+        "vue-tsc": "^3.0.5"
     },
     "peerDependencies": {
         "@ilingo/vue": "^4.3.3",
         "@vuelidate/core": "^2.0.3",
-        "@vueuse/core": "^13.5.0",
+        "@vueuse/core": "^13.6.0",
         "ilingo": "^4.4.1",
-        "vue": "^3.5.17"
+        "vue": "^3.5.18"
     },
     "publishConfig": {
         "access": "public"
