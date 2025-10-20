@@ -53,7 +53,7 @@
     "devDependencies": {
         "@vueuse/core": "^13.5.0",
         "ilingo": "^4.4.1",
-        "vite": "^7.0.4",
+        "vite": "^7.0.8",
         "vue": "^3.5.17",
         "vue-tsc": "^3.0.1"
     },
