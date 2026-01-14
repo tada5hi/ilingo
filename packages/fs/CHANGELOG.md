@@ -1,5 +1,23 @@
 # Changelog
 
+## [5.0.0](https://github.com/tada5hi/ilingo/compare/fs-v4.3.3...fs-v5.0.0) (2026-01-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* esm only
+
+### Bug Fixes
+
+* bump dependencies ([fe0583c](https://github.com/tada5hi/ilingo/commit/fe0583c181575c769bfb3f9b18ee590d1ae1f020))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^4.4.1 to ^5.0.0
+
 ## [4.3.3](https://github.com/tada5hi/ilingo/compare/fs-v4.3.2...fs-v4.3.3) (2025-04-08)
 
 
