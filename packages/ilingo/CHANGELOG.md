@@ -1,5 +1,18 @@
 # Changelog
 
+## [5.0.0](https://github.com/tada5hi/ilingo/compare/ilingo-v4.4.1...ilingo-v5.0.0) (2026-01-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* interface renamed
+* esm only
+
+### Bug Fixes
+
+* bump dependencies ([fe0583c](https://github.com/tada5hi/ilingo/commit/fe0583c181575c769bfb3f9b18ee590d1ae1f020))
+* rename interface Store -&gt; IStore ([137dfd5](https://github.com/tada5hi/ilingo/commit/137dfd55cd0c5aa28bcd833e1a0de1e1a26f0876))
+
 ## [4.4.1](https://github.com/tada5hi/ilingo/compare/ilingo-v4.4.0...ilingo-v4.4.1) (2025-04-08)
 
 
