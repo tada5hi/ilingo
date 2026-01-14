@@ -1,7 +1,7 @@
-import type { Store } from '../store';
+import type { IStore } from '../store';
 
 export type Config = {
-    store: Store,
+    store: IStore,
     // default: en
     locale: string,
 };

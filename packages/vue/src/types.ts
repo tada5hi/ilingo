@@ -5,11 +5,11 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { GetContext, Store } from 'ilingo';
+import type { GetContext, IStore } from 'ilingo';
 import type { MaybeRef } from 'vue';
 
 export type Options = {
-    store: Store,
+    store: IStore,
     locale?: string
 };
 

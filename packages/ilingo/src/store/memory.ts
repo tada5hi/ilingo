@@ -8,13 +8,13 @@
 import { getPathValue, setPathValue } from 'pathtrace';
 import type { LocalesRecord } from '../types';
 import type {
+    IStore,
     MemoryStoreOptions,
-    Store,
     StoreGetContext,
     StoreSetContext,
 } from './types';
 
-export class MemoryStore implements Store {
+export class MemoryStore implements IStore {
     protected data : LocalesRecord;
 
     constructor(options: MemoryStoreOptions) {

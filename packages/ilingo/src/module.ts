@@ -7,7 +7,7 @@
 
 import type { ConfigInput } from './config';
 import { LOCALE_DEFAULT } from './constants';
-import type { Store } from './store';
+import type { IStore } from './store';
 import type {
     GetContext,
 } from './types';
@@ -16,7 +16,7 @@ import {
 } from './utils';
 
 export class Ilingo {
-    public readonly stores : Set<Store>;
+    public readonly stores : Set<IStore>;
 
     protected locale: string;
 
@@ -25,7 +25,7 @@ export class Ilingo {
     constructor(input: ConfigInput = {}) {
         this.locale = input.locale || LOCALE_DEFAULT;
 
-        this.stores = new Set<Store>();
+        this.stores = new Set<IStore>();
         if (input.store) {
             this.stores.add(input.store);
         }

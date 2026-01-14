@@ -17,7 +17,7 @@ export type StoreSetContext = StoreGetContext & {
     value: string
 };
 
-export interface Store {
+export interface IStore {
     get(context: StoreGetContext) : Promise<string | undefined>;
 
     set(context: StoreSetContext) : Promise<void>;
