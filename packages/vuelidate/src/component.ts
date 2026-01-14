@@ -5,12 +5,10 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { BaseValidation } from '@vuelidate/core';
 import type { PropType, SlotsType, VNodeChild } from 'vue';
 import {
     computed,
     defineComponent,
-    h,
     toRef,
 } from 'vue';
 import { useSeverity, useTranslationsForBaseValidation } from './composables';

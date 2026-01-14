@@ -5,6 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import { beforeAll, describe, it, expect } from "vitest";
 import path from "node:path";
 import {Ilingo} from "ilingo";
 import {FSStore} from "../../src";
@@ -15,7 +16,7 @@ describe('src/store/file-system', function () {
     let store : FSStore;
 
     beforeAll(() => {
-        store = new FSStore({directory: basePath});
+        store = new FSStore({ directory: basePath });
     })
 
     it('should get locales', async () => {

@@ -1,20 +1,10 @@
 {
+    "extends": "@tada5hi/tsconfig",
     "compilerOptions": {
-        "sourceMap": true,
-
-        "declaration": true,
-        "declarationMap": true,
-
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-
-        "skipLibCheck": true,
-
-        "esModuleInterop": true,
-        "lib": ["ESNext", "DOM"],
-        "target": "ES2020",
-
-        "moduleResolution": "Node",
+        "strict": false,
+        "lib": ["ESNext"],
+        "target": "ES2022",
+        "moduleResolution": "bundler",
         "module": "ESNext"
     },
     "exclude": [

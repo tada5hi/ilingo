@@ -3,14 +3,9 @@
 
     "compilerOptions": {
         "outDir": "./dist",
-        "lib": [
-            "dom",
-            "ESNext"
-        ],
         "importHelpers": true,
         "allowSyntheticDefaultImports": true,
         "sourceMap": false,
-        "module": "ESNext",
         "jsx": "preserve",
 
         "declaration": true,

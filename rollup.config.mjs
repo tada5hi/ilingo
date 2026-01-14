@@ -7,32 +7,14 @@
 
 import resolve from '@rollup/plugin-node-resolve';
 import vue from '@vitejs/plugin-vue';
-
-import { merge } from 'smob';
+import swc from 'unplugin-swc';
 
 import { builtinModules } from 'node:module';
-import { transform } from "@swc/core";
-import json from "@rollup/plugin-json";
+import json from '@rollup/plugin-json';
 
 const extensions = [
-    '.js', '.mjs', '.cjs', '.ts', '.mts', '.cts'
+    '.js', '.mjs', '.cjs', '.ts', '.mts', '.cts',
 ];
-
-const swcOptions = {
-    jsc: {
-        target: 'es2020',
-        parser: {
-            syntax: 'typescript',
-            decorators: true
-        },
-        transform: {
-            decoratorMetadata: true,
-            legacyDecorator: true
-        },
-        loose: true
-    },
-    sourceMaps: true
-}
 
 export function createConfig(
     {
@@ -40,9 +22,7 @@ export function createConfig(
         pluginsPre = [],
         pluginsPost = [],
         external = [],
-        defaultExport = false,
-        swc = {}
-    }
+    },
 ) {
     external = Object.keys(pkg.dependencies || {})
         .concat(Object.keys(pkg.peerDependencies || {}))
@@ -54,37 +34,25 @@ export function createConfig(
         external,
         output: [
             {
-                format: 'cjs',
-                file: pkg.main,
-                exports: 'named',
-                ...(defaultExport ? { footer: 'module.exports = Object.assign(exports.default, exports);' } : {}),
-                sourcemap: true
-            },
-            {
                 format: 'es',
                 file: pkg.module,
-                sourcemap: true
-            }
+                sourcemap: true,
+            },
         ],
         plugins: [
             ...pluginsPre,
 
             // Allows node_modules resolution
-            resolve({ extensions}),
+            resolve({ extensions }),
 
             json(),
 
             vue(),
 
             // Compile TypeScript/JavaScript files
-            {
-                name: 'swc',
-                transform(code) {
-                    return transform(code, merge({}, swc, swcOptions));
-                }
-            },
+            swc.rollup(),
 
-            ...pluginsPost
-        ]
+            ...pluginsPost,
+        ],
     };
 }

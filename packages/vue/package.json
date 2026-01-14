@@ -1,16 +1,15 @@
 {
     "name": "@ilingo/vue",
+    "type": "module",
     "version": "4.3.3",
     "description": "This package contains the vue package of ilingo.",
-    "main": "dist/index.cjs",
     "module": "dist/index.mjs",
     "types": "dist/index.d.ts",
     "exports": {
         "./package.json": "./package.json",
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.mjs",
-            "require": "./dist/index.cjs"
+            "import": "./dist/index.mjs"
         },
         "./core": {
             "import": {
@@ -33,6 +32,9 @@
         "build:js": "cross-env NODE_ENV=production rollup -c",
         "build": "rimraf ./dist && npm run build:js && npm run build:types",
         "build:watch": "npm run build -- --watch"
+    },
+    "engines": {
+        "node": "^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0"
     },
     "keywords": [],
     "author": {

@@ -1,5 +1,6 @@
 {
     "name": "ilingo",
+    "type": "module",
     "version": "4.4.1",
     "description": "This is a lightweight library for translation.",
     "author": {
@@ -16,11 +17,9 @@
         "./package.json": "./package.json",
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.mjs",
-            "require": "./dist/index.cjs"
+            "import": "./dist/index.mjs"
         }
     },
-    "main": "./dist/index.cjs",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
     "files": [
@@ -32,9 +31,12 @@
         "build": "rimraf dist && npm run build:types && npm run build:js",
         "lint": "eslint --ext .js,.vue,.ts ./src",
         "lint:fix": "npm run lint -- --fix",
-        "test": "cross-env NODE_ENV=test jest --config ./test/jest.config.js",
-        "test:coverage": "npm run test -- --coverage",
+        "test": "cross-env NODE_ENV=test vitest run test/unit",
+        "test:coverage": "cross-env NODE_ENV=test vitest run --coverage",
         "release": "npm run build && changelogen --release --push && npm publish"
+    },
+    "engines": {
+        "node": "^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0"
     },
     "keywords": [
         "i18n",
@@ -52,6 +54,9 @@
     "dependencies": {
         "pathtrace": "^1.1.0",
         "smob": "^1.5.0"
+    },
+    "devDependencies": {
+        "vitest": "^4.0.17"
     },
     "publishConfig": {
         "access": "public"
