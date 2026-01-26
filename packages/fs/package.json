@@ -68,7 +68,7 @@
         "smob": "^1.5.0"
     },
     "devDependencies": {
-        "vitest": "^4.0.17"
+        "vitest": "^4.0.18"
     },
     "gitHead": "e0db40b8067d33add80b3582cab8d24149dacec9",
     "publishConfig": {
