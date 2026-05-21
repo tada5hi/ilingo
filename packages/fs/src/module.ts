@@ -5,12 +5,14 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import { mkdir, rename, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import process from 'node:process';
 import type { LocatorOptionsInput } from 'locter';
 import {
     load,
     locateMany,
 } from 'locter';
-import path from 'node:path';
 import type { Merger } from 'smob';
 import { createMerger } from 'smob';
 import type { LinesRecord, StoreGetContext, StoreSetContext } from 'ilingo';
@@ -23,6 +25,8 @@ export class FSStore extends MemoryStore {
 
     protected directories : string[];
 
+    protected writeDirectory : string;
+
     protected merger : Merger;
 
     constructor(input?: ConfigInput) {
@@ -32,6 +36,7 @@ export class FSStore extends MemoryStore {
 
         this.loaded = {};
         this.directories = options.directory;
+        this.writeDirectory = options.writeDirectory;
 
         this.merger = createMerger({
             inPlace: true,
@@ -48,9 +53,13 @@ export class FSStore extends MemoryStore {
     }
 
     override async set(context: StoreSetContext): Promise<void> {
-        return super.set(context);
+        // Ensure the in-memory record reflects the latest on-disk state
+        // before merging the new value, so the write does not drop sibling keys.
+        await this.loadGroup(context.group, context.locale);
 
-        // todo: write to file!
+        await super.set(context);
+
+        await this.persist(context.locale, context.group);
     }
 
     // ------------------------------------------
@@ -110,6 +119,29 @@ export class FSStore extends MemoryStore {
         this.data[locale][group] = this.mergeFiles(files);
 
         return this.data[locale][group];
+    }
+
+    /**
+     * Persist the current in-memory record for `(locale, group)` to a JSON
+     * file inside `writeDirectory`. Always writes the merged record so that
+     * subsequent `loadGroup` calls observe the change.
+     *
+     * Atomic via write-temp-then-rename. If the source data was originally a
+     * `.ts` / `.js` / `.cjs` file the original is left untouched and the new
+     * `.json` sits alongside it; on next load both are merged by smob and the
+     * new JSON keys win because the loader applies later sources on top.
+     */
+    protected async persist(locale: string, group: string): Promise<void> {
+        const targetDir = path.join(this.writeDirectory, locale);
+        const targetFile = path.join(targetDir, `${group}.json`);
+        const tmpFile = `${targetFile}.${process.pid}.tmp`;
+
+        const record = (this.data[locale] && this.data[locale][group]) || {};
+        const content = `${JSON.stringify(record, null, 4)}\n`;
+
+        await mkdir(targetDir, { recursive: true });
+        await writeFile(tmpFile, content, 'utf8');
+        await rename(tmpFile, targetFile);
     }
 
     protected buildLocatorOptionsForLocale(locale?: string) : LocatorOptionsInput {

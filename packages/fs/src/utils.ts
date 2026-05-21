@@ -9,10 +9,10 @@ import { normalize } from 'pathe';
 import process from 'node:process';
 import type { Config, ConfigInput } from './types';
 
-export function buildConfig(input?: ConfigInput) : Config {
+export function buildConfig(input?: ConfigInput): Config {
     input = input || {};
 
-    let directory : string[];
+    let directory: string[];
     if (input.directory) {
         directory = Array.isArray(input.directory) ?
             input.directory :
@@ -25,5 +25,7 @@ export function buildConfig(input?: ConfigInput) : Config {
         directory = [process.cwd()];
     }
 
-    return { directory };
+    const writeDirectory = normalize(input.writeDirectory ?? directory[0]);
+
+    return { directory, writeDirectory };
 }

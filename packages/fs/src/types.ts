@@ -6,9 +6,11 @@
  */
 
 export type Config = {
-    directory: string[]
+    directory: string[],
+    writeDirectory: string,
 };
 
 export type ConfigInput = {
-    directory?: string | string[]
+    directory?: string | string[],
+    writeDirectory?: string,
 };

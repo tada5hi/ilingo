@@ -74,7 +74,26 @@ module.exports = {
 ```
 It is also possible to use `export default {...}` instead of `module.exports = {...}` for script files.
 
+### Persistence
 
+`FSStore.set(...)` writes the updated group back to disk as JSON. By default the file is written to `<directory>/<locale>/<group>.json` — the first configured `directory`. Pass `writeDirectory` to send writes to a separate path while still reading from the original locations:
+
+```typescript
+const store = new FSStore({
+    directory: ['language', 'overrides'],
+    writeDirectory: 'overrides',
+});
+
+await store.set({
+    locale: 'en',
+    group: 'app',
+    key: 'greeting',
+    value: 'Hello {{name}}',
+});
+// → overrides/en/app.json
+```
+
+Writes are atomic (write-to-temp then `rename`) and the full merged record is serialized — sibling keys are preserved. If the original source for a group was a `.ts` / `.js` / `.cjs` file, that file is left untouched and the new `.json` lives alongside it; on the next load `smob` merges both, with the newer JSON taking precedence.
 
 ## License
 
