@@ -1,7 +1,7 @@
 {
     "name": "@ilingo/fs",
     "type": "module",
-    "version": "5.0.0",
+    "version": "5.1.0",
     "description": "This is a lightweight library for translation.",
     "author": {
         "name": "Peter Placzek",

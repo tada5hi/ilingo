@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.0](https://github.com/tada5hi/ilingo/compare/fs-v5.0.0...fs-v5.1.0) (2026-05-21)
+
+
+### Features
+
+* **fs:** persist FSStore.set to disk ([bab057a](https://github.com/tada5hi/ilingo/commit/bab057a003726d3929d7582679b5f05a4bcf7e14))
+
 ## [5.0.0](https://github.com/tada5hi/ilingo/compare/fs-v4.3.3...fs-v5.0.0) (2026-01-14)
 
 
