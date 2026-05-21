@@ -71,7 +71,7 @@ export class FSStore extends MemoryStore {
     protected isLoaded(group: string, locale: string) : boolean {
         this.loaded[locale] = this.loaded[locale] || [];
 
-        return this.loaded[locale].indexOf(group) !== -1;
+        return this.loaded[locale].includes(group);
     }
 
     protected setIsLoaded(group: string, locale: string) {
@@ -134,9 +134,7 @@ export class FSStore extends MemoryStore {
 
     protected mergeFiles(files: unknown[]) {
         const lineRecord : LinesRecord = {};
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-
+        for (const file of files) {
             if (isLineRecord(file)) {
                 this.merger(lineRecord, file);
             }

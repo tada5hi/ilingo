@@ -16,15 +16,15 @@ import { SlotName } from './constants';
 import type { KeyValue, SlotProps } from './types';
 
 const IVuelidate = defineComponent({
-    slots: Object as SlotsType<{
-        [SlotName.DEFAULT]: SlotProps
-    }>,
     props: {
         validation: {
             type: Object as PropType<Record<string, any>>,
             required: true,
         },
     },
+    slots: Object as SlotsType<{
+        [SlotName.DEFAULT]: SlotProps
+    }>,
     setup(props, { slots }) {
         const validation = toRef(props, 'validation');
         const translations = useTranslationsForBaseValidation((validation as Record<string, any>).value);
@@ -33,10 +33,10 @@ const IVuelidate = defineComponent({
             const output : KeyValue<string>[] = [];
             const keys = Object.keys(translations.value);
 
-            for (let i = 0; i < keys.length; i++) {
+            for (const key of keys) {
                 output.push({
-                    key: keys[i],
-                    value: translations.value[keys[i]],
+                    key,
+                    value: translations.value[key],
                 });
             }
 

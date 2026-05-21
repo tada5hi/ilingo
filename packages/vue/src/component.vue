@@ -5,6 +5,7 @@ import {
     defineComponent,
 } from 'vue';
 import { useTranslation } from './composables';
+import type { DataMaybeRef } from './types';
 
 export default defineComponent({
     props: {
@@ -12,9 +13,7 @@ export default defineComponent({
             type: String as PropType<DotKey>,
             required: true,
         },
-        data: {
-            type: Object as PropType<Record<string, any>>,
-        },
+        data: { type: Object as PropType<DataMaybeRef> },
     },
     setup(props) {
         const parseKey = (key: string) : [string, string] => {
@@ -34,12 +33,10 @@ export default defineComponent({
         const text = useTranslation({
             group,
             key,
-            data: props.data as Record<string, any> | undefined,
+            data: props.data,
         });
 
-        return {
-            text,
-        };
+        return { text };
     },
 });
 </script>

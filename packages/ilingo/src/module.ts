@@ -37,18 +37,17 @@ export class Ilingo {
         const ownEntries = Array.from(this.stores.values());
         const foreignEntries = Array.from(instance.stores.values());
 
-        let foreignEntriesIndex = -1;
-        for (let i = 0; i < foreignEntries.length; i++) {
-            foreignEntriesIndex = -1;
-            for (let j = 0; j < ownEntries.length; j++) {
-                if (ownEntries[j] === foreignEntries[i]) {
+        for (const foreignEntry of foreignEntries) {
+            let foreignEntriesIndex = -1;
+            for (const [j, ownEntry] of ownEntries.entries()) {
+                if (ownEntry === foreignEntry) {
                     foreignEntriesIndex = j;
                     break;
                 }
             }
 
             if (foreignEntriesIndex === -1) {
-                this.stores.add(foreignEntries[i]);
+                this.stores.add(foreignEntry);
             }
         }
     }
@@ -72,7 +71,7 @@ export class Ilingo {
     async getLocales() : Promise<string[]> {
         const locales : string[] = [];
         const entries = this.stores.values();
-        // eslint-disable-next-line no-constant-condition
+         
         while (true) {
             const store = entries.next();
             if (store.done) {
@@ -89,7 +88,7 @@ export class Ilingo {
     async get(ctx: GetContext) : Promise<string | undefined> {
         let message : string | undefined;
         const entries = this.stores.values();
-        // eslint-disable-next-line no-constant-condition
+         
         while (true) {
             const store = entries.next();
             if (store.done) {

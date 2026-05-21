@@ -46,9 +46,7 @@ export function applyInstallInput(
         if (instance) {
             instance.stores.add(input.store);
         } else {
-            instance = new Ilingo({
-                store: input.store,
-            });
+            instance = new Ilingo({ store: input.store });
         }
     }
 
@@ -73,9 +71,7 @@ export function install(app: App, input: Options | Ilingo) : void {
     app.component('ITranslate', ITranslate);
 }
 
-export default {
-    install,
-} satisfies Plugin<Options | Ilingo>;
+export default { install } satisfies Plugin<Options | Ilingo>;
 
 export { default as ITranslate } from './component.vue';
 export * from './composables';

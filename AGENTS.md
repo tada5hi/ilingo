@@ -11,15 +11,20 @@ ilingo is a lightweight TypeScript library for translation and internationalizat
 npm install
 
 # Development
-npm run build                 # builds every workspace via Nx
-npm run test                  # runs vitest in every workspace that defines a test script
-npm run lint                  # eslint over ./packages/**/*.ts
+npm run build                 # tsdown per workspace, orchestrated by Nx
+npm run test                  # vitest --run per workspace that defines a test script
+npm run lint                  # eslint (flat config) across the repo
 npm run lint:fix              # eslint --fix
 ```
 
-- **Node.js**: `^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0`
+- **Node.js**: `>=22.0.0`
 - **Package manager**: npm (workspaces)
 - **Build orchestration**: Nx (`nx.json`, cacheable: `build`, `lint`, `test`)
+- **Bundler**: tsdown (Rolldown + Oxc); `@ilingo/vue` adds `unplugin-vue/rolldown` to compile `.vue` SFCs
+- **Type declarations**: tsdown's built-in `dts: true` for `.ts`-only packages; `vue-tsc --emitDeclarationOnly -p tsconfig.build.json` for Vue packages (tsdown's dts pipeline does not understand `.vue` files)
+- **Test runner**: Vitest 4 (config at `packages/<pkg>/test/vitest.config.ts`)
+- **Linter**: ESLint 10 flat config via `@tada5hi/eslint-config` factory (`vue: true`, `typescript: true`)
+- **Releases**: release-please opens the version-bump PR; merging it triggers `tada5hi/monoship@v2` which publishes any workspace whose `version` is not yet on the registry (OIDC trusted publishing, no `NPM_TOKEN` needed)
 
 Apps do not exist in this repo. All four workspaces under `packages/` are publishable libraries.
 

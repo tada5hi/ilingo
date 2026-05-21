@@ -35,9 +35,7 @@ export function install(
     }
 }
 
-export default {
-    install,
-} satisfies Plugin<Options | Ilingo | undefined>;
+export default { install } satisfies Plugin<Options | Ilingo | undefined>;
 
 export * from './component';
 export * from './composables';

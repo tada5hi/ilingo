@@ -13,30 +13,28 @@
         "url": "https://github.com/tada5hi/ilingo.git",
         "directory": "packages/ilingo"
     },
+    "main": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
     "exports": {
         "./package.json": "./package.json",
         ".": {
-            "types": "./dist/index.d.ts",
+            "types": "./dist/index.d.mts",
             "import": "./dist/index.mjs"
         }
     },
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
     "files": [
-        "dist/"
+        "dist"
     ],
     "scripts": {
-        "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
-        "build:js": "rollup -c",
-        "build": "rimraf dist && npm run build:types && npm run build:js",
-        "lint": "eslint --ext .js,.vue,.ts ./src",
+        "build": "tsdown",
+        "lint": "eslint",
         "lint:fix": "npm run lint -- --fix",
-        "test": "cross-env NODE_ENV=test vitest run test/unit",
-        "test:coverage": "cross-env NODE_ENV=test vitest run --coverage",
-        "release": "npm run build && changelogen --release --push && npm publish"
+        "test": "cross-env NODE_ENV=test vitest --config test/vitest.config.ts --run",
+        "test:coverage": "cross-env NODE_ENV=test vitest --config test/vitest.config.ts --run --coverage"
     },
     "engines": {
-        "node": "^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0"
+        "node": ">=22.0.0"
     },
     "keywords": [
         "i18n",
@@ -55,11 +53,7 @@
         "pathtrace": "^1.1.0",
         "smob": "^1.5.0"
     },
-    "devDependencies": {
-        "vitest": "^4.0.17"
-    },
     "publishConfig": {
         "access": "public"
-    },
-    "gitHead": "e0db40b8067d33add80b3582cab8d24149dacec9"
+    }
 }

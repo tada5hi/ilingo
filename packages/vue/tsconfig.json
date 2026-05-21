@@ -1,19 +1,11 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "esModuleInterop": true,
-        "lib": [
-            "ESNext",
-            "DOM",
-            "DOM.Iterable"
-        ],
-        "strict": true,
-        "paths": {
-            "ilingo": ["./packages/ilingo/src"]
-        }
+        "lib": ["ESNext", "DOM", "DOM.Iterable"]
     },
     "include": [
         "types/**/*.d.ts",
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "src/**/*.vue"
     ]
 }

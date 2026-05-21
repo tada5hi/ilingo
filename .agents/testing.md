@@ -5,7 +5,7 @@
 - **Runner**: [Vitest](https://vitest.dev/) (v4)
 - **Test location**: `packages/<pkg>/test/unit/**/*.spec.ts`
 - **Fixtures**: `packages/<pkg>/test/data/` — real locale files loaded at test time (no mocking of the filesystem)
-- **Config**: no per-package `vitest.config.*` is checked in; Vitest's defaults are used. The test script sets `NODE_ENV=test` via `cross-env`.
+- **Config**: `packages/<pkg>/test/vitest.config.ts` per package; the test script (`vitest --config test/vitest.config.ts --run`) sets `NODE_ENV=test` via `cross-env`. Coverage is configured but not enforced via thresholds.
 
 Only `ilingo` and `@ilingo/fs` have tests today. `@ilingo/vue` and `@ilingo/vuelidate` ship a `playground/` Vite app instead of a unit suite — manual verification through the playground is the current convention there.
 

@@ -3,8 +3,9 @@
     "type": "module",
     "version": "5.0.0",
     "description": "This package contains the vue package of ilingo.",
-    "module": "dist/index.mjs",
-    "types": "dist/index.d.ts",
+    "main": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
     "exports": {
         "./package.json": "./package.json",
         ".": {
@@ -12,14 +13,9 @@
             "import": "./dist/index.mjs"
         },
         "./core": {
-            "import": {
-                "types": "./core/index.d.ts",
-                "default": "./core/index.mjs"
-            },
-            "require": {
-                "types": "./core/index.d.ts",
-                "default": "./core/index.js"
-            }
+            "types": "./core/index.d.ts",
+            "import": "./core/index.mjs",
+            "require": "./core/index.js"
         }
     },
     "files": [
@@ -28,13 +24,14 @@
     ],
     "scripts": {
         "dev": "vite",
+        "build:js": "tsdown",
         "build:types": "vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json",
-        "build:js": "cross-env NODE_ENV=production rollup -c",
-        "build": "rimraf ./dist && npm run build:js && npm run build:types",
-        "build:watch": "npm run build -- --watch"
+        "build": "npm run build:js && npm run build:types",
+        "lint": "eslint",
+        "lint:fix": "npm run lint -- --fix"
     },
     "engines": {
-        "node": "^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0"
+        "node": ">=22.0.0"
     },
     "keywords": [],
     "author": {
@@ -46,18 +43,17 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/tada5hi/ilingo.git",
-        "directory": "packages/ilingo"
+        "directory": "packages/vue"
     },
     "bugs": {
-        "url": "https://github.com/authup/ilingo/issues"
+        "url": "https://github.com/tada5hi/ilingo/issues"
     },
-    "homepage": "https://github.com/authup/ilingo#readme",
+    "homepage": "https://github.com/tada5hi/ilingo#readme",
     "devDependencies": {
         "@vueuse/core": "^14.1.0",
         "ilingo": "^5.0.0",
         "vite": "^7.3.1",
-        "vue": "^3.5.26",
-        "vue-tsc": "^3.2.2"
+        "vue": "^3.5.26"
     },
     "peerDependencies": {
         "@vueuse/core": "^14.1.0",

@@ -1,8 +1,4 @@
 {
     "extends": "../../tsconfig.json",
-    "compilerOptions": {
-        "paths": {
-            "ilingo": ["./packages/ilingo/src"]
-        }
-    }
+    "include": ["src/**/*"]
 }

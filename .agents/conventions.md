@@ -6,22 +6,22 @@
 |--------------------------------------------|-------------------------------------------------------------------------|
 | npm workspaces                             | Monorepo package management                                             |
 | Nx (`nx.json`)                             | Task orchestration + caching for `build`, `lint`, `test`                |
-| TypeScript 5.9                             | Source language; `@tada5hi/tsconfig` is the base config                 |
-| Rollup + `unplugin-swc`                    | JS bundling — emits a single `.mjs` per package                         |
-| `@vitejs/plugin-vue` (in Rollup)           | Single-file `.vue` component compilation                                |
-| `vue-tsc`                                  | `.d.ts` emission for Vue packages (`@ilingo/vue`, `@ilingo/vuelidate`)  |
-| `tsc --emitDeclarationOnly`                | `.d.ts` emission for non-Vue packages                                   |
-| Vitest 4                                   | Test runner                                                             |
-| ESLint 8 (`@tada5hi/eslint-config-vue-typescript`) | Linting                                                         |
+| TypeScript 6                               | Source language; `@tada5hi/tsconfig` is the base config                 |
+| tsdown                                     | JS bundling — Rolldown (Rust) + Oxc, emits a single ESM `.mjs` per package |
+| `unplugin-vue/rolldown`                    | Vue SFC compilation inside tsdown (only `@ilingo/vue` uses it)          |
+| `vue-tsc`                                  | `.d.ts` emission for Vue packages (`@ilingo/vue`, `@ilingo/vuelidate`) — tsdown's dts pipeline does not understand `.vue` |
+| Vitest 4                                   | Test runner; config lives in `packages/<pkg>/test/vitest.config.ts`     |
+| ESLint 10 (flat config)                    | Linting via `@tada5hi/eslint-config({ typescript: true, vue: true })`   |
 | Husky + commitlint                         | Pre-commit hook validating Conventional Commits                         |
 | release-please                             | Automated changelogs + version bumps from commit history                |
+| `tada5hi/monoship@v2`                      | Publishes workspace packages whose `version` is not yet on the registry; OIDC trusted publishing |
 
 ## Workflow
 
-- After source changes, run `npm run lint` (top-level) and `npm run build` for the affected workspace before declaring a task done.
+- After source changes, run `npm run lint` (top-level) and `npm run build` (top-level or `--workspace=packages/<pkg>`) before declaring a task done.
 - When adding a new public symbol, re-export it from the package's `src/index.ts` — that file is the public-API contract.
 - When changing an `IStore` method signature, update both adapters (`MemoryStore`, `FSStore`) in the same commit; they share the port interface.
-- When adding a new package, register it in `release-please-config.json` and in the root `README.md` package list.
+- When adding a new package, register it in `release-please-config.json` and in the root `README.md` package list. monoship will publish it on the next release if its `version` is not on the registry.
 
 ## Code Style
 
@@ -29,12 +29,7 @@
 - **Indentation**: 4 spaces (per `.editorconfig`).
 - **Line endings**: LF.
 - **Charset**: UTF-8, final newline required, trailing whitespace trimmed (except in `.md`).
-- **Linting**: extends `@tada5hi/eslint-config-vue-typescript`. Project-level overrides (`/.eslintrc`):
-  - `class-methods-use-this: off` (stores keep `async` methods even when they could be static)
-  - `import/no-cycle` enforced at `maxDepth: 1`
-  - `no-shadow`, `no-use-before-define`, `no-underscore-dangle` disabled
-  - `@typescript-eslint/no-unused-vars` disabled
-  - `**/test/*` is excluded from linting
+- **Linting**: `eslint.config.js` is the single source of truth — flat config, no per-package overrides today. It invokes the `@tada5hi/eslint-config` factory with `typescript: true, vue: true`, then ignores `**/dist/**`, `**/node_modules/**`, `**/playground/**`, `**/test/**`, `**/*.d.ts`.
 
 ## File Header Convention
 
@@ -68,15 +63,15 @@ When creating new files, copy this header and use the **current year**.
 - Exported types live in `types.ts` colocated with the implementation (e.g. `src/store/types.ts`, `src/config/type.ts` — note the inconsistent singular/plural; mirror the surrounding directory rather than introducing a new convention).
 - Each directory has an `index.ts` barrel re-exporting from `types.ts` and the implementation files.
 - The package's `src/index.ts` re-exports the public API — anything not re-exported there is internal.
-- Static data (e.g. BCP-47 codes) lives in JSON next to the consumer (`packages/ilingo/src/utils/language/data.json`); `@rollup/plugin-json` inlines it at build time.
+- Static data (e.g. BCP-47 codes) lives in JSON next to the consumer (`packages/ilingo/src/utils/language/data.json`); tsdown inlines it at build time via `resolveJsonModule: true`.
 
 ## Pre-commit Hooks
 
 Husky runs on every commit (`.husky/commit-msg`):
 
-1. **commitlint** (`@tada5hi/commitlint-config`) — validates the message follows Conventional Commits.
+1. **commitlint** (`@tada5hi/commitlint-config`, ESM config at `commitlint.config.mjs`) — validates the message follows Conventional Commits.
 
-There is **no `pre-commit` lint-staged hook** wired up today even though `lint-staged` is in `devDependencies`. Run `npm run lint` manually.
+`prepare: husky` in the root `package.json` installs the hook directory on `npm install`. There is no `pre-commit` lint-staged hook wired up today — run `npm run lint` manually.
 
 ## Commit Convention
 
@@ -97,32 +92,32 @@ Conventional Commits, validated by commitlint:
 
 ## TypeScript
 
-- Base: `@tada5hi/tsconfig` extended by `tsconfig.build.json`.
-- `target: ES2022`, `module: ESNext`, `moduleResolution: bundler`, `lib: ["ESNext"]`.
+- Base: `@tada5hi/tsconfig` (strict settings). The root `tsconfig.json` extends it and overrides `module`/`moduleResolution` to `ESNext`/`bundler`, sets `noEmit: true` and `allowImportingTsExtensions: true`. tsc is used for type-checking only — tsdown handles emission.
+- `target: ES2022`, `module: ESNext`, `moduleResolution: bundler`, `lib: ["ESNext"]` (Vue packages add `"DOM", "DOM.Iterable"`).
 - `strict: false` repo-wide — do not turn on strictness as a side effect of other work; treat it as a separate migration if attempted.
-- `tsconfig.json` (root) sets `noEmit: true` and is used for editor / lint only.
-- Each package has its own `tsconfig.build.json` that emits declarations.
+- Each Vue package keeps a `tsconfig.build.json` (`emitDeclarationOnly: true`, `outDir: dist`) consumed exclusively by `vue-tsc` to produce `.d.ts` for `.vue` SFCs. Non-Vue packages need no `tsconfig.build.json` — tsdown handles their `.d.mts`.
 
 ## Build Output
 
 - One `dist/` per package, gitignored.
-- `dist/index.mjs` — single ES-module bundle produced by Rollup.
-- `dist/index.d.ts` — declarations from `tsc`/`vue-tsc`.
-- Source maps are emitted (`sourcemap: true` in `rollup.config.mjs`).
-- The `files` field in each `package.json` controls what is published — `dist/` (and `core/` / `vue/` for the adapters with subpath exports).
+- `dist/index.mjs` — single ES-module bundle produced by tsdown.
+- `dist/index.d.mts` (non-Vue packages) or `dist/index.d.ts` (Vue packages, via `vue-tsc`).
+- Source maps are emitted (`sourcemap: true` in `tsdown.config.ts`).
+- The `files` field in each `package.json` controls what is published — `dist/` plus any pre-built subpath dirs (`core/`, `vue/`).
 
 ## Release Process
 
 - **release-please** (`.github/workflows/release.yml`) reads Conventional Commits since the last release tag and opens a PR that bumps versions and updates `CHANGELOG.md` per workspace.
 - `release-please-config.json` lists the four components (`ilingo`, `fs`, `vue`, `vuelidate`) and uses the `node-workspace` plugin so internal version ranges are kept in sync (`updatePeerDependencies: true`).
-- `prerelease: true` + `bump-minor-pre-major: true` — while `0.x`-style or pre-1.0 series are in play, breaking changes bump minor; today the published packages are already past 1.0 so this affects future zero-versioned packages.
-- Merging the release-please PR triggers publishing (the `release` script in `packages/ilingo/package.json` is manual; CI handles workspace publishes via `workspaces-publish`).
+- Merging the release-please PR triggers the rest of the `release.yml` job: install → build → `tada5hi/monoship@v2`. monoship checks each workspace's `version` against the npm registry and publishes only the ones that aren't there yet.
+- **OIDC trusted publishing** is enabled via `permissions: id-token: write`. No `NPM_TOKEN` secret is configured or needed — npm 10+ negotiates a short-lived token with the registry.
 
 ## CI/CD
 
-- `.github/workflows/main.yml` — runs lint/build/test on push and PR.
-- `.github/workflows/release.yml` — runs release-please and publishes.
-- Dependabot is configured (`.github/dependabot.yml`); minor + patch updates are grouped (see recent commit `402f49e build(deps-dev): bump the minorandpatch group with 11 updates`).
+- `.github/workflows/main.yml` — jobs: `install → build → {lint, tests}`. Composite actions `./.github/actions/install` (caches `node_modules` keyed on `package-lock.json`) and `./.github/actions/build` (caches `**/dist/**` keyed on `github.sha`).
+- `.github/workflows/release.yml` — release-please + monoship as above.
+- Primary Node version: 24 (matrices may be added later; `engines.node` is `>=22.0.0`).
+- Dependabot is configured (`.github/dependabot.yml`); minor + patch updates are grouped.
 
 ## Architecture Conventions
 

@@ -21,13 +21,13 @@ export function useTranslationsForBaseValidation<
     const rules = computed<string[]>(() => {
         const output : string[] = [];
         const keys = Object.keys(result);
-        for (let i = 0; i < keys.length; i++) {
-            const item = (result as Record<string, any>)[keys[i]];
+        for (const key of keys) {
+            const item = (result as Record<string, any>)[key];
             if (!item || !item.$invalid || !isRuleResult(item)) {
                 continue;
             }
 
-            output.push(keys[i]);
+            output.push(key);
         }
 
         return output;

@@ -5,48 +5,38 @@ on:
         branches:
             - master
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
-
-env:
-    NODE_VERSION: 22
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
 
 permissions:
-    packages: write
     contents: write
     pull-requests: write
     id-token: write
 
-defaults:
-    run:
-        shell: bash
+env:
+    PRIMARY_NODE_VERSION: 24
 
 jobs:
     release:
         name: Release
         runs-on: ubuntu-latest
-
         steps:
-            -   uses: google-github-actions/release-please-action@v4
-                id: release
+            -   id: release
+                uses: googleapis/release-please-action@v5
                 with:
                     token: ${{ secrets.GITHUB_TOKEN }}
 
-            -   name: Checkout
-                if: steps.release.outputs.releases_created == 'true'
+            -   if: steps.release.outputs.releases_created == 'true'
                 uses: actions/checkout@v6
-                with:
-                    fetch-depth: 0
 
-            -   name: Install
-                if: steps.release.outputs.releases_created == 'true'
+            -   if: steps.release.outputs.releases_created == 'true'
                 uses: ./.github/actions/install
                 with:
-                    node-version: ${{ env.NODE_VERSION }}
+                    node-version: ${{ env.PRIMARY_NODE_VERSION }}
+                    registry-url: 'https://registry.npmjs.org'
 
-            -   name: Build
-                if: steps.release.outputs.releases_created == 'true'
+            -   if: steps.release.outputs.releases_created == 'true'
                 uses: ./.github/actions/build
 
-            -   name: Publish
-                if: steps.release.outputs.releases_created == 'true'
-                run: npx workspaces-publish
+            -   if: steps.release.outputs.releases_created == 'true'
+                uses: tada5hi/monoship@v2

@@ -15,11 +15,11 @@ export function isLineRecord(value: unknown) : value is LinesRecord {
 
     const ob = value as Record<string, any>;
     const keys = Object.keys(ob);
-    for (let i = 0; i < keys.length; i++) {
+    for (const key of keys) {
         /* istanbul ignore next */
         if (
-            typeof ob[keys[i]] !== 'string' &&
-            !isLineRecord(ob[keys[i]])
+            typeof ob[key] !== 'string' &&
+            !isLineRecord(ob[key])
         ) {
             return false;
         }

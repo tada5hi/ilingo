@@ -25,7 +25,5 @@ export function buildConfig(input?: ConfigInput) : Config {
         directory = [process.cwd()];
     }
 
-    return {
-        directory,
-    };
+    return { directory };
 }
