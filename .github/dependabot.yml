@@ -19,19 +19,33 @@ updates:
           prefix-development: "build"
           include: "scope"
       groups:
+          # New build/test toolchain — bumps land together so CI runs once.
+          toolchain:
+              applies-to: version-updates
+              patterns:
+                  - "tsdown"
+                  - "unplugin-vue"
+                  - "vitest"
+                  - "@vitest/*"
+                  - "eslint"
+                  - "typescript-eslint"
+                  - "@tada5hi/eslint-config"
+                  - "vue-tsc"
+                  - "typescript"
+                  - "@tada5hi/tsconfig"
+                  - "@tada5hi/commitlint-config"
+              update-types:
+                  - "patch"
+                  - "minor"
+                  - "major"
           majorProd:
               applies-to: version-updates
               dependency-type: production
-              exclude-patterns:
-                  - "prom-client"
-                  - "nanoid"
               update-types:
                   - "major"
           majorDev:
               applies-to: version-updates
               dependency-type: development
-              exclude-patterns:
-                  - "eslint"
               update-types:
                   - "major"
           minorAndPatch:
