@@ -63,10 +63,13 @@ export function useScopedCatalog(options: { messages: LocalesRecord }): UseScope
     const instance = new Ilingo({ store: new MemoryStore({ data: options.messages }) });
     // Parent stores resolve *after* the scoped catalog — scoped messages
     // win, but anything not scoped still falls back to the parent's stores.
+    // Note: the orchestrator's own `instance.locale` default is intentionally
+    // left at LOCALE_DEFAULT — callers always pass `locale` from the
+    // injected Vue Ref (via `t()` here, or `useTranslation` on descendants),
+    // so the instance default is never consulted.
     for (const store of parent.stores) {
         instance.stores.add(store);
     }
-    instance.setLocale(parent.getLocale());
 
     // Make the scoped instance available to descendants. Vue's
     // provide is component-local, so siblings outside this subtree are

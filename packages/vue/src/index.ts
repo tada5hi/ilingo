@@ -13,6 +13,7 @@ import { ITranslateT } from './component-t';
 import { createVTDirective } from './directives/t';
 import {
     injectIlingoSafe,
+    injectLocale,
     injectLocaleSafe,
     provideIlingo,
     provideLocale,
@@ -75,7 +76,11 @@ export function install(app: App, input?: Options | Ilingo): void {
 
     const directivesEnabled = !(input && !(input instanceof Ilingo) && input.directives === false);
     if (directivesEnabled) {
-        const locale = injectLocaleSafe(app)!;
+        // applyInstallInput always ensures a locale Ref is provided to the
+        // app, so the non-safe injectLocale is justified here. If that
+        // contract ever changes, this throws instead of producing a
+        // misbehaving directive.
+        const locale = injectLocale(app);
         app.directive('t', createVTDirective(instance, locale));
     }
 }

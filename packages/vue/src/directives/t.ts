@@ -92,15 +92,30 @@ export function createVTDirective(
     function apply(el: ElementWithStop, value: VTBinding) {
         el[STOP_KEY]?.();
         const ctx = resolveBinding(value);
-        el[STOP_KEY] = watchEffect(async () => {
-            const text = await instance.get({
-                group: ctx.group,
-                key: ctx.key,
-                data: ctx.data,
-                count: ctx.count,
-                locale: ctx.locale ?? localeRef.value,
-            });
-            el.textContent = text ?? `${ctx.group}.${ctx.key}`;
+        el[STOP_KEY] = watchEffect((onCleanup) => {
+            // Track the locale Ref synchronously so the watcher's dependency
+            // set is established BEFORE the async hop. Reading it later (after
+            // await) wouldn't be tracked.
+            const localeOverride = ctx.locale ?? localeRef.value;
+
+            // Cancel-on-stale: if `apply()` re-runs (binding change, locale
+            // change, unmount) while a prior `instance.get(...)` is still
+            // in-flight, mark it cancelled so its eventual resolution can't
+            // clobber a newer translation.
+            let cancelled = false;
+            onCleanup(() => { cancelled = true; });
+
+            (async () => {
+                const text = await instance.get({
+                    group: ctx.group,
+                    key: ctx.key,
+                    data: ctx.data,
+                    count: ctx.count,
+                    locale: localeOverride,
+                });
+                if (cancelled) return;
+                el.textContent = text ?? `${ctx.group}.${ctx.key}`;
+            })();
         });
     }
 

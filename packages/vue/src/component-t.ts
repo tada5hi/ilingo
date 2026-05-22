@@ -5,15 +5,18 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import { computedAsync } from '@vueuse/core';
 import { tokenize } from 'ilingo';
 import type { PropType, VNodeChild } from 'vue';
-import { 
-    computed, 
-    defineComponent, 
-    h, 
-    unref, 
+import {
+    computed,
+    defineComponent,
+    h,
+    unref,
 } from 'vue';
-import { useTranslation } from './composables';
+import { injectIlingo } from './composables/instance';
+import { injectLocale } from './composables/locale';
+import { extractReactiveData } from './composables/utils';
 import type { DataMaybeRef } from './types';
 
 /**
@@ -44,19 +47,34 @@ export const ITranslateT = defineComponent({
         path: { type: String, required: true },
         data: { type: Object as PropType<DataMaybeRef> },
         locale: { type: String },
-        count: { type: [Number, Object] as PropType<number | { value: number }> },
+        count: { type: Number },
         tag: { type: String, default: 'span' },
     },
     setup(props, { slots }) {
-        const { group, key } = parsePath(props.path);
+        const instance = injectIlingo();
+        const localeRef = injectLocale();
 
-        const text = useTranslation({
-            group,
-            key,
-            data: props.data,
-            locale: props.locale,
-            count: props.count as never,
-        });
+        // Reactive to `props.path` — re-parses if the parent flips the path
+        // mid-flight. Throws on a path without a dot, matching <ITranslate>.
+        // Eagerly validated at setup so a malformed initial path fails on
+        // mount rather than asynchronously on first render.
+        parsePath(props.path);
+        const parsed = computed(() => parsePath(props.path));
+
+        const text = computedAsync(
+            async () => {
+                const { group, key } = parsed.value;
+                const value = await instance.get({
+                    group,
+                    key,
+                    data: props.data ? extractReactiveData(props.data) : undefined,
+                    locale: props.locale ?? localeRef.value,
+                    count: props.count,
+                });
+                return value ?? `${group}.${key}`;
+            },
+            '',
+        );
 
         const tokens = computed(() => tokenize(text.value));
 
@@ -66,6 +84,12 @@ export const ITranslateT = defineComponent({
                 if (token.kind === 'text') {
                     children.push(token.value);
                 } else if (token.kind === 'var') {
+                    // `{{var}}` placeholders are normally substituted by
+                    // Ilingo.format() before tokenize sees the message; this
+                    // branch handles the leftover case where data was missing
+                    // a key, so the placeholder survived. Re-check
+                    // props.data in case the value is a Ref that wasn't
+                    // unwrapped by extractReactiveData (defensive).
                     const raw = props.data?.[token.name];
                     children.push(
                         typeof raw === 'undefined' ? `{{${token.name}}}` : String(unref(raw)),
@@ -98,8 +122,5 @@ function parsePath(path: string): { group: string, key: string } {
             `[ilingo] <ITranslateT path="${path}"> requires a "group.key" path.`,
         );
     }
-    return {
-        group: path.slice(0, index),
-        key: path.slice(index + 1),
-    };
+    return { group: path.slice(0, index), key: path.slice(index + 1) };
 }

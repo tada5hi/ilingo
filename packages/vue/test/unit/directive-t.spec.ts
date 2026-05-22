@@ -91,6 +91,68 @@ describe('v-t directive (#901)', () => {
         expect(nodeAfter.textContent).toEqual('Hallo');  // updated
     });
 
+    it('cancels in-flight lookups on locale change (no stale clobber)', async () => {
+        // Regression: without onCleanup in the watchEffect, a slow `get()`
+        // started under the previous locale could resolve after the locale
+        // had already changed and clobber `textContent` with the stale
+        // translation.
+        const store = new MemoryStore({
+            data: {
+                en: { app: { hi: 'Hello' } },
+                de: { app: { hi: 'Hallo' } },
+            },
+        });
+
+        // Wrap the store to make `get()` artificially slow for 'en' but fast
+        // for 'de'. Without the cancel-on-stale fix, the slow 'en' lookup
+        // would resolve last and win.
+        const originalGet = store.get.bind(store);
+        store.get = async (ctx) => {
+            if (ctx.locale === 'en') {
+                await new Promise((r) => setTimeout(r, 30));
+            }
+            return originalGet(ctx);
+        };
+
+        const ProbeRoot = defineComponent({
+            template: '<p data-test="t" v-t="\'app.hi\'"></p>',
+        });
+
+        let localeRef: Ref<string> | undefined;
+        const ProbeRootWithLocale = defineComponent({
+            components: { ProbeRoot },
+            template: '<ProbeRoot />',
+            setup() {
+                localeRef = injectLocale();
+            },
+        });
+
+        const wrapper = mount(ProbeRootWithLocale, {
+            global: {
+                plugins: [{
+                    install(app: import('vue').App) {
+                        install(app, { store, locale: 'en' });
+                    },
+                }],
+            },
+        });
+
+        // Wait briefly so the initial 'en' lookup has *started* but not yet
+        // resolved (its 30ms delay).
+        await new Promise((r) => setTimeout(r, 5));
+
+        // Flip locale to 'de' while 'en' is still in flight.
+        localeRef!.value = 'de';
+
+        // Let everything settle — the slow 'en' resolution races with the
+        // fast 'de' resolution. With the fix, the cancelled 'en' branch
+        // never writes textContent.
+        await new Promise((r) => setTimeout(r, 80));
+        await flushPromises();
+
+        expect(wrapper.find('[data-test="t"]').text()).toEqual('Hallo');
+    });
+
     it('directives: false opts out of v-t registration', () => {
         const Wrapper = defineComponent({
             template: '<p v-t="\'app.hi\'"></p>',

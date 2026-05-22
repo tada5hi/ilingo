@@ -5,9 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { mount, flushPromises } from "@vue/test-utils";
-import { Ilingo, MemoryStore } from 'ilingo';
-import { h, nextTick } from 'vue';
+import { flushPromises, mount } from '@vue/test-utils';
+import { MemoryStore } from 'ilingo';
+import { defineComponent, h } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { ITranslateT, install } from '../../src';
 
@@ -114,6 +114,32 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         })).toThrow(/group\.key/);
     });
 
+    it('reacts to a dynamic `path` prop (no stale group/key)', async () => {
+        // Regression: an earlier implementation parsed `props.path` once at
+        // setup, so flipping the path after mount left the component stuck
+        // on the original message.
+        const Wrapper = defineComponent({
+            components: { ITranslateT },
+            data() {
+                return { p: 'app.hi' };
+            },
+            template: '<ITranslateT :path="p" data-test="t" />',
+        });
+
+        const wrapper = mount(Wrapper, {
+            global: {
+                plugins: [makeApp({ en: { app: { hi: 'Hello', bye: 'Goodbye' } } })],
+            },
+        });
+
+        await flushPromises();
+        expect(wrapper.text()).toEqual('Hello');
+
+        (wrapper.vm as never as { p: string }).p = 'app.bye';
+        await flushPromises();
+        expect(wrapper.text()).toEqual('Goodbye');
+    });
+
     it('renders a fragment with no wrapper when tag=""', async () => {
         const wrapper = mount({
             components: { ITranslateT },
@@ -131,8 +157,3 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
     });
 });
 
-// Helper local to this file — installs Ilingo into the test root using the
-// real `install()` entry point exercised by consumers.
-declare module 'vue' {
-    interface ComponentCustomOptions {}
-}
