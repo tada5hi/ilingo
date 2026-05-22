@@ -56,7 +56,7 @@ src/
     ├── locale.ts             # bcp47Parents, resolveLocaleChain
     ├── identify.ts           # PLURAL_MARKER + isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord
     ├── formatters.ts         # FormatterRegistry, parseFormatterOptions, parseModifier, Formatter type
-    ├── template.ts           # {{var}} + {{var, formatter(opts)}} interpolation
+    ├── template.ts           # {{var}} + {{var, formatter(opts)}} interpolation + tokenize() for slot-aware renderers (Vue)
     └── language/
         ├── index.ts
         ├── module.ts         # isBCP47LanguageCode
@@ -94,16 +94,26 @@ test/
 
 ```
 src/
-├── index.ts                  # install(), applyInstallInput(), default Plugin export, ITranslate re-export
-├── component.vue             # <ITranslate> component
+├── index.ts                  # install(), applyInstallInput(), default Plugin export,
+│                             #   ITranslate / ITranslateT re-export, v-t directive registration
+├── component.vue             # <ITranslate> component (plain {{var}} substitution)
+├── component-t.ts            # <ITranslateT> — slot-aware renderer (uses tokenize from core)
 ├── helpers.ts
-├── types.ts                  # Options, GetContextReactive, etc.
+├── types.ts                  # Options (incl. directives?: boolean), GetContextReactive, DataMaybeRef
+├── directives/
+│   └── t.ts                  # createVTDirective(): reactive locale-tracking v-t directive
 └── composables/
     ├── index.ts
     ├── instance.ts           # provideIlingo / injectIlingo / injectIlingoSafe
     ├── locale.ts             # provideLocale / injectLocale / injectLocaleSafe (Ref<string>)
     ├── use-translation.ts    # useTranslation(ctx): Ref<string> via computedAsync
+    ├── use-scoped-catalog.ts # useScopedCatalog({ messages }) → { instance, t } + provides scoped Ilingo
     └── utils.ts              # extractReactiveData
+test/                         # happy-dom + @vue/test-utils via vitest
+└── unit/
+    ├── component-t.spec.ts   # <ITranslateT> rendering (slots, vars, fragments, error paths)
+    ├── directive-t.spec.ts   # v-t directive (string/object bindings, reactive locale, opt-out)
+    └── scoped-catalog.spec.ts# useScopedCatalog (same-component t, descendant provide, no-leak, fallback)
 playground/                   # local Vue app for manual testing (vite dev)
 index.html, vite.config.js    # vite dev entry
 ```

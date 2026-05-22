@@ -10,7 +10,14 @@ import type { MaybeRef } from 'vue';
 
 export type Options = {
     store: IStore,
-    locale?: string
+    locale?: string,
+    /**
+     * When `false`, the `v-t` directive is NOT registered globally on the
+     * Vue app. Useful for apps that prefer the explicit `<ITranslate>` /
+     * `<ITranslateT>` components, or that already use `v-t` for something
+     * else. Default: `true`.
+     */
+    directives?: boolean,
 };
 
 export type DataMaybeRef = Record<string, MaybeRef<string | number>>;

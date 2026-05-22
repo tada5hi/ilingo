@@ -1,0 +1,118 @@
+/*
+ * Copyright (c) 2026.
+ * Author Peter Placzek (tada5hi)
+ * For the full copyright and license information,
+ * view the LICENSE file that was distributed with this source code.
+ */
+
+import type { Ilingo } from 'ilingo';
+import type { Directive, Ref } from 'vue';
+import { watchEffect } from 'vue';
+
+/**
+ * Binding accepted by the `v-t` directive.
+ *
+ * - `string` — shorthand for `{ path }`. Parsed as `"group.key"`.
+ * - `{ path, data?, locale?, count? }` — explicit context.
+ * - `{ group, key, data?, locale?, count? }` — alternative explicit form.
+ */
+export type VTBindingDataMap = Record<string, string | number>;
+
+export type VTBindingPath = {
+    path: string,
+    data?: VTBindingDataMap,
+    locale?: string,
+    count?: number,
+};
+
+export type VTBindingGroupKey = {
+    group: string,
+    key: string,
+    data?: VTBindingDataMap,
+    locale?: string,
+    count?: number,
+};
+
+export type VTBinding = string | VTBindingPath | VTBindingGroupKey;
+
+type Resolved = {
+    group: string,
+    key: string,
+    data?: Record<string, string | number>,
+    locale?: string,
+    count?: number,
+};
+
+function resolveBinding(value: VTBinding): Resolved {
+    if (typeof value === 'string') {
+        return splitPath(value);
+    }
+    if ('path' in value) {
+        const { group, key } = splitPath(value.path);
+        return {
+            group,
+            key,
+            data: value.data,
+            locale: value.locale,
+            count: value.count,
+        };
+    }
+    return value;
+}
+
+function splitPath(path: string): { group: string, key: string } {
+    const index = path.indexOf('.');
+    if (index === -1) {
+        throw new SyntaxError(
+            `[ilingo] v-t="${path}" requires a "group.key" path.`,
+        );
+    }
+    return { group: path.slice(0, index), key: path.slice(index + 1) };
+}
+
+/**
+ * Factory for the `v-t` directive. Bound to the install-time `Ilingo`
+ * instance and locale ref so the directive can run outside of a component
+ * setup context.
+ *
+ * The element's `textContent` is updated reactively when the locale
+ * changes or the binding value changes — no remount required.
+ *
+ * Marker symbol on the element holds the watchEffect's stop handle so it
+ * can be cancelled on unmount or re-bound on update.
+ */
+const STOP_KEY = Symbol.for('ilingo.v-t.stop');
+
+type ElementWithStop = HTMLElement & { [STOP_KEY]?: () => void };
+
+export function createVTDirective(
+    instance: Ilingo,
+    localeRef: Ref<string>,
+): Directive<HTMLElement, VTBinding> {
+    function apply(el: ElementWithStop, value: VTBinding) {
+        el[STOP_KEY]?.();
+        const ctx = resolveBinding(value);
+        el[STOP_KEY] = watchEffect(async () => {
+            const text = await instance.get({
+                group: ctx.group,
+                key: ctx.key,
+                data: ctx.data,
+                count: ctx.count,
+                locale: ctx.locale ?? localeRef.value,
+            });
+            el.textContent = text ?? `${ctx.group}.${ctx.key}`;
+        });
+    }
+
+    return {
+        mounted(el, binding) {
+            apply(el as ElementWithStop, binding.value);
+        },
+        updated(el, binding) {
+            apply(el as ElementWithStop, binding.value);
+        },
+        unmounted(el) {
+            (el as ElementWithStop)[STOP_KEY]?.();
+        },
+    };
+}

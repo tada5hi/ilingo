@@ -9,6 +9,8 @@ import { Ilingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
 import { ref } from 'vue';
 import ITranslate from './component.vue';
+import { ITranslateT } from './component-t';
+import { createVTDirective } from './directives/t';
 import {
     injectIlingoSafe,
     injectLocaleSafe,
@@ -20,7 +22,7 @@ import type { Options } from './types';
 export function applyInstallInput(
     app: App,
     input?: Options | Ilingo,
-) : Ilingo {
+): Ilingo {
     let locale = injectLocaleSafe(app);
     const localeExisted = typeof locale !== 'undefined' && !!locale.value;
     let instance = injectIlingoSafe(app);
@@ -65,15 +67,25 @@ export function applyInstallInput(
     return instance;
 }
 
-export function install(app: App, input: Options | Ilingo) : void {
-    applyInstallInput(app, input);
+export function install(app: App, input?: Options | Ilingo): void {
+    const instance = applyInstallInput(app, input);
 
     app.component('ITranslate', ITranslate);
+    app.component('ITranslateT', ITranslateT);
+
+    const directivesEnabled = !(input && !(input instanceof Ilingo) && input.directives === false);
+    if (directivesEnabled) {
+        const locale = injectLocaleSafe(app)!;
+        app.directive('t', createVTDirective(instance, locale));
+    }
 }
 
-export default { install } satisfies Plugin<Options | Ilingo>;
+export default { install } satisfies Plugin<Options | Ilingo | undefined>;
 
 export { default as ITranslate } from './component.vue';
+export { ITranslateT } from './component-t';
+export { createVTDirective } from './directives/t';
+export type { VTBinding } from './directives/t';
 export * from './composables';
 export * from './types';
 export * from './helpers';

@@ -47,6 +47,17 @@ data/
 └── language/{en,de,fr}/form.{js,ts,json}   # cross-extension loader fixtures
 ```
 
+### `packages/vue/test/`
+
+```
+unit/
+├── component-t.spec.ts         # <ITranslateT> — slot rendering, vars, fragments, error paths
+├── directive-t.spec.ts         # v-t directive — string/object bindings, reactive locale, opt-out
+└── scoped-catalog.spec.ts      # useScopedCatalog — same-component t, descendant provide, no-leak, fallback
+```
+
+The Vue package uses **happy-dom** for the DOM environment and **@vue/test-utils**'s `mount` + `flushPromises` for component rendering. Plain `nextTick` is not enough — `useTranslation` resolves through `computedAsync`, which needs the microtask queue flushed.
+
 ### `packages/fs/test/`
 
 ```

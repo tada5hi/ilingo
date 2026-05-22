@@ -152,6 +152,20 @@ If `onMissingKey` is not configured, the built-in default warns once per `(reque
 
 `@ilingo/vuelidate` chains this: it calls `applyInstallInput`, then ensures its own `Store` (a `MemoryStore` pre-loaded with EN/DE/FR/ES validator translations) is registered if none is present yet.
 
+### Slot-aware rendering — `<ITranslateT>` + `tokenize()`
+
+`<ITranslateT>` extends `<ITranslate>` with **slot placeholders**: a message can contain `{slot}` markers (single curly) alongside the usual `{{var}}` interpolations (double curly). The component renders each slot from a named scoped slot, producing inline VNodes (links, bold runs, icons) without splitting the message across keys.
+
+Core support lives in `packages/ilingo/src/utils/template.ts` as a separate `tokenize(str): TemplateToken[]` function. Tokens are `text` / `var` / `slot`. The plain `template()` function continues to return a string (used by `Ilingo.format`); the tokenizer is for renderers that produce structured output. `template()` and `tokenize()` share no state — they're parallel parsers over the same syntax.
+
+### `v-t` directive
+
+`packages/vue/src/directives/t.ts` exposes a `createVTDirective(instance, localeRef)` factory. Registered by `install()` on the Vue app under the name `t`, opt-out via `Options.directives: false`. The directive writes the translation to the element's `textContent` and uses `watchEffect` to track the locale Ref — locale changes update the element in place, no remount required. A stop-handle is stashed on the element via a `Symbol.for('ilingo.v-t.stop')` key so the directive can cancel the effect on unmount and re-subscribe on update.
+
+### Scoped catalogs — `useScopedCatalog`
+
+Creates a fresh `Ilingo` instance with a `MemoryStore` for the scoped messages registered *first* (scoped strings win), then re-adds every store from the parent instance (non-scoped keys still fall through). Calls `provideIlingo(scoped)` so the component subtree sees the scoped instance via plain `useTranslation`. Returns `{ instance, t }` for same-component use, since Vue's provide can't reach the current setup's own injections.
+
 ## Data Flow
 
 ```
@@ -197,7 +211,7 @@ packages/ilingo/src/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
 │   ├── identify.ts          ← isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord, PLURAL_MARKER
 │   ├── formatters.ts        ← FormatterRegistry, parseFormatterOptions, parseModifier, Formatter type
-│   ├── template.ts          ← {{var}} + {{var, formatter(opts)}} substitution
+│   ├── template.ts          ← {{var}} + {{var, formatter(opts)}} substitution; tokenize() for slot-aware renderers
 │   └── language/            ← isBCP47LanguageCode + CLDR data
 └── config/                  ← typed input shape
 
