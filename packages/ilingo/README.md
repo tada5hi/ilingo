@@ -21,6 +21,7 @@ Ilingo is a lightweight library for translation and internationalization.
   - [Pluralization](#pluralization)
   - [Fallback locale chain](#fallback-locale-chain)
   - [Missing-key handler](#missing-key-handler)
+  - [Formatters](#formatters)
 - [Store](#store)
   - [Memory](#memory-store)
   - [FileSystem](#fs-store)
@@ -363,6 +364,45 @@ const ilingo = new Ilingo({
     },
 });
 ```
+
+### Formatters
+
+Template placeholders support modifiers backed by `Intl.NumberFormat`, `Intl.DateTimeFormat`, and `Intl.ListFormat`:
+
+```typescript
+const ilingo = new Ilingo({
+    store: new MemoryStore({
+        data: {
+            en: {
+                app: {
+                    owe: 'You owe {{amount, number(style=currency, currency=EUR)}}',
+                    signed: 'Signed {{date, date(dateStyle=medium, timeZone=UTC)}}',
+                    invited: '{{people, list(style=long, type=conjunction)}}',
+                },
+            },
+        },
+    }),
+});
+
+await ilingo.get({ group: 'app', key: 'owe',     data: { amount: 99 } });           // "You owe €99.00"
+await ilingo.get({ group: 'app', key: 'signed',  data: { date: '2026-05-22T12:00:00Z' } }); // "Signed May 22, 2026"
+await ilingo.get({ group: 'app', key: 'invited', data: { people: ['Alice', 'Bob', 'Carol'] } });
+// → "Alice, Bob, and Carol"
+```
+
+Syntax:
+
+```text
+{{value}}                          plain substitution
+{{value, formatter}}               formatter with no options
+{{value, formatter(k=v, k2=v2)}}   formatter with options
+```
+
+The locale used to construct the `Intl.*Format` instance is the **resolved** locale — the one that actually yielded the message via the fallback chain — not the requested one. `Intl.*Format` instances are memoised per `(formatter, locale, options)` on the `Ilingo` instance, so repeated renders do not reallocate.
+
+Option-value coercion: `42` → `42` (number), `true` / `false` → boolean, anything else → string. So `currency=EUR` becomes `{ currency: 'EUR' }`, `minimumFractionDigits=2` becomes `{ minimumFractionDigits: 2 }`.
+
+Unknown modifiers fall back to `String(value)` and emit a one-shot dev-mode warning (silenced in `process.env.NODE_ENV === 'production'`). Malformed modifier expressions (unbalanced parens, non-identifier names) are treated the same way — never throw.
 
 ## Store
 

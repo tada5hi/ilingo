@@ -52,17 +52,20 @@ src/
     ├── index.ts
     ├── locale.ts             # bcp47Parents, resolveLocaleChain
     ├── identify.ts           # PLURAL_MARKER + isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord
-    ├── template.ts           # {{var}} interpolation
+    ├── formatters.ts         # FormatterRegistry, parseFormatterOptions, parseModifier, Formatter type
+    ├── template.ts           # {{var}} + {{var, formatter(opts)}} interpolation
     └── language/
         ├── index.ts
         ├── module.ts         # isBCP47LanguageCode
         └── data.json         # BCP-47 language code table
 test/
 └── unit/
-    ├── module.spec.ts        # legacy core behaviour
-    ├── resolution.spec.ts    # plural, fallback chain, missing-key handler, parallel lookup
+    ├── module.spec.ts                # legacy core behaviour
+    ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, parallel lookup
+    ├── formatters-integration.spec.ts # Ilingo.get() with number/date/list modifiers, cache + dev-warn
     └── utils/
-        ├── locale.spec.ts    # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
+        ├── locale.spec.ts            # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
+        ├── formatters.spec.ts        # parseFormatterOptions, parseModifier, FormatterRegistry, template dispatch
         ├── identify.spec.ts
         └── template.spec.ts
 ```

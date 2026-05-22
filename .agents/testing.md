@@ -27,14 +27,18 @@ Nx caches `test` (see `nx.json` → `cacheableOperations`). To re-run an already
 
 ```
 unit/
-├── module.spec.ts              # legacy core behaviour — get/set, locale switching, merge()
-├── resolution.spec.ts          # pluralization (incl. explicit @plural form), fallback chain
-│                               #   (default, string, array, function, false, []), missing-key handler,
-│                               #   per-instance warn isolation, parallel intra-locale lookup
+├── module.spec.ts                  # legacy core behaviour — get/set, locale switching, merge()
+├── resolution.spec.ts              # pluralization (incl. explicit @plural form), fallback chain
+│                                   #   (default, string, array, function, false, []), missing-key
+│                                   #   handler, per-instance warn isolation, parallel intra-locale lookup
+├── formatters-integration.spec.ts  # end-to-end Ilingo.get() with number/date/list modifiers,
+│                                   #   resolved-locale propagation, per-instance cache, dev-warn
 └── utils/
-    ├── identify.spec.ts        # isLineRecord / isPluralLeaf / isPluralLeafExplicit
-    ├── locale.spec.ts          # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
-    └── template.spec.ts        # {{var}} interpolation
+    ├── identify.spec.ts            # isLineRecord / isPluralLeaf / isPluralLeafExplicit
+    ├── locale.spec.ts              # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
+    ├── formatters.spec.ts          # parseFormatterOptions, parseModifier, FormatterRegistry,
+    │                               #   template-level modifier dispatch
+    └── template.spec.ts            # {{var}} interpolation
 data/
 └── language/{en,de,fr}/form.{js,ts,json}   # cross-extension loader fixtures
 ```
