@@ -47,7 +47,21 @@ Template placeholders accept modifier syntax: `{{value, formatter}}` and `{{valu
 
 The locale handed to a formatter is the **resolved** locale (the one that actually yielded the message), not the requested one. Unknown modifiers fall back to `String(value)` and emit a per-instance dev-mode one-shot warning via the same `isProductionEnv()` gate used by the missing-key handler.
 
-### 7. ESM-first, dependency-light, browser-safe
+### 7. Type-safe keys via a generic `Ilingo<Catalog>`
+
+`Ilingo` is generic in the catalog: `class Ilingo<C extends LocalesRecord = LocalesRecord>`. When `C` is the default `LocalesRecord` (no generic supplied) the API stays as loose as before — `group: string`, `key: string`. When `C` is a concrete catalog, `Groups<C>` / `Key<C, G>` infer the legal pairs and `IsPluralKey<C, G, K>` makes `count` *required* at the type level for plural leaves.
+
+Helpers in `packages/ilingo/src/types.ts`:
+
+- `AnyGroups<C>` — pick any locale's group map (catalogs SHOULD share a shape across locales).
+- `Groups<C>` — union of top-level group names.
+- `LeafAt<T, K>` — walk a dotted key path through a typed object; `never` on miss.
+- `DottedPaths<T>` — enumerate all dotted leaf paths; short-circuits to `string` for open-shape inputs (so `LocalesRecord` reduces to a `string`-typed key, not `never`).
+- `Key<C, G>`, `IsPluralKey<C, G, K>`, `GetParams<C, G, K>`.
+
+`defineCatalog<const T>(c)` (`packages/ilingo/src/catalog.ts`) is a runtime identity function with a `const` generic that captures the catalog literal without losing inference — saves callers from sprinkling `as const`.
+
+### 8. ESM-first, dependency-light, browser-safe
 
 Each package's runtime dependencies are minimal — `pathtrace` and `smob` in core; `locter`, `pathe`, `smob` in `@ilingo/fs`. Vue and Vuelidate are declared as `peerDependencies`, not bundled. Core does not import `node:process` — `NODE_ENV` is read via a bare `process.env.NODE_ENV` literal (so Vite / Webpack DefinePlugin can replace it) wrapped in a `typeof process !== 'undefined'` guard for raw-browser execution.
 
@@ -176,6 +190,7 @@ Output:
 packages/ilingo/src/
 ├── module.ts                ← orchestrator (Ilingo class)
 ├── store/{types,memory}     ← port + default adapter
+├── catalog.ts               ← defineCatalog<const T>() helper
 ├── utils/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
 │   ├── identify.ts          ← isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord, PLURAL_MARKER

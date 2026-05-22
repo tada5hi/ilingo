@@ -12,7 +12,11 @@ import type {
     Data,
     Fallback,
     GetContext,
+    GetParams,
+    Groups,
+    Key,
     Leaf,
+    LocalesRecord,
     MissingKeyHandler,
 } from './types';
 import {
@@ -41,7 +45,7 @@ function isProductionEnv(): boolean {
     }
 }
 
-export class Ilingo {
+export class Ilingo<C extends LocalesRecord = LocalesRecord> {
     public readonly stores: Set<IStore>;
 
     protected locale: string;
@@ -91,7 +95,7 @@ export class Ilingo {
 
     // ----------------------------------------------------
 
-    merge(instance: Ilingo) {
+    merge(instance: Ilingo<LocalesRecord>) {
         const ownEntries = Array.from(this.stores.values());
         const foreignEntries = Array.from(instance.stores.values());
 
@@ -149,28 +153,34 @@ export class Ilingo {
      * Which locale in the chain actually yielded a value for the given
      * `(group, key)`, or `undefined` if the key is missing in every locale.
      */
-    async getResolvedLocale(ctx: GetContext): Promise<string | undefined> {
-        const chain = this.getResolvedLocaleChain(ctx);
-        const hit = await this.lookup(chain, ctx);
+    async getResolvedLocale<G extends Groups<C>, K extends Key<C, G> & string>(
+        ctx: GetParams<C, G, K>,
+    ): Promise<string | undefined> {
+        const internal = ctx as unknown as GetContext;
+        const chain = this.getResolvedLocaleChain(internal);
+        const hit = await this.lookup(chain, internal);
         return hit?.locale;
     }
 
     // ----------------------------------------------------
 
-    async get(ctx: GetContext): Promise<string | undefined> {
-        const requestedLocale = ctx.locale ?? this.getLocale();
+    async get<G extends Groups<C>, K extends Key<C, G> & string>(
+        ctx: GetParams<C, G, K>,
+    ): Promise<string | undefined> {
+        const internal = ctx as unknown as GetContext;
+        const requestedLocale = internal.locale ?? this.getLocale();
         const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
 
-        const hit = await this.lookup(chain, ctx);
+        const hit = await this.lookup(chain, internal);
 
         if (!hit) {
-            return this.handleMissingKey(ctx, requestedLocale, chain);
+            return this.handleMissingKey(internal, requestedLocale, chain);
         }
 
-        const message = this.selectPluralForm(hit.leaf, hit.locale, ctx.count);
-        const data: Data = { ...(ctx.data || {}) };
-        if (typeof ctx.count === 'number' && typeof data.count === 'undefined') {
-            data.count = ctx.count;
+        const message = this.selectPluralForm(hit.leaf, hit.locale, internal.count);
+        const data: Data = { ...(internal.data || {}) };
+        if (typeof internal.count === 'number' && typeof data.count === 'undefined') {
+            data.count = internal.count;
         }
         return this.format(message, data, hit.locale);
     }
