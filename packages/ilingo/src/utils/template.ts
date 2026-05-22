@@ -14,6 +14,8 @@ export interface TemplateContext {
     onUnknownFormatter?: (name: string) => void;
 }
 
+const DEFAULT_REGEX = /\{\{\s*([^,}]+?)(?:\s*,\s*([^}]+?))?\s*\}\}/g;
+
 /**
  * Substitute `{{var}}` placeholders. With a `TemplateContext`, also supports
  * modifier syntax: `{{var, modifier}}` and `{{var, modifier(opts)}}`.
@@ -21,16 +23,27 @@ export interface TemplateContext {
  * - Unknown data key → placeholder left in place (unchanged from prior behaviour).
  * - Unknown modifier → raw value substituted, `onUnknownFormatter` invoked.
  * - Malformed modifier expression (e.g. unbalanced parens) → raw value substituted.
+ *
+ * The third parameter accepts either a `TemplateContext` (modern, with
+ * formatter support) or a `RegExp` (legacy escape-hatch for custom
+ * placeholder delimiters). Passing a `RegExp` disables modifier dispatch,
+ * matching the pre-formatter behaviour for callers that supplied their own
+ * delimiter.
  */
 export function template(
     str: string,
     data: Record<string, any>,
-    ctx?: TemplateContext,
+    ctxOrRegex?: TemplateContext | RegExp,
 ): string {
-    // Matches `{{var}}` and `{{var, modifierExpr}}`. The modifier capture
-    // allows commas inside parens (e.g. `list(style=long, type=conjunction)`)
-    // because `[^}]+?` is bounded only by the closing brace.
-    const regex = /\{\{\s*([^,}]+?)(?:\s*,\s*([^}]+?))?\s*\}\}/g;
+    let regex: RegExp;
+    let ctx: TemplateContext | undefined;
+    if (ctxOrRegex instanceof RegExp) {
+        regex = ctxOrRegex;
+        ctx = undefined;
+    } else {
+        regex = DEFAULT_REGEX;
+        ctx = ctxOrRegex;
+    }
 
     return str.replace(regex, (match, rawKey: string, modExpr: string | undefined) => {
         const key = rawKey.trim();

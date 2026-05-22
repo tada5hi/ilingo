@@ -67,10 +67,14 @@ export function parseModifier(input: string): { name: string, options: string | 
         // input like 'number)' that has no opening paren but a stray closing one.
         return NAME_RE.test(trimmed) ? { name: trimmed, options: undefined } : undefined;
     }
-    if (!trimmed.endsWith(')')) return undefined;
+    // The first `)` after the opening paren must be the very last character.
+    // Catches stray closes like `number(currency=EUR))` and nested parens
+    // (which the option grammar doesn't support).
+    const close = trimmed.indexOf(')', open);
+    if (close !== trimmed.length - 1) return undefined;
     const name = trimmed.slice(0, open).trim();
     if (!NAME_RE.test(name)) return undefined;
-    const options = trimmed.slice(open + 1, -1).trim();
+    const options = trimmed.slice(open + 1, close).trim();
     return { name, options };
 }
 
@@ -94,6 +98,7 @@ export class FormatterRegistry {
                 options,
                 () => new Intl.NumberFormat(locale, options as Intl.NumberFormatOptions),
             );
+            if (!fmt) return String(value);
             return fmt.format(numeric);
         });
 
@@ -113,6 +118,7 @@ export class FormatterRegistry {
                 options,
                 () => new Intl.DateTimeFormat(locale, options as Intl.DateTimeFormatOptions),
             );
+            if (!fmt) return String(value);
             return fmt.format(d);
         });
 
@@ -124,6 +130,7 @@ export class FormatterRegistry {
                 options,
                 () => new Intl.ListFormat(locale, options as Intl.ListFormatOptions),
             );
+            if (!fmt) return value.map(String).join(', ');
             return fmt.format(value.map(String));
         });
     }
@@ -140,16 +147,36 @@ export class FormatterRegistry {
         return this.entries.has(name);
     }
 
+    /**
+     * Look up or construct the `Intl.*Format` instance for `(kind, locale,
+     * options)`. Returns `undefined` if either the cache-key generation or
+     * the constructor throws — built-in formatters then fall back to a plain
+     * `String(value)` rendering rather than letting a typo in a translator's
+     * options crash the entire render.
+     *
+     * Options are stringified with sorted keys so callers that happen to pass
+     * the same logical options in a different order share a cache entry.
+     */
     protected intl<T extends Intl.NumberFormat | Intl.DateTimeFormat | Intl.ListFormat>(
         kind: string,
         locale: string,
         options: FormatterOptions,
         create: () => T,
-    ): T {
-        const key = `${kind}|${locale}|${JSON.stringify(options)}`;
+    ): T | undefined {
+        let key: string;
+        try {
+            const sortedKeys = Object.keys(options).sort();
+            key = `${kind}|${locale}|${JSON.stringify(options, sortedKeys)}`;
+        } catch {
+            return undefined;
+        }
         let fmt = this.cache.get(key) as T | undefined;
         if (!fmt) {
-            fmt = create();
+            try {
+                fmt = create();
+            } catch {
+                return undefined;
+            }
             this.cache.set(key, fmt);
         }
         return fmt;

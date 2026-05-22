@@ -392,7 +392,7 @@ await ilingo.get({ group: 'app', key: 'invited', data: { people: ['Alice', 'Bob'
 
 Syntax:
 
-```
+```text
 {{value}}                          plain substitution
 {{value, formatter}}               formatter with no options
 {{value, formatter(k=v, k2=v2)}}   formatter with options

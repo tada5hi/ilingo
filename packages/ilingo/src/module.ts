@@ -281,7 +281,9 @@ export class Ilingo {
     /**
      * Substitute `{{var}}` placeholders. Modifier syntax
      * (`{{var, number(currency=EUR)}}`) is dispatched through
-     * `this.formatters` when `locale` is provided.
+     * `this.formatters`. The optional `locale` argument controls which
+     * locale `Intl.*Format` instances are constructed for; if omitted, the
+     * instance's current locale is used.
      */
     format(input: string, data: Record<string, any>, locale?: string): string {
         return template(input, data || {}, {

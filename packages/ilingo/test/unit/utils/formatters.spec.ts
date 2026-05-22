@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
     FormatterRegistry,
     parseFormatterOptions,
@@ -58,6 +58,12 @@ describe('utils/formatters — modifier parser', () => {
         expect(parseModifier('number(currency=EUR')).toBeUndefined();
         expect(parseModifier('number)')).toBeUndefined();
     });
+
+    it('rejects extra trailing parens and nested parens', () => {
+        // Regression for PR review: `endsWith(')')` previously allowed these.
+        expect(parseModifier('number(currency=EUR))')).toBeUndefined();
+        expect(parseModifier('number(group(nested))')).toBeUndefined();
+    });
 });
 
 describe('utils/formatters — built-in registry', () => {
@@ -87,6 +93,24 @@ describe('utils/formatters — built-in registry', () => {
         expect(fmt(['Alice', 'Bob', 'Carol'], { style: 'long', type: 'conjunction' }, 'en'))
             .toEqual('Alice, Bob, and Carol');
         expect(fmt(['Alice', 'Bob'], { type: 'disjunction' }, 'en')).toEqual('Alice or Bob');
+    });
+
+    it('caches by sorted option keys — re-ordered options hit the same entry', () => {
+        const reg = new FormatterRegistry();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cacheSize = () => (reg as any).cache.size;
+
+        reg.get('number')!(1, { style: 'currency', currency: 'EUR' }, 'en');
+        reg.get('number')!(1, { currency: 'EUR', style: 'currency' }, 'en');
+
+        expect(cacheSize()).toEqual(1);
+    });
+
+    it('falls back to String(value) when Intl.* construction throws (invalid options)', () => {
+        const reg = new FormatterRegistry();
+        // `currency=invalid` causes new Intl.NumberFormat to throw RangeError.
+        expect(reg.get('number')!(99, { style: 'currency', currency: 'invalid' }, 'en'))
+            .toEqual('99');
     });
 
     it('memoises Intl instances per (locale, options)', () => {
@@ -185,6 +209,14 @@ describe('utils/template — modifier dispatch', () => {
             { locale: 'en', formatters },
         );
         expect(out).toEqual('Test 42');
+    });
+
+    it('preserves the legacy 3rd-arg-as-RegExp signature for backward compat', () => {
+        // Pre-formatter callers may have passed a custom delimiter regex.
+        // The new modifier dispatch is disabled in that case, but the
+        // signature must still work.
+        const out = template('Hi <name>!', { name: 'Peter' }, /<(\w+)>/g);
+        expect(out).toEqual('Hi Peter!');
     });
 });
 
