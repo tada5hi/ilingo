@@ -106,6 +106,23 @@ describe('Ilingo<Catalog> — typed key inference', () => {
         });
     });
 
+    it('rejects an intermediate namespace key (not a leaf)', () => {
+        // Regression for PR #915 review: DottedPaths previously included
+        // intermediate `K` (the namespace itself) alongside `K.path`.
+        // The runtime would have returned undefined for that path; rejecting
+        // it at the type level matches the actual contract.
+        ilingo.get({
+            group: 'app',
+            // @ts-expect-error 'nested' is a namespace, not a leaf
+            key: 'nested',
+        });
+        ilingo.get({
+            group: 'app',
+            // @ts-expect-error 'nested.deep' is also a namespace, not a leaf
+            key: 'nested.deep',
+        });
+    });
+
     it('requires `count` for an explicit @plural leaf', () => {
         // OK with count.
         ilingo.get({ group: 'cart', key: 'items', count: 1 });
@@ -124,6 +141,40 @@ describe('Ilingo<Catalog> — typed key inference', () => {
     it('does not require count for a regular string leaf', () => {
         // No count needed when leaf is plain string.
         ilingo.get({ group: 'app', key: 'greeting' });
+    });
+
+    it('requires count when locales diverge and at least one is plural', () => {
+        // Regression for PR #915 review: a naked
+        // `extends PluralLeaf | PluralLeafExplicit` returns false for
+        // unions like `string | PluralLeaf`, letting count slip through as
+        // optional even when one locale needs plural selection. The
+        // `Extract<...>`-based IsPluralKey treats the key as plural when
+        // any branch in the union is plural-shaped.
+        const divergeCatalog = defineCatalog({
+            en: {
+                app: {
+                    items: {
+                        '@plural': { one: '1 item', other: '{{count}} items' },
+                    },
+                },
+            },
+            de: {
+                app: {
+                    // String in German — diverges from English's plural form.
+                    items: 'Artikel',
+                },
+            },
+        });
+
+        const il = new Ilingo<typeof divergeCatalog>({
+            store: new MemoryStore({ data: divergeCatalog }),
+        });
+
+        // OK: count provided.
+        il.get({ group: 'app', key: 'items', count: 1 });
+
+        // @ts-expect-error count is required because en defines a plural shape
+        il.get({ group: 'app', key: 'items' });
     });
 });
 

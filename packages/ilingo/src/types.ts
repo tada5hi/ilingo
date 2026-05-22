@@ -95,7 +95,7 @@ export type LeafAt<T, K extends string> =    K extends `${infer Head}.${infer Ta
  * `LinesRecord`) short-circuit to plain `string` — there are no concrete
  * keys to enumerate, so any string is acceptable.
  */
-export type DottedPaths<T> =    string extends keyof T ? string :
+export type DottedPaths<T> = string extends keyof T ? string :
     T extends string ? never :
         T extends PluralLeaf | PluralLeafExplicit ? never :
             T extends Record<string, unknown> ?
@@ -104,7 +104,10 @@ export type DottedPaths<T> =    string extends keyof T ? string :
                     T[K] extends string | PluralLeaf | PluralLeafExplicit ?
                         K :
                         T[K] extends Record<string, unknown> ?
-                                K | `${K}.${DottedPaths<T[K]>}` :
+                            // Only emit dotted leaf paths — never the bare
+                            // intermediate namespace key (which would type-
+                            // check but always miss at runtime).
+                            `${K}.${DottedPaths<T[K]>}` :
                             never;
                 }[keyof T & string] :
                 never;
@@ -120,16 +123,33 @@ export type Key<C extends LocalesRecord, G extends Groups<C>> =    AnyGroups<C>[
 
 /**
  * `true` when the leaf at `(G, K)` is a plural shape (either structural or
- * explicit `@plural`-wrapped). Used to make `count` required at the type
- * level for plural keys.
+ * explicit `@plural`-wrapped) in *any* locale. Used to make `count` required
+ * at the type level for plural keys.
+ *
+ * `LeafAt<...>` for diverging locales returns a union like
+ * `string | PluralLeaf`. A naked `extends PluralLeaf | PluralLeafExplicit`
+ * collapses that to `false`, which would let `count` slip through as
+ * optional. The `Extract<...>` form treats the key as plural when *any*
+ * branch of the union is a plural shape — the safer default, since the
+ * locale that's plural-shaped would otherwise silently fall back to its
+ * `other` form on every call.
+ *
+ * The `[X] extends [never]` wrapping disables the distributive-conditional
+ * behaviour so `never` (no plural anywhere) is detected directly.
  */
+// Open shapes (default LocalesRecord) have a `string` index signature at
+// the group level; their leaf type union always includes `PluralLeaf`,
+// which would make every call site require `count`. Short-circuit to
+// false there — only concrete catalogs participate in plural inference.
 export type IsPluralKey<
     C extends LocalesRecord,
     G extends Groups<C>,
     K extends string,
-> = LeafAt<AnyGroups<C>[G], K> extends PluralLeaf | PluralLeafExplicit ?
-    true :
-    false;
+> = string extends keyof AnyGroups<C>[G] ?
+    false :
+    [Extract<LeafAt<AnyGroups<C>[G], K>, PluralLeaf | PluralLeafExplicit>] extends [never] ?
+        false :
+        true;
 
 /**
  * The full `ctx` argument to `Ilingo.get()` when parameterised with a
