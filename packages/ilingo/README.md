@@ -292,18 +292,35 @@ await ilingo.get({ group: 'cart', key: 'items', count: 5 });
 
 If the selected category is absent from the leaf, `other` is used as a fallback.
 
-**Recommended explicit form.** Prefer wrapping plural forms in `{ "@plural": { ... } }` to disambiguate them from regular namespaces that happen to use CLDR category names:
+**Recommended explicit form.** Wrap plural forms in `{ "@plural": { ... } }` to disambiguate them from regular namespaces that happen to use CLDR category names. The right syntax depends on how you author your locale data:
+
+**JSON files** (loaded by `FSStore`) — use the literal `@plural` key:
+
+```json
+{
+    "cart": {
+        "items": {
+            "@plural": {
+                "one": "{{count}} item",
+                "other": "{{count}} items"
+            }
+        }
+    }
+}
+```
+
+**TS / JS files** (inline `defineCatalog`, or loaded by `FSStore`) — use the `definePlural` helper:
 
 ```typescript
-{
+import { defineCatalog, definePlural } from 'ilingo';
+
+const catalog = defineCatalog({
     en: {
         cart: {
-            items: {
-                '@plural': {
-                    one: '{{count}} item',
-                    other: '{{count}} items',
-                },
-            },
+            items: definePlural({
+                one: '{{count}} item',
+                other: '{{count}} items',
+            }),
         },
         form: {
             kind: {
@@ -312,8 +329,10 @@ If the selected category is absent from the leaf, `other` is used as a fallback.
             },
         },
     },
-}
+});
 ```
+
+`definePlural` is a thin identity helper — it returns `{ '@plural': leaf }` with the same runtime shape as the JSON form. The `const` generic preserves the literal types of each plural form (so `Ilingo<typeof catalog>` still sees them as plural keys requiring `count`). The TS/JS version gets CLDR-category autocomplete and a compile error if you misspell `other` or pass a non-CLDR key.
 
 Structural detection (a bare `{ one, other }` object without the marker) is still supported for backward compatibility.
 

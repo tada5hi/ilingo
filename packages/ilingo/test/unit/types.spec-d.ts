@@ -6,7 +6,9 @@
  */
 
 import { describe, expectTypeOf, it } from 'vitest';
-import { Ilingo, MemoryStore, defineCatalog } from '../../src';
+import {
+    Ilingo, MemoryStore, defineCatalog, definePlural,
+} from '../../src';
 
 // A typical typed catalog mixing flat keys, nested namespaces, and both
 // plural forms (structural + explicit).
@@ -132,6 +134,45 @@ describe('Ilingo — no generic preserves backward compat (loose typing)', () =>
         // Without a generic, the API is intentionally loose.
         ilingo.get({ group: 'whatever', key: 'really.anything' });
         ilingo.get({ group: 'whatever', key: 'really.anything', count: 5 });
+    });
+});
+
+describe('definePlural — TS/JS authoring helper', () => {
+    it('produces the same { "@plural": ... } shape as a literal', () => {
+        const a = definePlural({ one: '1 item', other: '{{count}} items' });
+
+        expectTypeOf(a).toMatchTypeOf<{ '@plural': { other: string } }>();
+        // The inner CLDR-categorised shape is preserved.
+        expectTypeOf(a['@plural'].one).toEqualTypeOf<'1 item'>();
+        expectTypeOf(a['@plural'].other).toEqualTypeOf<'{{count}} items'>();
+    });
+
+    it('requires `other` and rejects non-CLDR keys at compile time', () => {
+        // @ts-expect-error `other` is required by PluralLeaf
+        definePlural({ one: 'a' });
+
+        // @ts-expect-error 'foo' is not a CLDR plural category
+        definePlural({ other: 'a', foo: 'b' });
+    });
+
+    it('a catalog leaf written via definePlural is detected as plural', () => {
+        const cat = defineCatalog({
+            en: {
+                cart: {
+                    items: definePlural({ one: '1', other: '{{count}}' }),
+                },
+            },
+        });
+
+        const ilingo = new Ilingo<typeof cat>({
+            store: new MemoryStore({ data: cat }),
+        });
+
+        // count is required because the leaf is plural-shaped
+        ilingo.get({ group: 'cart', key: 'items', count: 2 });
+
+        // @ts-expect-error count is required for plural keys
+        ilingo.get({ group: 'cart', key: 'items' });
     });
 });
 

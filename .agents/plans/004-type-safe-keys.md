@@ -27,7 +27,8 @@ Infer the legal `(group, key)` pairs from a typed catalog so the compiler catche
 - [x] Plural-shaped leaves (both `@plural`-wrapped and structural) require `count: number` at the call site — calling without `count` is a type error.
 - [x] No runtime change — all 84 existing `.spec.ts` cases pass unchanged.
 - [x] `IStore` left non-generic (catalog flows through `Ilingo<C>` only, not stores) — keeps custom store implementations simple at the cost of not propagating the catalog into store-level types. Acceptable trade-off; revisit if a concrete use case appears.
-- [x] Type tests live in `test/unit/types.spec-d.ts`, run via `npm run test:types` (vitest `--typecheck`). 10 type tests, no errors. Vue composable not made generic in this pass — the call site uses an injected (loosely typed) instance; module-augmentation pattern (`declare module '@ilingo/vue' { interface IlingoCatalog { ... } }`) belongs to a follow-up.
+- [x] Type tests live in `test/unit/types.spec-d.ts`, run via `npm run test:types` (vitest `--typecheck`). 13 type tests, no errors. Vue composable not made generic in this pass — the call site uses an injected (loosely typed) instance; module-augmentation pattern (`declare module '@ilingo/vue' { interface IlingoCatalog { ... } }`) belongs to a follow-up.
+- [x] `definePlural<const T>(leaf)` helper added alongside `defineCatalog`. TS/JS authors get autocomplete + literal-type capture; JSON authors continue with the string-key `@plural` marker (JSON can't call functions). Both produce identical runtime data.
 
 ## Why now
 

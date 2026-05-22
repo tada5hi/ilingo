@@ -61,6 +61,8 @@ Helpers in `packages/ilingo/src/types.ts`:
 
 `defineCatalog<const T>(c)` (`packages/ilingo/src/catalog.ts`) is a runtime identity function with a `const` generic that captures the catalog literal without losing inference — saves callers from sprinkling `as const`.
 
+`definePlural<const T>(plural)` is the TS/JS-friendly companion to the explicit `@plural` JSON marker. Returns `{ '@plural': leaf }` — same runtime shape as the JSON literal — with CLDR-category autocomplete and a compile error on missing-`other` / non-CLDR keys. Both forms produce identical runtime data: JSON files keep using the `"@plural"` literal (they can't call functions), TS/JS files use `definePlural()`.
+
 ### 8. ESM-first, dependency-light, browser-safe
 
 Each package's runtime dependencies are minimal — `pathtrace` and `smob` in core; `locter`, `pathe`, `smob` in `@ilingo/fs`. Vue and Vuelidate are declared as `peerDependencies`, not bundled. Core does not import `node:process` — `NODE_ENV` is read via a bare `process.env.NODE_ENV` literal (so Vite / Webpack DefinePlugin can replace it) wrapped in a `typeof process !== 'undefined'` guard for raw-browser execution.

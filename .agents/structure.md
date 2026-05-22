@@ -41,7 +41,7 @@ src/
 ├── types.ts                  # LinesRecord, Leaf, PluralLeaf, PluralLeafExplicit, GetContext (with count),
 │                             #   MissingKeyContext, MissingKeyHandler, Fallback, FallbackResolver, Data,
 │                             #   AnyGroups, Groups, Key, LeafAt, DottedPaths, IsPluralKey, GetParams
-├── catalog.ts                # defineCatalog<const T>() identity helper
+├── catalog.ts                # defineCatalog<const T>() + definePlural<const T>() typed helpers
 ├── constants.ts              # LOCALE_DEFAULT = 'en'
 ├── config/
 │   ├── index.ts

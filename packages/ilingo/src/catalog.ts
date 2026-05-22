@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { LocalesRecord } from './types';
+import type { LocalesRecord, PluralLeaf, PluralLeafExplicit } from './types';
 
 /**
  * Helper that returns its argument unchanged but captures it with `const`
@@ -26,4 +26,33 @@ import type { LocalesRecord } from './types';
  */
 export function defineCatalog<const T extends LocalesRecord>(catalog: T): T {
     return catalog;
+}
+
+/**
+ * TS/JS-friendly companion for the explicit `@plural` marker. Wraps the
+ * given CLDR-categorised forms into `{ '@plural': leaf }` — the same
+ * runtime shape an authored JSON file would carry — so callers writing
+ * catalogs in TypeScript don't have to type the magic key by hand.
+ *
+ * The `const` generic preserves the literal type of each plural form for
+ * downstream type inference (e.g. inside `defineCatalog`).
+ *
+ * JSON files cannot call functions, so they continue to use the
+ * `{ "@plural": { "one": "...", "other": "..." } }` literal shape. Both
+ * forms produce identical runtime data.
+ *
+ * @example
+ *     const catalog = defineCatalog({
+ *         en: {
+ *             cart: {
+ *                 items: definePlural({
+ *                     one: '{{count}} item',
+ *                     other: '{{count}} items',
+ *                 }),
+ *             },
+ *         },
+ *     });
+ */
+export function definePlural<const T extends PluralLeaf>(plural: T): { '@plural': T } & PluralLeafExplicit {
+    return { '@plural': plural };
 }
