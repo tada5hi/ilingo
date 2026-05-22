@@ -11,3 +11,5 @@ reports
 .env
 coverage
 .nx
+.claude/settings.local.json
+.agents/plans
