@@ -5,20 +5,53 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import type { FormatterRegistry } from './formatters';
+import { parseFormatterOptions, parseModifier } from './formatters';
+
+export interface TemplateContext {
+    locale: string;
+    formatters: FormatterRegistry;
+    onUnknownFormatter?: (name: string) => void;
+}
+
+/**
+ * Substitute `{{var}}` placeholders. With a `TemplateContext`, also supports
+ * modifier syntax: `{{var, modifier}}` and `{{var, modifier(opts)}}`.
+ *
+ * - Unknown data key → placeholder left in place (unchanged from prior behaviour).
+ * - Unknown modifier → raw value substituted, `onUnknownFormatter` invoked.
+ * - Malformed modifier expression (e.g. unbalanced parens) → raw value substituted.
+ */
 export function template(
     str: string,
     data: Record<string, any>,
-    regex = /\{\{(.+?)\}\}/g,
-) : string {
-    return Array.from(str.matchAll(regex))
-        .reduce((
-            acc,
-            match,
-        ) => {
-            if (typeof data[match[1]] !== 'undefined') {
-                return acc.replace(match[0], data[match[1]]);
-            }
+    ctx?: TemplateContext,
+): string {
+    // Matches `{{var}}` and `{{var, modifierExpr}}`. The modifier capture
+    // allows commas inside parens (e.g. `list(style=long, type=conjunction)`)
+    // because `[^}]+?` is bounded only by the closing brace.
+    const regex = /\{\{\s*([^,}]+?)(?:\s*,\s*([^}]+?))?\s*\}\}/g;
 
-            return acc;
-        }, str);
+    return str.replace(regex, (match, rawKey: string, modExpr: string | undefined) => {
+        const key = rawKey.trim();
+        if (typeof data[key] === 'undefined') return match;
+
+        const value = data[key];
+
+        if (!modExpr || !ctx) {
+            return String(value);
+        }
+
+        const modifier = parseModifier(modExpr);
+        if (!modifier) return String(value);
+
+        const formatter = ctx.formatters.get(modifier.name);
+        if (!formatter) {
+            ctx.onUnknownFormatter?.(modifier.name);
+            return String(value);
+        }
+
+        const options = parseFormatterOptions(modifier.options);
+        return formatter(value, options, ctx.locale);
+    });
 }

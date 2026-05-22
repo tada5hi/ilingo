@@ -1,6 +1,6 @@
 # Phase 3 — Intl formatters
 
-**Status**: Blocked by Phase 2 (shares the `GetContext` shape).
+**Status**: In review (branch `feat/intl-formatters`).
 **Tracks**: [#896](https://github.com/tada5hi/ilingo/issues/896).
 
 Add `Intl.NumberFormat`, `Intl.DateTimeFormat`, and `Intl.ListFormat` support to the template formatter so consumers don't have to pre-format values in calling code.
@@ -22,9 +22,10 @@ Add `Intl.NumberFormat`, `Intl.DateTimeFormat`, and `Intl.ListFormat` support to
 
 ## Acceptance
 
-- [ ] `"You owe {{amount, number(currency=EUR, style=currency)}}"` renders correctly for `en` and `de`.
-- [ ] Unknown modifier falls back to the raw value (no throw) and emits a dev-only warning routed through `onMissingKey`'s sibling diagnostic channel.
-- [ ] Formatter cache lives on the `Ilingo` instance — verified by spying construction count across repeated renders.
+- [x] `"You owe {{amount, number(currency=EUR, style=currency)}}"` renders correctly for `en` and `de` (resolved-locale propagation tested).
+- [x] Unknown modifier falls back to the raw value (no throw) and emits a per-instance dev-only warn-once via `Ilingo.handleUnknownFormatter` (mirrors the missing-key diagnostic shape). Production is silenced via the same `isProductionEnv()` gate.
+- [x] Formatter cache lives on the `Ilingo` instance — asserted by reading the registry's `cache.size` after repeated renders.
+- [x] Tightened modifier parser rejects malformed names (`number)`, stray punctuation) instead of treating them as valid identifiers.
 
 ## Why now
 

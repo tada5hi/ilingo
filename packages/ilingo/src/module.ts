@@ -16,6 +16,7 @@ import type {
     MissingKeyHandler,
 } from './types';
 import {
+    FormatterRegistry,
     resolveLocaleChain,
     template,
 } from './utils';
@@ -52,12 +53,24 @@ export class Ilingo {
     protected pluralRulesCache: Map<string, Intl.PluralRules>;
 
     /**
+     * Per-instance registry for `{{value, formatter(opts)}}` template
+     * modifiers. Built-in entries: `number`, `date`, `list` (each backed
+     * by the matching `Intl.*Format`, memoised by `(locale, options)`).
+     */
+    public readonly formatters: FormatterRegistry;
+
+    /**
      * Per-instance set of `(locale, group, key)` triples that have already
      * triggered a missing-key warning. Kept on the instance — not module
      * scope — so multiple `Ilingo` instances do not dedupe each other's
      * warnings.
      */
     protected warnedKeys: Set<string>;
+
+    /**
+     * Mirror of `warnedKeys` for unknown-formatter diagnostics.
+     */
+    protected warnedFormatters: Set<string>;
 
     // ----------------------------------------------------
 
@@ -67,6 +80,8 @@ export class Ilingo {
         this.onMissingKey = input.onMissingKey;
         this.pluralRulesCache = new Map();
         this.warnedKeys = new Set();
+        this.warnedFormatters = new Set();
+        this.formatters = new FormatterRegistry();
 
         this.stores = new Set<IStore>();
         if (input.store) {
@@ -157,7 +172,7 @@ export class Ilingo {
         if (typeof ctx.count === 'number' && typeof data.count === 'undefined') {
             data.count = ctx.count;
         }
-        return this.format(message, data);
+        return this.format(message, data, hit.locale);
     }
 
     // ----------------------------------------------------
@@ -263,7 +278,25 @@ export class Ilingo {
 
     // ----------------------------------------------------
 
-    format(input: string, data: Record<string, any>) {
-        return template(input, data || {});
+    /**
+     * Substitute `{{var}}` placeholders. Modifier syntax
+     * (`{{var, number(currency=EUR)}}`) is dispatched through
+     * `this.formatters` when `locale` is provided.
+     */
+    format(input: string, data: Record<string, any>, locale?: string): string {
+        return template(input, data || {}, {
+            locale: locale ?? this.getLocale(),
+            formatters: this.formatters,
+            onUnknownFormatter: (name) => this.handleUnknownFormatter(name),
+        });
+    }
+
+    protected handleUnknownFormatter(name: string): void {
+        /* istanbul ignore next */
+        if (isProductionEnv()) return;
+        if (this.warnedFormatters.has(name)) return;
+        this.warnedFormatters.add(name);
+        // eslint-disable-next-line no-console
+        console.warn(`[ilingo] unknown formatter "${name}" — falling back to raw value`);
     }
 }

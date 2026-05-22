@@ -37,7 +37,17 @@ A leaf can be either a plain `string` or a `PluralLeaf` (`{ zero?, one?, two?, f
 
 The orchestrator selects a form using `Intl.PluralRules` keyed by the *resolved* locale (the one that actually matched). `Intl.PluralRules` instances are cached per locale on the `Ilingo` instance.
 
-### 6. ESM-first, dependency-light, browser-safe
+### 6. Template formatters via a per-instance registry
+
+Template placeholders accept modifier syntax: `{{value, formatter}}` and `{{value, formatter(opt=value, ...)}}`. The orchestrator owns a `FormatterRegistry` instance that:
+
+- Holds the built-in formatters `number`, `date`, `list` (backed by `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.ListFormat`).
+- Memoises `Intl.*Format` instances keyed by `(formatter, locale, JSON-encoded options)` so repeated renders don't reallocate.
+- Exposes `register(name, fn)` and `get(name)` — designed so Phase 6 (#906) opens it to user-supplied formatters without re-architecting.
+
+The locale handed to a formatter is the **resolved** locale (the one that actually yielded the message), not the requested one. Unknown modifiers fall back to `String(value)` and emit a per-instance dev-mode one-shot warning via the same `isProductionEnv()` gate used by the missing-key handler.
+
+### 7. ESM-first, dependency-light, browser-safe
 
 Each package's runtime dependencies are minimal — `pathtrace` and `smob` in core; `locter`, `pathe`, `smob` in `@ilingo/fs`. Vue and Vuelidate are declared as `peerDependencies`, not bundled. Core does not import `node:process` — `NODE_ENV` is read via a bare `process.env.NODE_ENV` literal (so Vite / Webpack DefinePlugin can replace it) wrapped in a `typeof process !== 'undefined'` guard for raw-browser execution.
 
@@ -106,7 +116,7 @@ protected async lookup(chain, ctx) {
 }
 ```
 
-`Ilingo` owns: the locale (default `'en'` from `LOCALE_DEFAULT`), the ordered store set, the fallback config, the missing-key handler, a per-instance `pluralRulesCache: Map<string, Intl.PluralRules>`, a per-instance `warnedKeys: Set<string>` for the default warn-once handler, and the `{{var}}` template formatter. Framework-specific concerns live in higher-layer packages.
+`Ilingo` owns: the locale (default `'en'` from `LOCALE_DEFAULT`), the ordered store set, the fallback config, the missing-key handler, a per-instance `pluralRulesCache: Map<string, Intl.PluralRules>`, a per-instance `formatters: FormatterRegistry` (with its own `Intl.*Format` cache), a per-instance `warnedKeys` / `warnedFormatters: Set<string>` for the two warn-once channels, and the `{{var}}` template formatter. Framework-specific concerns live in higher-layer packages.
 
 ### Missing-key handler
 
@@ -145,7 +155,8 @@ Processing:
   5. selectPluralForm(leaf, hitLocale, count)
        └── Intl.PluralRules(hitLocale) [cached] selects category, falls back to 'other'
   6. count auto-merges into data if absent
-  7. template(message, data) substitutes {{var}} placeholders
+  7. template(message, data, { locale: hitLocale, formatters }) substitutes
+     {{var}} and {{var, formatter(opts)}} placeholders
 
 Output:
   └── Promise<string | undefined>     ('undefined' = handler returned no string)
@@ -168,7 +179,8 @@ packages/ilingo/src/
 ├── utils/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
 │   ├── identify.ts          ← isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord, PLURAL_MARKER
-│   ├── template.ts          ← {{var}} substitution
+│   ├── formatters.ts        ← FormatterRegistry, parseFormatterOptions, parseModifier, Formatter type
+│   ├── template.ts          ← {{var}} + {{var, formatter(opts)}} substitution
 │   └── language/            ← isBCP47LanguageCode + CLDR data
 └── config/                  ← typed input shape
 
