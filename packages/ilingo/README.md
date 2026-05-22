@@ -18,6 +18,9 @@ Ilingo is a lightweight library for translation and internationalization.
   - [Parameters](#parameters)
   - [Locales](#locales)
   - [Lazy](#lazy)
+  - [Pluralization](#pluralization)
+  - [Fallback locale chain](#fallback-locale-chain)
+  - [Missing-key handler](#missing-key-handler)
 - [Store](#store)
   - [Memory](#memory-store)
   - [FileSystem](#fs-store)
@@ -257,6 +260,68 @@ await ilingo.get({
     locale: 'de'
 });
 // boz y
+```
+
+### Pluralization
+
+Leaves may be CLDR plural objects keyed by category (`zero | one | two | few | many | other`); the matching form is selected via `Intl.PluralRules`. The `count` is automatically merged into `data` so `{{count}}` works without restating it.
+
+```typescript
+const ilingo = new Ilingo({
+    store: new MemoryStore({
+        data: {
+            en: {
+                cart: {
+                    items: {
+                        one: '{{count}} item',
+                        other: '{{count}} items',
+                    },
+                },
+            },
+        },
+    }),
+});
+
+await ilingo.get({ group: 'cart', key: 'items', count: 1 });
+// "1 item"
+await ilingo.get({ group: 'cart', key: 'items', count: 5 });
+// "5 items"
+```
+
+If the selected category is absent from the leaf, `other` is used as a fallback.
+
+### Fallback locale chain
+
+`get()` walks an ordered fallback chain. By default the chain is derived from BCP-47 parents of the requested locale, terminating at `en`:
+
+```typescript
+new Ilingo({ locale: 'pt-BR' }).getResolvedLocaleChain({ locale: 'pt-BR' });
+// ['pt-BR', 'pt', 'en']
+```
+
+Override with `fallback`:
+
+```typescript
+new Ilingo({ fallback: 'es' });            // string
+new Ilingo({ fallback: ['es', 'fr'] });    // array, in order
+new Ilingo({                               // function: per-call
+    fallback: (locale) => locale.startsWith('pt') ? ['es'] : [],
+});
+```
+
+The chain is walked locale-first across all stores — the closest locale match wins regardless of store order. Inspect the resolution with `await ilingo.getResolvedLocale({ group, key })`.
+
+### Missing-key handler
+
+Override the default dev-mode `console.warn` via `onMissingKey`. Return a string to make it the result of `get()`; return `undefined` to keep the result `undefined`.
+
+```typescript
+const ilingo = new Ilingo({
+    onMissingKey: ({ group, key, resolvedLocale }) => {
+        track('i18n.miss', { group, key, locale: resolvedLocale });
+        return `[missing: ${group}.${key}]`;
+    },
+});
 ```
 
 ## Store

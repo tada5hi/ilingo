@@ -5,12 +5,19 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
+
+export type PluralLeaf = { other: string } &
+    Partial<Record<Exclude<PluralCategory, 'other'>, string>>;
+
+export type Leaf = string | PluralLeaf;
+
 export type ValueOrNestedValue<T> = {
     [key: string]: ValueOrNestedValue<T> | T
 };
 
 // default: Record<group, Record<locale, Lines>>
-export type LinesRecord = ValueOrNestedValue<string>;
+export type LinesRecord = ValueOrNestedValue<Leaf>;
 // default: Record<group, Lines>
 export type GroupsRecord = Record<string, LinesRecord>;
 // default: Record<locale, Groups>
@@ -25,4 +32,18 @@ export type GetContext = {
     locale?: string,
     group: string,
     key: string,
+    count?: number,
 };
+
+export type MissingKeyContext = GetContext & {
+    /**
+     * The last locale that was tried — the end of the resolved fallback chain.
+     */
+    resolvedLocale?: string,
+};
+
+export type MissingKeyHandler = (context: MissingKeyContext) => string | undefined | void;
+
+export type FallbackResolver = (locale: string) => string[];
+
+export type Fallback = string | string[] | FallbackResolver;

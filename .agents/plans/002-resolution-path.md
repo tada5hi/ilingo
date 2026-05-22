@@ -1,6 +1,6 @@
 # Phase 2 — Resolution-path features
 
-**Status**: Blocked by Phase 1.
+**Status**: Done (PR opened from `feat/resolution-path`).
 **Tracks**: [#895](https://github.com/tada5hi/ilingo/issues/895), [#897](https://github.com/tada5hi/ilingo/issues/897), [#899](https://github.com/tada5hi/ilingo/issues/899).
 
 Three features that all change how `Ilingo.get()` resolves a `(locale, group, key)` to a string. Per #907's sequencing they ship together so the tests are written against the final lookup shape — landing them serially would force two test rewrites.
@@ -40,11 +40,12 @@ Three features that all change how `Ilingo.get()` resolves a `(locale, group, ke
 
 ## Acceptance
 
-- [ ] Plural catalogs round-trip through `MemoryStore` and `FSStore`.
-- [ ] `get({ group, key, count: 0 })` matches `zero` where defined, `other` otherwise.
-- [ ] `get({ ..., locale: 'pt-BR' })` falls back to `pt` then to the default in the documented order.
-- [ ] Default dev-mode warning fires exactly once per missing key per process (memoize the warning set).
-- [ ] All existing tests still pass with no opt-in needed (backwards compatible for `string` leaves).
+- [x] Plural catalogs round-trip through `MemoryStore` (and `FSStore`, since it extends it).
+- [x] `get({ group, key, count: 0 })` matches `zero` where defined, `other` otherwise (verified in Welsh and English).
+- [x] `get({ ..., locale: 'pt-BR' })` falls back through `pt` to `en` by default; explicit `fallback` overrides (string / array / function).
+- [x] Default dev-mode warning fires exactly once per `(locale, group, key)` per process.
+- [x] Pre-existing tests pass with one expected behaviour change: a missing-locale lookup now falls through to the default locale rather than returning `undefined`. The affected fs test was updated to reflect the new contract.
+- [x] `getResolvedLocale(ctx)` returns the locale in the chain that yielded a value; `undefined` when the key is missing in every locale.
 
 ## Why this wave
 

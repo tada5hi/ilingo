@@ -5,26 +5,33 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { LocalesRecord } from '../types';
+import type { Leaf, LocalesRecord } from '../types';
 
 export type StoreGetContext = {
     locale: string,
     group: string,
-    key: string
+    key: string,
 };
 
 export type StoreSetContext = StoreGetContext & {
-    value: string
+    value: string,
 };
 
 export interface IStore {
-    get(context: StoreGetContext) : Promise<string | undefined>;
+    /**
+     * Resolve a `(locale, group, key)` to a leaf value.
+     *
+     * The leaf can be a plain string or a CLDR-categorised plural leaf
+     * (`{ one, other, ... }`). Implementations that don't support plural
+     * catalogs may return only `string | undefined`.
+     */
+    get(context: StoreGetContext): Promise<Leaf | undefined>;
 
-    set(context: StoreSetContext) : Promise<void>;
+    set(context: StoreSetContext): Promise<void>;
 
-    getLocales() : Promise<string[]>;
+    getLocales(): Promise<string[]>;
 }
 
 export type MemoryStoreOptions = {
-    data: LocalesRecord
+    data: LocalesRecord,
 };
