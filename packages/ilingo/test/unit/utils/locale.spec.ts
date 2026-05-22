@@ -60,4 +60,18 @@ describe('utils/locale', () => {
         expect(resolveLocaleChain('ru', false, 'en')).toEqual(['ru']);
         expect(resolveLocaleChain('pt-BR', false, 'en')).toEqual(['pt-BR']);
     });
+
+    it('explicit empty array also opts out (default locale not appended)', () => {
+        // Two independent reviewers expected `fallback: []` to mean "no
+        // fallback at all". Treat literal-empty explicit shapes as opt-out
+        // so the API matches that intuition.
+        expect(resolveLocaleChain('ru', [], 'en')).toEqual(['ru']);
+        expect(resolveLocaleChain('pt-BR', [], 'en')).toEqual(['pt-BR']);
+    });
+
+    it('resolver function returning [] also opts out', () => {
+        expect(
+            resolveLocaleChain('ru', () => [], 'en'),
+        ).toEqual(['ru']);
+    });
 });

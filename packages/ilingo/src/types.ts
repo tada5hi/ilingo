@@ -64,9 +64,15 @@ export type FallbackResolver = (locale: string) => string[];
 
 /**
  * - `string`            — single fallback locale, applied after the requested one.
- * - `string[]`          — ordered fallback locales (empty array suppresses BCP-47 parents).
- * - `FallbackResolver`  — computed per call.
- * - `false`             — disable fallback entirely; the chain is just `[locale]`
- *                          (the default locale is NOT appended).
+ * - `string[]`          — ordered fallback locales. An *empty* array opts out
+ *                          of fallback entirely (chain is just `[locale]`).
+ * - `FallbackResolver`  — computed per call. Returning `[]` also opts out for
+ *                          that call.
+ * - `false`             — disable fallback entirely; equivalent to `[]` but
+ *                          type-safe to spell out the intent.
+ *
+ * If none of the explicit forms above are given (i.e. `undefined`), the chain
+ * is derived from BCP-47 parents of the requested locale and terminates at
+ * the default locale.
  */
 export type Fallback = string | string[] | FallbackResolver | false;

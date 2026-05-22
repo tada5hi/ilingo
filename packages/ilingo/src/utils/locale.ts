@@ -41,15 +41,25 @@ export function resolveLocaleChain(
     }
 
     const explicit: string[] = [];
+    // Did the caller hand us an *explicit* fallback shape (array or function)?
+    // If yes and that shape evaluates to empty, the caller is asking for no
+    // fallback at all — don't fall back to the default locale either.
+    let explicitlyProvided = false;
 
     if (typeof fallback === 'function') {
+        explicitlyProvided = true;
         explicit.push(...fallback(locale));
     } else if (Array.isArray(fallback)) {
+        explicitlyProvided = true;
         explicit.push(...fallback);
     } else if (typeof fallback === 'string') {
         explicit.push(fallback);
     } else {
         explicit.push(...bcp47Parents(locale));
+    }
+
+    if (explicitlyProvided && explicit.length === 0) {
+        return [locale];
     }
 
     // Order-preserving de-dupe that guarantees defaultLocale stays at the end.
