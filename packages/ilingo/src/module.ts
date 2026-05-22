@@ -163,20 +163,35 @@ export class Ilingo {
     // ----------------------------------------------------
 
     /**
-     * Walk the locale chain (then each store within a locale) and return the
-     * first hit. Returns `undefined` when every store misses for every locale.
+     * Walk the locale chain in order. Within each locale, query every store
+     * in parallel and pick the first store (in declared insertion order) that
+     * returned a hit.
+     *
+     * Locale order is preserved (closer locale beats farther one), but for a
+     * single locale the I/O of multiple stores overlaps. The trade-off is that
+     * stores later in the insertion order are still queried even when an
+     * earlier store would have hit — wasted work for network-backed stores
+     * but cheap for the in-memory + fs adapters shipped here. Custom stores
+     * with side effects (e.g. metrics) will see every call.
      */
     protected async lookup(
         chain: string[],
         ctx: Pick<GetContext, 'group' | 'key'>,
     ): Promise<{ locale: string, leaf: Leaf } | undefined> {
+        const stores = Array.from(this.stores);
+        if (stores.length === 0) {
+            return undefined;
+        }
+
         for (const locale of chain) {
-            for (const store of this.stores) {
-                const candidate = await store.get({
+            const results = await Promise.all(
+                stores.map((store) => store.get({
                     locale,
                     group: ctx.group,
                     key: ctx.key,
-                });
+                })),
+            );
+            for (const candidate of results) {
                 if (typeof candidate !== 'undefined') {
                     return { locale, leaf: candidate };
                 }

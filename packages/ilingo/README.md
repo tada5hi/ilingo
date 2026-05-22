@@ -290,6 +290,31 @@ await ilingo.get({ group: 'cart', key: 'items', count: 5 });
 
 If the selected category is absent from the leaf, `other` is used as a fallback.
 
+**Recommended explicit form.** Prefer wrapping plural forms in `{ "@plural": { ... } }` to disambiguate them from regular namespaces that happen to use CLDR category names:
+
+```typescript
+{
+    en: {
+        cart: {
+            items: {
+                '@plural': {
+                    one: '{{count}} item',
+                    other: '{{count}} items',
+                },
+            },
+        },
+        form: {
+            kind: {
+                // Plain namespaces with CLDR-category-shaped keys are safe.
+                other: { label: 'Other' },
+            },
+        },
+    },
+}
+```
+
+Structural detection (a bare `{ one, other }` object without the marker) is still supported for backward compatibility.
+
 ### Fallback locale chain
 
 `get()` walks an ordered fallback chain. By default the chain is derived from BCP-47 parents of the requested locale, terminating at `en`:

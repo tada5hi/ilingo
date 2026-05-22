@@ -7,7 +7,7 @@
 
 import { getPathValue, setPathValue } from 'pathtrace';
 import type { Leaf, LocalesRecord } from '../types';
-import { isPluralLeaf } from '../utils/identify';
+import { asPluralLeaf } from '../utils/identify';
 import type {
     IStore,
     MemoryStoreOptions,
@@ -39,11 +39,11 @@ export class MemoryStore implements IStore {
             return output;
         }
 
-        if (isPluralLeaf(output)) {
-            return output;
-        }
-
-        return undefined;
+        // Accept both the explicit `{ "@plural": { ... } }` wrapper and the
+        // structural bare `{ one, other }` form. `asPluralLeaf` returns the
+        // inner leaf in either case so callers (and the orchestrator) deal
+        // with one shape.
+        return asPluralLeaf(output);
     }
 
     async set(context: StoreSetContext): Promise<void> {

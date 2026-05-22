@@ -10,13 +10,21 @@ export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 /**
  * CLDR-categorised translation for a single key.
  *
- * Note: detection is structural (`isPluralLeaf`). A non-plural object whose
- * only keys happen to be CLDR category names (e.g. `{ other: 'fallback' }`
- * used as a regular namespace) will be interpreted as a plural leaf. Avoid
- * naming nested groups after plural categories.
+ * Prefer the explicit form below (`PluralLeafExplicit`) — wrap your plural
+ * forms in `{ "@plural": { ... } }` — to avoid ambiguity with regular
+ * namespaces. Structural detection (recognising a bare `{ one, other }`
+ * object as plural) is supported for backward compatibility but is
+ * unambiguous only as long as no sibling key happens to be a CLDR
+ * category name.
  */
 export type PluralLeaf = { other: string } &
     Partial<Record<Exclude<PluralCategory, 'other'>, string>>;
+
+/**
+ * Recommended explicit form. Unambiguous regardless of sibling key names,
+ * since detection keys off the `@plural` discriminator.
+ */
+export type PluralLeafExplicit = { '@plural': PluralLeaf };
 
 export type Leaf = string | PluralLeaf;
 

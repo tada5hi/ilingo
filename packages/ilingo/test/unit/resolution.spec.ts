@@ -285,4 +285,97 @@ describe('Ilingo — resolution path', () => {
             ).toEqual('7 items');
         });
     });
+
+    describe('explicit @plural marker', () => {
+        it('recognises { "@plural": { ... } } as a plural leaf', async () => {
+            const ilingo = new Ilingo({
+                store: new MemoryStore({
+                    data: {
+                        en: {
+                            cart: {
+                                items: {
+                                    '@plural': {
+                                        one: '{{count}} item',
+                                        other: '{{count}} items',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                }),
+            });
+            expect(
+                await ilingo.get({ group: 'cart', key: 'items', count: 1 }),
+            ).toEqual('1 item');
+            expect(
+                await ilingo.get({ group: 'cart', key: 'items', count: 3 }),
+            ).toEqual('3 items');
+        });
+
+        it('disambiguates a namespace whose only key happens to be "other"', async () => {
+            // Without the explicit marker, { other: 'literal' } would be
+            // detected as a plural leaf and `.deeper` would fail. With the
+            // marker, `other` is just a regular nested record.
+            const ilingo = new Ilingo({
+                store: new MemoryStore({
+                    data: {
+                        en: {
+                            form: {
+                                kind: {
+                                    other: { label: 'Other' },
+                                },
+                            },
+                        },
+                    },
+                }),
+            });
+            expect(
+                await ilingo.get({ group: 'form', key: 'kind.other.label' }),
+            ).toEqual('Other');
+        });
+    });
+
+    describe('parallel lookup', () => {
+        it('queries every store in a locale concurrently, not serially', async () => {
+            // Record when each store's get() actually runs. Concurrent entry
+            // means both stores start in the same microtask burst — well
+            // before the 30ms simulated work has resolved. Asserting on
+            // entry order (not total elapsed time) avoids CI-jitter flakes.
+            const entries: { id: number, at: number }[] = [];
+            const makeStore = (id: number, hit?: string) => ({
+                async get(_ctx: { locale: string; group: string; key: string }) {
+                    entries.push({ id, at: Date.now() });
+                    await new Promise((r) => setTimeout(r, 30));
+                    return hit;
+                },
+                async set() { /* noop */ },
+                async getLocales() { return []; },
+            });
+
+            const ilingo = new Ilingo({});
+            ilingo.stores.add(makeStore(1));
+            ilingo.stores.add(makeStore(2, 'hello'));
+
+            const result = await ilingo.get({ group: 'app', key: 'hi' });
+
+            expect(result).toEqual('hello');
+            expect(entries.map((e) => e.id)).toEqual([1, 2]);
+            // Both stores entered well within one tick — far less than the
+            // 30ms a sequential walk would have inserted between them.
+            expect(entries[1].at - entries[0].at).toBeLessThan(15);
+        });
+
+        it('preserves store insertion order on a tie within a locale', async () => {
+            const ilingo = new Ilingo({
+                store: new MemoryStore({
+                    data: { en: { app: { hi: 'from store 1' } } },
+                }),
+            });
+            ilingo.stores.add(new MemoryStore({
+                data: { en: { app: { hi: 'from store 2' } } },
+            }));
+
+            expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('from store 1');
+        });
+    });
 });
