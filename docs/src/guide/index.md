@@ -48,7 +48,7 @@ The chain is walked **locale-first**: the closest locale beats the farthest one 
 |---|---|
 | Pluggable storage backend | [Stores](./stores) |
 | BCP-47 fallback chain     | [Locales & Fallback](./locales) |
-| <code v-pre>{{var}}</code> substitution + data merging | [Templates & Data](./templates) |
+| `{{var}}` substitution + data merging | [Templates & Data](./templates) |
 | CLDR-category plural selection | [Pluralization](./pluralization) |
 | `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.ListFormat` | [Formatters](./formatters) |
 | Compile-time typo prevention | [Type-Safe Keys](./type-safe-keys) |

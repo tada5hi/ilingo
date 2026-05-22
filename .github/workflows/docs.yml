@@ -35,11 +35,8 @@ jobs:
                 with:
                     node-version: ${{ env.PRIMARY_NODE_VERSION }}
 
-            -   name: Build packages
+            -   name: Build
                 uses: ./.github/actions/build
-
-            -   name: Build docs
-                run: npm run build -w @ilingo/docs
 
             -   name: CNAME
                 if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}

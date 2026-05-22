@@ -63,13 +63,18 @@ await ilingo.get({ group: 'app', key: 'hi' });
 
 ## Multiple stores
 
-An `Ilingo` instance holds a `Set<IStore>`. Add as many as you want — they are queried **in parallel** within each locale, with the first declared hit winning:
+An `Ilingo` instance exposes a `public readonly stores: Set<IStore>` — add as many as you want. They are queried **in parallel** within each locale, with the first declared hit winning:
 
 ```typescript
-const ilingo = new Ilingo();
-ilingo.addStore(new MemoryStore({ data: { /* core strings */ } }));
-ilingo.addStore(new FSStore({ directory: './locales/overrides' }));
+const ilingo = new Ilingo({
+    store: new MemoryStore({ data: { /* core strings */ } }),
+});
+
+// add more after construction
+ilingo.stores.add(new FSStore({ directory: './locales/overrides' }));
 ```
+
+The constructor's `store` option seeds the first entry; everything else goes through `ilingo.stores.add(...)`. Set semantics make repeated adds of the same reference a no-op.
 
 For network-backed or side-effecting stores, remember that **every store in a locale is queried even if an earlier one hits** — the parallel walk picks the winner after `Promise.all` resolves. Cheap for in-memory and disk; document the cost on custom adapters.
 

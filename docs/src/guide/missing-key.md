@@ -14,7 +14,7 @@ Override via `onMissingKey`:
 
 ```typescript
 const ilingo = new Ilingo({
-    onMissingKey: ({ group, key, locale, resolvedLocale, chain }) => {
+    onMissingKey: ({ group, key, locale, resolvedLocale }) => {
         track('i18n.miss', { group, key, locale, resolvedLocale });
         return `[missing: ${group}.${key}]`;
     },
@@ -31,11 +31,12 @@ The handler receives a `MissingKeyContext`:
 |---|---|---|
 | `group` | `string` | The group that was requested |
 | `key` | `string` | The dotted key path |
-| `locale` | `string` | The *resolved* requested locale (never `undefined`) |
-| `resolvedLocale` | `string` | The chain terminator — the last locale that was tried |
-| `chain` | `string[]` | The full chain that was walked |
+| `locale` | `string` | The *resolved* requested locale. Always set by the runtime, even though the source `GetContext.locale` is optional |
+| `resolvedLocale` | `string \| undefined` | The chain terminator — the last locale that was tried. Optional in the type; populated whenever the chain was non-empty |
 | `data` | `Data \| undefined` | Whatever `data` was passed to `get()` |
 | `count` | `number \| undefined` | Whatever `count` was passed to `get()` |
+
+If you need the full fallback chain inside the handler, call `ilingo.getResolvedLocaleChain({ locale })` from a closure — the chain isn't passed in because it's cheap to recompute and not always needed.
 
 The handler is useful for:
 

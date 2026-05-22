@@ -7,6 +7,16 @@ export default defineConfig({
     cleanUrls: true,
     lastUpdated: true,
 
+    markdown: {
+        config: (md) => {
+            const escape = md.utils.escapeHtml;
+            md.renderer.rules.code_inline = (tokens, idx) => {
+                const content = escape(tokens[idx].content);
+                return `<code v-pre>${content}</code>`;
+            };
+        },
+    },
+
     head: [
         ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
         ['meta', { name: 'theme-color', content: '#6366f1' }],

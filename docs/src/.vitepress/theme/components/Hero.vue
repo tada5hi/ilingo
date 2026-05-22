@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watchEffect } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useData } from 'vitepress';
 import { Ilingo, MemoryStore } from 'ilingo';
 
@@ -75,30 +75,33 @@ const state = reactive({
 
 const chain = computed(() => ilingo.getResolvedLocaleChain({ locale: state.locale }));
 
-const greeting = ref('');
-const items = ref('');
-const total = ref('');
+async function renderAll () {
+    const [greetingValue, itemsValue, totalValue] = await Promise.all([
+        ilingo.get({ group: 'cart', key: 'greeting', locale: state.locale, data: { name: state.name } }),
+        ilingo.get({ group: 'cart', key: 'items', locale: state.locale, count: state.count }),
+        ilingo.get({ group: 'cart', key: 'total', locale: state.locale, data: { amount: state.amount } }),
+    ]);
+    return {
+        greeting: greetingValue ?? '',
+        items: itemsValue ?? '',
+        total: totalValue ?? '',
+    };
+}
 
-watchEffect(async () => {
-    greeting.value = await ilingo.get({
-        group: 'cart',
-        key: 'greeting',
-        locale: state.locale,
-        data: { name: state.name },
-    }) ?? '';
-    items.value = await ilingo.get({
-        group: 'cart',
-        key: 'items',
-        locale: state.locale,
-        count: state.count,
-    }) ?? '';
-    total.value = await ilingo.get({
-        group: 'cart',
-        key: 'total',
-        locale: state.locale,
-        data: { amount: state.amount },
-    }) ?? '';
-});
+const initial = await renderAll();
+const greeting = ref(initial.greeting);
+const items = ref(initial.items);
+const total = ref(initial.total);
+
+watch(
+    () => [state.locale, state.name, state.count, state.amount] as const,
+    async () => {
+        const next = await renderAll();
+        greeting.value = next.greeting;
+        items.value = next.items;
+        total.value = next.total;
+    },
+);
 
 const { isDark } = useData();
 

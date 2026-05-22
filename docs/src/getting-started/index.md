@@ -4,7 +4,7 @@
 
 1. An **orchestrator** (`Ilingo`) that resolves a key against a locale chain.
 2. A **port** (`IStore`) with two stock adapters: in-memory and file-system.
-3. A **template** engine for <code v-pre>{{var}}</code> substitution plus `Intl` formatters.
+3. A **template** engine for `{{var}}` substitution plus `Intl` formatters.
 4. An optional **typed-catalog** mode that turns typos into compile errors.
 
 Everything else — pluralization, fallback chains, missing-key handling, framework adapters — composes from those four pieces.

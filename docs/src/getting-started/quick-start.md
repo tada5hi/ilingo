@@ -77,5 +77,5 @@ That's it. The same call works with a [file-system store](/integrations/fs), in 
 - **[Stores](/guide/stores)** — the `IStore` port and how to write your own.
 - **[Locales & Fallback](/guide/locales)** — how `pt-BR` finds `en` automatically.
 - **[Pluralization](/guide/pluralization)** — the `@plural` marker and `definePlural`.
-- **[Formatters](/guide/formatters)** — <code v-pre>{{value, number(...)}}</code> and friends.
+- **[Formatters](/guide/formatters)** — `{{value, number(...)}}` and friends.
 - **[Type-Safe Keys](/guide/type-safe-keys)** — `defineCatalog()` + `Ilingo<typeof catalog>`.

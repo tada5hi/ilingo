@@ -48,7 +48,7 @@ await ilingo.get({ group: 'cart',  key: 'items', count: 1 });  // OK
 - `Groups<C>` — union of top-level group names from any locale.
 - `Key<C, G>` — union of dotted leaf paths within group `G`.
 - `IsPluralKey<C, G, K>` — `true` if the leaf at `(G, K)` is a plural object. Makes `count` required at the type level.
-- `GetParams<C, G, K>` — the shape of `data` required by <code v-pre>{{var}}</code> placeholders in the leaf.
+- `GetParams<C, G, K>` — the shape of `data` required by `{{var}}` placeholders in the leaf.
 
 ## Opt out
 

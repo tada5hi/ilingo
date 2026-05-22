@@ -1,6 +1,6 @@
 # Templates & Data
 
-Translation strings can contain <code v-pre>{{var}}</code> placeholders. Pass values via `data`:
+Translation strings can contain `{{var}}` placeholders. Pass values via `data`:
 
 ```typescript
 await ilingo.get({
@@ -13,7 +13,7 @@ await ilingo.get({
 
 ## Missing-data semantics
 
-A <code v-pre>{{var}}</code> whose key is **not in `data`** is left untouched — the placeholder stays in the output. This is intentional: missing data is a developer-facing signal, not an error.
+A `{{var}}` whose key is **not in `data`** is left untouched — the placeholder stays in the output. This is intentional: missing data is a developer-facing signal, not an error.
 
 ```typescript
 const store = new MemoryStore({
@@ -40,7 +40,7 @@ await ilingo.get({
 // data is effectively { count: 5 }
 ```
 
-This means <code v-pre>{{count}}</code> works in plural forms without restating it. Explicitly setting `data.count` overrides the auto-merge.
+This means `{{count}}` works in plural forms without restating it. Explicitly setting `data.count` overrides the auto-merge.
 
 ## Nested keys
 

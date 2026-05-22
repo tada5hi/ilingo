@@ -59,7 +59,7 @@ The bundled `vuelidate` group covers Vuelidate's standard validators:
 
 `alpha`, `alphaNum`, `between`, `decimal`, `email`, `integer`, `ipAddress`, `macAddress`, `maxLength`, `maxValue`, `minLength`, `minValue`, `numeric`, `not`, `or`, `and`, `required`, `requiredIf`, `requiredUnless`, `sameAs`, `url`.
 
-Each message uses <code v-pre>{{var}}</code> substitution for the relevant parameter — e.g. `minLength` reads <code v-pre>{{min}}</code> from the validator's `$params`.
+Each message uses `{{var}}` substitution for the relevant parameter — e.g. `minLength` reads `{{min}}` from the validator's `$params`.
 
 ## Overriding messages
 
