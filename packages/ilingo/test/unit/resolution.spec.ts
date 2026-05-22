@@ -252,5 +252,37 @@ describe('Ilingo — resolution path', () => {
             await ilingo.get({ group: 'app', key: 'hi' });
             expect(onMissingKey).not.toHaveBeenCalled();
         });
+
+        it('warn-once state is per-instance, not shared across Ilingo instances', async () => {
+            const a = new Ilingo({ store: new MemoryStore({ data: {} }) });
+            const b = new Ilingo({ store: new MemoryStore({ data: {} }) });
+
+            await a.get({ group: 'app', key: 'isolated' });
+            await b.get({ group: 'app', key: 'isolated' });
+
+            // Two instances → two warnings for the same key. Without
+            // per-instance state, `b` would silently dedupe `a`'s warning.
+            expect(warn).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    describe('plural-leaf write side (#912 review)', () => {
+        it('MemoryStore.set + get round-trips a plural leaf', async () => {
+            const store = new MemoryStore({ data: {} });
+            await store.set({
+                locale: 'en',
+                group: 'cart',
+                key: 'items',
+                value: { one: '{{count}} item', other: '{{count}} items' },
+            });
+
+            const ilingo = new Ilingo({ store });
+            expect(
+                await ilingo.get({ group: 'cart', key: 'items', count: 1 }),
+            ).toEqual('1 item');
+            expect(
+                await ilingo.get({ group: 'cart', key: 'items', count: 7 }),
+            ).toEqual('7 items');
+        });
     });
 });

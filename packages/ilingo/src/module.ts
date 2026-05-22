@@ -13,44 +13,31 @@ import type {
     Fallback,
     GetContext,
     Leaf,
-    MissingKeyContext,
     MissingKeyHandler,
-    PluralLeaf,
 } from './types';
 import {
-    isPluralLeaf,
     resolveLocaleChain,
     template,
 } from './utils';
 
-const warnedKeys = new Set<string>();
-
 /**
- * Read `process.env.NODE_ENV` without importing `node:process`, so the core
- * module stays browser-safe. `globalThis.process` may be `undefined` in
- * browsers; tolerate that without throwing.
+ * `true` when running under a production bundle.
+ *
+ * Webpack's DefinePlugin and Vite's `define` replace the literal expression
+ * `process.env.NODE_ENV` at build time. We reference it directly (rather
+ * than via `globalThis`) so that replacement actually fires. The
+ * `typeof process !== 'undefined'` guard makes raw-browser execution
+ * (no polyfill, no bundler) safe.
  */
-function getNodeEnv(): string | undefined {
-    const p = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
-    return p?.env?.NODE_ENV;
-}
-
-function defaultMissingKeyHandler(ctx: MissingKeyContext): undefined {
+function isProductionEnv(): boolean {
     /* istanbul ignore next */
-    if (getNodeEnv() === 'production') {
-        return undefined;
+    try {
+        return typeof process !== 'undefined' &&
+            process.env != null &&
+            process.env.NODE_ENV === 'production';
+    } catch {
+        return false;
     }
-    const requestedLocale = ctx.locale ?? 'unknown';
-    const id = `${requestedLocale}|${ctx.group}|${ctx.key}`;
-    if (!warnedKeys.has(id)) {
-        warnedKeys.add(id);
-        // eslint-disable-next-line no-console
-        console.warn(
-            `[ilingo] missing translation for "${ctx.group}.${ctx.key}" ` +
-            `(locale=${requestedLocale})`,
-        );
-    }
-    return undefined;
 }
 
 export class Ilingo {
@@ -60,17 +47,26 @@ export class Ilingo {
 
     protected fallback: Fallback | undefined;
 
-    protected onMissingKey: MissingKeyHandler;
+    protected onMissingKey: MissingKeyHandler | undefined;
 
     protected pluralRulesCache: Map<string, Intl.PluralRules>;
+
+    /**
+     * Per-instance set of `(locale, group, key)` triples that have already
+     * triggered a missing-key warning. Kept on the instance — not module
+     * scope — so multiple `Ilingo` instances do not dedupe each other's
+     * warnings.
+     */
+    protected warnedKeys: Set<string>;
 
     // ----------------------------------------------------
 
     constructor(input: ConfigInput = {}) {
         this.locale = input.locale || LOCALE_DEFAULT;
         this.fallback = input.fallback;
-        this.onMissingKey = input.onMissingKey || defaultMissingKeyHandler;
+        this.onMissingKey = input.onMissingKey;
         this.pluralRulesCache = new Map();
+        this.warnedKeys = new Set();
 
         this.stores = new Set<IStore>();
         if (input.store) {
@@ -140,19 +136,8 @@ export class Ilingo {
      */
     async getResolvedLocale(ctx: GetContext): Promise<string | undefined> {
         const chain = this.getResolvedLocaleChain(ctx);
-        for (const locale of chain) {
-            for (const store of this.stores) {
-                const leaf = await store.get({
-                    locale,
-                    group: ctx.group,
-                    key: ctx.key,
-                });
-                if (typeof leaf !== 'undefined') {
-                    return locale;
-                }
-            }
-        }
-        return undefined;
+        const hit = await this.lookup(chain, ctx);
+        return hit?.locale;
     }
 
     // ----------------------------------------------------
@@ -162,19 +147,12 @@ export class Ilingo {
         const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
 
         const hit = await this.lookup(chain, ctx);
-        const resolvedLocale = hit?.locale;
-        const leaf = hit?.leaf;
 
-        if (typeof leaf === 'undefined') {
-            const fallback = this.onMissingKey({
-                ...ctx,
-                locale: requestedLocale,
-                resolvedLocale: chain[chain.length - 1],
-            });
-            return typeof fallback === 'string' ? fallback : undefined;
+        if (!hit) {
+            return this.handleMissingKey(ctx, requestedLocale, chain);
         }
 
-        const message = this.selectPluralForm(leaf, resolvedLocale ?? requestedLocale, ctx.count);
+        const message = this.selectPluralForm(hit.leaf, hit.locale, ctx.count);
         const data: Data = { ...(ctx.data || {}) };
         if (typeof ctx.count === 'number' && typeof data.count === 'undefined') {
             data.count = ctx.count;
@@ -190,7 +168,7 @@ export class Ilingo {
      */
     protected async lookup(
         chain: string[],
-        ctx: GetContext,
+        ctx: Pick<GetContext, 'group' | 'key'>,
     ): Promise<{ locale: string, leaf: Leaf } | undefined> {
         for (const locale of chain) {
             for (const store of this.stores) {
@@ -208,6 +186,41 @@ export class Ilingo {
     }
 
     /**
+     * Run the configured `onMissingKey` (or the built-in warn-once default)
+     * and return whatever it produces.
+     */
+    protected handleMissingKey(
+        ctx: GetContext,
+        requestedLocale: string,
+        chain: string[],
+    ): string | undefined {
+        if (this.onMissingKey) {
+            const result = this.onMissingKey({
+                ...ctx,
+                locale: requestedLocale,
+                resolvedLocale: chain[chain.length - 1],
+            });
+            return typeof result === 'string' ? result : undefined;
+        }
+
+        /* istanbul ignore next */
+        if (isProductionEnv()) {
+            return undefined;
+        }
+
+        const id = `${requestedLocale}|${ctx.group}|${ctx.key}`;
+        if (!this.warnedKeys.has(id)) {
+            this.warnedKeys.add(id);
+            // eslint-disable-next-line no-console
+            console.warn(
+                `[ilingo] missing translation for "${ctx.group}.${ctx.key}" ` +
+                `(locale=${requestedLocale})`,
+            );
+        }
+        return undefined;
+    }
+
+    /**
      * Pick the matching plural form for `count`. Pass-through when the leaf
      * is already a string. Falls back to `other` if the selected category
      * isn't present.
@@ -220,7 +233,7 @@ export class Ilingo {
             return leaf.other;
         }
         const category = this.getPluralRules(locale).select(count);
-        const candidate = (leaf as PluralLeaf)[category];
+        const candidate = leaf[category];
         return typeof candidate === 'string' ? candidate : leaf.other;
     }
 
@@ -231,11 +244,6 @@ export class Ilingo {
             this.pluralRulesCache.set(locale, rules);
         }
         return rules;
-    }
-
-    /* istanbul ignore next */
-    protected isPluralLeaf(value: unknown): value is PluralLeaf {
-        return isPluralLeaf(value);
     }
 
     // ----------------------------------------------------

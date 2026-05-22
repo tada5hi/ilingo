@@ -7,6 +7,14 @@
 
 export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
+/**
+ * CLDR-categorised translation for a single key.
+ *
+ * Note: detection is structural (`isPluralLeaf`). A non-plural object whose
+ * only keys happen to be CLDR category names (e.g. `{ other: 'fallback' }`
+ * used as a regular namespace) will be interpreted as a plural leaf. Avoid
+ * naming nested groups after plural categories.
+ */
 export type PluralLeaf = { other: string } &
     Partial<Record<Exclude<PluralCategory, 'other'>, string>>;
 
@@ -42,7 +50,7 @@ export type MissingKeyContext = GetContext & {
     resolvedLocale?: string,
 };
 
-export type MissingKeyHandler = (context: MissingKeyContext) => string | undefined | void;
+export type MissingKeyHandler = (context: MissingKeyContext) => string | undefined;
 
 export type FallbackResolver = (locale: string) => string[];
 

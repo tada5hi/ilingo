@@ -30,7 +30,7 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
                     undefined,
                 group: ctx.group,
                 key: ctx.key,
-                count: typeof ctx.count === 'undefined' ? undefined : unref(ctx.count),
+                count: unref(ctx.count),
             });
 
             return value || defaultValue;
