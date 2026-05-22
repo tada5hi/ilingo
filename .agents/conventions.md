@@ -20,7 +20,7 @@
 
 - After source changes, run `npm run lint` (top-level) and `npm run build` (top-level or `--workspace=packages/<pkg>`) before declaring a task done.
 - **Keep docs in sync with code.** Every change that touches an observable surface — new public API, behavior change, new config field, new file in `src/`, new test spec — updates the affected docs in the same commit:
-  - User-facing: `packages/<pkg>/README.md`.
+  - User-facing: `packages/<pkg>/README.md` **and** the corresponding page under `docs/src/guide/` or `docs/src/integrations/`. The README is the GitHub landing page; the docs site is the canonical published reference — both must stay accurate.
   - Agent docs: `.agents/architecture.md` for orchestration / data-flow / patterns; `.agents/structure.md` for the file tree; `.agents/testing.md` for new specs; this file for new conventions or tooling.
   - Plan files in `.agents/plans/` flip their status from Ready → In review → Done as the work moves through PRs.
   - Exceptions: pure internal refactors with no observable change, and one-line bug fixes that don't change semantics. Use judgment.
@@ -129,6 +129,7 @@ Conventional Commits, validated by commitlint:
 - A new translation source = a new class implementing `IStore`, not a fork of `Ilingo`. The orchestrator is intentionally tiny.
 - Vue and Vuelidate are **peer dependencies**, never bundled — never add them to a package's `dependencies`.
 - `@ilingo/vue` is the integration seam: any other Vue-aware adapter should depend on it and re-use `applyInstallInput` rather than re-implementing the provide/inject dance (see how `@ilingo/vuelidate/src/index.ts` chains it).
+- The `docs/` site (`@ilingo/docs`) consumes packages only through their **public exports** — never reach into `packages/*/src/`. The workspace symlink resolves the package name at build time. The site is private (`"private": true`) and excluded from `release-please-config.json`.
 
 ## Best Practices
 

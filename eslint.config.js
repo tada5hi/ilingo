@@ -12,6 +12,7 @@ export default [
             '**/playground/**',
             '**/test/**',
             '**/*.d.ts',
+            'docs/**',
             'packages/fs/core/**',
             'packages/vue/core/**',
             'packages/vuelidate/core/**',

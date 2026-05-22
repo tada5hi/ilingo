@@ -1,6 +1,6 @@
 # Project Structure
 
-This is an npm-workspaces monorepo. Every workspace under `packages/` is a publishable library — there are no runnable apps.
+This is an npm-workspaces monorepo. Workspaces under `packages/` are publishable libraries; the `docs/` workspace is a private VitePress site that deploys to GitHub Pages. There are no runnable end-user apps.
 
 ## Packages
 
@@ -10,6 +10,7 @@ This is an npm-workspaces monorepo. Every workspace under `packages/` is a publi
 | [`@ilingo/fs`](../packages/fs)                         | 5.x     | File-system store adapter — extends `MemoryStore`, lazy-loads `<locale>/<group>.{js,mjs,cjs,ts,mts,json,conf}` |
 | [`@ilingo/vue`](../packages/vue)                       | 5.x     | Vue 3 plugin: `install()`, `provide/inject` for the `Ilingo` instance and reactive locale, `<ITranslate>` component, `useTranslation` composable |
 | [`@ilingo/vuelidate`](../packages/vuelidate)           | 6.x     | Vuelidate-message adapter on top of `@ilingo/vue` — ships built-in EN/DE/FR/ES translations for validator names |
+| [`@ilingo/docs`](../docs)                              | private | VitePress 1.x marketing + reference site. Deploys to GitHub Pages via `.github/workflows/docs.yml`. Never published to npm. |
 
 ## Package Dependency Layers
 
@@ -136,9 +137,52 @@ All four packages use ESM (`"type": "module"`) and ship type declarations alongs
 
 The public API is whatever the package's `src/index.ts` re-exports. Anything not re-exported from there should be considered internal even if a subpath import would technically reach it.
 
+### `docs/` — VitePress site (private)
+
+```
+docs/
+├── package.json              # @ilingo/docs, private. scripts: dev / build / preview (vitepress src)
+├── tsconfig.json
+└── src/
+    ├── index.md              # layout: page — composes the 5 marketing components below
+    ├── public/logo.svg
+    ├── .vitepress/
+    │   ├── config.mts        # title, nav, sidebar, head meta, editLink, search
+    │   └── theme/
+    │       ├── index.ts      # extends DefaultTheme; imports style.css
+    │       ├── style.css     # --il-color-* design tokens (light + .dark)
+    │       └── components/
+    │           ├── Hero.vue                  # live translation playground (locale + count + name + amount)
+    │           ├── FeatureGrid.vue           # 6-card feature grid
+    │           ├── IntegrationShowcase.vue   # 3 cards: @ilingo/fs, @ilingo/vue, @ilingo/vuelidate
+    │           ├── CodeTabs.vue              # Install / Define / Translate tabs w/ copy button
+    │           └── VueSpotlight.vue          # 2-col spotlight for @ilingo/vue
+    ├── getting-started/
+    │   ├── index.md          # Introduction
+    │   ├── installation.md
+    │   └── quick-start.md
+    ├── guide/
+    │   ├── index.md          # conceptual overview + sitemap
+    │   ├── stores.md
+    │   ├── locales.md
+    │   ├── templates.md
+    │   ├── pluralization.md
+    │   ├── formatters.md
+    │   ├── type-safe-keys.md
+    │   └── missing-key.md
+    └── integrations/
+        ├── index.md
+        ├── fs.md
+        ├── vue.md
+        └── vuelidate.md
+```
+
+The sidebar in `config.mts` is the source of truth for what pages should exist — adding a markdown file under `src/guide/` is not enough, it must also be referenced in the sidebar config.
+
 ## Separation of Concerns
 
 - **`ilingo`** owns the domain: locale lookup, store iteration order, `{{var}}` template formatting, BCP-47 validation.
 - **`@ilingo/fs`** owns I/O — loading translation files from disk via `locter` and merging them with `smob`.
 - **`@ilingo/vue`** owns Vue integration: provide/inject of the `Ilingo` instance, reactive locale, component, composable.
 - **`@ilingo/vuelidate`** owns the Vuelidate use case: a `Store` pre-populated with validator-message translations and the composables that wire Vuelidate's `$errors` shape into ilingo.
+- **`@ilingo/docs`** owns the marketing and reference site. Imports the public APIs only — never reaches into a package's `src/`. Free to depend on any published `ilingo` package via workspace symlink.

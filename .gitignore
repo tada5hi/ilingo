@@ -13,3 +13,5 @@ coverage
 .nx
 .claude/settings.local.json
 .agents/plans
+docs/src/.vitepress/cache
+docs/src/.vitepress/dist

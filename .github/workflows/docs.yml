@@ -1,0 +1,56 @@
+name: Deploy Docs
+
+on:
+    push:
+        branches: [master]
+        paths:
+            - 'docs/**'
+            - 'packages/**'
+            - '.github/workflows/docs.yml'
+    pull_request:
+        branches: [master]
+        paths:
+            - 'docs/**'
+            - 'packages/**'
+            - '.github/workflows/docs.yml'
+
+concurrency:
+    group: docs-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    PRIMARY_NODE_VERSION: 22
+
+jobs:
+    docs:
+        name: Build & deploy docs
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            -   uses: actions/checkout@v6
+
+            -   name: Install
+                uses: ./.github/actions/install
+                with:
+                    node-version: ${{ env.PRIMARY_NODE_VERSION }}
+
+            -   name: Build packages
+                uses: ./.github/actions/build
+
+            -   name: Build docs
+                run: npm run build -w @ilingo/docs
+
+            -   name: CNAME
+                if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+                run: |
+                    cd ./docs/src/.vitepress/dist/
+                    touch CNAME
+                    echo "ilingo.tada5hi.net" > CNAME
+
+            -   name: Deploy
+                if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+                uses: peaceiris/actions-gh-pages@v4
+                with:
+                    github_token: ${{ secrets.GITHUB_TOKEN }}
+                    publish_dir: ./docs/src/.vitepress/dist

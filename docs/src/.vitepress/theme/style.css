@@ -1,0 +1,56 @@
+:root {
+    --il-color-primary-300: #a5b4fc;
+    --il-color-primary-400: #818cf8;
+    --il-color-primary-500: #6366f1;
+    --il-color-primary-600: #4f46e5;
+    --il-color-primary-700: #4338ca;
+
+    --il-color-accent-400: #2dd4bf;
+    --il-color-accent-500: #14b8a6;
+    --il-color-accent-600: #0d9488;
+
+    --il-color-bg: #ffffff;
+    --il-color-bg-elevated: #f8fafc;
+    --il-color-bg-muted: #f1f5f9;
+
+    --il-color-fg: #0f172a;
+    --il-color-fg-muted: #475569;
+
+    --il-color-border: #e2e8f0;
+    --il-color-border-muted: #f1f5f9;
+
+    --il-color-info-500: #3b82f6;
+    --il-color-warning-500: #f59e0b;
+    --il-color-error-500: #ef4444;
+    --il-color-success-500: #22c55e;
+
+    --vp-c-brand-1: var(--il-color-primary-600);
+    --vp-c-brand-2: var(--il-color-primary-500);
+    --vp-c-brand-3: var(--il-color-primary-400);
+    --vp-c-brand-soft: color-mix(in oklab, var(--il-color-primary-500) 14%, transparent);
+
+    --vp-button-brand-bg: var(--il-color-primary-500);
+    --vp-button-brand-hover-bg: var(--il-color-primary-600);
+    --vp-button-brand-active-bg: var(--il-color-primary-700);
+    --vp-button-brand-border: var(--il-color-primary-500);
+    --vp-button-brand-hover-border: var(--il-color-primary-600);
+
+    --vp-home-hero-name-background: linear-gradient(120deg, var(--il-color-primary-500), var(--il-color-accent-500));
+}
+
+.dark {
+    --il-color-bg: #0f172a;
+    --il-color-bg-elevated: #1e293b;
+    --il-color-bg-muted: #1a2236;
+
+    --il-color-fg: #f1f5f9;
+    --il-color-fg-muted: #94a3b8;
+
+    --il-color-border: #334155;
+    --il-color-border-muted: #1e293b;
+
+    --vp-c-brand-1: var(--il-color-primary-400);
+    --vp-c-brand-2: var(--il-color-primary-300);
+    --vp-c-brand-3: var(--il-color-primary-500);
+    --vp-c-brand-soft: color-mix(in oklab, var(--il-color-primary-400) 22%, transparent);
+}
