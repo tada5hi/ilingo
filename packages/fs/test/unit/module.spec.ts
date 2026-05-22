@@ -132,6 +132,9 @@ describe('src/store/file-system', function () {
     it('should not translate async', async () => {
         const language = new Ilingo({ store });
 
+        // 'ru' has no data, but the default fallback chain now reaches 'en',
+        // which does have `form.maxLength` — so the key resolves through the
+        // fallback.
         let line = await language.get({
             group: 'form',
             key: 'maxLength',
@@ -140,7 +143,7 @@ describe('src/store/file-system', function () {
             },
             locale: 'ru'
         });
-        expect(line).toBeUndefined();
+        expect(line).toEqual('The length of the input must be less than 10.');
 
         line = await language.get({
             group: 'form',
@@ -148,4 +151,18 @@ describe('src/store/file-system', function () {
         });
         expect(line).toBeUndefined();
     })
+
+    it('should not translate when fallback is disabled (fallback: false)', async () => {
+        const language = new Ilingo({ store, fallback: false });
+
+        // With `fallback: false` the chain is just ['ru']; since 'ru' has no
+        // data the lookup misses without falling through to the default.
+        const line = await language.get({
+            group: 'form',
+            key: 'maxLength',
+            data: { max: 10 },
+            locale: 'ru',
+        });
+        expect(line).toBeUndefined();
+    });
 });

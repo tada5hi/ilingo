@@ -36,27 +36,35 @@ Nx (`nx.json`) is configured so `build` depends on `^build`, which means workspa
 ```
 src/
 ├── index.ts                  # barrel: re-exports config, module, store, utils, types
-├── module.ts                 # Ilingo class — holds Set<IStore>, locale, merge/get/getLocales
-├── types.ts                  # LinesRecord, GroupsRecord, LocalesRecord, GetContext, Data
+├── module.ts                 # Ilingo class — Set<IStore>, locale + fallback chain, plural rules cache,
+│                             #   per-instance warn-once memo, get / getResolvedLocale[Chain] / merge / format
+├── types.ts                  # LinesRecord, Leaf, PluralLeaf, PluralLeafExplicit, GetContext (with count),
+│                             #   MissingKeyContext, MissingKeyHandler, Fallback, FallbackResolver, Data
 ├── constants.ts              # LOCALE_DEFAULT = 'en'
 ├── config/
 │   ├── index.ts
-│   └── type.ts               # Config { store, locale }; ConfigInput = Partial<Config>
+│   └── type.ts               # Config { store, locale, fallback, onMissingKey }; ConfigInput = Partial<Config>
 ├── store/
 │   ├── index.ts              # barrel
-│   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext, MemoryStoreOptions
-│   └── memory.ts             # MemoryStore (default in-memory IStore implementation)
+│   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext (value: Leaf), MemoryStoreOptions
+│   └── memory.ts             # MemoryStore — returns string | PluralLeaf | undefined
 └── utils/
     ├── index.ts
-    ├── identify.ts           # isLineRecord type guard
+    ├── locale.ts             # bcp47Parents, resolveLocaleChain
+    ├── identify.ts           # PLURAL_MARKER + isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord
     ├── template.ts           # {{var}} interpolation
     └── language/
         ├── index.ts
         ├── module.ts         # isBCP47LanguageCode
         └── data.json         # BCP-47 language code table
 test/
-├── unit/                     # vitest specs mirroring src/
-└── data/                     # fixture locale files (.ts/.js/.json) consumed by spec runs
+└── unit/
+    ├── module.spec.ts        # legacy core behaviour
+    ├── resolution.spec.ts    # plural, fallback chain, missing-key handler, parallel lookup
+    └── utils/
+        ├── locale.spec.ts    # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
+        ├── identify.spec.ts
+        └── template.spec.ts
 ```
 
 ### `packages/fs/` — file-system adapter
@@ -64,11 +72,14 @@ test/
 ```
 src/
 ├── index.ts                  # barrel
-├── module.ts                 # FSStore extends MemoryStore — directory[], lazy loadGroup()
-├── types.ts                  # ConfigInput, Config
-└── utils.ts                  # buildConfig (normalize directory to string[])
+├── module.ts                 # FSStore extends MemoryStore — directory[], writeDirectory,
+│                             #   lazy loadGroup(), atomic persist() (write-tmp + rename)
+├── types.ts                  # ConfigInput, Config (now includes writeDirectory)
+└── utils.ts                  # buildConfig (normalize directory[] + writeDirectory)
 test/
-├── unit/module.spec.ts       # loads test/data/language/<locale>/<group>.* via FSStore
+├── unit/
+│   ├── module.spec.ts        # loads test/data/language/<locale>/<group>.* via FSStore
+│   └── persist.spec.ts       # set() round-trip, sibling preservation, split read/write dirs
 └── data/language/{en,de,fr}/form.{cjs,ts,json}
 ```
 

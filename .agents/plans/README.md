@@ -5,7 +5,7 @@ Phased roadmap for ilingo, sequenced to land coherent waves of work rather than 
 | Phase | File                                              | Status      | Tracks                          |
 |-------|---------------------------------------------------|-------------|---------------------------------|
 | 1     | [001-dependency-cleanup.md](001-dependency-cleanup.md) | Done        | Post-modernization hygiene      |
-| 2     | [002-resolution-path.md](002-resolution-path.md)       | Ready       | #895, #897, #899                |
+| 2     | [002-resolution-path.md](002-resolution-path.md)       | In review   | #895, #897, #899                |
 | 3     | [003-intl-formatters.md](003-intl-formatters.md)       | Blocked by 2| #896                            |
 | 4     | [004-type-safe-keys.md](004-type-safe-keys.md)         | Blocked by 2| #898                            |
 | 5     | [005-vue-ergonomics.md](005-vue-ergonomics.md)         | Blocked by 2| #900, #901, #902                |

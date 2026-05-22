@@ -7,12 +7,13 @@
 
 import { computedAsync } from '@vueuse/core';
 import type { Ref } from 'vue';
+import { unref } from 'vue';
 import type { GetContextReactive } from '../types';
 import { extractReactiveData } from './utils';
 import { injectIlingo } from './instance';
 import { injectLocale } from './locale';
 
-export function useTranslation(ctx: GetContextReactive) : Ref<string> {
+export function useTranslation(ctx: GetContextReactive): Ref<string> {
     const instance = injectIlingo();
     const locale = injectLocale();
 
@@ -29,6 +30,7 @@ export function useTranslation(ctx: GetContextReactive) : Ref<string> {
                     undefined,
                 group: ctx.group,
                 key: ctx.key,
+                count: unref(ctx.count),
             });
 
             return value || defaultValue;

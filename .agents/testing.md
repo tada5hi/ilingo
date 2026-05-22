@@ -27,9 +27,13 @@ Nx caches `test` (see `nx.json` → `cacheableOperations`). To re-run an already
 
 ```
 unit/
-├── module.spec.ts              # Ilingo + MemoryStore: get/set, locale switching, merge()
+├── module.spec.ts              # legacy core behaviour — get/set, locale switching, merge()
+├── resolution.spec.ts          # pluralization (incl. explicit @plural form), fallback chain
+│                               #   (default, string, array, function, false, []), missing-key handler,
+│                               #   per-instance warn isolation, parallel intra-locale lookup
 └── utils/
-    ├── identify.spec.ts        # isLineRecord type guard
+    ├── identify.spec.ts        # isLineRecord / isPluralLeaf / isPluralLeafExplicit
+    ├── locale.spec.ts          # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
     └── template.spec.ts        # {{var}} interpolation
 data/
 └── language/{en,de,fr}/form.{js,ts,json}   # cross-extension loader fixtures
@@ -39,7 +43,9 @@ data/
 
 ```
 unit/
-└── module.spec.ts              # FSStore.loadGroup against test/data/language/
+├── module.spec.ts              # FSStore.loadGroup against test/data/language/ + fallback semantics
+└── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
+                                #   split read/write directories
 data/
 └── language/{en,de,fr}/form.{cjs,ts,json}  # exercises locter's multi-extension resolution
 ```
@@ -54,7 +60,9 @@ data/
 
 ## Testing Philosophy
 
-Tests assert the **public contract** of `Ilingo` and the stores — the things documented in `architecture.md`: first-hit lookup across stores, fallback to the default locale, `{{var}}` substitution, `merge()` deduping by reference identity. If a test fails after a refactor, treat it as a real regression on that contract until proven otherwise.
+Tests assert the **public contract** of `Ilingo` and the stores — the things documented in `architecture.md`: locale-first walk with fallback chain, parallel intra-locale store query, plural selection via `Intl.PluralRules`, missing-key handler routing, `{{var}}` substitution, `merge()` deduping by reference identity. If a test fails after a refactor, treat it as a real regression on that contract until proven otherwise.
+
+For timing-sensitive tests (concurrent store entry, debounce, etc.), assert the **invariant** (e.g. both store calls entered within the same tick) rather than wall-clock thresholds — the latter flakes on CI scheduler jitter.
 
 ### Fakes Over Mocks
 
