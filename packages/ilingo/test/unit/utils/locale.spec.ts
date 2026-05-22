@@ -47,4 +47,17 @@ describe('utils/locale', () => {
         expect(resolveLocaleChain('en', undefined, 'en')).toEqual(['en']);
         expect(resolveLocaleChain('en', 'en', 'en')).toEqual(['en']);
     });
+
+    it('keeps defaultLocale at the terminal position even when it appears earlier in fallback', () => {
+        // Regression for #912 review: prior `new Set(...)` would yield
+        // ['pt-BR', 'en', 'fr'] because Set preserves insertion order.
+        expect(resolveLocaleChain('pt-BR', ['en', 'fr'], 'en')).toEqual([
+            'pt-BR', 'fr', 'en',
+        ]);
+    });
+
+    it('fallback: false opts out entirely — chain is just [locale]', () => {
+        expect(resolveLocaleChain('ru', false, 'en')).toEqual(['ru']);
+        expect(resolveLocaleChain('pt-BR', false, 'en')).toEqual(['pt-BR']);
+    });
 });

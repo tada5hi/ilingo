@@ -7,6 +7,7 @@
 
 import { computedAsync } from '@vueuse/core';
 import type { Ref } from 'vue';
+import { unref } from 'vue';
 import type { GetContextReactive } from '../types';
 import { extractReactiveData } from './utils';
 import { injectIlingo } from './instance';
@@ -29,7 +30,7 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
                     undefined,
                 group: ctx.group,
                 key: ctx.key,
-                count: ctx.count,
+                count: typeof ctx.count === 'undefined' ? undefined : unref(ctx.count),
             });
 
             return value || defaultValue;

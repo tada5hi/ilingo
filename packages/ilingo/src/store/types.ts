@@ -14,7 +14,7 @@ export type StoreGetContext = {
 };
 
 export type StoreSetContext = StoreGetContext & {
-    value: string,
+    value: Leaf,
 };
 
 export interface IStore {

@@ -5,7 +5,6 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import process from 'node:process';
 import type { ConfigInput } from './config';
 import { LOCALE_DEFAULT } from './constants';
 import type { IStore } from './store';
@@ -26,18 +25,29 @@ import {
 
 const warnedKeys = new Set<string>();
 
+/**
+ * Read `process.env.NODE_ENV` without importing `node:process`, so the core
+ * module stays browser-safe. `globalThis.process` may be `undefined` in
+ * browsers; tolerate that without throwing.
+ */
+function getNodeEnv(): string | undefined {
+    const p = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+    return p?.env?.NODE_ENV;
+}
+
 function defaultMissingKeyHandler(ctx: MissingKeyContext): undefined {
     /* istanbul ignore next */
-    if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'production') {
+    if (getNodeEnv() === 'production') {
         return undefined;
     }
-    const id = `${ctx.resolvedLocale ?? ctx.locale ?? ''}|${ctx.group}|${ctx.key}`;
+    const requestedLocale = ctx.locale ?? 'unknown';
+    const id = `${requestedLocale}|${ctx.group}|${ctx.key}`;
     if (!warnedKeys.has(id)) {
         warnedKeys.add(id);
         // eslint-disable-next-line no-console
         console.warn(
             `[ilingo] missing translation for "${ctx.group}.${ctx.key}" ` +
-            `(locale=${ctx.resolvedLocale ?? ctx.locale ?? 'unknown'})`,
+            `(locale=${requestedLocale})`,
         );
     }
     return undefined;
@@ -52,12 +62,15 @@ export class Ilingo {
 
     protected onMissingKey: MissingKeyHandler;
 
+    protected pluralRulesCache: Map<string, Intl.PluralRules>;
+
     // ----------------------------------------------------
 
     constructor(input: ConfigInput = {}) {
         this.locale = input.locale || LOCALE_DEFAULT;
         this.fallback = input.fallback;
         this.onMissingKey = input.onMissingKey || defaultMissingKeyHandler;
+        this.pluralRulesCache = new Map();
 
         this.stores = new Set<IStore>();
         if (input.store) {
@@ -145,7 +158,8 @@ export class Ilingo {
     // ----------------------------------------------------
 
     async get(ctx: GetContext): Promise<string | undefined> {
-        const chain = this.getResolvedLocaleChain(ctx);
+        const requestedLocale = ctx.locale ?? this.getLocale();
+        const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
 
         const hit = await this.lookup(chain, ctx);
         const resolvedLocale = hit?.locale;
@@ -154,12 +168,13 @@ export class Ilingo {
         if (typeof leaf === 'undefined') {
             const fallback = this.onMissingKey({
                 ...ctx,
+                locale: requestedLocale,
                 resolvedLocale: chain[chain.length - 1],
             });
             return typeof fallback === 'string' ? fallback : undefined;
         }
 
-        const message = this.selectPluralForm(leaf, resolvedLocale ?? this.getLocale(), ctx.count);
+        const message = this.selectPluralForm(leaf, resolvedLocale ?? requestedLocale, ctx.count);
         const data: Data = { ...(ctx.data || {}) };
         if (typeof ctx.count === 'number' && typeof data.count === 'undefined') {
             data.count = ctx.count;
@@ -204,9 +219,18 @@ export class Ilingo {
         if (typeof count !== 'number') {
             return leaf.other;
         }
-        const category = new Intl.PluralRules(locale).select(count);
+        const category = this.getPluralRules(locale).select(count);
         const candidate = (leaf as PluralLeaf)[category];
         return typeof candidate === 'string' ? candidate : leaf.other;
+    }
+
+    protected getPluralRules(locale: string): Intl.PluralRules {
+        let rules = this.pluralRulesCache.get(locale);
+        if (!rules) {
+            rules = new Intl.PluralRules(locale);
+            this.pluralRulesCache.set(locale, rules);
+        }
+        return rules;
     }
 
     /* istanbul ignore next */

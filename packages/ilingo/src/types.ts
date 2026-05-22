@@ -46,4 +46,11 @@ export type MissingKeyHandler = (context: MissingKeyContext) => string | undefin
 
 export type FallbackResolver = (locale: string) => string[];
 
-export type Fallback = string | string[] | FallbackResolver;
+/**
+ * - `string`            — single fallback locale, applied after the requested one.
+ * - `string[]`          — ordered fallback locales (empty array suppresses BCP-47 parents).
+ * - `FallbackResolver`  — computed per call.
+ * - `false`             — disable fallback entirely; the chain is just `[locale]`
+ *                          (the default locale is NOT appended).
+ */
+export type Fallback = string | string[] | FallbackResolver | false;

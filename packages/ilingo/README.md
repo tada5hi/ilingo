@@ -307,6 +307,7 @@ new Ilingo({ fallback: ['es', 'fr'] });    // array, in order
 new Ilingo({                               // function: per-call
     fallback: (locale) => locale.startsWith('pt') ? ['es'] : [],
 });
+new Ilingo({ fallback: false });           // disable fallback entirely
 ```
 
 The chain is walked locale-first across all stores — the closest locale match wins regardless of store order. Inspect the resolution with `await ilingo.getResolvedLocale({ group, key })`.

@@ -15,6 +15,7 @@ export type Options = {
 
 export type DataMaybeRef = Record<string, MaybeRef<string | number>>;
 
-export type GetContextReactive = Omit<GetContext, 'data'> & {
-    data?: DataMaybeRef
+export type GetContextReactive = Omit<GetContext, 'data' | 'count'> & {
+    data?: DataMaybeRef,
+    count?: MaybeRef<number>,
 };

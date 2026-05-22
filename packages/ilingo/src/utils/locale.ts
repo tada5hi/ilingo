@@ -35,6 +35,11 @@ export function resolveLocaleChain(
     fallback: Fallback | undefined,
     defaultLocale: string,
 ): string[] {
+    // Opt out of fallback entirely — chain is just the requested locale.
+    if (fallback === false) {
+        return [locale];
+    }
+
     const explicit: string[] = [];
 
     if (typeof fallback === 'function') {
@@ -47,6 +52,17 @@ export function resolveLocaleChain(
         explicit.push(...bcp47Parents(locale));
     }
 
-    const chain = [locale, ...explicit, defaultLocale];
-    return Array.from(new Set(chain));
+    // Order-preserving de-dupe that guarantees defaultLocale stays at the end.
+    // A plain `new Set([...locale, ...explicit, defaultLocale])` would move
+    // defaultLocale earlier in the chain if it appears in `explicit`.
+    const seen = new Set<string>();
+    const chain: string[] = [];
+    for (const candidate of [locale, ...explicit]) {
+        if (candidate !== defaultLocale && !seen.has(candidate)) {
+            seen.add(candidate);
+            chain.push(candidate);
+        }
+    }
+    chain.push(defaultLocale);
+    return chain;
 }

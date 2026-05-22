@@ -134,8 +134,7 @@ describe('src/store/file-system', function () {
 
         // 'ru' has no data, but the default fallback chain now reaches 'en',
         // which does have `form.maxLength` — so the key resolves through the
-        // fallback. Opt out by passing an empty fallback to assert the old
-        // behaviour.
+        // fallback.
         let line = await language.get({
             group: 'form',
             key: 'maxLength',
@@ -152,4 +151,18 @@ describe('src/store/file-system', function () {
         });
         expect(line).toBeUndefined();
     })
+
+    it('should not translate when fallback is disabled (fallback: false)', async () => {
+        const language = new Ilingo({ store, fallback: false });
+
+        // With `fallback: false` the chain is just ['ru']; since 'ru' has no
+        // data the lookup misses without falling through to the default.
+        const line = await language.get({
+            group: 'form',
+            key: 'maxLength',
+            data: { max: 10 },
+            locale: 'ru',
+        });
+        expect(line).toBeUndefined();
+    });
 });
