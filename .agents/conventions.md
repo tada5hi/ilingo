@@ -19,6 +19,11 @@
 ## Workflow
 
 - After source changes, run `npm run lint` (top-level) and `npm run build` (top-level or `--workspace=packages/<pkg>`) before declaring a task done.
+- **Keep docs in sync with code.** Every change that touches an observable surface — new public API, behavior change, new config field, new file in `src/`, new test spec — updates the affected docs in the same commit:
+  - User-facing: `packages/<pkg>/README.md`.
+  - Agent docs: `.agents/architecture.md` for orchestration / data-flow / patterns; `.agents/structure.md` for the file tree; `.agents/testing.md` for new specs; this file for new conventions or tooling.
+  - Plan files in `.agents/plans/` flip their status from Ready → In review → Done as the work moves through PRs.
+  - Exceptions: pure internal refactors with no observable change, and one-line bug fixes that don't change semantics. Use judgment.
 - When adding a new public symbol, re-export it from the package's `src/index.ts` — that file is the public-API contract.
 - When changing an `IStore` method signature, update both adapters (`MemoryStore`, `FSStore`) in the same commit; they share the port interface.
 - When adding a new package, register it in `release-please-config.json` and in the root `README.md` package list. monoship will publish it on the next release if its `version` is not on the registry.

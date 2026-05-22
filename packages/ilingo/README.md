@@ -315,6 +315,8 @@ If the selected category is absent from the leaf, `other` is used as a fallback.
 
 Structural detection (a bare `{ one, other }` object without the marker) is still supported for backward compatibility.
 
+Plural leaves round-trip through `store.set()` — `StoreSetContext.value` accepts either a `string` or a `PluralLeaf`. The `FSStore.set` persistence writes them as JSON unchanged.
+
 ### Fallback locale chain
 
 `get()` walks an ordered fallback chain. By default the chain is derived from BCP-47 parents of the requested locale, terminating at `en`:
@@ -336,7 +338,18 @@ new Ilingo({ fallback: false });           // disable fallback entirely
 new Ilingo({ fallback: [] });              // equivalent to `false`
 ```
 
-The chain is walked locale-first across all stores — the closest locale match wins regardless of store order. Inspect the resolution with `await ilingo.getResolvedLocale({ group, key })`.
+The chain is walked locale-first across all stores — the closest locale match wins regardless of store order. Within a single locale, every store is queried **in parallel** (`Promise.all`) and the first hit in declared insertion order is returned. For the in-memory and fs adapters this is essentially free; custom network-backed or side-effecting stores should expect every call within a locale even when an earlier store would have hit.
+
+Inspect the resolution with:
+
+```typescript
+ilingo.getResolvedLocaleChain({ locale: 'pt-BR' });
+// ['pt-BR', 'pt', 'en']
+
+await ilingo.getResolvedLocale({ group: 'app', key: 'hi' });
+// 'pt'   — which locale actually yielded a value
+// undefined if no store had the key anywhere in the chain
+```
 
 ### Missing-key handler
 
