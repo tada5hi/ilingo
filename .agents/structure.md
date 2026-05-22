@@ -39,7 +39,9 @@ src/
 ├── module.ts                 # Ilingo class — Set<IStore>, locale + fallback chain, plural rules cache,
 │                             #   per-instance warn-once memo, get / getResolvedLocale[Chain] / merge / format
 ├── types.ts                  # LinesRecord, Leaf, PluralLeaf, PluralLeafExplicit, GetContext (with count),
-│                             #   MissingKeyContext, MissingKeyHandler, Fallback, FallbackResolver, Data
+│                             #   MissingKeyContext, MissingKeyHandler, Fallback, FallbackResolver, Data,
+│                             #   AnyGroups, Groups, Key, LeafAt, DottedPaths, IsPluralKey, GetParams
+├── catalog.ts                # defineCatalog<const T>() + definePlural<const T>() typed helpers
 ├── constants.ts              # LOCALE_DEFAULT = 'en'
 ├── config/
 │   ├── index.ts
@@ -63,6 +65,7 @@ test/
     ├── module.spec.ts                # legacy core behaviour
     ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, parallel lookup
     ├── formatters-integration.spec.ts # Ilingo.get() with number/date/list modifiers, cache + dev-warn
+    ├── types.spec-d.ts               # compile-time-only — run via `npm run test:types` (vitest typecheck)
     └── utils/
         ├── locale.spec.ts            # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
         ├── formatters.spec.ts        # parseFormatterOptions, parseModifier, FormatterRegistry, template dispatch

@@ -22,6 +22,7 @@ Ilingo is a lightweight library for translation and internationalization.
   - [Fallback locale chain](#fallback-locale-chain)
   - [Missing-key handler](#missing-key-handler)
   - [Formatters](#formatters)
+  - [Type-safe keys](#type-safe-keys)
 - [Store](#store)
   - [Memory](#memory-store)
   - [FileSystem](#fs-store)
@@ -291,18 +292,35 @@ await ilingo.get({ group: 'cart', key: 'items', count: 5 });
 
 If the selected category is absent from the leaf, `other` is used as a fallback.
 
-**Recommended explicit form.** Prefer wrapping plural forms in `{ "@plural": { ... } }` to disambiguate them from regular namespaces that happen to use CLDR category names:
+**Recommended explicit form.** Wrap plural forms in `{ "@plural": { ... } }` to disambiguate them from regular namespaces that happen to use CLDR category names. The right syntax depends on how you author your locale data:
+
+**JSON files** (loaded by `FSStore`) — use the literal `@plural` key:
+
+```json
+{
+    "cart": {
+        "items": {
+            "@plural": {
+                "one": "{{count}} item",
+                "other": "{{count}} items"
+            }
+        }
+    }
+}
+```
+
+**TS / JS files** (inline `defineCatalog`, or loaded by `FSStore`) — use the `definePlural` helper:
 
 ```typescript
-{
+import { defineCatalog, definePlural } from 'ilingo';
+
+const catalog = defineCatalog({
     en: {
         cart: {
-            items: {
-                '@plural': {
-                    one: '{{count}} item',
-                    other: '{{count}} items',
-                },
-            },
+            items: definePlural({
+                one: '{{count}} item',
+                other: '{{count}} items',
+            }),
         },
         form: {
             kind: {
@@ -311,8 +329,10 @@ If the selected category is absent from the leaf, `other` is used as a fallback.
             },
         },
     },
-}
+});
 ```
+
+`definePlural` is a thin identity helper — it returns `{ '@plural': leaf }` with the same runtime shape as the JSON form. The `const` generic preserves the literal types of each plural form (so `Ilingo<typeof catalog>` still sees them as plural keys requiring `count`). The TS/JS version gets CLDR-category autocomplete and a compile error if you misspell `other` or pass a non-CLDR key.
 
 Structural detection (a bare `{ one, other }` object without the marker) is still supported for backward compatibility.
 
@@ -403,6 +423,49 @@ The locale used to construct the `Intl.*Format` instance is the **resolved** loc
 Option-value coercion: `42` → `42` (number), `true` / `false` → boolean, anything else → string. So `currency=EUR` becomes `{ currency: 'EUR' }`, `minimumFractionDigits=2` becomes `{ minimumFractionDigits: 2 }`.
 
 Unknown modifiers fall back to `String(value)` and emit a one-shot dev-mode warning (silenced in `process.env.NODE_ENV === 'production'`). Malformed modifier expressions (unbalanced parens, non-identifier names) are treated the same way — never throw.
+
+### Type-safe keys
+
+`Ilingo` is generic in the catalog shape. Wrap your catalog with `defineCatalog` to capture its narrowest literal types, pass it as the type parameter to `Ilingo`, and the compiler refuses typos, unknown groups, and plural-key calls that forget `count`.
+
+```typescript
+import { Ilingo, MemoryStore, defineCatalog } from 'ilingo';
+
+const catalog = defineCatalog({
+    en: {
+        app: {
+            greeting: 'Hi {{name}}',
+            nested: { deep: { leaf: 'Deep value' } },
+        },
+        cart: {
+            items: {
+                '@plural': {
+                    one: '{{count}} item',
+                    other: '{{count}} items',
+                },
+            },
+        },
+    },
+    de: { /* …same shape… */ },
+});
+
+const ilingo = new Ilingo<typeof catalog>({
+    store: new MemoryStore({ data: catalog }),
+});
+
+await ilingo.get({ group: 'app', key: 'greeting' });           // OK
+await ilingo.get({ group: 'app', key: 'nested.deep.leaf' });   // OK — dotted paths inferred
+await ilingo.get({ group: 'app', key: 'unknown' });            // ❌ type error
+await ilingo.get({ group: 'unknown', key: 'greeting' });       // ❌ type error
+await ilingo.get({ group: 'cart',  key: 'items' });            // ❌ type error — count is required
+await ilingo.get({ group: 'cart',  key: 'items', count: 1 });  // OK
+```
+
+`defineCatalog<const T>(catalog)` uses TS 5+ const-generic inference so per-key literals (and structural plural leaves) aren't widened to `string`. The runtime function is a no-op identity — purely a type carrier.
+
+Inference is structural, derived from the union of locales. Keep all locales aligned to the same shape and the inferred `Key<C, G>` is the natural set of leaf paths. Diverging locales widen the union but never break compilation.
+
+`new Ilingo()` (no generic) preserves today's loose typing — `group: string, key: string` are accepted. The generic is opt-in.
 
 ## Store
 

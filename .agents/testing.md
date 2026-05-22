@@ -33,6 +33,10 @@ unit/
 │                                   #   handler, per-instance warn isolation, parallel intra-locale lookup
 ├── formatters-integration.spec.ts  # end-to-end Ilingo.get() with number/date/list modifiers,
 │                                   #   resolved-locale propagation, per-instance cache, dev-warn
+├── types.spec-d.ts                 # compile-time-only — typed-catalog inference, plural-key
+│                                   #   count requirement, defineCatalog narrowing.
+│                                   #   Run via `npm run test:types --workspace=packages/ilingo`
+│                                   #   (vitest --typecheck against `*.spec-d.ts`)
 └── utils/
     ├── identify.spec.ts            # isLineRecord / isPluralLeaf / isPluralLeafExplicit
     ├── locale.spec.ts              # bcp47Parents, resolveLocaleChain (incl. opt-out forms)

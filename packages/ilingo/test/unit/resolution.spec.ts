@@ -287,6 +287,30 @@ describe('Ilingo — resolution path', () => {
     });
 
     describe('explicit @plural marker', () => {
+        it('definePlural() produces the same runtime shape as the @plural literal', async () => {
+            const { definePlural } = await import('../../src');
+
+            const ilingo = new Ilingo({
+                store: new MemoryStore({
+                    data: {
+                        en: {
+                            cart: {
+                                items: definePlural({
+                                    one: '{{count}} item',
+                                    other: '{{count}} items',
+                                }),
+                            },
+                        },
+                    },
+                }),
+            });
+
+            expect(await ilingo.get({ group: 'cart', key: 'items', count: 1 }))
+                .toEqual('1 item');
+            expect(await ilingo.get({ group: 'cart', key: 'items', count: 5 }))
+                .toEqual('5 items');
+        });
+
         it('recognises { "@plural": { ... } } as a plural leaf', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
