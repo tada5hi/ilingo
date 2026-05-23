@@ -75,3 +75,36 @@ Placeholders also accept inline modifiers — see [Formatters](./formatters).
 ```typescript
 'You owe {{amount, number(style=currency, currency=EUR)}}'
 ```
+
+## Slot placeholders
+
+Beyond `{{var}}` (double curly braces, substituted from `data`), messages can carry `{slot}` placeholders (single curly braces) that are filled by named scoped slots in renderer-aware components. The plain `template()` function leaves `{slot}` markers as literal text — only slot-aware renderers like `<ITranslateT>` consume them.
+
+```typescript
+'Hi {{user}}, please {cta} to continue.'
+//   ^^^^^^         ^^^^^
+//   data var       slot
+```
+
+Use cases: dropping a `<a>` tag, icon, or bold run into the middle of a translated sentence without splitting the message across keys.
+
+See [Vue integration](../integrations/vue#itranslate-t-slot-aware-interpolation) for the consumer-side syntax.
+
+## `tokenize()` — for renderers
+
+For renderers that produce non-string output (VNodes, JSX, etc.), the core exposes a `tokenize(str): TemplateToken[]` helper that parses a message into `text` / `var` / `slot` tokens. This is what `<ITranslateT>` uses internally; the same primitive lets any future framework adapter walk the same AST.
+
+```typescript
+import { tokenize } from 'ilingo';
+
+tokenize('Hi {{user}}, please {cta} now.');
+// [
+//   { kind: 'text', value: 'Hi ' },
+//   { kind: 'var', name: 'user' },
+//   { kind: 'text', value: ', please ' },
+//   { kind: 'slot', name: 'cta' },
+//   { kind: 'text', value: ' now.' },
+// ]
+```
+
+`tokenize` and `template` are parallel parsers over the same syntax — `template` returns a substituted string for `Ilingo.format`'s common case; `tokenize` returns tokens for structured renderers.

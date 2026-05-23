@@ -23,6 +23,7 @@ Ilingo is a lightweight library for translation and internationalization.
   - [Missing-key handler](#missing-key-handler)
   - [Formatters](#formatters)
   - [Type-safe keys](#type-safe-keys)
+  - [Slot placeholders & `tokenize()`](#slot-placeholders--tokenize)
 - [Store](#store)
   - [Memory](#memory-store)
   - [FileSystem](#fs-store)
@@ -466,6 +467,25 @@ await ilingo.get({ group: 'cart',  key: 'items', count: 1 });  // OK
 Inference is structural, derived from the union of locales. Keep all locales aligned to the same shape and the inferred `Key<C, G>` is the natural set of leaf paths. Diverging locales widen the union but never break compilation.
 
 `new Ilingo()` (no generic) preserves today's loose typing — `group: string, key: string` are accepted. The generic is opt-in.
+
+### Slot placeholders & `tokenize()`
+
+In addition to `{{var}}` data placeholders (and modifier syntax), messages can carry `{slot}` markers (single curly braces) for renderers that produce structured output rather than a string. The core `tokenize(str)` helper parses a message into `text` / `var` / `slot` tokens:
+
+```typescript
+import { tokenize } from 'ilingo';
+
+tokenize('Hi {{user}}, please {cta} now.');
+// [
+//   { kind: 'text', value: 'Hi ' },
+//   { kind: 'var', name: 'user' },
+//   { kind: 'text', value: ', please ' },
+//   { kind: 'slot', name: 'cta' },
+//   { kind: 'text', value: ' now.' },
+// ]
+```
+
+`tokenize()` and `template()` are parallel parsers — `template()` returns a substituted string (used by `Ilingo.format`); `tokenize()` returns tokens for VNode-producing renderers (e.g. `@ilingo/vue`'s `<ITranslateT>`). Plain `Ilingo.get()` always returns a string, so `{slot}` markers survive into the output unless a slot-aware renderer consumes them.
 
 ## Store
 

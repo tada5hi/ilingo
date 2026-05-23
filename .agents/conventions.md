@@ -19,11 +19,16 @@
 ## Workflow
 
 - After source changes, run `npm run lint` (top-level) and `npm run build` (top-level or `--workspace=packages/<pkg>`) before declaring a task done.
-- **Keep docs in sync with code.** Every change that touches an observable surface — new public API, behavior change, new config field, new file in `src/`, new test spec — updates the affected docs in the same commit:
-  - User-facing: `packages/<pkg>/README.md` **and** the corresponding page under `docs/src/guide/` or `docs/src/integrations/`. The README is the GitHub landing page; the docs site is the canonical published reference — both must stay accurate.
-  - Agent docs: `.agents/architecture.md` for orchestration / data-flow / patterns; `.agents/structure.md` for the file tree; `.agents/testing.md` for new specs; this file for new conventions or tooling.
-  - Plan files in `.agents/plans/` flip their status from Ready → In review → Done as the work moves through PRs.
-  - Exceptions: pure internal refactors with no observable change, and one-line bug fixes that don't change semantics. Use judgment.
+- **Keep docs in sync with code — every layer, every commit.** Any change that touches an observable surface (new public API, behavior change, new config field, new file in `src/`, new test spec) updates **all three** doc layers in the *same* commit. Shipping a public surface that's documented in only one layer is a real review-blocking gap, not a follow-up.
+  1. **Package READMEs** (`packages/<pkg>/README.md`) — GitHub landing page. Update for any new public symbol or contract change in that package.
+  2. **VitePress docs** (`docs/src/guide/*.md` for conceptual / cross-package material; `docs/src/integrations/*.md` for per-integration usage — Vue, fs, Vuelidate). The canonical published reference at the docs site. Cross-link guide ↔ integration pages where it helps the reader.
+  3. **Agent docs** — `.agents/architecture.md` (orchestration / data-flow / patterns), `.agents/structure.md` (file tree), `.agents/testing.md` (new specs), this file (new conventions or tooling).
+
+  Plan files in `.agents/plans/` flip status Ready → In review → Done as the work moves through PRs.
+
+  **Verification step before declaring done**: for every new public symbol exported from `src/index.ts`, grep both `packages/*/README.md` AND `docs/src/**/*.md`. Both must reference it. If they don't, the work isn't done.
+
+  Exceptions: pure internal refactors with no observable change, and one-line bug fixes that don't change semantics. Use judgment.
 - When adding a new public symbol, re-export it from the package's `src/index.ts` — that file is the public-API contract.
 - When changing an `IStore` method signature, update both adapters (`MemoryStore`, `FSStore`) in the same commit; they share the port interface.
 - When adding a new package, register it in `release-please-config.json` and in the root `README.md` package list. monoship will publish it on the next release if its `version` is not on the registry.
