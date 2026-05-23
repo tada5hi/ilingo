@@ -7,4 +7,5 @@
 
 export * from './instance';
 export * from './locale';
+export * from './use-scoped-catalog';
 export * from './use-translation';

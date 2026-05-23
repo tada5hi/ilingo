@@ -28,7 +28,9 @@
         "build:types": "vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json",
         "build": "npm run build:js && npm run build:types",
         "lint": "eslint",
-        "lint:fix": "npm run lint -- --fix"
+        "lint:fix": "npm run lint -- --fix",
+        "test": "cross-env NODE_ENV=test vitest --config test/vitest.config.ts --run",
+        "test:coverage": "cross-env NODE_ENV=test vitest --config test/vitest.config.ts --run --coverage"
     },
     "engines": {
         "node": ">=22.0.0"
@@ -50,9 +52,14 @@
     },
     "homepage": "https://github.com/tada5hi/ilingo#readme",
     "devDependencies": {
+        "@vitejs/plugin-vue": "^6.0.3",
+        "@vue/test-utils": "^2.4.6",
         "@vueuse/core": "^14.1.0",
+        "cross-env": "^10.1.0",
+        "happy-dom": "^15.11.0",
         "ilingo": "^5.0.0",
         "vite": "^7.3.1",
+        "vitest": "^4.1.5",
         "vue": "^3.5.26"
     },
     "peerDependencies": {

@@ -1,6 +1,6 @@
 # Phase 5 — Vue ergonomics
 
-**Status**: Blocked by Phase 2 (uses fallback + missing-key handler) and ideally Phase 4 (so composables can be generic in the catalog).
+**Status**: In review (branch `feat/vue-ergonomics`).
 **Tracks**: [#900](https://github.com/tada5hi/ilingo/issues/900), [#901](https://github.com/tada5hi/ilingo/issues/901), [#902](https://github.com/tada5hi/ilingo/issues/902).
 
 Brings `@ilingo/vue` to feature parity with vue-i18n's most-used Vue surface: component interpolation, the `v-t` directive, and scoped catalogs.
@@ -36,9 +36,23 @@ Brings `@ilingo/vue` to feature parity with vue-i18n's most-used Vue surface: co
 
 ## Acceptance
 
-- [ ] `<ITranslateT path="app.welcome"><template #user><strong>Peter</strong></template></ITranslateT>` renders the strong inline.
-- [ ] `v-t` updates the DOM when `setLocale()` is called, without remounting the element.
-- [ ] Scoped messages added in a `<Modal>` do not leak to the surrounding page after the modal unmounts (asserted via `injectIlingo` reading back).
+- [x] `<ITranslateT path="app.welcome"><template #cta><strong>get started</strong></template></ITranslateT>` renders the strong inline. Asserted in `component-t.spec.ts` (`mixes vars and slots in a single message`).
+- [x] `v-t` reactively updates when the injected locale Ref changes — element identity preserved (no remount). Asserted in `directive-t.spec.ts` (`reactively updates when the injected locale Ref changes — without remounting`).
+- [x] Scoped messages added in a `<Modal>` do not leak to a sibling component. Asserted in `scoped-catalog.spec.ts` (`does not leak the scoped messages to a sibling component`).
+- [x] `useScopedCatalog` returns `{ instance, t }` for same-component use because Vue's provide/inject can't reach the current setup's own provides — the descendant path uses plain `useTranslation`. Both paths covered by tests.
+- [x] `Options.directives: false` opts out of `v-t` registration. Covered.
+
+## Design notes (recorded during implementation)
+
+- The template tokenizer lives in **core** (`packages/ilingo/src/utils/template.ts`) so non-Vue renderers (e.g. a future React adapter) can reuse it. Plain `template()` continues to return a string for `Ilingo.format`; `tokenize()` is a parallel parser for VNode-producing renderers.
+- `<ITranslateT>` is a `.ts` render-function component (no `.vue` SFC) — interleaving text/VNode children is more direct in a render function than in template syntax.
+- The `v-t` directive captures the `Ilingo` instance and locale `Ref` at install-time via a `createVTDirective(instance, localeRef)` factory. The closure means directive lifecycle hooks (which run outside setup) can still reach the orchestrator.
+- A `Symbol.for('ilingo.v-t.stop')` is stashed on the element to hold the `watchEffect` stop-handle, so re-bindings and unmounts can cancel the effect cleanly.
+- `useScopedCatalog` could not be wired to mutate the current component's own injection — Vue's API doesn't expose that. Returning a same-component `t` shorthand is the pragmatic alternative and matches vue-i18n's `useI18n` pattern.
+
+## Follow-up out of scope
+
+- Catalog-aware generics in the Vue composables (`useTranslation<typeof catalog>(...)`, `<ITranslateT<typeof catalog>>`). Phase 4 left this for later because the Vue side needs either module augmentation (`declare module '@ilingo/vue' { interface IlingoCatalog { ... } }`) or per-call generics, both of which deserve their own design pass.
 
 ## Why this order
 

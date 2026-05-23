@@ -19,7 +19,7 @@ const IlingoSymbol = Symbol.for('Ilingo');
 
 export function provideIlingo(
     ilingo: Ilingo,
-    app: App,
+    app?: App,
 ) {
     if (typeof app === 'undefined') {
         provide(IlingoSymbol, ilingo);

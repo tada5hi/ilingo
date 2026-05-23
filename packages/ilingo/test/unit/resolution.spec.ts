@@ -402,4 +402,64 @@ describe('Ilingo — resolution path', () => {
             expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('from store 1');
         });
     });
+
+    describe('Ilingo.clone() — config override semantics', () => {
+        it('inherits parent config when overrides are omitted', async () => {
+            const parent = new Ilingo({
+                store: new MemoryStore({ data: { de: { app: { hi: 'Hallo' } } } }),
+                locale: 'de',
+                fallback: 'de',
+            });
+
+            const child = parent.clone();
+
+            // pt-BR has no data; parent's `fallback: 'de'` should be inherited
+            // so the lookup finds the German translation.
+            expect(await child.get({ group: 'app', key: 'hi', locale: 'pt-BR' }))
+                .toEqual('Hallo');
+        });
+
+        it('overrides.fallback === undefined clears the inherited fallback', async () => {
+            const parent = new Ilingo({
+                store: new MemoryStore({
+                    data: {
+                        de: { app: { hi: 'Hallo' } },
+                        en: { app: { hi: 'Hello' } },
+                    },
+                }),
+                locale: 'en',
+                fallback: 'de',
+            });
+
+            // Explicit `undefined` should clear the inherited 'de' fallback,
+            // so a pt-BR lookup walks BCP-47 parents then ends at the
+            // default 'en' (not at 'de').
+            const child = parent.clone({ fallback: undefined });
+
+            expect(await child.get({ group: 'app', key: 'hi', locale: 'pt-BR' }))
+                .toEqual('Hello');
+        });
+
+        it('overrides.onMissingKey === undefined clears the inherited handler', () => {
+            // Regression: clone() previously used `??` for onMissingKey,
+            // so passing `undefined` couldn't restore the default warn-once
+            // behaviour. Fixed to use `in`-check like `fallback`.
+            const parentHandler = vi.fn(() => 'PARENT');
+            const parent = new Ilingo({
+                store: new MemoryStore({ data: {} }),
+                onMissingKey: parentHandler,
+            });
+
+            const child = parent.clone({ onMissingKey: undefined });
+
+            // Internal check: the child should NOT carry the parent's handler.
+            // Reach into the protected field via type cast (this is a
+            // test-only invariant assertion — runtime behaviour is what
+            // matters, but the field-level check makes the fix obvious).
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((child as any).onMissingKey).toBeUndefined();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((parent as any).onMissingKey).toBe(parentHandler);
+        });
+    });
 });

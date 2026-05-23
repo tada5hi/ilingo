@@ -80,6 +80,69 @@ For inline use:
 
 `path` is `group.key`. The component is auto-registered by the plugin.
 
+## `<ITranslateT>` — slot-aware interpolation
+
+For messages that need inline HTML or component fragments (links, bold runs, icons), `<ITranslateT>` extends `<ITranslate>` with **slot placeholders**. Single-curly `{slot}` markers in the message are filled by named scoped slots:
+
+```vue
+<template>
+    <ITranslateT path="app.welcome" :data="{ user: 'Peter' }">
+        <template #cta>
+            <a href="/start">get started</a>
+        </template>
+    </ITranslateT>
+    <!-- → <span>Hi Peter, please <a href="/start">get started</a> to continue.</span> -->
+</template>
+```
+
+Message: `"Hi {{user}}, please {cta} to continue."`. The `{{var}}` placeholders still resolve from `data`; `{slot}` placeholders pull from named scoped slots.
+
+- Default wrapper element is `<span>`; override with `tag="p"`, `tag="div"`, etc. Pass `tag=""` to render a fragment with no wrapper.
+- Unfilled slot placeholders stay as literal `{slot}` text — never throws.
+- Reacts to `path` prop changes (no stale group/key after a dynamic flip).
+
+## `v-t` directive
+
+For elements whose entire `textContent` is a single translation, the `v-t` directive avoids the wrapping component:
+
+```vue
+<template>
+    <p v-t="'app.greeting'"></p>
+    <p v-t="{ path: 'app.greet', data: { name: 'Peter' } }"></p>
+    <p v-t="{ group: 'cart', key: 'items', count: 3 }"></p>
+</template>
+```
+
+The directive writes the translation to `el.textContent` and reacts to locale changes — element identity is preserved (no remount on locale flip). In-flight lookups are cancelled when the binding or locale changes again, so a stale translation can't clobber a newer one.
+
+Registered globally by `install()`. Opt out per-app:
+
+```typescript
+install(app, { store, directives: false });
+```
+
+## `useScopedCatalog` — per-component message scope
+
+Some components (modals, embedded widgets, marketing sections) ship their own strings. `useScopedCatalog` creates a fresh `Ilingo` whose stores resolve scoped messages first, then fall back to the parent app's stores:
+
+```vue
+<script setup>
+import { useScopedCatalog, useTranslation } from '@ilingo/vue';
+
+// Use `t` in the SAME component — Vue's provide/inject can't reach
+// the current setup's own provides.
+const { t } = useScopedCatalog({
+    messages: {
+        en: { modal: { greeting: 'Welcome to the modal!' } },
+    },
+});
+
+const greeting = t({ group: 'modal', key: 'greeting' });
+</script>
+```
+
+Descendant components can use plain `useTranslation` — they receive the scoped instance via inject. Siblings outside the subtree continue to see the parent's stores. On unmount, the scoped instance becomes unreachable and is garbage-collected.
+
 ## Accessing the locale
 
 ```vue
