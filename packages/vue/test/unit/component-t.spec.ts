@@ -114,6 +114,37 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         })).toThrow(/group\.key/);
     });
 
+    it.each([
+        ['.key'],     // empty group
+        ['group.'],   // empty key
+        ['.'],        // both empty
+    ])('rejects an empty segment in path: %s', (badPath) => {
+        expect(() => mount(ITranslateT, {
+            props: { path: badPath },
+            global: {
+                plugins: [makeApp({ en: { app: {} } })],
+            },
+        })).toThrow(/group\.key/);
+    });
+
+    it('preserves the full original placeholder (incl. modifier) when data is missing', async () => {
+        // Regression: the var-token fallback previously rendered `{{name}}`
+        // even when the original placeholder carried a modifier expression
+        // like `{{amount, number(currency=EUR)}}`. Dropping the modifier
+        // silently mutated the literal text shown for missing data.
+        const wrapper = mount(ITranslateT, {
+            props: { path: 'app.owe', data: {} as never },
+            global: {
+                plugins: [makeApp({
+                    en: { app: { owe: 'You owe {{amount, number(currency=EUR)}}' } },
+                })],
+            },
+        });
+
+        await flushPromises();
+        expect(wrapper.text()).toEqual('You owe {{amount, number(currency=EUR)}}');
+    });
+
     it('reacts to a dynamic `path` prop (no stale group/key)', async () => {
         // Regression: an earlier implementation parsed `props.path` once at
         // setup, so flipping the path after mount left the component stuck

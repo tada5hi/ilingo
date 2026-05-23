@@ -153,6 +153,38 @@ describe('v-t directive (#901)', () => {
         expect(wrapper.find('[data-test="t"]').text()).toEqual('Hallo');
     });
 
+    it('falls back to group.key when instance.get() rejects', async () => {
+        // Regression: the async IIFE inside the directive's watchEffect
+        // previously had no try/catch; a rejected get() would surface as
+        // an unhandled promise rejection and leave the textContent stale.
+        const failingStore = {
+            async get(): Promise<never> {
+                throw new Error('boom');
+            },
+            async set() { /* noop */ },
+            async getLocales() { return []; },
+        };
+
+        const Wrapper = defineComponent({
+            template: '<p data-test="t" v-t="\'app.hi\'">initial</p>',
+        });
+
+        const wrapper = mount(Wrapper, {
+            global: {
+                plugins: [{
+                    install(app: import('vue').App) {
+                        install(app, { store: failingStore as never, locale: 'en' });
+                    },
+                }],
+            },
+        });
+
+        await flushPromises();
+        // Catches the rejection; falls back to the group.key contract used
+        // when get() returns undefined.
+        expect(wrapper.find('[data-test="t"]').text()).toEqual('app.hi');
+    });
+
     it('directives: false opts out of v-t registration', () => {
         const Wrapper = defineComponent({
             template: '<p v-t="\'app.hi\'"></p>',

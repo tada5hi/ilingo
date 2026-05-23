@@ -61,7 +61,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
      * modifiers. Built-in entries: `number`, `date`, `list` (each backed
      * by the matching `Intl.*Format`, memoised by `(locale, options)`).
      */
-    public readonly formatters: FormatterRegistry;
+    public formatters: FormatterRegistry;
 
     /**
      * Per-instance set of `(locale, group, key)` triples that have already
@@ -94,6 +94,40 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
     }
 
     // ----------------------------------------------------
+
+    /**
+     * Build a new `Ilingo` that inherits this instance's configuration
+     * (locale, fallback, missing-key handler), shares its formatter
+     * registry, and includes its stores in order. The new instance is
+     * independent — mutating its `stores` does not affect the parent —
+     * but the shared `formatters` registry means custom formatters
+     * registered on either side are visible to both.
+     *
+     * `overrides.store`, when provided, becomes the **first** store in
+     * the new instance (resolved before any inherited store). Other
+     * overrides replace the corresponding inherited config field.
+     *
+     * Designed for consumers that need a scoped variant of an existing
+     * orchestrator — e.g. `@ilingo/vue`'s `useScopedCatalog`.
+     */
+    clone(overrides: ConfigInput = {}): Ilingo {
+        const child = new Ilingo({
+            store: overrides.store,
+            locale: overrides.locale ?? this.locale,
+            fallback: 'fallback' in overrides ? overrides.fallback : this.fallback,
+            onMissingKey: overrides.onMissingKey ?? this.onMissingKey,
+        });
+        // Inherit stores in order (overrides.store, if any, was already added
+        // first by the constructor — appending parent's keeps the precedence).
+        for (const store of this.stores) {
+            child.stores.add(store);
+        }
+        // Share the formatter registry so custom registrations on the parent
+        // are honoured. Trade-off: mutations on either side are visible to
+        // both. Callers that need isolation should construct manually.
+        child.formatters = this.formatters;
+        return child;
+    }
 
     merge(instance: Ilingo<LocalesRecord>) {
         const ownEntries = Array.from(this.stores.values());

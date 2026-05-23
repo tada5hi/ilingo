@@ -6,8 +6,8 @@
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
-import { MemoryStore } from 'ilingo';
-import { defineComponent, h } from 'vue';
+import { Ilingo, MemoryStore } from 'ilingo';
+import { defineComponent } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { install, useScopedCatalog, useTranslation } from '../../src';
 
@@ -126,6 +126,55 @@ describe('useScopedCatalog (#902)', () => {
         expect(wrapper.find('[data-test="modal"]').text()).toEqual('Scoped hello');
         // Sibling is OUTSIDE the modal's subtree — sees the parent default.
         expect(wrapper.find('[data-test="sibling"]').text()).toEqual('Default hello');
+    });
+
+    it('inherits the parent fallback chain', async () => {
+        // Regression: previously useScopedCatalog only copied stores, dropping
+        // the parent's `fallback` config so scoped lookups walked a different
+        // chain than the parent.
+        const Modal = defineComponent({
+            template: '<p data-test="modal">{{ text }}</p>',
+            setup() {
+                const { t } = useScopedCatalog({
+                    messages: { en: { modal: { greeting: 'Scoped hello' } } },
+                });
+                // Request a locale ('ru') that has no data anywhere; with the
+                // parent's `fallback: 'de'` honoured, the chain reaches the
+                // German parent translation. Without it, the lookup would fall
+                // to 'en' (the default) and pick up the wrong message.
+                const text = t({ group: 'app', key: 'farewell', locale: 'ru' });
+                return { text };
+            },
+        });
+
+        // Plugin with a custom `fallback: 'de'` on the parent Ilingo.
+        const PluginWithFallback = {
+            install(app: import('vue').App) {
+                // Build a fresh Ilingo with a custom fallback, then install.
+                // (Manual construction because the helper plugin() above
+                // doesn't expose `fallback`.)
+                const ilingo = new Ilingo({
+                    fallback: 'de',
+                    store: new MemoryStore({
+                        data: {
+                            de: { app: { farewell: 'Tschüss aus DE' } },
+                            en: { app: { farewell: 'Bye from EN' } },
+                        },
+                    }),
+                    locale: 'en',
+                });
+                install(app, ilingo);
+            },
+        };
+
+        const wrapper = mount(Modal, {
+            global: { plugins: [PluginWithFallback] },
+        });
+
+        await flushPromises();
+        // 'ru' → fallback 'de' → 'Tschüss aus DE'. If fallback were dropped,
+        // we'd see 'Bye from EN'.
+        expect(wrapper.find('[data-test="modal"]').text()).toEqual('Tschüss aus DE');
     });
 
     it('falls back to the parent catalog for keys not in the scope', async () => {

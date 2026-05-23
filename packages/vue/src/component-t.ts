@@ -91,9 +91,16 @@ export const ITranslateT = defineComponent({
                     // props.data in case the value is a Ref that wasn't
                     // unwrapped by extractReactiveData (defensive).
                     const raw = props.data?.[token.name];
-                    children.push(
-                        typeof raw === 'undefined' ? `{{${token.name}}}` : String(unref(raw)),
-                    );
+                    if (typeof raw === 'undefined') {
+                        // Preserve the FULL original placeholder, including any
+                        // modifier expression — dropping it would silently
+                        // mutate the literal text shown when data is missing.
+                        children.push(token.modifierExpression ?
+                            `{{${token.name}, ${token.modifierExpression}}}` :
+                            `{{${token.name}}}`);
+                    } else {
+                        children.push(String(unref(raw)));
+                    }
                 } else {
                     const slotFn = slots[token.name];
                     if (slotFn) {
@@ -117,7 +124,8 @@ export const ITranslateT = defineComponent({
 
 function parsePath(path: string): { group: string, key: string } {
     const index = path.indexOf('.');
-    if (index === -1) {
+    // Reject missing dot, leading dot (empty group), and trailing dot (empty key).
+    if (index <= 0 || index >= path.length - 1) {
         throw new SyntaxError(
             `[ilingo] <ITranslateT path="${path}"> requires a "group.key" path.`,
         );

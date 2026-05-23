@@ -6,8 +6,8 @@
  */
 
 import { computedAsync } from '@vueuse/core';
-import type { LocalesRecord } from 'ilingo';
-import { Ilingo, MemoryStore } from 'ilingo';
+import type { Ilingo, LocalesRecord } from 'ilingo';
+import { MemoryStore } from 'ilingo';
 import type { Ref } from 'vue';
 import { unref } from 'vue';
 import type { GetContextReactive } from '../types';
@@ -60,16 +60,16 @@ export function useScopedCatalog(options: { messages: LocalesRecord }): UseScope
     const parent = injectIlingo();
     const locale = injectLocale();
 
-    const instance = new Ilingo({ store: new MemoryStore({ data: options.messages }) });
-    // Parent stores resolve *after* the scoped catalog — scoped messages
-    // win, but anything not scoped still falls back to the parent's stores.
-    // Note: the orchestrator's own `instance.locale` default is intentionally
-    // left at LOCALE_DEFAULT — callers always pass `locale` from the
-    // injected Vue Ref (via `t()` here, or `useTranslation` on descendants),
-    // so the instance default is never consulted.
-    for (const store of parent.stores) {
-        instance.stores.add(store);
-    }
+    // `parent.clone()` inherits the parent's locale + fallback +
+    // onMissingKey and shares the formatter registry, so the scoped
+    // instance honours every config knob the parent set up. The scoped
+    // store is registered *first* (so its translations win), then the
+    // parent's stores fall through for anything not scoped.
+    //
+    // Note: the orchestrator's own `instance.locale` default is irrelevant
+    // here — callers always pass `locale` from the injected Vue Ref (via
+    // `t()` below, or `useTranslation` on descendants).
+    const instance = parent.clone({ store: new MemoryStore({ data: options.messages }) });
 
     // Make the scoped instance available to descendants. Vue's
     // provide is component-local, so siblings outside this subtree are

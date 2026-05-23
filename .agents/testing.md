@@ -49,7 +49,7 @@ data/
 
 ### `packages/vue/test/`
 
-```
+```text
 unit/
 ├── component-t.spec.ts         # <ITranslateT> — slot rendering, vars, fragments, error paths
 ├── directive-t.spec.ts         # v-t directive — string/object bindings, reactive locale, opt-out

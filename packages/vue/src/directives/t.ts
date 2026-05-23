@@ -62,7 +62,8 @@ function resolveBinding(value: VTBinding): Resolved {
 
 function splitPath(path: string): { group: string, key: string } {
     const index = path.indexOf('.');
-    if (index === -1) {
+    // Reject missing dot, leading dot (empty group), and trailing dot (empty key).
+    if (index <= 0 || index >= path.length - 1) {
         throw new SyntaxError(
             `[ilingo] v-t="${path}" requires a "group.key" path.`,
         );
@@ -106,15 +107,23 @@ export function createVTDirective(
             onCleanup(() => { cancelled = true; });
 
             (async () => {
-                const text = await instance.get({
-                    group: ctx.group,
-                    key: ctx.key,
-                    data: ctx.data,
-                    count: ctx.count,
-                    locale: localeOverride,
-                });
-                if (cancelled) return;
-                el.textContent = text ?? `${ctx.group}.${ctx.key}`;
+                try {
+                    const text = await instance.get({
+                        group: ctx.group,
+                        key: ctx.key,
+                        data: ctx.data,
+                        count: ctx.count,
+                        locale: localeOverride,
+                    });
+                    if (cancelled) return;
+                    el.textContent = text ?? `${ctx.group}.${ctx.key}`;
+                } catch {
+                    // A rejected store / formatter shouldn't propagate as an
+                    // unhandled promise rejection. Degrade to the same
+                    // group.key fallback we use when get() returns undefined.
+                    if (cancelled) return;
+                    el.textContent = `${ctx.group}.${ctx.key}`;
+                }
             })();
         });
     }
