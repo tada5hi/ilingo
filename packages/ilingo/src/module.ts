@@ -114,8 +114,12 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
         const child = new Ilingo({
             store: overrides.store,
             locale: overrides.locale ?? this.locale,
+            // Use `in`-check (not ??) so explicit `undefined` clears the
+            // inherited value. Matches the `fallback` handling above —
+            // both nullable config fields treat "field present in overrides"
+            // as intent to replace, even when the new value is undefined.
             fallback: 'fallback' in overrides ? overrides.fallback : this.fallback,
-            onMissingKey: overrides.onMissingKey ?? this.onMissingKey,
+            onMissingKey: 'onMissingKey' in overrides ? overrides.onMissingKey : this.onMissingKey,
         });
         // Inherit stores in order (overrides.store, if any, was already added
         // first by the constructor — appending parent's keeps the precedence).
