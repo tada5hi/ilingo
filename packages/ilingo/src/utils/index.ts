@@ -9,4 +9,5 @@ export * from './formatters';
 export * from './identify';
 export * from './language';
 export * from './locale';
+export * from './negotiate';
 export * from './template';

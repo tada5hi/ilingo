@@ -70,3 +70,41 @@ This matters when `en-US` falls back to `en`: the formatter uses `en`, matching 
 Unknown formatter names fall back to `String(value)` and emit a **one-shot dev-mode warning** (silenced in `process.env.NODE_ENV === 'production'`). Malformed modifier expressions (unbalanced parens, non-identifier names) are treated the same way — formatters never throw.
 
 The warning is deduplicated **per `Ilingo` instance** — different instances log independently.
+
+## Custom formatters
+
+Register your own modifier names alongside the built-ins. Two surfaces, same effect:
+
+### `Config.formatters` at construction time
+
+```typescript
+const ilingo = new Ilingo({
+    store: /* ... */,
+    formatters: {
+        upper: (value, _opts, locale) => String(value).toLocaleUpperCase(locale),
+        relative: (value, _opts, locale) => {
+            const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+            return rtf.format(Number(value), 'day');
+        },
+    },
+});
+```
+
+### `ilingo.registerFormatter(name, fn)` after construction
+
+```typescript
+ilingo.registerFormatter('upper', (value, _opts, locale) =>
+    String(value).toLocaleUpperCase(locale));
+```
+
+Custom formatters receive `(value, options, locale)`:
+
+- `value` — the raw value from `data` (already unwrapped from any `MaybeRef`).
+- `options` — the parsed `{key=value, ...}` from inside the modifier parens; coerced per the [Option-value coercion](#option-value-coercion) rules.
+- `locale` — the resolved locale (the one that yielded the message).
+
+Names registered via either surface **override the built-ins** if they collide. So you can swap the default `number` for a custom one if needed.
+
+## The shared registry
+
+Each `Ilingo` instance owns a `FormatterRegistry`. `clone()` shares that registry by reference — custom formatters registered on either side are visible to both. If you need isolation, build the child instance directly.

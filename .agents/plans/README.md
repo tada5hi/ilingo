@@ -9,7 +9,8 @@ Phased roadmap for ilingo, sequenced to land coherent waves of work rather than 
 | 3     | [003-intl-formatters.md](003-intl-formatters.md)       | In review   | #896                            |
 | 4     | [004-type-safe-keys.md](004-type-safe-keys.md)         | In review   | #898                            |
 | 5     | [005-vue-ergonomics.md](005-vue-ergonomics.md)         | In review   | #900, #901, #902                |
-| 6     | [006-dx-and-loader.md](006-dx-and-loader.md)           | Blocked by 5| #903, #904, #905, #906          |
+| 6A    | [006-dx-and-loader.md](006-dx-and-loader.md) (#905, #906) | In review | locale negotiation + custom formatters |
+| 6B    | [006-dx-and-loader.md](006-dx-and-loader.md) (#903, #904) | Ready     | loader store + FSStore watch mode      |
 
 ## How to use these
 

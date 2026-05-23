@@ -63,3 +63,34 @@ await ilingo.get({ group: 'app', key: 'hi', locale: 'fr' }); // one-off override
 ```
 
 In Vue, the locale is exposed as a `Ref<string>` — see [Integrations → Vue](/integrations/vue).
+
+## Negotiating a locale from a request
+
+For server-side apps (Express / Hono / Nuxt server routes) or browser apps reading `navigator.languages`, pick the best supported locale via `negotiateLocale`:
+
+```typescript
+import { Ilingo, negotiateLocale, parseAcceptLanguage } from 'ilingo';
+
+const supported = ['en', 'de', 'pt-BR'];
+
+// From an HTTP Accept-Language header:
+const requested = parseAcceptLanguage('en-US,en;q=0.9,de;q=0.8');
+// → ['en-US', 'en', 'de']
+
+const chosen = negotiateLocale(supported, requested) ?? 'en';
+ilingo.setLocale(chosen);
+```
+
+`negotiateLocale` implements BCP-47 best-match:
+
+1. **Exact match** — requested tag identical to a supported one (case-insensitive language sub-tag).
+2. **Prefix match** — requested `'pt'` matches supported `'pt-BR'`.
+3. **Parent walk** — requested `'pt-PT-Latn'` walks parents (`'pt-PT'` → `'pt'`) against supported.
+
+Returns the first supported tag that matches, or `undefined` if none did. Compose with your own default:
+
+```typescript
+ilingo.setLocale(negotiateLocale(supported, requested) ?? 'en');
+```
+
+`parseAcceptLanguage(header)` parses the RFC 9110 header into a quality-sorted array, dropping the `*` wildcard. Tags without an explicit `q=` default to `q=1.0`. Both functions are pure — they don't mutate `Ilingo` state.

@@ -19,6 +19,7 @@ import type {
     LocalesRecord,
     MissingKeyHandler,
 } from './types';
+import type { Formatter } from './utils';
 import {
     FormatterRegistry,
     resolveLocaleChain,
@@ -86,11 +87,35 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
         this.warnedKeys = new Set();
         this.warnedFormatters = new Set();
         this.formatters = new FormatterRegistry();
+        if (input.formatters) {
+            for (const [name, fn] of Object.entries(input.formatters)) {
+                this.formatters.register(name, fn);
+            }
+        }
 
         this.stores = new Set<IStore>();
         if (input.store) {
             this.stores.add(input.store);
         }
+    }
+
+    /**
+     * Register a custom formatter for use inside `{{value, name(opts)}}`
+     * placeholders. Equivalent to `this.formatters.register(name, fn)` —
+     * exposed as an instance method for discoverability and parity with
+     * `setLocale` / `merge` / `clone`.
+     *
+     * @example
+     *     ilingo.registerFormatter('upper', (value, _opts, locale) =>
+     *         String(value).toLocaleUpperCase(locale));
+     *     await ilingo.get({
+     *         group: 'app', key: 'shout',
+     *         data: { name: 'peter' },
+     *     });
+     *     // "{{name, upper}}" → "PETER"
+     */
+    registerFormatter(name: string, formatter: Formatter): void {
+        this.formatters.register(name, formatter);
     }
 
     // ----------------------------------------------------

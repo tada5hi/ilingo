@@ -24,6 +24,8 @@ Ilingo is a lightweight library for translation and internationalization.
   - [Formatters](#formatters)
   - [Type-safe keys](#type-safe-keys)
   - [Slot placeholders & `tokenize()`](#slot-placeholders--tokenize)
+  - [Custom formatters](#custom-formatters)
+  - [Locale negotiation](#locale-negotiation)
 - [Store](#store)
   - [Memory](#memory-store)
   - [FileSystem](#fs-store)
@@ -486,6 +488,54 @@ tokenize('Hi {{user}}, please {cta} now.');
 ```
 
 `tokenize()` and `template()` are parallel parsers — `template()` returns a substituted string (used by `Ilingo.format`); `tokenize()` returns tokens for VNode-producing renderers (e.g. `@ilingo/vue`'s `<ITranslateT>`). Plain `Ilingo.get()` always returns a string, so `{slot}` markers survive into the output unless a slot-aware renderer consumes them.
+
+### Custom formatters
+
+Register your own modifier names alongside the built-in `number` / `date` / `list`:
+
+```typescript
+const ilingo = new Ilingo({
+    store: /* ... */,
+    formatters: {
+        upper: (value, _opts, locale) => String(value).toLocaleUpperCase(locale),
+        relative: (value, _opts, locale) => {
+            const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+            return rtf.format(Number(value), 'day');
+        },
+    },
+});
+
+await ilingo.get({
+    group: 'app', key: 'shout',
+    data: { name: 'peter' },
+});
+// "{{name, upper}}" → "PETER"
+```
+
+Or call `ilingo.registerFormatter(name, fn)` after construction. Custom formatters receive `(value, options, locale)` — `options` is the parsed `{key=value, ...}` from inside the modifier parens.
+
+`Config.formatters` overrides win against the built-ins by name, so you can swap the default `number` formatter for a custom one if needed.
+
+### Locale negotiation
+
+`negotiateLocale(supported, requested)` picks the best match between a list of supported locales and a list of requested ones (typically from an HTTP `Accept-Language` header). Implements BCP-47 best-match: exact match → prefix match → parent walk.
+
+```typescript
+import { negotiateLocale, parseAcceptLanguage } from 'ilingo';
+
+const supported = ['en', 'de', 'pt-BR'];
+
+negotiateLocale(supported, ['pt-PT', 'pt', 'en']);
+// → 'pt-BR'  (requested 'pt' matches supported 'pt-BR' as a parent prefix)
+
+const fromHeader = parseAcceptLanguage('en-US,en;q=0.9,de;q=0.8');
+// → ['en-US', 'en', 'de']
+
+const chosen = negotiateLocale(supported, fromHeader) ?? 'en';
+ilingo.setLocale(chosen);
+```
+
+`parseAcceptLanguage(header)` parses the RFC 9110 header into a quality-sorted tag list. Both functions are pure utilities — they don't mutate `Ilingo` state. Compose them with `setLocale()` to wire request-side locale negotiation in a server (Express / Hono / etc.) or client (`navigator.languages`).
 
 ## Store
 

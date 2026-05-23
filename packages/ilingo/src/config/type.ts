@@ -1,5 +1,6 @@
 import type { IStore } from '../store';
 import type { Fallback, MissingKeyHandler } from '../types';
+import type { Formatter } from '../utils/formatters';
 
 export type Config = {
     store: IStore,
@@ -20,6 +21,17 @@ export type Config = {
      * returning `undefined` (or nothing) keeps `get()`'s result `undefined`.
      */
     onMissingKey: MissingKeyHandler,
+    /**
+     * Custom formatters to register on the instance's `FormatterRegistry` at
+     * construction time. Equivalent to calling
+     * `ilingo.registerFormatter(name, fn)` for each entry afterwards — kept
+     * as constructor sugar so a fully-configured instance can be defined in
+     * one expression.
+     *
+     * Built-in formatters (`number`, `date`, `list`) are registered by the
+     * registry; entries here can override them by re-registering the same name.
+     */
+    formatters: Record<string, Formatter>,
 };
 
 export type ConfigInput = Partial<Config>;
