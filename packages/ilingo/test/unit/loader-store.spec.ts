@@ -166,4 +166,68 @@ describe('LoaderStore (#903)', () => {
         // Loader called once during set()'s preloading; subsequent get() reads cache.
         expect(loader).toHaveBeenCalledTimes(1);
     });
+
+    it('invalidate during an in-flight load drops the stale result', async () => {
+        // Regression: previously the loader's .then() unconditionally wrote
+        // the resolved record into the cache. An invalidate fired between
+        // load start and resolve would be silently overwritten.
+        let resolveFirst: (v: { hi: string }) => void = () => {};
+        let firstCall = true;
+        const loader = vi.fn(() => {
+            if (firstCall) {
+                firstCall = false;
+                return new Promise<{ hi: string }>((r) => { resolveFirst = r; });
+            }
+            return { hi: 'Fresh' };
+        });
+
+        const store = new LoaderStore({ loader });
+        const ilingo = new Ilingo({ store });
+
+        // Start the slow load.
+        const p1 = ilingo.get({ group: 'app', key: 'hi' });
+        // Invalidate while it's in flight.
+        store.invalidate('en', 'app');
+        // Now resolve the slow load — its result must NOT land in the cache.
+        resolveFirst({ hi: 'Stale' });
+        await p1;
+
+        // Fresh get must re-run the loader (the stale result was dropped).
+        expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('Fresh');
+        expect(loader).toHaveBeenCalledTimes(2);
+    });
+
+    it('set() fires the invalidate event so subscribers can re-render', async () => {
+        // Regression: set() mutated the cache without notifying subscribers,
+        // so a Vue composable hooked into the store would not re-render
+        // when a translation was set at runtime.
+        const store = new LoaderStore({ loader: async () => ({}) });
+        const events: Array<[string | undefined, string | undefined]> = [];
+        store.on('invalidate', (locale, group) => {
+            events.push([locale, group]);
+        });
+
+        await store.set({ locale: 'en', group: 'app', key: 'hi', value: 'Hello' });
+
+        expect(events).toEqual([['en', 'app']]);
+    });
+
+    it('cache keys do not collide when group/locale strings contain a pipe', async () => {
+        // Regression: previous KEY_SEP was '|', which could collide if a
+        // group name contained '|' (e.g. group="a|b"). NUL byte is now used.
+        const loaded: string[] = [];
+        const store = new LoaderStore({
+            loader: async (locale, group) => {
+                loaded.push(`${locale}/${group}`);
+                return { hi: `from ${group}` };
+            },
+        });
+
+        const v1 = await store.get({ locale: 'en', group: 'a|b', key: 'hi' });
+        const v2 = await store.get({ locale: 'en|a', group: 'b', key: 'hi' });
+
+        expect(v1).toEqual('from a|b');
+        expect(v2).toEqual('from b');
+        expect(loaded).toEqual(['en/a|b', 'en|a/b']);
+    });
 });
