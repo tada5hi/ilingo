@@ -49,8 +49,10 @@ src/
 │   └── type.ts               # Config { store, locale, fallback, onMissingKey }; ConfigInput = Partial<Config>
 ├── store/
 │   ├── index.ts              # barrel
-│   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext (value: Leaf), MemoryStoreOptions
-│   └── memory.ts             # MemoryStore — returns string | PluralLeaf | undefined
+│   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext (value: Leaf),
+│   │                         #   MemoryStoreOptions, InvalidatingStore + isInvalidatingStore guard
+│   ├── memory.ts             # MemoryStore — returns string | PluralLeaf | undefined
+│   └── loader.ts             # LoaderStore — lazy load + per-(locale,group) cache + invalidate
 └── utils/
     ├── index.ts
     ├── locale.ts             # bcp47Parents, resolveLocaleChain
@@ -68,6 +70,7 @@ test/
     ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, parallel lookup, clone()
     ├── formatters-integration.spec.ts # Ilingo.get() with number/date/list modifiers, cache + dev-warn
     ├── custom-formatters.spec.ts     # registerFormatter + Config.formatters constructor sugar
+    ├── loader-store.spec.ts          # LoaderStore lazy load, cache, miss cache, dedupe, invalidate, events
     ├── types.spec-d.ts               # compile-time-only — run via `npm run test:types` (vitest typecheck)
     └── utils/
         ├── locale.spec.ts            # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
@@ -89,7 +92,8 @@ src/
 test/
 ├── unit/
 │   ├── module.spec.ts        # loads test/data/language/<locale>/<group>.* via FSStore
-│   └── persist.spec.ts       # set() round-trip, sibling preservation, split read/write dirs
+│   ├── persist.spec.ts       # set() round-trip, sibling preservation, split read/write dirs
+│   └── watch.spec.ts         # watch: true emits invalidate on file change, close() teardown
 └── data/language/{en,de,fr}/form.{cjs,ts,json}
 ```
 

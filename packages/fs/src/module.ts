@@ -15,19 +15,37 @@ import {
 } from 'locter';
 import type { Merger } from 'smob';
 import { createMerger } from 'smob';
-import type { LinesRecord, StoreGetContext, StoreSetContext } from 'ilingo';
+import type {
+    InvalidateListener,
+    InvalidatingStore,
+    LinesRecord,
+    StoreGetContext,
+    StoreSetContext,
+} from 'ilingo';
 import { MemoryStore, isBCP47LanguageCode, isLineRecord } from 'ilingo';
 import type { ConfigInput } from './types';
 import { buildConfig } from './utils';
 
-export class FSStore extends MemoryStore {
-    protected loaded : Record<string, string[]>;
+type ChokidarLike = {
+    watch(paths: string | string[], options?: object): {
+        on(event: 'add' | 'change' | 'unlink', cb: (path: string) => void): unknown,
+        close(): Promise<void>,
+    },
+};
 
-    protected directories : string[];
+export class FSStore extends MemoryStore implements InvalidatingStore {
+    protected loaded: Record<string, string[]>;
 
-    protected writeDirectory : string;
+    protected directories: string[];
 
-    protected merger : Merger;
+    protected writeDirectory: string;
+
+    protected merger: Merger;
+
+    protected listeners = new Set<InvalidateListener>();
+
+    /** Active chokidar watcher (only when `watch: true`). Closed by `close()`. */
+    protected watcher: ReturnType<ChokidarLike['watch']> | undefined;
 
     constructor(input?: ConfigInput) {
         super({ data: {} });
@@ -43,6 +61,15 @@ export class FSStore extends MemoryStore {
             array: true,
             arrayDistinct: true,
         });
+
+        if (options.watch) {
+            // chokidar is loaded asynchronously so that consumers who don't
+            // enable watch mode never pay the dep cost. We start the watcher
+            // promise-style; readiness is not awaited here (callers can
+            // await get()s freely — the cache will simply not be hot-
+            // invalidated until chokidar has signalled `ready`).
+            this.startWatcher().catch(() => { /* swallow — see startWatcher */ });
+        }
     }
 
     // ------------------------------------------
@@ -64,7 +91,7 @@ export class FSStore extends MemoryStore {
 
     // ------------------------------------------
 
-    override async getLocales() : Promise<string[]> {
+    override async getLocales(): Promise<string[]> {
         const locations = await locateMany(['*'], {
             path: this.directories,
             onlyDirectories: true,
@@ -77,7 +104,53 @@ export class FSStore extends MemoryStore {
 
     // ------------------------------------------
 
-    protected isLoaded(group: string, locale: string) : boolean {
+    /**
+     * Drop cached file content for the matching scope. The next `get()` for
+     * an affected key will re-read from disk.
+     */
+    invalidate(locale?: string, group?: string): void {
+        if (typeof locale === 'undefined') {
+            this.loaded = {};
+            this.data = {};
+        } else if (typeof group === 'undefined') {
+            delete this.loaded[locale];
+            delete this.data[locale];
+        } else {
+            const groups = this.loaded[locale];
+            if (groups) {
+                this.loaded[locale] = groups.filter((g) => g !== group);
+            }
+            if (this.data[locale]) {
+                delete this.data[locale][group];
+            }
+        }
+        for (const listener of this.listeners) {
+            listener(locale, group);
+        }
+    }
+
+    on(event: 'invalidate', listener: InvalidateListener): () => void {
+        if (event !== 'invalidate') return () => {};
+        this.listeners.add(listener);
+        return () => { this.listeners.delete(listener); };
+    }
+
+    /**
+     * Stop the file watcher (if active) and detach all listeners. Idempotent.
+     * Useful in tests and on app shutdown — once closed, the store still
+     * serves cached reads but no longer reacts to file-system changes.
+     */
+    async close(): Promise<void> {
+        if (this.watcher) {
+            await this.watcher.close();
+            this.watcher = undefined;
+        }
+        this.listeners.clear();
+    }
+
+    // ------------------------------------------
+
+    protected isLoaded(group: string, locale: string): boolean {
         this.loaded[locale] = this.loaded[locale] || [];
 
         return this.loaded[locale].includes(group);
@@ -91,7 +164,7 @@ export class FSStore extends MemoryStore {
 
     // ------------------------------------------
 
-    async loadGroup(group: string, locale: string) : Promise<Record<string, any>> {
+    async loadGroup(group: string, locale: string): Promise<Record<string, any>> {
         // only load file once
         if (this.isLoaded(group, locale)) {
             /* istanbul ignore next */
@@ -144,7 +217,67 @@ export class FSStore extends MemoryStore {
         await rename(tmpFile, targetFile);
     }
 
-    protected buildLocatorOptionsForLocale(locale?: string) : LocatorOptionsInput {
+    /**
+     * Start watching the configured directories. Each `(directory, locale,
+     * group)` file change calls `invalidate(locale, group)`. Errors loading
+     * chokidar (e.g. consumer hasn't installed the optional peer) throw a
+     * clear message — caught and rethrown as a deferred error so the
+     * constructor doesn't reject.
+     */
+    protected async startWatcher(): Promise<void> {
+        let chokidar: ChokidarLike;
+        try {
+            // Lazy import so the dep is loaded only when watch mode is on.
+            chokidar = await import('chokidar') as unknown as ChokidarLike;
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error(
+                '[ilingo/fs] watch: true requires the optional `chokidar` peer dependency. ' +
+                'Install it via `npm i chokidar -D`.',
+                err,
+            );
+            return;
+        }
+
+        this.watcher = chokidar.watch(this.directories, {
+            ignoreInitial: true,
+            persistent: false,
+        });
+        const onPath = (changedPath: string) => {
+            const parsed = this.parseLocaleGroup(changedPath);
+            if (parsed) this.invalidate(parsed.locale, parsed.group);
+        };
+        this.watcher.on('add', onPath);
+        this.watcher.on('change', onPath);
+        this.watcher.on('unlink', onPath);
+    }
+
+    /**
+     * Map a file path under one of the configured directories to its
+     * `(locale, group)` pair. Returns `undefined` if the path doesn't sit
+     * exactly under `<dir>/<locale>/<group>.<ext>` (e.g. a deeper nesting,
+     * or a sibling file not owned by us).
+     */
+    protected parseLocaleGroup(filePath: string): { locale: string, group: string } | undefined {
+        const absPath = path.resolve(filePath);
+        for (const dir of this.directories) {
+            const absDir = path.resolve(dir);
+            if (absPath.startsWith(`${absDir}${path.sep}`)) {
+                const rel = absPath.slice(absDir.length + 1);
+                const parts = rel.split(path.sep);
+                if (parts.length === 2) {
+                    const [locale, file] = parts;
+                    const dotIdx = file.lastIndexOf('.');
+                    if (dotIdx > 0 && isBCP47LanguageCode(locale)) {
+                        return { locale, group: file.slice(0, dotIdx) };
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
+
+    protected buildLocatorOptionsForLocale(locale?: string): LocatorOptionsInput {
         let directory: string[];
         if (this.directories.length === 0) {
             directory = [locale || 'en'];
@@ -165,7 +298,7 @@ export class FSStore extends MemoryStore {
     }
 
     protected mergeFiles(files: unknown[]) {
-        const lineRecord : LinesRecord = {};
+        const lineRecord: LinesRecord = {};
         for (const file of files) {
             if (isLineRecord(file)) {
                 this.merger(lineRecord, file);

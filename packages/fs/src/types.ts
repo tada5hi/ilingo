@@ -8,9 +8,20 @@
 export type Config = {
     directory: string[],
     writeDirectory: string,
+    /**
+     * When `true`, watch the configured `directory` paths via `chokidar`
+     * and invalidate the matching `(locale, group)` cache entry on each
+     * change. Subscribers registered via `FSStore.on('invalidate', ...)`
+     * are notified.
+     *
+     * Default `false`. `chokidar` is an *optional* peer dependency — install
+     * it (`npm i chokidar -D`) when enabling this option.
+     */
+    watch: boolean,
 };
 
 export type ConfigInput = {
     directory?: string | string[],
     writeDirectory?: string,
+    watch?: boolean,
 };

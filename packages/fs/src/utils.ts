@@ -26,6 +26,11 @@ export function buildConfig(input?: ConfigInput): Config {
     }
 
     const writeDirectory = normalize(input.writeDirectory ?? directory[0]);
+    const watch = input.watch === true;
 
-    return { directory, writeDirectory };
+    return {
+        directory, 
+        writeDirectory, 
+        watch, 
+    };
 }

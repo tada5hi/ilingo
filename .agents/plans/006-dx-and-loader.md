@@ -1,8 +1,8 @@
 # Phase 6 — DX + loader-based store
 
 **Status**: Split into two waves —
-- **Phase 6A** (#905 + #906): In review (branch `feat/locale-negotiation-and-custom-formatters`).
-- **Phase 6B** (#903 + #904): Ready — follow-up after 6A merges.
+- **Phase 6A** (#905 + #906): Done (merged as #918).
+- **Phase 6B** (#903 + #904): In review (branch `feat/loader-store-and-watch`).
 
 **Tracks**: [#903](https://github.com/tada5hi/ilingo/issues/903), [#904](https://github.com/tada5hi/ilingo/issues/904), [#905](https://github.com/tada5hi/ilingo/issues/905), [#906](https://github.com/tada5hi/ilingo/issues/906).
 
@@ -46,8 +46,8 @@ Four loosely-coupled DX features. They can land in any order, but #903 + #904 sh
 
 ## Acceptance
 
-- [ ] `new LoaderStore({ loader: (l, g) => import(`./locales/${l}/${g}.json`) })` resolves a key from a code-split chunk.
-- [ ] `FSStore({ watch: true })`: editing `test/data/language/en/form.ts` in a running playground reflects in the rendered Vue component within one second.
+- [x] `new LoaderStore({ loader: (l, g) => import(`./locales/${l}/${g}.json`) })` resolves a key from a code-split chunk. Asserted in `loader-store.spec.ts`. Loader is called once per `(locale, group)`; concurrent `get()`s share one invocation; misses are cached.
+- [x] `FSStore({ watch: true })`: editing a watched file emits `invalidate` and the next `get()` reflects the new content. Asserted in `packages/fs/test/unit/watch.spec.ts`. `chokidar` is an optional peer dependency.
 - [x] `negotiateLocale(['en', 'pt-BR'], ['pt-PT', 'pt', 'en'])` returns `'pt-BR'` (longest prefix wins). Asserted in `test/unit/utils/negotiate.spec.ts`.
 - [x] `ilingo.registerFormatter('upper', (value, _options, locale) => String(value).toLocaleUpperCase(locale))` works inside `{{name, upper}}`. Plus a `Config.formatters` constructor-time sugar covered in `custom-formatters.spec.ts`. Signature is `(value, options, locale) => string` — same as built-in formatters.
 

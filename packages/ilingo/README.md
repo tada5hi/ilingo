@@ -28,6 +28,8 @@ Ilingo is a lightweight library for translation and internationalization.
   - [Locale negotiation](#locale-negotiation)
 - [Store](#store)
   - [Memory](#memory-store)
+  - [Loader](#loader-store)
+  - [Invalidation](#invalidation)
   - [FileSystem](#fs-store)
 - [License](#license)
 
@@ -547,6 +549,46 @@ ilingo.setLocale(chosen);
 
 The Memory Store is the default store and is set if no
 other Store is specified manually.
+
+### Loader Store
+
+For browser / SPA apps with code-split locale chunks, `LoaderStore` lazy-loads translation data via a user-supplied function and caches the result per `(locale, group)`:
+
+```typescript
+import { Ilingo, LoaderStore } from 'ilingo';
+
+const ilingo = new Ilingo({
+    store: new LoaderStore({
+        loader: async (locale, group) => {
+            const m = await import(`./locales/${locale}/${group}.json`);
+            return m.default;
+        },
+        locales: ['en', 'de', 'fr'],   // optional — answers `getLocales()`
+    }),
+});
+
+await ilingo.get({ group: 'cart', key: 'items', count: 3 });
+// First call loads `./locales/en/cart.json`; subsequent calls hit the cache.
+```
+
+Concurrent `get()`s for the same `(locale, group)` share one loader invocation. Misses (loader returning `undefined`) are cached too, so the loader isn't re-called for keys it has no answer for.
+
+### Invalidation
+
+Stores that cache lookups can implement `InvalidatingStore`:
+
+```typescript
+export interface InvalidatingStore extends IStore {
+    invalidate(locale?: string, group?: string): void;
+    on(event: 'invalidate', listener: (locale?: string, group?: string) => void): () => void;
+}
+```
+
+Drop scoped cache entries with `invalidate(locale?, group?)` — `()` drops everything, `('en')` drops all groups for `en`, `('en', 'app')` drops just one group. Subscribe to invalidation events via `on('invalidate', cb)` to react to file changes or manual drops.
+
+Both `LoaderStore` and `FSStore` implement this interface. The Vue composable (`@ilingo/vue`) subscribes automatically — file changes under `FSStore({ watch: true })` trigger a re-render without a remount.
+
+Detect via the `isInvalidatingStore(store)` type guard before subscribing.
 
 ### FS Store
 

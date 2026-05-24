@@ -37,6 +37,39 @@ A leaf can be either a plain `string` or a `PluralLeaf` (`{ zero?, one?, two?, f
 
 The orchestrator selects a form using `Intl.PluralRules` keyed by the *resolved* locale (the one that actually matched). `Intl.PluralRules` instances are cached per locale on the `Ilingo` instance.
 
+### Cache invalidation
+
+Stores that cache lookups implement `InvalidatingStore extends IStore`:
+
+```typescript
+export interface InvalidatingStore extends IStore {
+    invalidate(locale?: string, group?: string): void;
+    on(event: 'invalidate', listener: (locale?, group?) => void): () => void;
+}
+```
+
+`invalidate(...)` drops scoped cache entries (`()` = everything, `(locale)` = all groups, `(locale, group)` = one). The `on('invalidate')` event fires after the cache is dropped — subscribers see the post-invalidate state.
+
+Both `LoaderStore` (core) and `FSStore` (`@ilingo/fs`) implement it. Detect at runtime via `isInvalidatingStore(store)` — the type guard checks for both `invalidate` and `on` methods.
+
+`@ilingo/vue`'s `useTranslation` walks `instance.stores` at composable-setup time, subscribes to every `InvalidatingStore`, and bumps an internal trigger ref on `invalidate` events that match the current `(locale, group)`. The `computedAsync` reads the ref in its dep set, so the re-fetch happens automatically. Unsubscribes are wired to `onScopeDispose`.
+
+### `LoaderStore`
+
+`packages/ilingo/src/store/loader.ts`. Lazy-loaded store backed by a user-supplied `loader(locale, group) => Promise<LinesRecord | undefined>`. Caches per `(locale, group)` so the loader is called at most once per pair until `invalidate()` is called. De-duplicates concurrent `get()`s for the same pair via an in-flight map.
+
+Misses (loader returning `undefined`) are cached too — the loader isn't re-called for known-missing pairs. Designed for browser code-splitting: typical loader is `(l, g) => import(\`./locales/${l}/${g}.json\`).then(m => m.default)`.
+
+`getLocales()` returns the declared `locales: string[]` option when provided; otherwise the set of locales seen so far (best-effort).
+
+### `FSStore.watch`
+
+`packages/fs/src/module.ts`. Optional `watch: boolean` config field. When true, lazy-imports `chokidar` (declared as an *optional* peer dependency in `@ilingo/fs/package.json`) and starts a watcher over the configured directories. File changes under `<dir>/<locale>/<group>.<ext>` are mapped back to `(locale, group)` via `parseLocaleGroup`, which strips the directory prefix and validates the locale segment against `isBCP47LanguageCode`.
+
+`chokidar` is an optional peer because most production deployments don't want a file watcher running — and the dep weight is ~1MB. If `watch: true` is set without chokidar installed, the store logs a one-line error and continues without watching (the rest of the store works normally).
+
+`close()` stops the watcher and detaches all listeners — idempotent, callable in tests and on app shutdown.
+
 ### Locale negotiation utilities
 
 `packages/ilingo/src/utils/negotiate.ts` exposes two pure helpers for picking a locale from a request:

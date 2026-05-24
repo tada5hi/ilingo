@@ -61,6 +61,17 @@
         "pathe": "^2.0.3",
         "smob": "^1.5.0"
     },
+    "devDependencies": {
+        "chokidar": "^4.0.3"
+    },
+    "peerDependencies": {
+        "chokidar": "^4.0.0"
+    },
+    "peerDependenciesMeta": {
+        "chokidar": {
+            "optional": true
+        }
+    },
     "publishConfig": {
         "access": "public"
     }
