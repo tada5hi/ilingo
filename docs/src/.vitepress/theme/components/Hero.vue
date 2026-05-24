@@ -75,33 +75,32 @@ const state = reactive({
 
 const chain = computed(() => ilingo.getResolvedLocaleChain({ locale: state.locale }));
 
+const greeting = ref('');
+const items = ref('');
+const total = ref('');
+
 async function renderAll () {
     const [greetingValue, itemsValue, totalValue] = await Promise.all([
         ilingo.get({ group: 'cart', key: 'greeting', locale: state.locale, data: { name: state.name } }),
         ilingo.get({ group: 'cart', key: 'items', locale: state.locale, count: state.count }),
         ilingo.get({ group: 'cart', key: 'total', locale: state.locale, data: { amount: state.amount } }),
     ]);
-    return {
-        greeting: greetingValue ?? '',
-        items: itemsValue ?? '',
-        total: totalValue ?? '',
-    };
+    greeting.value = greetingValue ?? '';
+    items.value = itemsValue ?? '';
+    total.value = totalValue ?? '';
 }
 
-const initial = await renderAll();
-const greeting = ref(initial.greeting);
-const items = ref(initial.items);
-const total = ref(initial.total);
-
+// Register the watcher SYNCHRONOUSLY (before any await) so it attaches to the
+// current component scope. Composition-API calls made after a top-level await
+// in <script setup> are detached and would never fire.
 watch(
     () => [state.locale, state.name, state.count, state.amount] as const,
-    async () => {
-        const next = await renderAll();
-        greeting.value = next.greeting;
-        items.value = next.items;
-        total.value = next.total;
-    },
+    renderAll,
 );
+
+// Pre-populate initial values so SSR ships the rendered strings instead of
+// empty spans. The watcher above is already wired up.
+await renderAll();
 
 const { isDark } = useData();
 
