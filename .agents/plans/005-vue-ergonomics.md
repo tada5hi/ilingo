@@ -1,6 +1,6 @@
 # Phase 5 — Vue ergonomics
 
-**Status**: In review (branch `feat/vue-ergonomics`).
+**Status**: Done.
 **Tracks**: [#900](https://github.com/tada5hi/ilingo/issues/900), [#901](https://github.com/tada5hi/ilingo/issues/901), [#902](https://github.com/tada5hi/ilingo/issues/902).
 
 Brings `@ilingo/vue` to feature parity with vue-i18n's most-used Vue surface: component interpolation, the `v-t` directive, and scoped catalogs.

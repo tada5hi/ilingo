@@ -1,6 +1,6 @@
 # Phase 3 — Intl formatters
 
-**Status**: In review (branch `feat/intl-formatters`).
+**Status**: Done.
 **Tracks**: [#896](https://github.com/tada5hi/ilingo/issues/896).
 
 Add `Intl.NumberFormat`, `Intl.DateTimeFormat`, and `Intl.ListFormat` support to the template formatter so consumers don't have to pre-format values in calling code.

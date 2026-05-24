@@ -1,6 +1,6 @@
 # Phase 4 — Type-safe key inference
 
-**Status**: In review (branch `feat/type-safe-keys`).
+**Status**: Done.
 **Tracks**: [#898](https://github.com/tada5hi/ilingo/issues/898).
 
 Infer the legal `(group, key)` pairs from a typed catalog so the compiler catches typos and renames.
