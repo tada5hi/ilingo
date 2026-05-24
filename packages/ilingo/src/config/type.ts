@@ -30,8 +30,13 @@ export type Config = {
      *
      * Built-in formatters (`number`, `date`, `list`) are registered by the
      * registry; entries here can override them by re-registering the same name.
+     *
+     * Optional even on `Config` itself — every other field is logically
+     * optional via `ConfigInput = Partial<Config>` already, but a required
+     * `formatters` here would leak as a hard requirement onto consumers that
+     * type their config objects against `Config` directly.
      */
-    formatters: Record<string, Formatter>,
+    formatters?: Record<string, Formatter>,
 };
 
 export type ConfigInput = Partial<Config>;

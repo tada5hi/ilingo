@@ -49,7 +49,7 @@ Four loosely-coupled DX features. They can land in any order, but #903 + #904 sh
 - [ ] `new LoaderStore({ loader: (l, g) => import(`./locales/${l}/${g}.json`) })` resolves a key from a code-split chunk.
 - [ ] `FSStore({ watch: true })`: editing `test/data/language/en/form.ts` in a running playground reflects in the rendered Vue component within one second.
 - [x] `negotiateLocale(['en', 'pt-BR'], ['pt-PT', 'pt', 'en'])` returns `'pt-BR'` (longest prefix wins). Asserted in `test/unit/utils/negotiate.spec.ts`.
-- [x] `ilingo.registerFormatter('upper', (locale) => v => String(v).toLocaleUpperCase(locale))` works inside `{{name, upper}}`. Plus a `Config.formatters` constructor-time sugar covered in `custom-formatters.spec.ts`.
+- [x] `ilingo.registerFormatter('upper', (value, _options, locale) => String(value).toLocaleUpperCase(locale))` works inside `{{name, upper}}`. Plus a `Config.formatters` constructor-time sugar covered in `custom-formatters.spec.ts`. Signature is `(value, options, locale) => string` — same as built-in formatters.
 
 ## Why last
 

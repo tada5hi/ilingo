@@ -12,15 +12,18 @@ import { bcp47Parents } from './locale';
  * requested locales, using BCP-47 best-match semantics:
  *
  *   1. Exact match — if any `requested` entry equals a `supported` entry
- *      (case-insensitive language tag, case-sensitive region per BCP-47).
+ *      after canonicalisation.
  *   2. Prefix match — if a `requested` tag is a parent of a `supported` tag
  *      (e.g. requested `pt` matches supported `pt-BR`).
  *   3. Parent match — if a `requested` tag's BCP-47 parents include a
  *      `supported` tag (e.g. requested `pt-PT` matches supported `pt`).
  *
- * Tags compared case-insensitively for the language sub-tag and
- * case-sensitively for the region sub-tag (`pt-BR`, not `PT-BR`). Region
- * sub-tags are canonicalised on input.
+ * **Casing:** comparison is case-insensitive — both `supported` and
+ * `requested` tags are canonicalised internally (language lowercase, region
+ * uppercase, script titlecase, per the convention browsers and `Intl.*`
+ * emit). The **returned** locale preserves the original casing of the
+ * matching `supported` entry — so `negotiateLocale(['PT-br'], ['pt-BR'])`
+ * returns `'PT-br'`, not the canonical form.
  *
  * Returns the matching `supported` entry, or `undefined` if nothing matches.
  *
@@ -72,6 +75,11 @@ export function negotiateLocale(
  * sorted by quality (`q=`) descending. Tags lacking a `q=` parameter default
  * to `q=1.0` (RFC 9110).
  *
+ * Tags with `q=0` are dropped per RFC 9110 § 12.5.4 — `q=0` means
+ * "not acceptable", so a client that says `de;q=0` is explicitly rejecting
+ * German and we must not negotiate to it. Invalid q-values (NaN or outside
+ * `0..1`) cause the tag to be dropped as well.
+ *
  * The `*` wildcard is dropped — callers that want a fallback should pass it
  * separately to `negotiateLocale`'s `requested` argument.
  *
@@ -81,6 +89,9 @@ export function negotiateLocale(
  *
  *   parseAcceptLanguage('pt-PT;q=0.7, pt;q=0.5, *;q=0.1');
  *   // → ['pt-PT', 'pt']
+ *
+ *   parseAcceptLanguage('en, fr;q=0, de;q=0.8');
+ *   // → ['en', 'de']    (French explicitly rejected)
  */
 export function parseAcceptLanguage(header: string): string[] {
     if (!header) return [];
@@ -94,13 +105,21 @@ export function parseAcceptLanguage(header: string): string[] {
         if (!tag || tag === '*') continue;
 
         let q = 1;
+        let qValid = true;
         for (const param of params) {
             const [k, v] = param.split('=').map((s) => s.trim());
-            if (k === 'q' && v !== undefined) {
+            // Header parameter names are case-insensitive (RFC 9110 § 5.6.2).
+            if (k.toLowerCase() === 'q' && v !== undefined) {
                 const parsed = Number(v);
-                if (!Number.isNaN(parsed)) q = parsed;
+                if (Number.isNaN(parsed) || parsed < 0 || parsed > 1) {
+                    qValid = false;
+                } else {
+                    q = parsed;
+                }
             }
         }
+        // q=0 ⇒ "not acceptable" — drop. Invalid q ⇒ drop (defensive).
+        if (!qValid || q <= 0) continue;
         entries.push({ tag, q });
     }
 

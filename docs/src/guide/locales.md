@@ -69,8 +69,11 @@ In Vue, the locale is exposed as a `Ref<string>` — see [Integrations → Vue](
 For server-side apps (Express / Hono / Nuxt server routes) or browser apps reading `navigator.languages`, pick the best supported locale via `negotiateLocale`:
 
 ```typescript
-import { Ilingo, negotiateLocale, parseAcceptLanguage } from 'ilingo';
+import { Ilingo, MemoryStore, negotiateLocale, parseAcceptLanguage } from 'ilingo';
 
+const ilingo = new Ilingo({
+    store: new MemoryStore({ data: /* ... */ }),
+});
 const supported = ['en', 'de', 'pt-BR'];
 
 // From an HTTP Accept-Language header:

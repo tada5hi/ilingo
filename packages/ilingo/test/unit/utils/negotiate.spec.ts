@@ -20,9 +20,14 @@ describe('utils/negotiate — negotiateLocale', () => {
         expect(negotiateLocale(['en', 'pt-BR'], ['pt-BR'])).toEqual('pt-BR');
     });
 
-    it('matches case-insensitively for language and case-sensitively (canonical) for region', () => {
+    it('canonicalises both lists for comparison but preserves the supported casing in the result', () => {
+        // Matching is case-insensitive — language sub-tag lowercased, region
+        // uppercased, script titlecased before comparison. The returned
+        // locale keeps whatever casing the supported entry had.
         expect(negotiateLocale(['en-US'], ['EN-us'])).toEqual('en-US');
         expect(negotiateLocale(['PT-br'], ['pt-BR'])).toEqual('PT-br');
+        // Lowercase request finds canonical-cased supported.
+        expect(negotiateLocale(['en-US', 'PT-br'], ['pt-br'])).toEqual('PT-br');
     });
 
     it('honours request priority order', () => {
@@ -89,5 +94,26 @@ describe('utils/negotiate — parseAcceptLanguage', () => {
     it('tolerates whitespace around tags and parameters', () => {
         // en-US has q=0.9; de has implicit q=1.0, so de wins on sort.
         expect(parseAcceptLanguage('  en-US ; q=0.9 , de ')).toEqual(['de', 'en-US']);
+    });
+
+    it('drops tags with q=0 — RFC 9110 "not acceptable"', () => {
+        expect(parseAcceptLanguage('en, fr;q=0, de;q=0.8')).toEqual(['en', 'de']);
+        expect(parseAcceptLanguage('fr;q=0')).toEqual([]);
+        // q=0 with whitespace and uppercase Q.
+        expect(parseAcceptLanguage('en, fr; Q=0.0')).toEqual(['en']);
+    });
+
+    it('drops tags with q outside the 0..1 range', () => {
+        // Negative and >1 are invalid — drop the tag entirely.
+        expect(parseAcceptLanguage('en, fr;q=1.5, de;q=-0.1')).toEqual(['en']);
+    });
+
+    it('drops tags whose q-value is not a number', () => {
+        expect(parseAcceptLanguage('en, fr;q=high, de;q=0.5')).toEqual(['en', 'de']);
+    });
+
+    it('treats the q parameter name case-insensitively', () => {
+        // Header parameter names are case-insensitive (RFC 9110 § 5.6.2).
+        expect(parseAcceptLanguage('de;Q=0.5,en;q=0.9')).toEqual(['en', 'de']);
     });
 });

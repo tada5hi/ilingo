@@ -521,7 +521,11 @@ Or call `ilingo.registerFormatter(name, fn)` after construction. Custom formatte
 `negotiateLocale(supported, requested)` picks the best match between a list of supported locales and a list of requested ones (typically from an HTTP `Accept-Language` header). Implements BCP-47 best-match: exact match → prefix match → parent walk.
 
 ```typescript
-import { negotiateLocale, parseAcceptLanguage } from 'ilingo';
+import { Ilingo, MemoryStore, negotiateLocale, parseAcceptLanguage } from 'ilingo';
+
+const ilingo = new Ilingo({
+    store: new MemoryStore({ data: /* ... */ }),
+});
 
 const supported = ['en', 'de', 'pt-BR'];
 

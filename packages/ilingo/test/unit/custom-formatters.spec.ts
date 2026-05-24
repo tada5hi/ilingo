@@ -56,6 +56,28 @@ describe('Custom formatters (#906)', () => {
         ).toEqual('You owe NUM:99');
     });
 
+    it('clone({ formatters }) applies the override formatters to the shared registry', async () => {
+        // Regression for PR #918 review: clone() previously accepted
+        // overrides.formatters via Partial<Config> but didn't apply them at
+        // runtime — silent no-op.
+        const parent = new Ilingo({ store: new MemoryStore({ data: {} }) });
+        const child = parent.clone({
+            store: new MemoryStore({
+                data: { en: { app: { hi: 'hi {{name, upper}}' } } },
+            }),
+            formatters: {
+                upper: (value, _opts, locale) =>
+                    String(value).toLocaleUpperCase(locale),
+            },
+        });
+
+        expect(
+            await child.get({ group: 'app', key: 'hi', data: { name: 'peter' } }),
+        ).toEqual('hi PETER');
+        // Shared registry: the parent now sees the formatter too.
+        expect(parent.formatters.has('upper')).toBe(true);
+    });
+
     it('clone() shares the formatter registry — custom formatters work in the child', async () => {
         const parent = new Ilingo({
             store: new MemoryStore({ data: {} }),

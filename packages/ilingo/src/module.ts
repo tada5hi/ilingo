@@ -132,6 +132,11 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
      * the new instance (resolved before any inherited store). Other
      * overrides replace the corresponding inherited config field.
      *
+     * `overrides.formatters`, when provided, is registered on the shared
+     * registry — visible to both the parent and the child (consistent with
+     * the registry-sharing design). Callers that need formatter isolation
+     * should construct manually instead of cloning.
+     *
      * Designed for consumers that need a scoped variant of an existing
      * orchestrator — e.g. `@ilingo/vue`'s `useScopedCatalog`.
      */
@@ -155,6 +160,14 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
         // are honoured. Trade-off: mutations on either side are visible to
         // both. Callers that need isolation should construct manually.
         child.formatters = this.formatters;
+        // Apply any new formatters from the overrides AFTER pointing at the
+        // shared registry, so they land on the shared map and are visible to
+        // the parent too. (Type contract: overrides.formatters is honoured.)
+        if (overrides.formatters) {
+            for (const [name, fn] of Object.entries(overrides.formatters)) {
+                child.formatters.register(name, fn);
+            }
+        }
         return child;
     }
 
