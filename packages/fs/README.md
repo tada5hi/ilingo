@@ -95,6 +95,35 @@ await store.set({
 
 Writes are atomic (write-to-temp then `rename`) and the full merged record is serialized — sibling keys are preserved. If the original source for a group was a `.ts` / `.js` / `.cjs` file, that file is left untouched and the new `.json` lives alongside it; on the next load `smob` merges both, with the newer JSON taking precedence.
 
+## Watch mode (dev hot-reload)
+
+`FSStore({ watch: true })` watches the configured `directory` paths via [chokidar](https://github.com/paulmillr/chokidar) and invalidates the matching `(locale, group)` cache entry on every file change. Subscribe via `store.on('invalidate', cb)` to react — `@ilingo/vue`'s `useTranslation` does this automatically, so file edits show up live in the rendered component without a remount.
+
+```typescript
+import { FSStore } from '@ilingo/fs';
+
+const store = new FSStore({
+    directory: './language',
+    watch: process.env.NODE_ENV !== 'production',
+});
+
+store.on('invalidate', (locale, group) => {
+    console.log(`[i18n] reloaded ${locale}/${group}`);
+});
+```
+
+`chokidar` is an **optional peer dependency**. Install it (`npm i chokidar -D`) when enabling `watch: true`; the store logs a clear error and continues without watching if it isn't available. Call `store.close()` on app shutdown / in tests to stop the watcher.
+
+Manual invalidation (no watch) works too:
+
+```typescript
+const store = new FSStore({ directory: './language' });
+
+store.invalidate('en', 'app');   // drop the cached en/app.* — next get() re-reads
+store.invalidate('en');          // drop all groups for en
+store.invalidate();              // drop everything
+```
+
 ## License
 
 Made with 💚

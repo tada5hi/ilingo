@@ -45,6 +45,53 @@ await store.set({
 });
 ```
 
+## LoaderStore
+
+For browser / SPA apps that code-split locales, `LoaderStore` lazy-loads translation data via a user-supplied function and caches the result per `(locale, group)`:
+
+```typescript
+import { Ilingo, LoaderStore } from 'ilingo';
+
+const ilingo = new Ilingo({
+    store: new LoaderStore({
+        loader: async (locale, group) => {
+            const m = await import(`./locales/${locale}/${group}.json`);
+            return m.default;
+        },
+        locales: ['en', 'de', 'fr'],
+    }),
+});
+```
+
+- Concurrent `get()`s for the same `(locale, group)` share one loader call.
+- Misses (loader returning `undefined`) are cached too — the loader isn't re-called for known-missing pairs.
+- Implements `InvalidatingStore` — see [Cache invalidation](#cache-invalidation).
+
+## Cache invalidation
+
+Stores that cache lookups can implement `InvalidatingStore`:
+
+```typescript
+export interface InvalidatingStore extends IStore {
+    invalidate(locale?: string, group?: string): void;
+    on(event: 'invalidate', listener: (locale?: string, group?: string) => void): () => void;
+}
+```
+
+Both `LoaderStore` and `FSStore` implement it. `@ilingo/vue`'s `useTranslation` automatically subscribes to every `InvalidatingStore` in the instance's store set — so file changes under `FSStore({ watch: true })` show up in the rendered UI without a remount.
+
+```typescript
+import { isInvalidatingStore } from 'ilingo';
+
+for (const store of ilingo.stores) {
+    if (isInvalidatingStore(store)) {
+        store.on('invalidate', (locale, group) => {
+            console.log(`reloaded ${locale ?? '*'}/${group ?? '*'}`);
+        });
+    }
+}
+```
+
 ## FSStore
 
 Lazy-loads files from disk. See [Integrations → File System](/integrations/fs) for the full story; the gist:

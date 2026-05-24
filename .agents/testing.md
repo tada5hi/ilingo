@@ -33,6 +33,8 @@ unit/
 │                                   #   handler, per-instance warn isolation, parallel intra-locale lookup
 ├── formatters-integration.spec.ts  # end-to-end Ilingo.get() with number/date/list modifiers,
 │                                   #   resolved-locale propagation, per-instance cache, dev-warn
+├── custom-formatters.spec.ts       # registerFormatter + Config.formatters; built-in override; clone shares
+├── loader-store.spec.ts            # LoaderStore lazy load, dedupe, cache, miss cache, invalidate, events
 ├── types.spec-d.ts                 # compile-time-only — typed-catalog inference, plural-key
 │                                   #   count requirement, defineCatalog narrowing.
 │                                   #   Run via `npm run test:types --workspace=packages/ilingo`
@@ -53,6 +55,7 @@ data/
 unit/
 ├── component-t.spec.ts         # <ITranslateT> — slot rendering, vars, fragments, error paths
 ├── directive-t.spec.ts         # v-t directive — string/object bindings, reactive locale, opt-out
+├── invalidation.spec.ts        # useTranslation re-runs on InvalidatingStore.invalidate() (scoped)
 └── scoped-catalog.spec.ts      # useScopedCatalog — same-component t, descendant provide, no-leak, fallback
 ```
 
@@ -63,8 +66,11 @@ The Vue package uses **happy-dom** for the DOM environment and **@vue/test-utils
 ```
 unit/
 ├── module.spec.ts              # FSStore.loadGroup against test/data/language/ + fallback semantics
-└── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
-                                #   split read/write directories
+├── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
+│                               #   split read/write directories
+└── watch.spec.ts               # FSStore({ watch: true }) emits invalidate on file change;
+                                #   manual invalidate() drops cache; close() teardown is idempotent.
+                                #   Needs the optional `chokidar` peer dep installed (it is, devDep).
 data/
 └── language/{en,de,fr}/form.{cjs,ts,json}  # exercises locter's multi-extension resolution
 ```
