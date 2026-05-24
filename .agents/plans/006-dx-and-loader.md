@@ -1,6 +1,9 @@
 # Phase 6 — DX + loader-based store
 
-**Status**: Blocked by Phase 5 (cache-invalidation API touches the composable).
+**Status**: Split into two waves —
+- **Phase 6A** (#905 + #906): In review (branch `feat/locale-negotiation-and-custom-formatters`).
+- **Phase 6B** (#903 + #904): Ready — follow-up after 6A merges.
+
 **Tracks**: [#903](https://github.com/tada5hi/ilingo/issues/903), [#904](https://github.com/tada5hi/ilingo/issues/904), [#905](https://github.com/tada5hi/ilingo/issues/905), [#906](https://github.com/tada5hi/ilingo/issues/906).
 
 Four loosely-coupled DX features. They can land in any order, but #903 + #904 share the `invalidate()` cache surface so coordinate those two.
@@ -45,8 +48,8 @@ Four loosely-coupled DX features. They can land in any order, but #903 + #904 sh
 
 - [ ] `new LoaderStore({ loader: (l, g) => import(`./locales/${l}/${g}.json`) })` resolves a key from a code-split chunk.
 - [ ] `FSStore({ watch: true })`: editing `test/data/language/en/form.ts` in a running playground reflects in the rendered Vue component within one second.
-- [ ] `negotiateLocale(['en', 'pt-BR'], ['pt-PT', 'pt', 'en'])` returns `'pt-BR'` (longest prefix wins).
-- [ ] `ilingo.registerFormatter('upper', (locale) => v => String(v).toLocaleUpperCase(locale))` works inside `{{name, upper}}`.
+- [x] `negotiateLocale(['en', 'pt-BR'], ['pt-PT', 'pt', 'en'])` returns `'pt-BR'` (longest prefix wins). Asserted in `test/unit/utils/negotiate.spec.ts`.
+- [x] `ilingo.registerFormatter('upper', (value, _options, locale) => String(value).toLocaleUpperCase(locale))` works inside `{{name, upper}}`. Plus a `Config.formatters` constructor-time sugar covered in `custom-formatters.spec.ts`. Signature is `(value, options, locale) => string` — same as built-in formatters.
 
 ## Why last
 

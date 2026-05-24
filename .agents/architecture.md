@@ -37,15 +37,26 @@ A leaf can be either a plain `string` or a `PluralLeaf` (`{ zero?, one?, two?, f
 
 The orchestrator selects a form using `Intl.PluralRules` keyed by the *resolved* locale (the one that actually matched). `Intl.PluralRules` instances are cached per locale on the `Ilingo` instance.
 
+### Locale negotiation utilities
+
+`packages/ilingo/src/utils/negotiate.ts` exposes two pure helpers for picking a locale from a request:
+
+- `negotiateLocale(supported, requested): string | undefined` — BCP-47 best-match (exact → prefix → parent walk). Returns the matching entry from `supported`, preserving its original casing.
+- `parseAcceptLanguage(header): string[]` — parses an RFC 9110 `Accept-Language` header into a quality-sorted tag list (drops `*`).
+
+These are utility-style — they don't touch `Ilingo` state. Callers compose them: `ilingo.setLocale(negotiateLocale(supported, requested) ?? defaultLocale)`. Kept in core so server-side (Express / Hono / Nuxt server routes) and client-side (`navigator.languages`) consumers share the same matcher.
+
 ### 6. Template formatters via a per-instance registry
 
 Template placeholders accept modifier syntax: `{{value, formatter}}` and `{{value, formatter(opt=value, ...)}}`. The orchestrator owns a `FormatterRegistry` instance that:
 
 - Holds the built-in formatters `number`, `date`, `list` (backed by `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.ListFormat`).
 - Memoises `Intl.*Format` instances keyed by `(formatter, locale, JSON-encoded options)` so repeated renders don't reallocate.
-- Exposes `register(name, fn)` and `get(name)` — designed so Phase 6 (#906) opens it to user-supplied formatters without re-architecting.
+- Exposes `register(name, fn)` / `get(name)` publicly. Two ergonomic entry points sit on `Ilingo`: `registerFormatter(name, fn)` (delegates to the registry) and `Config.formatters` (constructor-time bulk registration). Names registered via either surface override the built-ins if they collide.
 
 The locale handed to a formatter is the **resolved** locale (the one that actually yielded the message), not the requested one. Unknown modifiers fall back to `String(value)` and emit a per-instance dev-mode one-shot warning via the same `isProductionEnv()` gate used by the missing-key handler.
+
+`clone()` shares the formatter registry by reference — custom formatters registered on either side are visible to both. Callers that need isolation should build the child instance directly.
 
 ### 7. Type-safe keys via a generic `Ilingo<Catalog>`
 
@@ -209,8 +220,9 @@ packages/ilingo/src/
 ├── catalog.ts               ← defineCatalog<const T>() helper
 ├── utils/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
+│   ├── negotiate.ts         ← negotiateLocale, parseAcceptLanguage (request-side locale picking)
 │   ├── identify.ts          ← isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord, PLURAL_MARKER
-│   ├── formatters.ts        ← FormatterRegistry, parseFormatterOptions, parseModifier, Formatter type
+│   ├── formatters.ts        ← FormatterRegistry (with public register/get), parseFormatterOptions, parseModifier, Formatter type
 │   ├── template.ts          ← {{var}} + {{var, formatter(opts)}} substitution; tokenize() for slot-aware renderers
 │   └── language/            ← isBCP47LanguageCode + CLDR data
 └── config/                  ← typed input shape

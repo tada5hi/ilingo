@@ -19,6 +19,7 @@ import type {
     LocalesRecord,
     MissingKeyHandler,
 } from './types';
+import type { Formatter } from './utils';
 import {
     FormatterRegistry,
     resolveLocaleChain,
@@ -86,11 +87,35 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
         this.warnedKeys = new Set();
         this.warnedFormatters = new Set();
         this.formatters = new FormatterRegistry();
+        if (input.formatters) {
+            for (const [name, fn] of Object.entries(input.formatters)) {
+                this.formatters.register(name, fn);
+            }
+        }
 
         this.stores = new Set<IStore>();
         if (input.store) {
             this.stores.add(input.store);
         }
+    }
+
+    /**
+     * Register a custom formatter for use inside `{{value, name(opts)}}`
+     * placeholders. Equivalent to `this.formatters.register(name, fn)` —
+     * exposed as an instance method for discoverability and parity with
+     * `setLocale` / `merge` / `clone`.
+     *
+     * @example
+     *     ilingo.registerFormatter('upper', (value, _opts, locale) =>
+     *         String(value).toLocaleUpperCase(locale));
+     *     await ilingo.get({
+     *         group: 'app', key: 'shout',
+     *         data: { name: 'peter' },
+     *     });
+     *     // "{{name, upper}}" → "PETER"
+     */
+    registerFormatter(name: string, formatter: Formatter): void {
+        this.formatters.register(name, formatter);
     }
 
     // ----------------------------------------------------
@@ -106,6 +131,11 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
      * `overrides.store`, when provided, becomes the **first** store in
      * the new instance (resolved before any inherited store). Other
      * overrides replace the corresponding inherited config field.
+     *
+     * `overrides.formatters`, when provided, is registered on the shared
+     * registry — visible to both the parent and the child (consistent with
+     * the registry-sharing design). Callers that need formatter isolation
+     * should construct manually instead of cloning.
      *
      * Designed for consumers that need a scoped variant of an existing
      * orchestrator — e.g. `@ilingo/vue`'s `useScopedCatalog`.
@@ -130,6 +160,14 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
         // are honoured. Trade-off: mutations on either side are visible to
         // both. Callers that need isolation should construct manually.
         child.formatters = this.formatters;
+        // Apply any new formatters from the overrides AFTER pointing at the
+        // shared registry, so they land on the shared map and are visible to
+        // the parent too. (Type contract: overrides.formatters is honoured.)
+        if (overrides.formatters) {
+            for (const [name, fn] of Object.entries(overrides.formatters)) {
+                child.formatters.register(name, fn);
+            }
+        }
         return child;
     }
 

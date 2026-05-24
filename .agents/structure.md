@@ -54,8 +54,9 @@ src/
 └── utils/
     ├── index.ts
     ├── locale.ts             # bcp47Parents, resolveLocaleChain
+    ├── negotiate.ts          # negotiateLocale, parseAcceptLanguage (BCP-47 best-match)
     ├── identify.ts           # PLURAL_MARKER + isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord
-    ├── formatters.ts         # FormatterRegistry, parseFormatterOptions, parseModifier, Formatter type
+    ├── formatters.ts         # FormatterRegistry (with public register/get), parseFormatterOptions, parseModifier, Formatter type
     ├── template.ts           # {{var}} + {{var, formatter(opts)}} interpolation + tokenize() for slot-aware renderers (Vue)
     └── language/
         ├── index.ts
@@ -64,11 +65,13 @@ src/
 test/
 └── unit/
     ├── module.spec.ts                # legacy core behaviour
-    ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, parallel lookup
+    ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, parallel lookup, clone()
     ├── formatters-integration.spec.ts # Ilingo.get() with number/date/list modifiers, cache + dev-warn
+    ├── custom-formatters.spec.ts     # registerFormatter + Config.formatters constructor sugar
     ├── types.spec-d.ts               # compile-time-only — run via `npm run test:types` (vitest typecheck)
     └── utils/
         ├── locale.spec.ts            # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
+        ├── negotiate.spec.ts         # negotiateLocale + parseAcceptLanguage
         ├── formatters.spec.ts        # parseFormatterOptions, parseModifier, FormatterRegistry, template dispatch
         ├── identify.spec.ts
         └── template.spec.ts
