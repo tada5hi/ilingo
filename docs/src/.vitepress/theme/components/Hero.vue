@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useData } from 'vitepress';
 import { Ilingo, MemoryStore } from 'ilingo';
 
@@ -75,9 +75,14 @@ const state = reactive({
 
 const chain = computed(() => ilingo.getResolvedLocaleChain({ locale: state.locale }));
 
-const greeting = ref('');
-const items = ref('');
-const total = ref('');
+// Initial values match the default state (locale=en, name=Peter, count=3,
+// amount=49.9). Hardcoding them lets SSR ship rendered strings without
+// requiring a top-level await (which would force a <Suspense> ancestor that
+// VitePress's `layout: page` does not provide). `onMounted` re-runs the
+// async ilingo lookup on the client to stay accurate if the catalog changes.
+const greeting = ref('Welcome, Peter!');
+const items = ref('3 items in your cart');
+const total = ref('Total: €49.90');
 
 async function renderAll () {
     const [greetingValue, itemsValue, totalValue] = await Promise.all([
@@ -90,17 +95,12 @@ async function renderAll () {
     total.value = totalValue ?? '';
 }
 
-// Register the watcher SYNCHRONOUSLY (before any await) so it attaches to the
-// current component scope. Composition-API calls made after a top-level await
-// in <script setup> are detached and would never fire.
 watch(
     () => [state.locale, state.name, state.count, state.amount] as const,
     renderAll,
 );
 
-// Pre-populate initial values so SSR ships the rendered strings instead of
-// empty spans. The watcher above is already wired up.
-await renderAll();
+onMounted(renderAll);
 
 const { isDark } = useData();
 
