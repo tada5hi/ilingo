@@ -23,9 +23,9 @@ Wrap the plural object in `{ "@plural": { ... } }`:
 
 The marker disambiguates plurals from regular namespaces that happen to use CLDR-category keys. Use this form in JSON files.
 
-### Structural (back-compat)
+### Structural (back-compat, **deprecated**)
 
-A bare `{ one, other }` object is also recognised, **as long as every key is a CLDR category and `other` is present**:
+A bare `{ one, other }` object is also recognised at runtime, **as long as every key is a CLDR category and `other` is present**:
 
 ```typescript
 {
@@ -38,7 +38,21 @@ A bare `{ one, other }` object is also recognised, **as long as every key is a C
 }
 ```
 
-This is what existing codebases use. New code should prefer the explicit form.
+::: warning Scheduled for removal
+The bare structural form is deprecated as of the stability roadmap ([#917](https://github.com/tada5hi/ilingo/issues/917) Track B) and will be removed at the next major release.
+
+When detected at lookup time, the store emits a one-shot dev-mode warning per `(locale, group, key)` so a render loop doesn't spam the console:
+
+```
+[ilingo] deprecated: the bare structural plural form ({ one, other, ... }) at "en.cart.items"
+will be removed in the next major. Wrap it in `{ "@plural": { ... } }` (JSON) or use
+`definePlural({ ... })` (TS).
+```
+
+Production builds (`NODE_ENV=production`) stay silent — the warning is dev-only.
+
+Migration is one line per leaf: wrap the existing object in `{ "@plural": ... }` for JSON or `definePlural({ ... })` for TS. Behaviour is otherwise unchanged.
+:::
 
 ## TS/JS: `definePlural`
 

@@ -339,7 +339,7 @@ const catalog = defineCatalog({
 
 `definePlural` is a thin identity helper — it returns `{ '@plural': leaf }` with the same runtime shape as the JSON form. The `const` generic preserves the literal types of each plural form (so `Ilingo<typeof catalog>` still sees them as plural keys requiring `count`). The TS/JS version gets CLDR-category autocomplete and a compile error if you misspell `other` or pass a non-CLDR key.
 
-Structural detection (a bare `{ one, other }` object without the marker) is still supported for backward compatibility.
+> ⚠️ **Deprecated**: the **bare structural form** (a `{ one, other }` object without the `@plural` wrapper) is still accepted at runtime for backward compatibility but emits a one-shot dev-mode warning per `(locale, group, key)`. The stability roadmap (#917 Track B) removes it at the next major — wrap your plural leaves in `{ "@plural": { ... } }` (JSON) or `definePlural({ ... })` (TS) to silence the warning and stay forward-compatible.
 
 Plural leaves round-trip through `store.set()` — `StoreSetContext.value` accepts either a `string` or a `PluralLeaf`. The `FSStore.set` persistence writes them as JSON unchanged.
 

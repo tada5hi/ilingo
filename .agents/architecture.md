@@ -33,7 +33,7 @@ Translations are addressed by `(locale, group, key)` plus an optional `count` fo
 A leaf can be either a plain `string` or a `PluralLeaf` (`{ zero?, one?, two?, few?, many?, other }`). Two storage forms are accepted:
 
 - **Explicit (recommended)** — `{ "@plural": { one, other, ... } }`. Detection keys off the marker so siblings with CLDR-category names cannot collide.
-- **Structural (back-compat)** — bare `{ one, other }` with all keys being CLDR categories and `other` present.
+- **Structural (back-compat, deprecated)** — bare `{ one, other }` with all keys being CLDR categories and `other` present. Accepted at runtime today but emits a one-shot dev-mode warning per `(locale, group, key)`; scheduled for removal at the next major per #917 Track B. Migration is a one-line wrap.
 
 The orchestrator selects a form using `Intl.PluralRules` keyed by the *resolved* locale (the one that actually matched). `Intl.PluralRules` instances are cached per locale on the `Ilingo` instance.
 

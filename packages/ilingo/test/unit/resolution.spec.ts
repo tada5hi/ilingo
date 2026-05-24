@@ -286,6 +286,73 @@ describe('Ilingo — resolution path', () => {
         });
     });
 
+    describe('structural plural form (deprecated, #917 Track B)', () => {
+        it('still works for backward compatibility', async () => {
+            // Same data as the explicit form, but no @plural wrapper.
+            const ilingo = new Ilingo({
+                store: new MemoryStore({
+                    data: {
+                        en: {
+                            cart: {
+                                items: {
+                                    one: '{{count}} item',
+                                    other: '{{count}} items',
+                                },
+                            },
+                        },
+                    },
+                }),
+            });
+            expect(
+                await ilingo.get({ group: 'cart', key: 'items', count: 1 }),
+            ).toEqual('1 item');
+            expect(
+                await ilingo.get({ group: 'cart', key: 'items', count: 7 }),
+            ).toEqual('7 items');
+        });
+
+        it('emits a one-shot deprecation warning per (locale, group, key)', async () => {
+            const ilingo = new Ilingo({
+                store: new MemoryStore({
+                    data: {
+                        en: { cart: { items: { one: '1 item', other: '{{count}} items' } } },
+                    },
+                }),
+            });
+
+            // Three accesses to the same key — should warn once.
+            await ilingo.get({ group: 'cart', key: 'items', count: 1 });
+            await ilingo.get({ group: 'cart', key: 'items', count: 2 });
+            await ilingo.get({ group: 'cart', key: 'items', count: 3 });
+
+            expect(warn).toHaveBeenCalledTimes(1);
+            expect(warn.mock.calls[0][0]).toContain('deprecated');
+            expect(warn.mock.calls[0][0]).toContain('en.cart.items');
+            expect(warn.mock.calls[0][0]).toContain('@plural');
+        });
+
+        it('does NOT warn for the explicit @plural form', async () => {
+            const ilingo = new Ilingo({
+                store: new MemoryStore({
+                    data: {
+                        en: {
+                            cart: {
+                                items: {
+                                    '@plural': { one: '1 item', other: '{{count}} items' },
+                                },
+                            },
+                        },
+                    },
+                }),
+            });
+
+            await ilingo.get({ group: 'cart', key: 'items', count: 1 });
+            await ilingo.get({ group: 'cart', key: 'items', count: 5 });
+
+            expect(warn).not.toHaveBeenCalled();
+        });
+    });
+
     describe('explicit @plural marker', () => {
         it('definePlural() produces the same runtime shape as the @plural literal', async () => {
             const { definePlural } = await import('../../src');

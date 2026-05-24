@@ -22,29 +22,10 @@ import type {
 import type { Formatter } from './utils';
 import {
     FormatterRegistry,
+    isProductionEnv,
     resolveLocaleChain,
     template,
 } from './utils';
-
-/**
- * `true` when running under a production bundle.
- *
- * Webpack's DefinePlugin and Vite's `define` replace the literal expression
- * `process.env.NODE_ENV` at build time. We reference it directly (rather
- * than via `globalThis`) so that replacement actually fires. The
- * `typeof process !== 'undefined'` guard makes raw-browser execution
- * (no polyfill, no bundler) safe.
- */
-function isProductionEnv(): boolean {
-    /* istanbul ignore next */
-    try {
-        return typeof process !== 'undefined' &&
-            process.env != null &&
-            process.env.NODE_ENV === 'production';
-    } catch {
-        return false;
-    }
-}
 
 export class Ilingo<C extends LocalesRecord = LocalesRecord> {
     public readonly stores: Set<IStore>;
