@@ -17,6 +17,27 @@ export type StoreSetContext = StoreGetContext & {
     value: Leaf,
 };
 
+/**
+ * Read/write port for translation backends. The surface is intentionally
+ * minimal — `get`, `set`, `getLocales` — and is **frozen** for the stable
+ * release: external adapters can rely on these three methods being the
+ * complete required contract.
+ *
+ * Extensions are layered as optional interfaces detected via type guards
+ * (today: `InvalidatingStore` for caches that can be dropped). New
+ * capabilities like `has`, `delete`, `getKeys`, or batch `getAll` will
+ * follow the same opt-in pattern rather than expanding this interface —
+ * each was considered for inclusion and deferred:
+ *
+ * - `has(ctx)` — `get(ctx)` already returns `undefined` for misses; a
+ *   separate `has` doubles the round-trip count for network-backed stores
+ *   without buying meaningful API ergonomics.
+ * - `delete(ctx)` / `getKeys(group)` — no in-tree consumer; speculative.
+ * - `getAll(locale, group)` — bulk loading is the job of `LoaderStore`,
+ *   which pre-warms a whole group on first access.
+ *
+ * Re-evaluate each only when a concrete consumer surfaces.
+ */
 export interface IStore {
     /**
      * Resolve a `(locale, group, key)` to a leaf value.
@@ -27,8 +48,18 @@ export interface IStore {
      */
     get(context: StoreGetContext): Promise<Leaf | undefined>;
 
+    /**
+     * Persist a `(locale, group, key)` → leaf mapping. Implementations
+     * that are read-only may throw; callers writing through `Ilingo` do
+     * not invoke `set` themselves.
+     */
     set(context: StoreSetContext): Promise<void>;
 
+    /**
+     * Enumerate the locales the store can currently resolve. Used by
+     * `Ilingo.getLocales()` to aggregate across every registered store
+     * and by `negotiateLocale()` callers that want the supported list.
+     */
     getLocales(): Promise<string[]>;
 }
 

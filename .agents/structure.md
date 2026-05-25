@@ -46,7 +46,7 @@ src/
 ├── constants.ts              # LOCALE_DEFAULT = 'en'
 ├── config/
 │   ├── index.ts
-│   └── type.ts               # Config { store, locale, fallback, onMissingKey }; ConfigInput = Partial<Config>
+│   └── type.ts               # Config { store?, locale?, fallback?, onMissingKey?, formatters? } — all fields optional (defaults applied at runtime); ConfigInput = back-compat alias
 ├── store/
 │   ├── index.ts              # barrel
 │   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext (value: Leaf),
