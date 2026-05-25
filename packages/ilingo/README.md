@@ -545,6 +545,8 @@ ilingo.setLocale(chosen);
 
 ## Store
 
+A store implements the `IStore` port — `get`, `set`, `getLocales`. This three-method surface is **frozen** for the stable release; optional capabilities (cache invalidation, file watching, …) layer as separate interfaces detected via type guards (see [Invalidation](#invalidation) below). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
+
 ### Memory Store
 
 The Memory Store is the default store and is set if no
