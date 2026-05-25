@@ -124,6 +124,16 @@ The `@ilingo/fs` branch floor is intentionally loose — FSStore has many option
 
 CI runs `npm run test:coverage`, so threshold violations fail the build. Treat the thresholds as a ratchet — when sustained baseline moves above the floor, raise the floor in the same PR that benefits from it. Don't lower a threshold to keep CI green; investigate why the previous floor became hard to hit.
 
+## Benchmarks
+
+`packages/ilingo/bench/` holds a `vitest bench` suite that pairs ilingo against `i18next` (installed as a devDep) on four workloads: cache-hit `get()`, cache-miss with a 3-deep fallback chain, plural lookup, and template with an `Intl.NumberFormat` modifier. Run with `npm run bench --workspace=packages/ilingo`.
+
+The shared `bench/setup.ts` exports `makeIlingo()` / `makeI18next()` factories built from the same synthetic catalog so the two libraries do the same work. Each scenario is one `.bench.ts` file — keep it that way so contributors can run just the file that's relevant.
+
+Numbers and methodology live on the `/performance` docs page. When you change something in the resolution path (orchestrator, store lookup, formatter dispatch), run the suite before and after; the `hz` ratio is the answer to "did this make ilingo slower". `bench/results.json` is gitignored — it's a per-run artifact, not a tracked baseline.
+
+`vue-i18n` isn't part of the comparison because its API is shaped around Vue setup context; a fair comparison runs through `@ilingo/vue` not core. Planned as a separate bench page when `@ilingo/vue` benchmarks land.
+
 ## Infrastructure
 
 None. No Docker, no databases, no network services. Tests are pure — they read fixture files from `test/data/` on local disk.

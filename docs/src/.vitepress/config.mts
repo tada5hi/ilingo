@@ -33,6 +33,7 @@ export default defineConfig({
             { text: 'Guide', link: '/guide/', activeMatch: '/guide/' },
             { text: 'Integrations', link: '/integrations/', activeMatch: '/integrations/' },
             { text: 'Recipes', link: '/recipes/ssr', activeMatch: '/recipes/' },
+            { text: 'Performance', link: '/performance', activeMatch: '/performance' },
             { text: 'Migration', link: '/migration/from-5.0', activeMatch: '/migration/' },
         ],
         sidebar: {
@@ -78,6 +79,12 @@ export default defineConfig({
                 text: 'Recipes',
                 items: [
                     { text: 'Server-Side Rendering', link: '/recipes/ssr' },
+                ],
+            }],
+            '/performance': [{
+                text: 'Performance',
+                items: [
+                    { text: 'Benchmarks', link: '/performance' },
                 ],
             }],
             '/migration/': [{
