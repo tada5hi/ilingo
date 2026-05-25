@@ -108,3 +108,16 @@ Names registered via either surface **override the built-ins** if they collide. 
 ## The shared registry
 
 Each `Ilingo` instance owns a `FormatterRegistry`. `clone()` shares that registry by reference — custom formatters registered on either side are visible to both. If you need isolation, build the child instance directly.
+
+## ICU MessageFormat
+
+We don't ship an ICU MessageFormat formatter in core — the [plural form](./pluralization), the built-in `Intl.*Format` modifiers above, and custom formatters cover the same surface for typical apps without the ICU runtime weight or the MessageFormat parser. If you need full ICU semantics (`select`, `selectordinal`, nested clauses), register a custom formatter against your ICU runtime of choice:
+
+```typescript
+import IntlMessageFormat from 'intl-messageformat';
+
+ilingo.registerFormatter('icu', (value, _opts, locale) =>
+    new IntlMessageFormat(String(value), locale).format(_opts));
+```
+
+The cost lands only at the call sites that opt in, instead of every render.
