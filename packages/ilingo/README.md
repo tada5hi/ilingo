@@ -452,6 +452,24 @@ await ilingo.get({ group: 'cart',  key: 'items', count: 1 });  // OK
 
 `defineCatalog<const T>(catalog)` uses TS 5+ const-generic inference so per-key literals (and `@plural`-wrapped plural leaves) aren't widened to `string`. The runtime function is a no-op identity — purely a type carrier.
 
+For one-file-per-locale layouts, reach for `defineLocale<const T extends GroupsRecord>(locale: T): T` — the per-locale companion. It preserves literal types through an `export default` boundary and validates that the body is a `GroupsRecord` (catching a stray top-level string that `as const` would let through). Combine with `defineCatalog` to merge per-locale files into a single typed catalog:
+
+```typescript
+// locales/en.ts
+import { defineLocale, definePlural } from 'ilingo';
+
+export default defineLocale({
+    app:  { greeting: 'Hi {{name}}' },
+    cart: { items: definePlural({ one: '1 item', other: '{{count}} items' }) },
+});
+
+// locales/index.ts
+import { defineCatalog } from 'ilingo';
+import en from './en';
+import de from './de';
+export const catalog = defineCatalog({ en, de });
+```
+
 Inference is structural, derived from the union of locales. Keep all locales aligned to the same shape and the inferred `Key<C, G>` is the natural set of leaf paths. Diverging locales widen the union but never break compilation.
 
 `new Ilingo()` (no generic) preserves today's loose typing — `group: string, key: string` are accepted. The generic is opt-in.

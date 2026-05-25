@@ -32,6 +32,7 @@ export default defineConfig({
             { text: 'Getting Started', link: '/getting-started/', activeMatch: '/getting-started/' },
             { text: 'Guide', link: '/guide/', activeMatch: '/guide/' },
             { text: 'Integrations', link: '/integrations/', activeMatch: '/integrations/' },
+            { text: 'Migration', link: '/migration/from-5.0', activeMatch: '/migration/' },
         ],
         sidebar: {
             '/getting-started/': [{
@@ -47,6 +48,7 @@ export default defineConfig({
                     text: 'Concepts',
                     items: [
                         { text: 'Overview', link: '/guide/' },
+                        { text: 'Catalog Design', link: '/guide/catalog-design' },
                         { text: 'Stores', link: '/guide/stores' },
                         { text: 'Locales & Fallback', link: '/guide/locales' },
                         { text: 'Templates & Data', link: '/guide/templates' },
@@ -69,6 +71,12 @@ export default defineConfig({
                     { text: 'File System', link: '/integrations/fs' },
                     { text: 'Vue', link: '/integrations/vue' },
                     { text: 'Vuelidate', link: '/integrations/vuelidate' },
+                ],
+            }],
+            '/migration/': [{
+                text: 'Migration',
+                items: [
+                    { text: 'From 5.0', link: '/migration/from-5.0' },
                 ],
             }],
         },
