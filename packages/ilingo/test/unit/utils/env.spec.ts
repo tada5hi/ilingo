@@ -14,13 +14,14 @@ import { isProductionEnv } from '../../../src';
  * `isProductionEnv()` is the single guard the library uses to decide
  * whether to emit dev-mode warnings (missing-key, unknown-formatter).
  * It runs on every Ilingo instance across every runtime the library
- * claims to support — Node, Bun, raw browser ESM, Vite dev, Vite prod
- * (with DefinePlugin substitution), Cloudflare Workers, Deno.
+ * claims to support — Node, Bun, raw browser ESM, Cloudflare Workers,
+ * Deno, plus the Vite / webpack prod-build paths where the
+ * `process.env.NODE_ENV` literal is statically replaced.
  *
  * The guard is intentionally written as a literal `process.env.NODE_ENV`
  * reference (so bundlers' static substitution fires) wrapped in a
  * `typeof process !== 'undefined'` runtime check + a try/catch (for
- * sandboxes that throw on `process.env` access). These tests simulate
+ * sandboxes where reading `process.env` throws). These tests simulate
  * each runtime by manipulating the `process` global and verify the
  * guard never throws and never returns true outside production.
  */
@@ -92,20 +93,21 @@ describe('isProductionEnv() — cross-runtime guard', () => {
 
     it('returns false when process.env access throws (sandboxed runtime)', () => {
         // Some restricted runtimes (older Cloudflare Workers compat modes,
-        // certain Edge sandboxes) define `process` as a guarded proxy where
-        // reading `.env` throws. The try/catch swallows it.
-        Object.defineProperty(globalThis, 'process', {
+        // certain Edge sandboxes) expose `process` but define `env` as a
+        // guarded property that throws on read. The try/catch wrapper in
+        // `isProductionEnv` swallows that — without it we'd surface a
+        // misleading `TypeError` from inside a dev-mode warn check.
+        const guarded = Object.create(null) as { env?: unknown };
+        Object.defineProperty(guarded, 'env', {
             configurable: true,
             get(): never {
-                throw new Error('process is not exposed in this runtime');
+                throw new Error('process.env is not exposed in this runtime');
             },
         });
+        (globalThis as { process: typeof guarded }).process = guarded;
 
         expect(() => isProductionEnv()).not.toThrow();
         expect(isProductionEnv()).toBe(false);
-
-        // Clean up the getter so afterEach's plain assignment works.
-        delete (globalThis as { process?: ProcessShape }).process;
     });
 
     it('returns true under a Bun-like environment (process exists, NODE_ENV=production)', () => {
@@ -121,28 +123,13 @@ describe('isProductionEnv() — cross-runtime guard', () => {
         expect(isProductionEnv()).toBe(true);
     });
 
-    it('returns true when DefinePlugin has literal-replaced the comparison (Vite/webpack prod)', () => {
-        // Vite/webpack prod builds replace `process.env.NODE_ENV` with the
-        // string literal `"production"` at build time. The compiled form is
-        // effectively: `typeof process !== 'undefined' && process.env != null && "production" === 'production'`
-        // — which still requires `typeof process` to be true at runtime. In
-        // a Node prod runtime that's the case and the guard returns true,
-        // matching the behavior we'd see after the substitution.
-        (globalThis as { process: { env: { NODE_ENV: string } } }).process = {
-            env: { NODE_ENV: 'production' },
-        } as unknown as NodeJS.Process;
-
-        expect(isProductionEnv()).toBe(true);
-    });
-
-    it('returns false when DefinePlugin replaced NODE_ENV in a browser build', () => {
-        // Browser-targeted Vite/webpack prod build: `process.env.NODE_ENV`
-        // is replaced with `"production"` AND `typeof process` is left as
-        // a runtime check. In the browser, `typeof process` is 'undefined'
-        // so the short-circuit fires before the replaced literal matters.
-        // Result: false (correct — no warnings in browser, even prod).
-        delete (globalThis as { process?: ProcessShape }).process;
-
-        expect(isProductionEnv()).toBe(false);
-    });
+    // Note: bundler-substitution scenarios (Vite / webpack DefinePlugin
+    // replacing `process.env.NODE_ENV` with a literal at build time) are
+    // intentionally not exercised here. Substitution happens pre-runtime
+    // so any runtime test that re-imports the source module just runs
+    // the original code, not the substituted form — the assertions
+    // collapse to the Node-prod / browser cases above. The
+    // post-substitution code is still safe because the `typeof process`
+    // short-circuit fires before the replaced literal is reached in any
+    // runtime that lacks a `process` global.
 });
