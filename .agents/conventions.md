@@ -124,6 +124,26 @@ When adding new source files, keep this contract:
 - **OK**: function/class declarations, constants, JSON imports as values, lazy-imports inside function bodies (e.g. `FSStore`'s lazy `chokidar` import).
 - **Not OK without flipping the field**: top-level statements that run on import (registering globals, mutating prototypes, side-effect-only imports like `import 'some-polyfill'`, CSS imports). If you genuinely need any of these, change the package's `sideEffects` to a path-list (`["**/*.vue", "**/*.css"]`) rather than dropping the optimisation entirely.
 
+### Bundle size — `size-limit` budgets
+
+`.size-limit.json` at the repo root holds a budget per published-package entry — the full barrel for each, plus a couple of typical-slice imports for `ilingo` that validate tree-shaking. CI runs `npm run size` after the build; the job fails if any entry exceeds its limit. Current numbers (brotli, gzipped):
+
+| Entry | Budget | Current |
+|---|---|---|
+| `ilingo` — full barrel | 6 kB | 5.38 kB |
+| `ilingo` — `Ilingo + MemoryStore` | 5 kB | 3.33 kB |
+| `ilingo` — `defineCatalog` only | 1.3 kB | 1.18 kB |
+| `ilingo` — `negotiateLocale + parseAcceptLanguage` | 1.7 kB | 1.55 kB |
+| `@ilingo/fs` — full barrel | 4 kB | 3.00 kB |
+| `@ilingo/vue` — full barrel | 2 kB | 1.74 kB |
+| `@ilingo/vuelidate` — full barrel | 2.5 kB | 1.96 kB |
+
+`@ilingo/fs`'s entry ignores `node:*` modules and the optional `chokidar` peer (server-only package — those aren't consumer-bundled). `@ilingo/vue` and `@ilingo/vuelidate` ignore their declared peers (`vue`, `ilingo`, etc.).
+
+A consequence of `smob` and `pathtrace` not declaring `sideEffects: false` themselves: any single-symbol import from `ilingo` carries a ~1.2 kB floor from those upstream deps. That's why `defineCatalog` alone weighs 1.18 kB — it's not the function (it's an identity); it's the deps that come along. If we ever upstream `sideEffects: false` to those packages (or replace them with first-party code), the tree-shake floor drops further.
+
+Same ratchet rule as coverage thresholds: tighten budgets in the same PR that improves a number; never loosen one to keep CI green — investigate the regression first.
+
 ## Release Process
 
 - **release-please** (`.github/workflows/release.yml`) reads Conventional Commits since the last release tag and opens a PR that bumps versions and updates `CHANGELOG.md` per workspace.

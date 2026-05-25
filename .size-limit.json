@@ -1,0 +1,57 @@
+[
+    {
+        "name": "ilingo — full barrel",
+        "path": "packages/ilingo/dist/index.mjs",
+        "limit": "6 KB"
+    },
+    {
+        "name": "ilingo — Ilingo + MemoryStore (typical minimum)",
+        "path": "packages/ilingo/dist/index.mjs",
+        "import": "{ Ilingo, MemoryStore }",
+        "limit": "5 KB"
+    },
+    {
+        "name": "ilingo — defineCatalog only (tree-shake floor)",
+        "path": "packages/ilingo/dist/index.mjs",
+        "import": "{ defineCatalog }",
+        "limit": "1.3 KB"
+    },
+    {
+        "name": "ilingo — negotiateLocale + parseAcceptLanguage",
+        "path": "packages/ilingo/dist/index.mjs",
+        "import": "{ negotiateLocale, parseAcceptLanguage }",
+        "limit": "1.7 KB"
+    },
+    {
+        "name": "@ilingo/fs — full barrel (node externals)",
+        "path": "packages/fs/dist/index.mjs",
+        "ignore": [
+            "node:fs",
+            "node:fs/promises",
+            "node:path",
+            "node:process",
+            "chokidar",
+            "ilingo",
+            "locter"
+        ],
+        "limit": "4 KB"
+    },
+    {
+        "name": "@ilingo/vue — full barrel",
+        "path": "packages/vue/dist/index.mjs",
+        "ignore": ["vue", "ilingo", "@vueuse/core"],
+        "limit": "2 KB"
+    },
+    {
+        "name": "@ilingo/vuelidate — full barrel",
+        "path": "packages/vuelidate/dist/index.mjs",
+        "ignore": [
+            "vue",
+            "ilingo",
+            "@ilingo/vue",
+            "@vueuse/core",
+            "@vuelidate/core"
+        ],
+        "limit": "2.5 KB"
+    }
+]
