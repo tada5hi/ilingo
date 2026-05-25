@@ -1,5 +1,29 @@
 # Changelog
 
+## [6.0.0](https://github.com/tada5hi/ilingo/compare/ilingo-v5.0.0...ilingo-v6.0.0) (2026-05-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **ilingo:** walk stores serially within a locale, stop at first hit ([#926](https://github.com/tada5hi/ilingo/issues/926))
+* **ilingo:** a get({ locale: 'X' }) call where 'X' has no data now falls through to the default locale rather than returning undefined. Pass fallback: [] to opt out (or pre-check via getResolvedLocale).
+
+### Features
+
+* **ilingo:** deprecate bare structural plural form ([#920](https://github.com/tada5hi/ilingo/issues/920)) ([21a5efa](https://github.com/tada5hi/ilingo/commit/21a5efafa14de01daa7e2e18104c8d00c7707ccf))
+* **ilingo:** freeze IStore port, align Config shape with runtime, expand catalog type-tests ([#925](https://github.com/tada5hi/ilingo/issues/925)) ([325ecba](https://github.com/tada5hi/ilingo/commit/325ecbac45cac95866eb3c3f1b5b4bec91bff58a))
+* **ilingo:** generic Ilingo&lt;Catalog&gt; with type-safe keys ([#915](https://github.com/tada5hi/ilingo/issues/915)) ([d919f35](https://github.com/tada5hi/ilingo/commit/d919f35468351c72db49037714dd41afaaa3d583))
+* **ilingo:** intl number/date/list formatters in templates ([#914](https://github.com/tada5hi/ilingo/issues/914)) ([4618f24](https://github.com/tada5hi/ilingo/commit/4618f24c3122d65743d6a8a28f9d160b8830ff3b))
+* **ilingo:** locale negotiation + custom formatter sugar ([#918](https://github.com/tada5hi/ilingo/issues/918)) ([5e89c91](https://github.com/tada5hi/ilingo/commit/5e89c917d001097691e6aadde805172c97293eee))
+* **ilingo:** pluralization, fallback chain, missing-key handler ([#912](https://github.com/tada5hi/ilingo/issues/912)) ([b091bb4](https://github.com/tada5hi/ilingo/commit/b091bb4ba181163863ad17d9b9b56573796e476b))
+* loader store + FSStore watch mode + invalidation API ([#919](https://github.com/tada5hi/ilingo/issues/919)) ([f615d35](https://github.com/tada5hi/ilingo/commit/f615d35c9ddf1fe28db75fa479c6a31d8032de0e))
+* **vue:** slot-aware ITranslateT, v-t directive, scoped catalogs ([#916](https://github.com/tada5hi/ilingo/issues/916)) ([287d096](https://github.com/tada5hi/ilingo/commit/287d09641df1cc137e763eaf28abf436905fb2c4))
+
+
+### Code Refactoring
+
+* **ilingo:** walk stores serially within a locale, stop at first hit ([#926](https://github.com/tada5hi/ilingo/issues/926)) ([9073b9a](https://github.com/tada5hi/ilingo/commit/9073b9adca7a43466d31dd17bdf4d098c9f083f5))
+
 ## [5.0.0](https://github.com/tada5hi/ilingo/compare/ilingo-v4.4.1...ilingo-v5.0.0) (2026-01-14)
 
 

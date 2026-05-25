@@ -1,5 +1,26 @@
 # Changelog
 
+## [6.0.0](https://github.com/tada5hi/ilingo/compare/fs-v5.0.0...fs-v6.0.0) (2026-05-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **ilingo:** a get({ locale: 'X' }) call where 'X' has no data now falls through to the default locale rather than returning undefined. Pass fallback: [] to opt out (or pre-check via getResolvedLocale).
+
+### Features
+
+* **fs:** persist FSStore.set to disk ([bab057a](https://github.com/tada5hi/ilingo/commit/bab057a003726d3929d7582679b5f05a4bcf7e14))
+* **ilingo:** deprecate bare structural plural form ([#920](https://github.com/tada5hi/ilingo/issues/920)) ([21a5efa](https://github.com/tada5hi/ilingo/commit/21a5efafa14de01daa7e2e18104c8d00c7707ccf))
+* **ilingo:** pluralization, fallback chain, missing-key handler ([#912](https://github.com/tada5hi/ilingo/issues/912)) ([b091bb4](https://github.com/tada5hi/ilingo/commit/b091bb4ba181163863ad17d9b9b56573796e476b))
+* loader store + FSStore watch mode + invalidation API ([#919](https://github.com/tada5hi/ilingo/issues/919)) ([f615d35](https://github.com/tada5hi/ilingo/commit/f615d35c9ddf1fe28db75fa479c6a31d8032de0e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^5.0.0 to ^6.0.0
+
 ## [5.0.0](https://github.com/tada5hi/ilingo/compare/fs-v4.3.3...fs-v5.0.0) (2026-01-14)
 
 

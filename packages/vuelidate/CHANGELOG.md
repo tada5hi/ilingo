@@ -1,5 +1,18 @@
 # Changelog
 
+## [6.0.1](https://github.com/tada5hi/ilingo/compare/vuelidate-v6.0.0...vuelidate-v6.0.1) (2026-05-25)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/vue bumped from ^5.0.0 to ^6.0.0
+    * ilingo bumped from ^5.0.0 to ^6.0.0
+  * peerDependencies
+    * @ilingo/vue bumped from ^5.0.0 to ^6.0.0
+    * ilingo bumped from ^5.0.0 to ^6.0.0
+
 ## [6.0.0](https://github.com/tada5hi/ilingo/compare/vuelidate-v5.0.4...vuelidate-v6.0.0) (2026-01-14)
 
 
