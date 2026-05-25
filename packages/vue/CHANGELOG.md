@@ -1,5 +1,27 @@
 # Changelog
 
+## [6.0.0](https://github.com/tada5hi/ilingo/compare/vue-v5.0.0...vue-v6.0.0) (2026-05-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **ilingo:** a get({ locale: 'X' }) call where 'X' has no data now falls through to the default locale rather than returning undefined. Pass fallback: [] to opt out (or pre-check via getResolvedLocale).
+
+### Features
+
+* **ilingo:** pluralization, fallback chain, missing-key handler ([#912](https://github.com/tada5hi/ilingo/issues/912)) ([b091bb4](https://github.com/tada5hi/ilingo/commit/b091bb4ba181163863ad17d9b9b56573796e476b))
+* loader store + FSStore watch mode + invalidation API ([#919](https://github.com/tada5hi/ilingo/issues/919)) ([f615d35](https://github.com/tada5hi/ilingo/commit/f615d35c9ddf1fe28db75fa479c6a31d8032de0e))
+* **vue:** slot-aware ITranslateT, v-t directive, scoped catalogs ([#916](https://github.com/tada5hi/ilingo/issues/916)) ([287d096](https://github.com/tada5hi/ilingo/commit/287d09641df1cc137e763eaf28abf436905fb2c4))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * ilingo bumped from ^5.0.0 to ^6.0.0
+  * peerDependencies
+    * ilingo bumped from ^5.0.0 to ^6.0.0
+
 ## [5.0.0](https://github.com/tada5hi/ilingo/compare/vue-v4.3.3...vue-v5.0.0) (2026-01-14)
 
 
