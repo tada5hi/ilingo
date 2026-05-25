@@ -6,11 +6,11 @@
  */
 
 import { isObject } from 'smob';
-import type { 
-    LinesRecord, 
-    PluralCategory, 
-    PluralLeaf, 
-    PluralLeafExplicit, 
+import type {
+    LinesRecord,
+    PluralCategory,
+    PluralLeaf,
+    PluralLeafExplicit,
 } from '../types';
 
 export const PLURAL_MARKER = '@plural';
@@ -25,8 +25,15 @@ const PLURAL_CATEGORIES = new Set<PluralCategory>([
 ]);
 
 /**
- * Detects a bare `{ one, other, ... }` plural object by structure. Returns
- * `true` only when every key is a CLDR category and `other` is present.
+ * Validates the inner shape of a plural leaf — a `{ one, other, ... }`
+ * object whose keys are CLDR categories and whose values are strings,
+ * with `other` always present. Used by `isPluralLeafExplicit` to check
+ * the contents of the `@plural` wrapper.
+ *
+ * Not a top-level plural detector: a bare object of this shape sitting
+ * directly under a group is treated as a regular nested namespace.
+ * Wrap it in `{ "@plural": { ... } }` (JSON) or `definePlural({ ... })`
+ * (TS) to mark it as a plural leaf.
  */
 export function isPluralLeaf(value: unknown): value is PluralLeaf {
     if (!isObject(value)) {
@@ -49,8 +56,9 @@ export function isPluralLeaf(value: unknown): value is PluralLeaf {
 }
 
 /**
- * Detects an explicit `{ "@plural": { ... } }` wrapper. Recommended form —
- * unambiguous regardless of sibling key names.
+ * Detects the `{ "@plural": { ... } }` wrapper — the only recognised
+ * plural form. The marker disambiguates plurals from regular namespaces
+ * that happen to use CLDR-category key names.
  */
 export function isPluralLeafExplicit(value: unknown): value is PluralLeafExplicit {
     if (!isObject(value)) {
@@ -60,26 +68,12 @@ export function isPluralLeafExplicit(value: unknown): value is PluralLeafExplici
     return PLURAL_MARKER in obj && isPluralLeaf(obj[PLURAL_MARKER]);
 }
 
-/**
- * Unwrap either plural form (explicit or structural) into the inner
- * `PluralLeaf`. Returns `undefined` for non-plural values.
- */
-export function asPluralLeaf(value: unknown): PluralLeaf | undefined {
-    if (isPluralLeafExplicit(value)) {
-        return value[PLURAL_MARKER];
-    }
-    if (isPluralLeaf(value)) {
-        return value;
-    }
-    return undefined;
-}
-
 export function isLineRecord(value: unknown): value is LinesRecord {
     if (!isObject(value)) {
         return false;
     }
 
-    if (isPluralLeaf(value) || isPluralLeafExplicit(value)) {
+    if (isPluralLeafExplicit(value)) {
         return false;
     }
 
@@ -89,7 +83,6 @@ export function isLineRecord(value: unknown): value is LinesRecord {
         /* istanbul ignore next */
         if (
             typeof ob[key] !== 'string' &&
-            !isPluralLeaf(ob[key]) &&
             !isPluralLeafExplicit(ob[key]) &&
             !isLineRecord(ob[key])
         ) {

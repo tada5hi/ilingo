@@ -8,21 +8,22 @@
 export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
 /**
- * CLDR-categorised translation for a single key.
- *
- * Prefer the explicit form below (`PluralLeafExplicit`) — wrap your plural
- * forms in `{ "@plural": { ... } }` — to avoid ambiguity with regular
- * namespaces. Structural detection (recognising a bare `{ one, other }`
- * object as plural) is supported for backward compatibility but is
- * unambiguous only as long as no sibling key happens to be a CLDR
- * category name.
+ * CLDR-categorised translation for a single key. This is the *inner* shape
+ * — the value that lives under the `@plural` discriminator. Catalogs MUST
+ * wrap it in `PluralLeafExplicit` (`{ "@plural": ... }`) at the leaf
+ * position; bare `{ one, other }` objects are treated as ordinary nested
+ * namespaces.
  */
 export type PluralLeaf = { other: string } &
     Partial<Record<Exclude<PluralCategory, 'other'>, string>>;
 
 /**
- * Recommended explicit form. Unambiguous regardless of sibling key names,
- * since detection keys off the `@plural` discriminator.
+ * The plural-leaf wrapper. The `@plural` discriminator disambiguates a
+ * plural form from a regular namespace whose siblings happen to use
+ * CLDR-category key names — without it, a `{ kind: { other: { ... } } }`
+ * record would be ambiguous between "plural at `kind`" and "namespace
+ * containing a key called `other`". With the discriminator, the second
+ * reading is the only legal one.
  */
 export type PluralLeafExplicit = { '@plural': PluralLeaf };
 
@@ -86,10 +87,10 @@ export type LeafAt<T, K extends string> =    K extends `${infer Head}.${infer Ta
         never;
 
 /**
- * Enumerate all dotted leaf paths within a typed object. Stops descending at
- * `string` leaves and at plural leaves (structural or explicit), so a key
- * like `cart.items` resolves to the plural leaf and not into its inner
- * `one` / `other`.
+ * Enumerate all dotted leaf paths within a typed object. Stops descending
+ * at `string` leaves and at `@plural`-wrapped plural leaves, so a key
+ * like `cart.items` resolves to the plural leaf itself and not into its
+ * inner `one` / `other`.
  *
  * Open shapes (those with a `string` index signature like the default
  * `LinesRecord`) short-circuit to plain `string` — there are no concrete
@@ -97,11 +98,11 @@ export type LeafAt<T, K extends string> =    K extends `${infer Head}.${infer Ta
  */
 export type DottedPaths<T> = string extends keyof T ? string :
     T extends string ? never :
-        T extends PluralLeaf | PluralLeafExplicit ? never :
+        T extends PluralLeafExplicit ? never :
             T extends Record<string, unknown> ?
                 {
                     [K in keyof T & string]:
-                    T[K] extends string | PluralLeaf | PluralLeafExplicit ?
+                    T[K] extends string | PluralLeafExplicit ?
                         K :
                         T[K] extends Record<string, unknown> ?
                             // Only emit dotted leaf paths — never the bare
@@ -122,32 +123,32 @@ export type Key<C extends LocalesRecord, G extends Groups<C>> =    AnyGroups<C>[
     string;
 
 /**
- * `true` when the leaf at `(G, K)` is a plural shape (either structural or
- * explicit `@plural`-wrapped) in *any* locale. Used to make `count` required
- * at the type level for plural keys.
+ * `true` when the leaf at `(G, K)` is `@plural`-wrapped in *any* locale.
+ * Used to make `count` required at the type level for plural keys.
  *
  * `LeafAt<...>` for diverging locales returns a union like
- * `string | PluralLeaf`. A naked `extends PluralLeaf | PluralLeafExplicit`
- * collapses that to `false`, which would let `count` slip through as
- * optional. The `Extract<...>` form treats the key as plural when *any*
- * branch of the union is a plural shape — the safer default, since the
- * locale that's plural-shaped would otherwise silently fall back to its
- * `other` form on every call.
+ * `string | PluralLeafExplicit`. A naked
+ * `extends PluralLeafExplicit` collapses that to `false`, which would let
+ * `count` slip through as optional. The `Extract<...>` form treats the
+ * key as plural when *any* branch of the union is plural-shaped — the
+ * safer default, since the locale that's plural-shaped would otherwise
+ * silently fall back to its `other` form on every call.
  *
  * The `[X] extends [never]` wrapping disables the distributive-conditional
  * behaviour so `never` (no plural anywhere) is detected directly.
  */
 // Open shapes (default LocalesRecord) have a `string` index signature at
-// the group level; their leaf type union always includes `PluralLeaf`,
-// which would make every call site require `count`. Short-circuit to
-// false there — only concrete catalogs participate in plural inference.
+// the group level; their leaf type union always includes
+// `PluralLeafExplicit`, which would make every call site require `count`.
+// Short-circuit to false there — only concrete catalogs participate in
+// plural inference.
 export type IsPluralKey<
     C extends LocalesRecord,
     G extends Groups<C>,
     K extends string,
 > = string extends keyof AnyGroups<C>[G] ?
     false :
-    [Extract<LeafAt<AnyGroups<C>[G], K>, PluralLeaf | PluralLeafExplicit>] extends [never] ?
+    [Extract<LeafAt<AnyGroups<C>[G], K>, PluralLeafExplicit>] extends [never] ?
         false :
         true;
 

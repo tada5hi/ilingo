@@ -2,11 +2,9 @@
 
 Leaves can be **plural objects** keyed by CLDR category (`zero | one | two | few | many | other`). `Ilingo` selects the matching form via `Intl.PluralRules` keyed by the *resolved* locale.
 
-## Two forms
+## The `@plural` wrapper
 
-### Explicit (recommended)
-
-Wrap the plural object in `{ "@plural": { ... } }`:
+Plural forms are recognised only when wrapped in `{ "@plural": { ... } }`:
 
 ```json
 {
@@ -21,38 +19,7 @@ Wrap the plural object in `{ "@plural": { ... } }`:
 }
 ```
 
-The marker disambiguates plurals from regular namespaces that happen to use CLDR-category keys. Use this form in JSON files.
-
-### Structural (back-compat, **deprecated**)
-
-A bare `{ one, other }` object is also recognised at runtime, **as long as every key is a CLDR category and `other` is present**:
-
-```typescript
-{
-    cart: {
-        items: {
-            one: '{{count}} item',
-            other: '{{count}} items',
-        },
-    },
-}
-```
-
-::: warning Scheduled for removal
-The bare structural form is deprecated as of the stability roadmap ([#917](https://github.com/tada5hi/ilingo/issues/917) Track B) and will be removed at the next major release.
-
-When detected at lookup time, the store emits a one-shot dev-mode warning per `(locale, group, key)` so a render loop doesn't spam the console:
-
-```
-[ilingo] deprecated: the bare structural plural form ({ one, other, ... }) at "en.cart.items"
-will be removed in the next major. Wrap it in `{ "@plural": { ... } }` (JSON) or use
-`definePlural({ ... })` (TS).
-```
-
-Production builds (`NODE_ENV=production`) stay silent — the warning is dev-only.
-
-Migration is one line per leaf: wrap the existing object in `{ "@plural": ... }` for JSON or `definePlural({ ... })` for TS. Behaviour is otherwise unchanged.
-:::
+The marker disambiguates plurals from regular namespaces that happen to use CLDR-category keys. A bare `{ one, other }` object — without the marker — is treated as an ordinary nested namespace, so siblings called `one`, `other`, etc. are reachable via dotted access without being interpreted as plural categories.
 
 ## TS/JS: `definePlural`
 
@@ -84,7 +51,6 @@ await ilingo.get({ group: 'cart', key: 'items', count: 5 }); // 'other'
 ```
 
 - If the selected category is **absent**, `other` is used.
-- If `other` is also missing on a structural form, the form is not recognised as a plural — the bare object is returned as-is.
 - The locale used by `Intl.PluralRules` is the **resolved** locale (the one that actually yielded the leaf), not the requested one. Useful when `en-US → en` falls back and you want the English plural rules to apply.
 
 ## Caching
@@ -93,4 +59,4 @@ await ilingo.get({ group: 'cart', key: 'items', count: 5 }); // 'other'
 
 ## Round-tripping
 
-Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts `string | PluralLeaf`. `FSStore.set` persists them as JSON unchanged.
+Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts `string | PluralLeafExplicit`. `FSStore.set` persists them as JSON unchanged.

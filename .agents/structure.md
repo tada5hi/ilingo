@@ -57,7 +57,7 @@ src/
     ├── index.ts
     ├── locale.ts             # bcp47Parents, resolveLocaleChain
     ├── negotiate.ts          # negotiateLocale, parseAcceptLanguage (BCP-47 best-match)
-    ├── identify.ts           # PLURAL_MARKER + isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord
+    ├── identify.ts           # PLURAL_MARKER + isPluralLeafExplicit, isLineRecord (isPluralLeaf is internal — inner-shape helper for the @plural wrapper)
     ├── formatters.ts         # FormatterRegistry (with public register/get), parseFormatterOptions, parseModifier, Formatter type
     ├── template.ts           # {{var}} + {{var, formatter(opts)}} interpolation + tokenize() for slot-aware renderers (Vue)
     └── language/

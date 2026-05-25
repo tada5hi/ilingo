@@ -28,12 +28,11 @@ For each locale in the chain, the orchestrator issues `store.get(...)` for every
 
 Translations are addressed by `(locale, group, key)` plus an optional `count` for pluralization. The `group` is a logical namespace — typically a filename when using `FSStore` (`packages/fs/src/module.ts` resolves `<directory>/<locale>/<group>.{js,mjs,cjs,ts,mts,json,conf}`). The `key` is a `pathtrace`-style dotted path within that group's nested object.
 
-### 5. Plural leaves: explicit marker preferred
+### 5. Plural leaves: `@plural` wrapper is the only recognised form
 
-A leaf can be either a plain `string` or a `PluralLeaf` (`{ zero?, one?, two?, few?, many?, other }`). Two storage forms are accepted:
+A leaf can be either a plain `string` or a `PluralLeafExplicit` (`{ '@plural': { zero?, one?, two?, few?, many?, other } }`). The `@plural` marker is the only signal that an object should be interpreted as a CLDR-categorised plural — a bare `{ one, other }` object is treated as an ordinary nested namespace.
 
-- **Explicit (recommended)** — `{ "@plural": { one, other, ... } }`. Detection keys off the marker so siblings with CLDR-category names cannot collide.
-- **Structural (back-compat, deprecated)** — bare `{ one, other }` with all keys being CLDR categories and `other` present. Accepted at runtime today but emits a one-shot dev-mode warning per `(locale, group, key)`; scheduled for removal at the next major per #917 Track B. Migration is a one-line wrap.
+This was a stability-roadmap decision (#917 Track B): the original dual-form behaviour (also accepting bare `{ one, other }`) collided with sibling keys named after CLDR categories. Since pluralization had never shipped a stable release, the structural form was removed outright rather than going through a deprecate-then-remove cycle.
 
 The orchestrator selects a form using `Intl.PluralRules` keyed by the *resolved* locale (the one that actually matched). `Intl.PluralRules` instances are cached per locale on the `Ilingo` instance.
 
@@ -128,7 +127,7 @@ export interface IStore {
 }
 ```
 
-Adapter — `packages/ilingo/src/store/memory.ts` (returns either form, normalized via `asPluralLeaf`):
+Adapter — `packages/ilingo/src/store/memory.ts` (unwraps the `@plural` marker; bare `{ one, other }` objects are namespaces, not plurals):
 
 ```typescript
 async get(ctx: StoreGetContext): Promise<Leaf | undefined> {
@@ -136,7 +135,8 @@ async get(ctx: StoreGetContext): Promise<Leaf | undefined> {
     if (!group) return undefined;
     const out = getPathValue(group, ctx.key);
     if (typeof out === 'string') return out;
-    return asPluralLeaf(out); // unwraps `{ "@plural": ... }` or bare structural
+    if (isPluralLeafExplicit(out)) return out['@plural'];
+    return undefined;
 }
 ```
 
@@ -254,7 +254,7 @@ packages/ilingo/src/
 ├── utils/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
 │   ├── negotiate.ts         ← negotiateLocale, parseAcceptLanguage (request-side locale picking)
-│   ├── identify.ts          ← isPluralLeaf, isPluralLeafExplicit, asPluralLeaf, isLineRecord, PLURAL_MARKER
+│   ├── identify.ts          ← isPluralLeafExplicit, isLineRecord, PLURAL_MARKER (isPluralLeaf is internal — inner-shape helper for the @plural wrapper)
 │   ├── formatters.ts        ← FormatterRegistry (with public register/get), parseFormatterOptions, parseModifier, Formatter type
 │   ├── template.ts          ← {{var}} + {{var, formatter(opts)}} substitution; tokenize() for slot-aware renderers
 │   └── language/            ← isBCP47LanguageCode + CLDR data

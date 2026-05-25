@@ -13,8 +13,8 @@ import {
     Ilingo, MemoryStore, defineCatalog, definePlural,
 } from '../../src';
 
-// A typical typed catalog mixing flat keys, nested namespaces, and both
-// plural forms (structural + explicit).
+// A typical typed catalog mixing flat keys, nested namespaces, and
+// `@plural`-wrapped plural leaves (the only recognised plural form).
 const catalog = defineCatalog({
     en: {
         app: {
@@ -27,17 +27,11 @@ const catalog = defineCatalog({
             },
         },
         cart: {
-            // Explicit plural form — recommended.
             items: {
                 '@plural': {
                     one: '{{count}} item',
                     other: '{{count}} items',
                 },
-            },
-            // Structural plural form — backward compat.
-            shipping: {
-                one: 'One package',
-                other: '{{count}} packages',
             },
         },
     },
@@ -57,10 +51,6 @@ const catalog = defineCatalog({
                     one: '{{count}} Artikel',
                     other: '{{count}} Artikel',
                 },
-            },
-            shipping: {
-                one: 'Ein Paket',
-                other: '{{count}} Pakete',
             },
         },
     },
@@ -134,25 +124,17 @@ describe('Ilingo<Catalog> — typed key inference', () => {
         ilingo.get({ group: 'cart', key: 'items' });
     });
 
-    it('requires `count` for a structural plural leaf', () => {
-        ilingo.get({ group: 'cart', key: 'shipping', count: 2 });
-
-        // @ts-expect-error count is required for plural keys
-        ilingo.get({ group: 'cart', key: 'shipping' });
-    });
-
     it('does not require count for a regular string leaf', () => {
         // No count needed when leaf is plain string.
         ilingo.get({ group: 'app', key: 'greeting' });
     });
 
     it('requires count when locales diverge and at least one is plural', () => {
-        // Regression for PR #915 review: a naked
-        // `extends PluralLeaf | PluralLeafExplicit` returns false for
-        // unions like `string | PluralLeaf`, letting count slip through as
-        // optional even when one locale needs plural selection. The
-        // `Extract<...>`-based IsPluralKey treats the key as plural when
-        // any branch in the union is plural-shaped.
+        // Regression for PR #915 review: a naked `extends PluralLeafExplicit`
+        // returns false for unions like `string | PluralLeafExplicit`,
+        // letting count slip through as optional even when one locale needs
+        // plural selection. The `Extract<...>`-based IsPluralKey treats the
+        // key as plural when any branch in the union is plural-shaped.
         const divergeCatalog = defineCatalog({
             en: {
                 app: {
@@ -370,10 +352,9 @@ describe('Ilingo<Catalog>.merge — accepts foreign-typed Ilingo', () => {
 
 describe('definePlural in a diverging-locale catalog — count still required', () => {
     it('treats the union as plural when one locale uses definePlural', () => {
-        // Mirrors the structural-vs-string diverging case above, but using
-        // the `definePlural` helper — confirms the `@plural` marker survives
-        // the union with a plain string leaf and that `IsPluralKey` still
-        // returns true via the `Extract<...>`-based detection.
+        // Confirms the `@plural` marker survives the union with a plain
+        // string leaf and that `IsPluralKey` still returns true via the
+        // `Extract<...>`-based detection.
         const diverge = defineCatalog({
             en: {
                 cart: {

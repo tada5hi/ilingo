@@ -10,8 +10,8 @@ import type { LocalesRecord, PluralLeaf, PluralLeafExplicit } from './types';
 /**
  * Helper that returns its argument unchanged but captures it with `const`
  * type inference, so the catalog literal keeps its narrowest shape
- * (per-key string literals, structural plural leaves, etc.) without the
- * caller having to add `as const` everywhere.
+ * (per-key string literals, `@plural`-wrapped plural leaves, etc.)
+ * without the caller having to add `as const` everywhere.
  *
  * @example
  *     const catalog = defineCatalog({

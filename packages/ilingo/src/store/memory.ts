@@ -7,8 +7,7 @@
 
 import { getPathValue, setPathValue } from 'pathtrace';
 import type { Leaf, LocalesRecord } from '../types';
-import { isProductionEnv } from '../utils/env';
-import { isPluralLeaf, isPluralLeafExplicit } from '../utils/identify';
+import { isPluralLeafExplicit } from '../utils/identify';
 import type {
     IStore,
     MemoryStoreOptions,
@@ -18,15 +17,6 @@ import type {
 
 export class MemoryStore implements IStore {
     protected data: LocalesRecord;
-
-    /**
-     * Per-instance warn-once set for the bare structural plural form
-     * (`{ one, other }` without the `@plural` wrapper). Deprecated in the
-     * stability roadmap (#917 Track B) — will be removed at the next major.
-     * Each `(locale, group, key)` triple only warns the first time it is
-     * seen, so a render loop doesn't spam the console.
-     */
-    protected warnedStructuralPlural = new Set<string>();
 
     constructor(options: MemoryStoreOptions) {
         this.data = options.data;
@@ -49,18 +39,12 @@ export class MemoryStore implements IStore {
             return output;
         }
 
-        // Explicit `{ "@plural": { ... } }` — the recommended form.
+        // Plural forms must use the explicit `{ "@plural": { ... } }`
+        // wrapper. Bare `{ one, other }` objects are treated as ordinary
+        // nested namespaces — the wrapper is the only signal that an
+        // object should be interpreted as a CLDR-categorised plural leaf.
         if (isPluralLeafExplicit(output)) {
             return output['@plural'];
-        }
-
-        // Bare structural `{ one, other }` — accepted today for backward
-        // compatibility, deprecated by the stability roadmap (#917 Track B)
-        // and scheduled for removal at the next major. Warns once per
-        // (locale, group, key) so consumers can migrate without console spam.
-        if (isPluralLeaf(output)) {
-            this.warnStructuralPlural(context);
-            return output;
         }
 
         return undefined;
@@ -88,20 +72,5 @@ export class MemoryStore implements IStore {
 
     async getLocales(): Promise<string[]> {
         return Object.keys(this.data);
-    }
-
-    protected warnStructuralPlural(context: StoreGetContext): void {
-        /* istanbul ignore next */
-        if (isProductionEnv()) return;
-        const id = `${context.locale}|${context.group}|${context.key}`;
-        if (this.warnedStructuralPlural.has(id)) return;
-        this.warnedStructuralPlural.add(id);
-        // eslint-disable-next-line no-console
-        console.warn(
-            '[ilingo] deprecated: the bare structural plural form ' +
-            `({ one, other, ... }) at "${context.locale}.${context.group}.${context.key}" ` +
-            'will be removed in the next major. Wrap it in `{ "@plural": { ... } }` ' +
-            '(JSON) or use `definePlural({ ... })` (TS).',
-        );
     }
 }
