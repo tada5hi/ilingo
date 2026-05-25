@@ -33,14 +33,14 @@ Input: { group, key, locale?, data?, count? }
 2. chain           = resolveLocaleChain(requested, fallback config, 'en')
 3. lookup:
        for each locale in chain:
-           query every store in parallel
-           first defined candidate (in declared store order) wins
+           for each store in insertion order:
+               return on first defined candidate
 4. miss?           → handleMissingKey → onMissingKey or warn-once default
 5. selectPluralForm(leaf, hitLocale, count)
 6. template(message, data, { locale: hitLocale, formatters })
 ```
 
-The chain is walked **locale-first**: the closest locale beats the farthest one regardless of which store holds the value. Within a single locale, all stores are queried concurrently and the first declared store with a hit wins.
+The chain is walked **locale-first**: the closest locale beats the farthest one regardless of which store holds the value. Within a single locale, stores are queried **serially in insertion order** and the walk stops at the first hit — later stores are not pre-fetched, so an expensive adapter never fires when a cheap one has already answered.
 
 ## Concepts
 

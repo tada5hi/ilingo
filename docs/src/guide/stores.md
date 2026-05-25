@@ -114,20 +114,20 @@ await ilingo.get({ group: 'app', key: 'hi' });
 
 ## Multiple stores
 
-An `Ilingo` instance exposes a `public readonly stores: Set<IStore>` — add as many as you want. They are queried **in parallel** within each locale, with the first declared hit winning:
+An `Ilingo` instance exposes a `public readonly stores: Set<IStore>` — add as many as you want. They are queried **serially in insertion order** within each locale, stopping at the first hit:
 
 ```typescript
 const ilingo = new Ilingo({
     store: new MemoryStore({ data: { /* core strings */ } }),
 });
 
-// add more after construction
+// add more after construction — checked only when the Memory store misses
 ilingo.stores.add(new FSStore({ directory: './locales/overrides' }));
 ```
 
 The constructor's `store` option seeds the first entry; everything else goes through `ilingo.stores.add(...)`. Set semantics make repeated adds of the same reference a no-op.
 
-For network-backed or side-effecting stores, remember that **every store in a locale is queried even if an earlier one hits** — the parallel walk picks the winner after `Promise.all` resolves. Cheap for in-memory and disk; document the cost on custom adapters.
+The serial walk is the reason "local first, remote fallback" compositions work as written. A network-backed store registered after a Memory store is only consulted when the Memory store has nothing for `(locale, group, key)` — the orchestrator does not pre-fan-out across stores. Locale-first composition still applies: a closer locale always beats a farther one regardless of which store would have answered.
 
 ## Merging instances
 

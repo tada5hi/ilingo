@@ -245,35 +245,30 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
     // ----------------------------------------------------
 
     /**
-     * Walk the locale chain in order. Within each locale, query every store
-     * in parallel and pick the first store (in declared insertion order) that
-     * returned a hit.
+     * Walk the locale chain in order. Within each locale, query stores
+     * serially in insertion order and stop at the first hit.
      *
-     * Locale order is preserved (closer locale beats farther one), but for a
-     * single locale the I/O of multiple stores overlaps. The trade-off is that
-     * stores later in the insertion order are still queried even when an
-     * earlier store would have hit — wasted work for network-backed stores
-     * but cheap for the in-memory + fs adapters shipped here. Custom stores
-     * with side effects (e.g. metrics) will see every call.
+     * Locale-first composition: the closer locale always beats the farther
+     * one, regardless of which store would have answered. Within a single
+     * locale, a store is only consulted when every earlier store has
+     * missed — so a network-backed adapter registered after a Memory
+     * adapter is never called when the Memory adapter hits.
      */
     protected async lookup(
         chain: string[],
         ctx: Pick<GetContext, 'group' | 'key'>,
     ): Promise<{ locale: string, leaf: Leaf } | undefined> {
-        const stores = Array.from(this.stores);
-        if (stores.length === 0) {
+        if (this.stores.size === 0) {
             return undefined;
         }
 
         for (const locale of chain) {
-            const results = await Promise.all(
-                stores.map((store) => store.get({
+            for (const store of this.stores) {
+                const candidate = await store.get({
                     locale,
                     group: ctx.group,
                     key: ctx.key,
-                })),
-            );
-            for (const candidate of results) {
+                });
                 if (typeof candidate !== 'undefined') {
                     return { locale, leaf: candidate };
                 }

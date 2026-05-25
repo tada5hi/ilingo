@@ -348,7 +348,7 @@ new Ilingo({ fallback: false });           // disable fallback entirely
 new Ilingo({ fallback: [] });              // equivalent to `false`
 ```
 
-The chain is walked locale-first across all stores — the closest locale match wins regardless of store order. Within a single locale, every store is queried **in parallel** (`Promise.all`) and the first hit in declared insertion order is returned. For the in-memory and fs adapters this is essentially free; custom network-backed or side-effecting stores should expect every call within a locale even when an earlier store would have hit.
+The chain is walked locale-first across all stores — the closest locale match wins regardless of store order. Within a single locale, stores are queried **serially in insertion order**, stopping at the first hit. A network-backed adapter registered after a Memory adapter is never called when the Memory adapter answers — the orchestrator does not pre-fan-out across stores.
 
 Inspect the resolution with:
 
