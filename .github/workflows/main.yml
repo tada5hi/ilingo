@@ -62,4 +62,4 @@ jobs:
                 with:
                     node-version: ${{ matrix.node-version }}
             -   uses: ./.github/actions/build
-            -   run: npm run test
+            -   run: npm run test:coverage

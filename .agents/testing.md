@@ -106,7 +106,23 @@ For a custom `IStore` adapter under test, write a tiny class implementing `IStor
 
 ## Code Coverage
 
-`packages/ilingo/package.json` defines `test:coverage` (`vitest run --coverage`). No coverage thresholds are enforced today; reports are informational.
+Each unit-tested package (`ilingo`, `@ilingo/fs`, `@ilingo/vue`) defines a `test:coverage` script that runs `vitest --coverage`. Provider is `v8`; the report includes `src/**/*.{ts,tsx,js,jsx,vue}` per package. Run the full suite from the repo root with `npm run test:coverage` (Nx orchestrates one workspace at a time and caches the results).
+
+### Thresholds
+
+Each `test/vitest.config.ts` carries a `coverage.thresholds` block. The floors are picked from the current baseline minus a few percentage points of headroom so routine churn doesn't fail CI:
+
+| Package | Statements | Branches | Functions | Lines |
+|---|---|---|---|---|
+| `ilingo` | 90 | 80 | 85 | 90 |
+| `@ilingo/fs` | 85 | 60 | 80 | 85 |
+| `@ilingo/vue` | 75 | 65 | 75 | 75 |
+
+`@ilingo/vuelidate` has no unit suite (playground only); skipped.
+
+The `@ilingo/fs` branch floor is intentionally loose — FSStore has many optional code paths (`watch: true`, multi-directory, chokidar peer detection) that only fire under specific configs and are exercised by tests selectively. `@ilingo/vue` trails core because `<ITranslate>` is exercised through the playground rather than the unit suite, and reactive paths through `computedAsync` don't always fire in happy-dom.
+
+CI runs `npm run test:coverage`, so threshold violations fail the build. Treat the thresholds as a ratchet — when sustained baseline moves above the floor, raise the floor in the same PR that benefits from it. Don't lower a threshold to keep CI green; investigate why the previous floor became hard to hit.
 
 ## Infrastructure
 
