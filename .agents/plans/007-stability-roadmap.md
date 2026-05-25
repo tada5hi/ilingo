@@ -31,7 +31,7 @@ Each decision lands as a commit (often docs-only) that nails the contract. Items
 
 ## Track D — Test + benchmark floor
 
-- [ ] **Vitest coverage thresholds** per package. Coverage data is collected today (provider `v8`, `include: ['src/**/*.{ts,tsx,js,jsx}']`) but no thresholds → regressions silent. Pick a floor from current numbers; ratchet over time.
+- [x] **Vitest coverage thresholds** per package. Floors set in each package's `test/vitest.config.ts` with ~5pp headroom on most metrics (10pp on the noisier branch metric in `@ilingo/fs` and `@ilingo/vue`). CI now runs `npm run test:coverage` so threshold violations fail the build. Policy + per-package numbers documented in `.agents/testing.md`. `@ilingo/vuelidate` skipped — no unit suite there.
 - [ ] **Benchmark suite** (`packages/ilingo/bench/`) via `vitest bench`. Cover: cache-hit `get()`, cache-miss with 3-deep fallback, plural lookup, template render with one `number` modifier. Numbers land on a docs Performance page; re-run in CI on every release-please PR.
 - [ ] **Comparative numbers** vs `i18next` and `vue-i18n` for the same workloads — backs up the "lightweight alternative" README claim with receipts.
 
