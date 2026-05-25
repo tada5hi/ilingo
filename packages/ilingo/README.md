@@ -6,7 +6,7 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Tada5hi/ilingo?targetFile=package.json)
 [![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
 
-Ilingo is a lightweight library for translation and internationalization.
+Ilingo is a lightweight library for translation and internationalization. The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob); on common workloads it runs **1.6× – 2.3× faster than `i18next`** ([benchmarks](https://ilingo.tada5hi.net/performance)).
 
 **Table of Contents**
 

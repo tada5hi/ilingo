@@ -78,6 +78,13 @@ test/
         ├── formatters.spec.ts        # parseFormatterOptions, parseModifier, FormatterRegistry, template dispatch
         ├── identify.spec.ts
         └── template.spec.ts
+bench/
+├── vitest.config.ts                  # vitest bench config; writes results.json (gitignored)
+├── setup.ts                          # shared catalog + makeIlingo() / makeI18next() factories
+├── get-cache-hit.bench.ts            # baseline: simple-string leaf hit
+├── fallback.bench.ts                 # 3-deep BCP-47 fallback walk
+├── plural.bench.ts                   # plural form selection
+└── format.bench.ts                   # template + Intl.NumberFormat modifier
 ```
 
 ### `packages/fs/` — file-system adapter
