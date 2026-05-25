@@ -7,7 +7,7 @@
 
 import { getPathValue, setPathValue } from 'pathtrace';
 import type { Leaf, LocalesRecord } from '../types';
-import { isPluralLeafExplicit } from '../utils/identify';
+import { isPluralLeaf } from '../utils/identify';
 import type {
     IStore,
     MemoryStoreOptions,
@@ -43,7 +43,7 @@ export class MemoryStore implements IStore {
         // wrapper. Bare `{ one, other }` objects are treated as ordinary
         // nested namespaces — the wrapper is the only signal that an
         // object should be interpreted as a CLDR-categorised plural leaf.
-        if (isPluralLeafExplicit(output)) {
+        if (isPluralLeaf(output)) {
             return output['@plural'];
         }
 

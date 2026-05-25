@@ -130,11 +130,11 @@ describe('Ilingo<Catalog> — typed key inference', () => {
     });
 
     it('requires count when locales diverge and at least one is plural', () => {
-        // Regression for PR #915 review: a naked `extends PluralLeafExplicit`
-        // returns false for unions like `string | PluralLeafExplicit`,
-        // letting count slip through as optional even when one locale needs
-        // plural selection. The `Extract<...>`-based IsPluralKey treats the
-        // key as plural when any branch in the union is plural-shaped.
+        // Regression for PR #915 review: a naked `extends PluralLeaf`
+        // returns false for unions like `string | PluralLeaf`, letting
+        // count slip through as optional even when one locale needs
+        // plural selection. The `Extract<...>`-based IsPluralKey treats
+        // the key as plural when any branch in the union is plural-shaped.
         const divergeCatalog = defineCatalog({
             en: {
                 app: {

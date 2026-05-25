@@ -168,5 +168,5 @@ export class HttpStore implements IStore {
 Rules of thumb:
 
 - Return `undefined` on miss. **Never throw.** Throwing breaks the fallback walk.
-- Returning a `PluralLeaf` is allowed but optional. String-only stores are valid.
+- Returning `PluralForms` (the unwrapped CLDR-categorised options) is allowed but optional. String-only stores are valid. Custom stores that hold raw `PluralLeaf` (`{ "@plural": ... }`) values should unwrap before returning, matching `MemoryStore` and `LoaderStore`.
 - If you need a load cache, extending `MemoryStore` and using the parent map is idiomatic (`FSStore` does this).

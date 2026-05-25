@@ -30,7 +30,7 @@ Translations are addressed by `(locale, group, key)` plus an optional `count` fo
 
 ### 5. Plural leaves: `@plural` wrapper is the only recognised form
 
-A leaf can be either a plain `string` or a `PluralLeafExplicit` (`{ '@plural': { zero?, one?, two?, few?, many?, other } }`). The `@plural` marker is the only signal that an object should be interpreted as a CLDR-categorised plural — a bare `{ one, other }` object is treated as an ordinary nested namespace.
+A catalog leaf is either a plain `string` or a `PluralLeaf` (`{ '@plural': { zero?, one?, two?, few?, many?, other } }`). The inner CLDR-categorised options shape is exported as `PluralForms`. The `@plural` marker is the only signal that an object should be interpreted as a plural — a bare `{ one, other }` object is treated as an ordinary nested namespace.
 
 This was a stability-roadmap decision (#917 Track B): the original dual-form behaviour (also accepting bare `{ one, other }`) collided with sibling keys named after CLDR categories. Since pluralization had never shipped a stable release, the structural form was removed outright rather than going through a deprecate-then-remove cycle.
 
@@ -135,7 +135,7 @@ async get(ctx: StoreGetContext): Promise<Leaf | undefined> {
     if (!group) return undefined;
     const out = getPathValue(group, ctx.key);
     if (typeof out === 'string') return out;
-    if (isPluralLeafExplicit(out)) return out['@plural'];
+    if (isPluralLeaf(out)) return out['@plural'];
     return undefined;
 }
 ```
@@ -145,7 +145,7 @@ Conventions:
 - New stores **implement `IStore`** rather than extending `MemoryStore` unless they want the in-memory cache (`FSStore` extends it, using the parent map as a load cache).
 - All methods are async, even when synchronous — keep that contract; `Ilingo.lookup` `await`s every store call.
 - A miss is `undefined`. Do not throw on miss; that breaks the fallback walk.
-- Returning a `PluralLeaf` is allowed but optional — string-only stores remain valid.
+- Returning `PluralForms` (the unwrapped inner shape) is allowed but optional — string-only stores remain valid. Custom stores that hold raw `PluralLeaf` (`{ "@plural": ... }`) values should unwrap before returning, matching `MemoryStore` / `LoaderStore`.
 
 ### Orchestrator Pattern (`Ilingo`)
 
@@ -224,7 +224,7 @@ Processing:
        for each locale in chain:
            Promise.all(stores.map(s => s.get({ locale, group, key })))
            → first defined candidate (in declared store order) wins
-       → { locale: hitLocale, leaf: string | PluralLeaf }
+       → { locale: hitLocale, leaf: string | PluralForms } // post-unwrap
   4. If miss → handleMissingKey → onMissingKey or warn-once default
   5. selectPluralForm(leaf, hitLocale, count)
        └── Intl.PluralRules(hitLocale) [cached] selects category, falls back to 'other'
@@ -254,7 +254,7 @@ packages/ilingo/src/
 ├── utils/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
 │   ├── negotiate.ts         ← negotiateLocale, parseAcceptLanguage (request-side locale picking)
-│   ├── identify.ts          ← isPluralLeafExplicit, isLineRecord, PLURAL_MARKER (isPluralLeaf is internal — inner-shape helper for the @plural wrapper)
+│   ├── identify.ts          ← isPluralLeaf (wrapper guard), isPluralForms (inner-shape guard), isLineRecord, PLURAL_MARKER
 │   ├── formatters.ts        ← FormatterRegistry (with public register/get), parseFormatterOptions, parseModifier, Formatter type
 │   ├── template.ts          ← {{var}} + {{var, formatter(opts)}} substitution; tokenize() for slot-aware renderers
 │   └── language/            ← isBCP47LanguageCode + CLDR data

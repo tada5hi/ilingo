@@ -59,4 +59,4 @@ await ilingo.get({ group: 'cart', key: 'items', count: 5 }); // 'other'
 
 ## Round-tripping
 
-Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts `string | PluralLeafExplicit`. `FSStore.set` persists them as JSON unchanged.
+Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts `string | PluralLeaf` (the `{ "@plural": ... }` wrapper). `FSStore.set` persists them as JSON unchanged.

@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { LocalesRecord, PluralLeaf, PluralLeafExplicit } from './types';
+import type { LocalesRecord, PluralForms, PluralLeaf } from './types';
 
 /**
  * Helper that returns its argument unchanged but captures it with `const`
@@ -53,6 +53,6 @@ export function defineCatalog<const T extends LocalesRecord>(catalog: T): T {
  *         },
  *     });
  */
-export function definePlural<const T extends PluralLeaf>(plural: T): { '@plural': T } & PluralLeafExplicit {
+export function definePlural<const T extends PluralForms>(plural: T): { '@plural': T } & PluralLeaf {
     return { '@plural': plural };
 }

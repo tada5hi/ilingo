@@ -40,7 +40,7 @@ unit/
 │                                   #   Run via `npm run test:types --workspace=packages/ilingo`
 │                                   #   (vitest --typecheck against `*.spec-d.ts`)
 └── utils/
-    ├── identify.spec.ts            # isLineRecord / isPluralLeaf / isPluralLeafExplicit
+    ├── identify.spec.ts            # isLineRecord / isPluralLeaf / isPluralForms
     ├── locale.spec.ts              # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
     ├── formatters.spec.ts          # parseFormatterOptions, parseModifier, FormatterRegistry,
     │                               #   template-level modifier dispatch

@@ -325,7 +325,7 @@ await ilingo.get({ group: 'cart', key: 'items', count: 5 });  // "5 items"
 
 If the selected category is absent from the leaf, `other` is used as a fallback.
 
-Plural leaves round-trip through `store.set()` — `StoreSetContext.value` accepts either a `string` or a `PluralLeafExplicit`. The `FSStore.set` persistence writes them as JSON unchanged.
+Plural leaves round-trip through `store.set()` — `StoreSetContext.value` accepts either a `string` or a `PluralLeaf` (the `{ "@plural": ... }` wrapper). The `FSStore.set` persistence writes them as JSON unchanged.
 
 ### Fallback locale chain
 

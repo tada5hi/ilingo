@@ -39,7 +39,7 @@ src/
 ├── index.ts                  # barrel: re-exports config, module, store, utils, types
 ├── module.ts                 # Ilingo class — Set<IStore>, locale + fallback chain, plural rules cache,
 │                             #   per-instance warn-once memo, get / getResolvedLocale[Chain] / merge / format
-├── types.ts                  # LinesRecord, Leaf, PluralLeaf, PluralLeafExplicit, GetContext (with count),
+├── types.ts                  # LinesRecord, Leaf, PluralForms, PluralLeaf, GetContext (with count),
 │                             #   MissingKeyContext, MissingKeyHandler, Fallback, FallbackResolver, Data,
 │                             #   AnyGroups, Groups, Key, LeafAt, DottedPaths, IsPluralKey, GetParams
 ├── catalog.ts                # defineCatalog<const T>() + definePlural<const T>() typed helpers
@@ -51,13 +51,13 @@ src/
 │   ├── index.ts              # barrel
 │   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext (value: Leaf),
 │   │                         #   MemoryStoreOptions, InvalidatingStore + isInvalidatingStore guard
-│   ├── memory.ts             # MemoryStore — returns string | PluralLeaf | undefined
+│   ├── memory.ts             # MemoryStore — returns string | PluralForms | undefined (unwraps the @plural marker)
 │   └── loader.ts             # LoaderStore — lazy load + per-(locale,group) cache + invalidate
 └── utils/
     ├── index.ts
     ├── locale.ts             # bcp47Parents, resolveLocaleChain
     ├── negotiate.ts          # negotiateLocale, parseAcceptLanguage (BCP-47 best-match)
-    ├── identify.ts           # PLURAL_MARKER + isPluralLeafExplicit, isLineRecord (isPluralLeaf is internal — inner-shape helper for the @plural wrapper)
+    ├── identify.ts           # PLURAL_MARKER + isPluralLeaf (wrapper guard), isPluralForms (inner-shape guard), isLineRecord
     ├── formatters.ts         # FormatterRegistry (with public register/get), parseFormatterOptions, parseModifier, Formatter type
     ├── template.ts           # {{var}} + {{var, formatter(opts)}} interpolation + tokenize() for slot-aware renderers (Vue)
     └── language/

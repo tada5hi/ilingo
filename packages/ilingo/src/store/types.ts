@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Leaf, LocalesRecord } from '../types';
+import type { Leaf, LocalesRecord, PluralLeaf } from '../types';
 
 export type StoreGetContext = {
     locale: string,
@@ -14,7 +14,13 @@ export type StoreGetContext = {
 };
 
 export type StoreSetContext = StoreGetContext & {
-    value: Leaf,
+    /**
+     * Value to persist at the `(locale, group, key)` position. Plain
+     * translations are strings; plural translations must use the
+     * `{ "@plural": { ... } }` wrapper so they round-trip with `get()`
+     * (which only recognises the wrapped form when reading back).
+     */
+    value: string | PluralLeaf,
 };
 
 /**
