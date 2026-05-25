@@ -7,7 +7,7 @@
 
 import { getPathValue, setPathValue } from 'pathtrace';
 import type { Leaf, LocalesRecord } from '../types';
-import { asPluralLeaf } from '../utils/identify';
+import { isPluralLeaf } from '../utils/identify';
 import type {
     IStore,
     MemoryStoreOptions,
@@ -39,11 +39,15 @@ export class MemoryStore implements IStore {
             return output;
         }
 
-        // Accept both the explicit `{ "@plural": { ... } }` wrapper and the
-        // structural bare `{ one, other }` form. `asPluralLeaf` returns the
-        // inner leaf in either case so callers (and the orchestrator) deal
-        // with one shape.
-        return asPluralLeaf(output);
+        // Plural forms must use the explicit `{ "@plural": { ... } }`
+        // wrapper. Bare `{ one, other }` objects are treated as ordinary
+        // nested namespaces — the wrapper is the only signal that an
+        // object should be interpreted as a CLDR-categorised plural leaf.
+        if (isPluralLeaf(output)) {
+            return output['@plural'];
+        }
+
+        return undefined;
     }
 
     async set(context: StoreSetContext): Promise<void> {

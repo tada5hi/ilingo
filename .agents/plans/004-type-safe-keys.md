@@ -24,7 +24,7 @@ Infer the legal `(group, key)` pairs from a typed catalog so the compiler catche
 ## Acceptance
 
 - [x] `ilingo.get({ group: 'app', key: 'unknown' })` errors at compile time when typed with a concrete catalog. Dotted paths (`'nested.deep.leaf'`) are inferred too.
-- [x] Plural-shaped leaves (both `@plural`-wrapped and structural) require `count: number` at the call site — calling without `count` is a type error.
+- [x] `@plural`-wrapped leaves require `count: number` at the call site — calling without `count` is a type error. (Note: the bare structural form was later dropped in Track B of #917; `@plural` is now the only recognised plural shape.)
 - [x] No runtime change — all 84 existing `.spec.ts` cases pass unchanged.
 - [x] `IStore` left non-generic (catalog flows through `Ilingo<C>` only, not stores) — keeps custom store implementations simple at the cost of not propagating the catalog into store-level types. Acceptable trade-off; revisit if a concrete use case appears.
 - [x] Type tests live in `test/unit/types.spec-d.ts`, run via `npm run test:types` (vitest `--typecheck`). 13 type tests, no errors. Vue composable not made generic in this pass — the call site uses an injected (loosely typed) instance; module-augmentation pattern (`declare module '@ilingo/vue' { interface IlingoCatalog { ... } }`) belongs to a follow-up.

@@ -2,11 +2,9 @@
 
 Leaves can be **plural objects** keyed by CLDR category (`zero | one | two | few | many | other`). `Ilingo` selects the matching form via `Intl.PluralRules` keyed by the *resolved* locale.
 
-## Two forms
+## The `@plural` wrapper
 
-### Explicit (recommended)
-
-Wrap the plural object in `{ "@plural": { ... } }`:
+Plural forms are recognised only when wrapped in `{ "@plural": { ... } }`:
 
 ```json
 {
@@ -21,24 +19,7 @@ Wrap the plural object in `{ "@plural": { ... } }`:
 }
 ```
 
-The marker disambiguates plurals from regular namespaces that happen to use CLDR-category keys. Use this form in JSON files.
-
-### Structural (back-compat)
-
-A bare `{ one, other }` object is also recognised, **as long as every key is a CLDR category and `other` is present**:
-
-```typescript
-{
-    cart: {
-        items: {
-            one: '{{count}} item',
-            other: '{{count}} items',
-        },
-    },
-}
-```
-
-This is what existing codebases use. New code should prefer the explicit form.
+The marker disambiguates plurals from regular namespaces that happen to use CLDR-category keys. A bare `{ one, other }` object — without the marker — is treated as an ordinary nested namespace, so siblings called `one`, `other`, etc. are reachable via dotted access without being interpreted as plural categories.
 
 ## TS/JS: `definePlural`
 
@@ -70,7 +51,6 @@ await ilingo.get({ group: 'cart', key: 'items', count: 5 }); // 'other'
 ```
 
 - If the selected category is **absent**, `other` is used.
-- If `other` is also missing on a structural form, the form is not recognised as a plural — the bare object is returned as-is.
 - The locale used by `Intl.PluralRules` is the **resolved** locale (the one that actually yielded the leaf), not the requested one. Useful when `en-US → en` falls back and you want the English plural rules to apply.
 
 ## Caching
@@ -79,4 +59,4 @@ await ilingo.get({ group: 'cart', key: 'items', count: 5 }); // 'other'
 
 ## Round-tripping
 
-Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts `string | PluralLeaf`. `FSStore.set` persists them as JSON unchanged.
+Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts `string | PluralLeaf` (the `{ "@plural": ... }` wrapper). `FSStore.set` persists them as JSON unchanged.

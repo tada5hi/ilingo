@@ -26,20 +26,24 @@ describe('Ilingo — resolution path', () => {
                     en: {
                         cart: {
                             items: {
-                                one: '{{count}} item',
-                                other: '{{count}} items',
+                                '@plural': {
+                                    one: '{{count}} item',
+                                    other: '{{count}} items',
+                                },
                             },
                         },
                     },
                     cy: {
                         cart: {
                             items: {
-                                zero: 'dim eitemau',
-                                one: '{{count}} eitem',
-                                two: '{{count}} eitem',
-                                few: '{{count}} eitem',
-                                many: '{{count}} eitem',
-                                other: '{{count}} eitem',
+                                '@plural': {
+                                    zero: 'dim eitemau',
+                                    one: '{{count}} eitem',
+                                    two: '{{count}} eitem',
+                                    few: '{{count}} eitem',
+                                    many: '{{count}} eitem',
+                                    other: '{{count}} eitem',
+                                },
                             },
                         },
                     },
@@ -70,7 +74,7 @@ describe('Ilingo — resolution path', () => {
         it('falls back to "other" if the selected category is absent', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: { en: { cart: { items: { other: '{{count}} items' } } } },
+                    data: { en: { cart: { items: { '@plural': { other: '{{count}} items' } } } } },
                 }),
             });
             expect(
@@ -92,8 +96,10 @@ describe('Ilingo — resolution path', () => {
                         en: {
                             cart: {
                                 items: {
-                                    one: '{{count}} of {{total}}',
-                                    other: '{{count}} of {{total}}',
+                                    '@plural': {
+                                        one: '{{count}} of {{total}}',
+                                        other: '{{count}} of {{total}}',
+                                    },
                                 },
                             },
                         },
@@ -273,7 +279,7 @@ describe('Ilingo — resolution path', () => {
                 locale: 'en',
                 group: 'cart',
                 key: 'items',
-                value: { one: '{{count}} item', other: '{{count}} items' },
+                value: { '@plural': { one: '{{count}} item', other: '{{count}} items' } },
             });
 
             const ilingo = new Ilingo({ store });
@@ -283,6 +289,41 @@ describe('Ilingo — resolution path', () => {
             expect(
                 await ilingo.get({ group: 'cart', key: 'items', count: 7 }),
             ).toEqual('7 items');
+        });
+    });
+
+    describe('bare structural plural shape — not recognised as plural', () => {
+        it('treats { one, other } as a regular nested namespace', async () => {
+            // Without the @plural wrapper, the object is just a record with
+            // keys named "one" / "other". `ilingo.get` returns undefined for
+            // the bare key (no string leaf there) — and the missing-key
+            // warning fires because the orchestrator's lookup walked past
+            // a non-leaf.
+            const ilingo = new Ilingo({
+                store: new MemoryStore({
+                    data: {
+                        en: {
+                            cart: {
+                                items: {
+                                    one: '{{count}} item',
+                                    other: '{{count}} items',
+                                },
+                            },
+                        },
+                    },
+                }),
+            });
+
+            expect(
+                await ilingo.get({ group: 'cart', key: 'items', count: 1 }),
+            ).toBeUndefined();
+
+            // Inner keys are still reachable via dotted access — useful when
+            // a namespace legitimately needs sibling keys named after CLDR
+            // categories (e.g. an enum dropdown with an "other" option).
+            expect(
+                await ilingo.get({ group: 'cart', key: 'items.one' }),
+            ).toEqual('{{count}} item');
         });
     });
 
@@ -336,10 +377,10 @@ describe('Ilingo — resolution path', () => {
             ).toEqual('3 items');
         });
 
-        it('disambiguates a namespace whose only key happens to be "other"', async () => {
-            // Without the explicit marker, { other: 'literal' } would be
-            // detected as a plural leaf and `.deeper` would fail. With the
-            // marker, `other` is just a regular nested record.
+        it('namespace whose only key happens to be "other" is walked normally', async () => {
+            // The `@plural` marker is the only plural signal, so a sibling
+            // key called `other` (or `one`, etc.) is just a regular nested
+            // namespace and is reachable via dotted access.
             const ilingo = new Ilingo({
                 store: new MemoryStore({
                     data: {
