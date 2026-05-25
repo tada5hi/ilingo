@@ -115,6 +115,15 @@ Conventional Commits, validated by commitlint:
 - Source maps are emitted (`sourcemap: true` in `tsdown.config.ts`).
 - The `files` field in each `package.json` controls what is published — `dist/` plus any pre-built subpath dirs (`core/`, `vue/`).
 
+### Tree-shaking — `sideEffects: false`
+
+Every published package declares `"sideEffects": false` in its `package.json` so Vite / webpack / Rollup can drop unused exports from a consumer's bundle. The audit that backed this (#917 Track E) confirmed no top-level side effects in any `src/` file: no module-scope `console.*`, no global mutations, no prototype patching, no CSS imports, no bare effectful imports. The single Vue SFC (`@ilingo/vue/src/component.vue`) has no `<style>` block.
+
+When adding new source files, keep this contract:
+
+- **OK**: function/class declarations, constants, JSON imports as values, lazy-imports inside function bodies (e.g. `FSStore`'s lazy `chokidar` import).
+- **Not OK without flipping the field**: top-level statements that run on import (registering globals, mutating prototypes, side-effect-only imports like `import 'some-polyfill'`, CSS imports). If you genuinely need any of these, change the package's `sideEffects` to a path-list (`["**/*.vue", "**/*.css"]`) rather than dropping the optimisation entirely.
+
 ## Release Process
 
 - **release-please** (`.github/workflows/release.yml`) reads Conventional Commits since the last release tag and opens a PR that bumps versions and updates `CHANGELOG.md` per workspace.
