@@ -46,6 +46,7 @@ The chain is walked **locale-first**: the closest locale beats the farthest one 
 
 | Concept | Page |
 |---|---|
+| Catalog shape + JSON-vs-TS authoring | [Catalog Design](./catalog-design) |
 | Pluggable storage backend | [Stores](./stores) |
 | BCP-47 fallback chain     | [Locales & Fallback](./locales) |
 | `{{var}}` substitution + data merging | [Templates & Data](./templates) |

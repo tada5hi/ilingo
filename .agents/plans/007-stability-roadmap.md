@@ -24,10 +24,10 @@ Each decision lands as a commit (often docs-only) that nails the contract. Items
 
 ## Track C — Docs completeness + migration
 
-- [ ] **`catalog-design` guide page** covering `defineCatalog` / `definePlural` workflow + JSON-vs-TS authoring trade-offs.
-- [ ] **"Upgrading to stable" guide** enumerating breakages from `ilingo@5.x` / `@ilingo/vue@5.x` to the stable cut, with before/after snippets where the change is mechanical.
+- [x] **`catalog-design` guide page** covering `defineCatalog` / `definePlural` workflow + JSON-vs-TS authoring trade-offs. Lives at `docs/src/guide/catalog-design.md`; wired into the "Concepts" sidebar between Overview and Stores. Cross-linked from the overview page.
+- [x] **Migration guide** enumerating breaking changes since `5.0.0`. Originally framed as "Upgrading to Stable" but trimmed to "From 5.0" — a focused list of breakages a consumer would hit upgrading from the published 5.0.0 to whatever the next release cuts. Purely-additive features are not duplicated here; they live in the matching guide pages. Lives at `docs/src/migration/from-5.0.md` under a new top-level Migration nav entry.
 - [ ] **SSR integration recipe** — at least one. Nuxt is the obvious target since `vue-i18n`'s strongest consumer story is there. Astro is a strong second.
-- [ ] **Doc-anchor audit** — every public export listed in package READMEs has a matching anchor on the docs site.
+- [x] **Doc-anchor audit** — every public symbol mentioned in a package README has at least one anchor on the docs site. Gaps that surfaced and were patched: `MissingKeyHandler` (now referenced in `missing-key.md` alongside the existing `MissingKeyContext` table), `bcp47Parents` + `resolveLocaleChain` (now under a "Low-level helpers" section in `locales.md`).
 
 ## Track D — Test + benchmark floor
 

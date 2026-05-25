@@ -25,7 +25,7 @@ Return a **string** to make it the result of `get()`; return **`undefined`** to 
 
 ## Handler context
 
-The handler receives a `MissingKeyContext`:
+The `onMissingKey` field is typed as `MissingKeyHandler = (ctx: MissingKeyContext) => string | undefined`. The handler receives a `MissingKeyContext`:
 
 | Field | Type | Notes |
 |---|---|---|
