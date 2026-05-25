@@ -180,6 +180,7 @@ docs/
     │   └── quick-start.md
     ├── guide/
     │   ├── index.md          # conceptual overview + sitemap
+    │   ├── catalog-design.md
     │   ├── stores.md
     │   ├── locales.md
     │   ├── templates.md
@@ -187,11 +188,15 @@ docs/
     │   ├── formatters.md
     │   ├── type-safe-keys.md
     │   └── missing-key.md
-    └── integrations/
-        ├── index.md
-        ├── fs.md
-        ├── vue.md
-        └── vuelidate.md
+    ├── integrations/
+    │   ├── index.md
+    │   ├── fs.md
+    │   ├── vue.md
+    │   └── vuelidate.md
+    ├── recipes/
+    │   └── ssr.md            # per-request Ilingo, hydration, Nuxt + Astro slots
+    └── migration/
+        └── from-5.0.md       # breaking-change list since the published 5.0.0
 ```
 
 The sidebar in `config.mts` is the source of truth for what pages should exist — adding a markdown file under `src/guide/` is not enough, it must also be referenced in the sidebar config.

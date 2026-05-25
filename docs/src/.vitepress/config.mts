@@ -32,6 +32,7 @@ export default defineConfig({
             { text: 'Getting Started', link: '/getting-started/', activeMatch: '/getting-started/' },
             { text: 'Guide', link: '/guide/', activeMatch: '/guide/' },
             { text: 'Integrations', link: '/integrations/', activeMatch: '/integrations/' },
+            { text: 'Recipes', link: '/recipes/ssr', activeMatch: '/recipes/' },
             { text: 'Migration', link: '/migration/from-5.0', activeMatch: '/migration/' },
         ],
         sidebar: {
@@ -71,6 +72,12 @@ export default defineConfig({
                     { text: 'File System', link: '/integrations/fs' },
                     { text: 'Vue', link: '/integrations/vue' },
                     { text: 'Vuelidate', link: '/integrations/vuelidate' },
+                ],
+            }],
+            '/recipes/': [{
+                text: 'Recipes',
+                items: [
+                    { text: 'Server-Side Rendering', link: '/recipes/ssr' },
                 ],
             }],
             '/migration/': [{

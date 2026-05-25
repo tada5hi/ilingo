@@ -98,6 +98,8 @@ ilingo.setLocale(negotiateLocale(supported, requested) ?? 'en');
 
 `parseAcceptLanguage(header)` parses the RFC 9110 header into a quality-sorted array, dropping the `*` wildcard. Tags without an explicit `q=` default to `q=1.0`. Both functions are pure — they don't mutate `Ilingo` state.
 
+For the full per-request pattern (avoiding a global `Ilingo`, hydrating from server to client, slotting into Nuxt or Astro), see [Recipes → Server-Side Rendering](../recipes/ssr).
+
 ## Low-level helpers
 
 `getResolvedLocaleChain` is the supported public surface; the two helpers it composes are also exported for advanced callers (e.g. building a custom resolver that needs the same BCP-47 semantics):
