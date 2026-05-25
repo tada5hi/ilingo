@@ -161,6 +161,35 @@ describe('Ilingo<Catalog> — typed key inference', () => {
         // @ts-expect-error count is required because en defines a plural shape
         il.get({ group: 'app', key: 'items' });
     });
+
+    it('treats a bare { one, other } literal as a nested namespace, not a plural', () => {
+        // Regression guard against silently re-treating the bare structural
+        // shape as plural. The literal must be addressable only via dotted
+        // access to its inner keys; the parent key is intentionally not a
+        // leaf, so `ilingo.get({ ..., key: 'items' })` is a type error and
+        // `count` is not required on the children.
+        const c = defineCatalog({
+            en: {
+                cart: {
+                    items: {
+                        one: '{{count}} item',
+                        other: '{{count}} items',
+                    },
+                },
+            },
+        });
+        const il = new Ilingo<typeof c>({ store: new MemoryStore({ data: c }) });
+
+        // OK: inner keys are plain string leaves, no count needed.
+        il.get({ group: 'cart', key: 'items.one' });
+        il.get({ group: 'cart', key: 'items.other' });
+
+        il.get({
+            group: 'cart',
+            // @ts-expect-error bare { one, other } is a namespace, not a leaf
+            key: 'items',
+        });
+    });
 });
 
 describe('Ilingo — no generic preserves backward compat (loose typing)', () => {
@@ -184,7 +213,7 @@ describe('definePlural — TS/JS authoring helper', () => {
     });
 
     it('requires `other` and rejects non-CLDR keys at compile time', () => {
-        // @ts-expect-error `other` is required by PluralLeaf
+        // @ts-expect-error `other` is required by PluralForms
         definePlural({ one: 'a' });
 
         // @ts-expect-error 'foo' is not a CLDR plural category

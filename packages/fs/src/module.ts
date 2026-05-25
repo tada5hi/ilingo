@@ -18,6 +18,7 @@ import { createMerger } from 'smob';
 import type {
     InvalidateListener,
     InvalidatingStore,
+    Leaf,
     LinesRecord,
     StoreGetContext,
     StoreSetContext,
@@ -73,7 +74,7 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
     }
 
     // ------------------------------------------
-    override async get(context: StoreGetContext): Promise<string | undefined> {
+    override async get(context: StoreGetContext): Promise<Leaf | undefined> {
         await this.loadGroup(context.group, context.locale);
 
         return super.get(context);

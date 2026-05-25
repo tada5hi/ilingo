@@ -48,9 +48,12 @@ export interface IStore {
     /**
      * Resolve a `(locale, group, key)` to a leaf value.
      *
-     * The leaf can be a plain string or a CLDR-categorised plural leaf
-     * (`{ one, other, ... }`). Implementations that don't support plural
-     * catalogs may return only `string | undefined`.
+     * The returned value is `Leaf` — `string | PluralForms` — which is
+     * the *post-unwrap* shape: stores that hold the catalog-side
+     * `PluralLeaf` (`{ "@plural": ... }`) wrapper are expected to strip
+     * the marker before returning, matching `MemoryStore` and
+     * `LoaderStore`. Stores that don't support plurals can return just
+     * `string | undefined`.
      */
     get(context: StoreGetContext): Promise<Leaf | undefined>;
 
