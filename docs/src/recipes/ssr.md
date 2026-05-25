@@ -260,6 +260,8 @@ For interactive islands (`client:*` directives) the same hydration patterns from
 
 The `Ilingo` runtime is pure JavaScript: no `node:fs`, no `node:process` outside the optional `NODE_ENV` guard (which is replaced at build time by every modern bundler). Cloudflare Workers, Vercel Edge, Bun, and Deno all run the core unmodified. `@ilingo/fs` is the exception — it imports `node:fs/promises` and only works on a runtime with the Node filesystem APIs. If you need translations at the edge, ship them in the bundle (`MemoryStore` with an inlined catalog) or fetch them on demand via `LoaderStore` against an external API.
 
+CI runs a [smoke script](https://github.com/tada5hi/ilingo/blob/master/packages/ilingo/test/smoke.mjs) against **Node** and **Bun** on every PR; the script boots the built `dist/index.mjs` and exercises the API end-to-end. The `typeof process !== 'undefined'` guard inside `isProductionEnv()` is covered separately by a unit test that simulates every runtime's globals (raw browser ESM, sparse polyfill, sandboxed `process.env` access, DefinePlugin literal-replacement). Together these prove the runtime-agnostic claim isn't speculative.
+
 ## See also
 
 - [Locales & Fallback](../guide/locales) — `negotiateLocale` / `parseAcceptLanguage` and the fallback-chain matcher.

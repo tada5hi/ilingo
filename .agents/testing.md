@@ -124,6 +124,22 @@ The `@ilingo/fs` branch floor is intentionally loose — FSStore has many option
 
 CI runs `npm run test:coverage`, so threshold violations fail the build. Treat the thresholds as a ratchet — when sustained baseline moves above the floor, raise the floor in the same PR that benefits from it. Don't lower a threshold to keep CI green; investigate why the previous floor became hard to hit.
 
+## Cross-runtime smoke
+
+`packages/ilingo/test/smoke.mjs` is a runtime-agnostic script that loads the built `dist/index.mjs` exactly like a published consumer and exercises a representative API slice (construct → locale chain → fallback → plural → interpolation → missing-key). Uses only `node:assert/strict` so it runs unmodified under any ES2022 + ESM + Promise runtime.
+
+CI runs it under **Node** and **Bun** via a matrix job in `.github/workflows/main.yml` (`oven-sh/setup-bun@v2` for the Bun runner). Other runtimes (Deno, Cloudflare Workers, raw browser ESM) aren't gated in CI but the script is pure JS — adding a runner is just one more matrix entry.
+
+`packages/ilingo/test/unit/utils/env.spec.ts` covers the **`typeof process !== 'undefined'` guard** by simulating each runtime's globals inside vitest:
+
+- Node prod / dev / unset → boolean correctness.
+- `process` undefined (raw browser) → false, no throw.
+- `process` present but `.env` missing (sparse polyfill) → false, no throw.
+- `process.env` access throws (sandboxed runtime) → false, no throw.
+- DefinePlugin literal-replaced both in Node-prod and in browser-prod targets.
+
+Together: the env spec proves the guard is correct in isolation, and the smoke script proves the full library boots under each runtime in CI.
+
 ## Benchmarks
 
 `packages/ilingo/bench/` holds a `vitest bench` suite that pairs ilingo against `i18next` (installed as a devDep) on four workloads: cache-hit `get()`, cache-miss with a 3-deep fallback chain, plural lookup, and template with an `Intl.NumberFormat` modifier. Run with `npm run bench --workspace=packages/ilingo`.

@@ -43,16 +43,7 @@ The docs site at `docs/` (`@ilingo/docs`) is a VitePress 1.x app. Run it locally
 
 ## Plans
 
-Phased roadmap for the i18next / vue-i18n parity work tracked in umbrella issue [#907](https://github.com/tada5hi/ilingo/issues/907). Plans are working documents — edit them in-place as scope shifts.
-
-1. [Dependency cleanup](.agents/plans/001-dependency-cleanup.md) — Ready
-2. [Resolution-path features (#895, #897, #899)](.agents/plans/002-resolution-path.md) — Blocked by 1
-3. [Intl formatters (#896)](.agents/plans/003-intl-formatters.md) — Blocked by 2
-4. [Type-safe keys (#898)](.agents/plans/004-type-safe-keys.md) — Blocked by 2
-5. [Vue ergonomics (#900, #901, #902)](.agents/plans/005-vue-ergonomics.md) — Blocked by 2
-6. [DX + loader (#903, #904, #905, #906)](.agents/plans/006-dx-and-loader.md) — Blocked by 5
-
-See [.agents/plans/README.md](.agents/plans/README.md) for the index and what's explicitly out of scope.
+Phased roadmap drafts live under `.agents/plans/` and are **gitignored** — kept as local working documents per maintainer convention, not part of the shared history. The current umbrella issues ([#907](https://github.com/tada5hi/ilingo/issues/907), [#917](https://github.com/tada5hi/ilingo/issues/917)) are the public source of truth for what's tracked and what's done.
 
 ## Commits
 

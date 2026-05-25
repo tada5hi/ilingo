@@ -15,7 +15,6 @@
  * (no polyfill, no bundler) safe.
  */
 export function isProductionEnv(): boolean {
-    /* istanbul ignore next */
     try {
         return typeof process !== 'undefined' &&
             process.env != null &&
