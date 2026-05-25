@@ -124,6 +124,24 @@ The `@ilingo/fs` branch floor is intentionally loose — FSStore has many option
 
 CI runs `npm run test:coverage`, so threshold violations fail the build. Treat the thresholds as a ratchet — when sustained baseline moves above the floor, raise the floor in the same PR that benefits from it. Don't lower a threshold to keep CI green; investigate why the previous floor became hard to hit.
 
+## Cross-runtime smoke
+
+`packages/ilingo/test/smoke.mjs` is a runtime-agnostic script that loads the built `dist/index.mjs` exactly like a published consumer and exercises a representative API slice (construct → locale chain → fallback → plural → interpolation → missing-key). It uses only the JS standard library (no `node:*` imports — a tiny inline `equal()` helper stands in for `assert.strictEqual`) so it runs unmodified under any ES2022 + ESM + Promise runtime: Node, Bun, Deno, modern browsers via `<script type="module">`, Cloudflare Workers, Vercel Edge.
+
+CI runs it under **Node** and **Bun** via a matrix job in `.github/workflows/main.yml` (`oven-sh/setup-bun@v2` for the Bun runner). Other runtimes aren't gated in CI today, but because the script has no Node-specific dependencies, adding a runner is one matrix entry away.
+
+`packages/ilingo/test/unit/utils/env.spec.ts` covers the `isProductionEnv()` guard (`typeof process !== 'undefined'` short-circuit + `try/catch` around `process.env` access) by simulating each runtime's globals inside vitest:
+
+- Node prod / dev / unset → boolean correctness.
+- `process` undefined (raw browser) → false, no throw.
+- `process` present but `.env` missing (sparse polyfill) → false, no throw.
+- `process.env` access throws (sandboxed runtime where `env` is a guarded proxy) → false, no throw.
+- Bun-like environment (Node-compat process global) → boolean correctness.
+
+Bundler-substitution scenarios (Vite / webpack DefinePlugin replacing the `process.env.NODE_ENV` literal at build time) are not exercised in this spec because they happen pre-runtime; running them under vitest would just re-test the Node-prod / browser cases above. The substitution path is covered indirectly: the literal `process.env.NODE_ENV` reference is the substitution target, and the `typeof process` guard is what keeps the post-substitution code safe in browser builds.
+
+Together: the env spec proves the guard is correct in isolation, and the smoke script proves the full library boots under each runtime in CI.
+
 ## Benchmarks
 
 `packages/ilingo/bench/` holds a `vitest bench` suite that pairs ilingo against `i18next` (installed as a devDep) on four workloads: cache-hit `get()`, cache-miss with a 3-deep fallback chain, plural lookup, and template with an `Intl.NumberFormat` modifier. Run with `npm run bench --workspace=packages/ilingo`.

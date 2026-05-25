@@ -75,3 +75,30 @@ jobs:
                     node-version: ${{ env.PRIMARY_NODE_VERSION }}
             -   uses: ./.github/actions/build
             -   run: npm run size
+
+    smoke:
+        # Cross-runtime smoke — boots the built dist under each supported
+        # runtime and runs a representative API slice. Catches breakage in
+        # the `typeof process !== 'undefined'` guard, ESM resolution,
+        # async/await, and any other runtime-specific surface.
+        name: Smoke (${{ matrix.runtime }})
+        needs: [build]
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                runtime: [node, bun]
+        steps:
+            -   uses: actions/checkout@v6
+            -   uses: ./.github/actions/install
+                with:
+                    node-version: ${{ env.PRIMARY_NODE_VERSION }}
+            -   uses: ./.github/actions/build
+            -   if: matrix.runtime == 'bun'
+                uses: oven-sh/setup-bun@v2
+                with:
+                    bun-version: latest
+            -   if: matrix.runtime == 'node'
+                run: node packages/ilingo/test/smoke.mjs
+            -   if: matrix.runtime == 'bun'
+                run: bun packages/ilingo/test/smoke.mjs
