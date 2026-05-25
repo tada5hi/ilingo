@@ -6,7 +6,7 @@ ilingo follows a small **port-and-adapter** design:
 
 - **Port**: `IStore` (`packages/ilingo/src/store/types.ts`) defines `get`, `set`, `getLocales`.
 - **Adapters**: `MemoryStore` (default, in-memory) and `FSStore` (lazy-loads files from disk, persists `set()` to JSON) implement the port.
-- **Orchestrator**: `Ilingo` (`packages/ilingo/src/module.ts`) holds a `Set<IStore>` plus per-instance state for the locale, fallback chain, missing-key handler, plural-rules cache, and warn-once memo. On each `get()` it walks a resolved locale chain in order; within each locale it queries every store **in parallel** and picks the first hit (in declared store order).
+- **Orchestrator**: `Ilingo` (`packages/ilingo/src/module.ts`) holds a `Set<IStore>` plus per-instance state for the locale, fallback chain, missing-key handler, plural-rules cache, and warn-once memo. On each `get()` it walks a resolved locale chain in order; within each locale it queries stores **serially in insertion order** and stops at the first hit.
 
 Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`) wrap the orchestrator for a specific framework — Vue's `provide`/`inject` makes the `Ilingo` instance and locale `Ref` available to descendants of the app root.
 
@@ -16,9 +16,11 @@ Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`) wrap the orchestrator
 
 `Ilingo.get(ctx)` resolves a locale **chain** before querying anything (`getResolvedLocaleChain`). The chain order is `[requested, ...explicit-or-BCP-47-parents, default]`, deduplicated, with `default` pinned at the terminal position so it cannot be reordered out by an earlier mention. The chain is walked locale-first: closer locale beats farther one *regardless of store insertion order*. The chain can be inspected via `getResolvedLocaleChain(ctx)`; the locale that actually yielded a value is reachable via `getResolvedLocale(ctx)`.
 
-### 2. Parallel store query within a locale
+### 2. Serial store query within a locale
 
-For each locale in the chain, the orchestrator issues `store.get(...)` for every store **concurrently** via `Promise.all`, then picks the first hit in declared insertion order. The locale-order semantics are preserved (closer locale always wins); only intra-locale I/O overlaps. Trade-off: stores later in declared order are still queried even when an earlier store would have hit — cheap for the in-memory + fs adapters here, but custom network-backed or side-effecting stores will see every call. Document this on custom stores that care.
+For each locale in the chain, the orchestrator walks the stores **serially in insertion order** and returns the first defined hit. Locale-order semantics still dominate (closer locale always wins, regardless of which store would have answered), and within a locale the walk stops the moment an earlier store answers — later stores never see the call. This is the contract that makes "local first, remote fallback" composition behave intuitively: registering a network-backed adapter after a Memory adapter never causes an HTTP request when the Memory adapter has the key.
+
+Trade-off accepted: when every registered store *would* have hit, total latency is `sum(per-store latency)` rather than `max(per-store latency)`. Pre-stable history kept this as a `Promise.all` parallel walk; it was flipped to serial-on-miss in [#917 Track B](plans/007-stability-roadmap.md) so the default composition matches user intuition. Speculative concurrency was rarely useful in practice — the in-tree adapters are sync after their first warm-up — and the parallel default was an active footgun for network-backed adapters.
 
 ### 3. Multi-store, identity-based deduping
 
@@ -166,10 +168,9 @@ async get(ctx: GetContext): Promise<string | undefined> {
 }
 
 protected async lookup(chain, ctx) {
-    const stores = Array.from(this.stores);
     for (const locale of chain) {
-        const results = await Promise.all(stores.map(s => s.get({ locale, ...ctx })));
-        for (const candidate of results) {
+        for (const store of this.stores) {
+            const candidate = await store.get({ locale, ...ctx });
             if (typeof candidate !== 'undefined') return { locale, leaf: candidate };
         }
     }
@@ -222,8 +223,8 @@ Processing:
        └── e.g. 'pt-BR' → ['pt-BR', 'pt', 'en']  (default tail; opt out via fallback: false | [])
   3. lookup(chain, ctx):
        for each locale in chain:
-           Promise.all(stores.map(s => s.get({ locale, group, key })))
-           → first defined candidate (in declared store order) wins
+           for each store in insertion order:
+               return on first defined candidate
        → { locale: hitLocale, leaf: string | PluralForms } // post-unwrap
   4. If miss → handleMissingKey → onMissingKey or warn-once default
   5. selectPluralForm(leaf, hitLocale, count)

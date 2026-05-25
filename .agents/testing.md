@@ -30,7 +30,7 @@ unit/
 ├── module.spec.ts                  # legacy core behaviour — get/set, locale switching, merge()
 ├── resolution.spec.ts              # pluralization (incl. explicit @plural form), fallback chain
 │                                   #   (default, string, array, function, false, []), missing-key
-│                                   #   handler, per-instance warn isolation, parallel intra-locale lookup
+│                                   #   handler, per-instance warn isolation, serial intra-locale store walk
 ├── formatters-integration.spec.ts  # end-to-end Ilingo.get() with number/date/list modifiers,
 │                                   #   resolved-locale propagation, per-instance cache, dev-warn
 ├── custom-formatters.spec.ts       # registerFormatter + Config.formatters; built-in override; clone shares
@@ -85,9 +85,9 @@ data/
 
 ## Testing Philosophy
 
-Tests assert the **public contract** of `Ilingo` and the stores — the things documented in `architecture.md`: locale-first walk with fallback chain, parallel intra-locale store query, plural selection via `Intl.PluralRules`, missing-key handler routing, `{{var}}` substitution, `merge()` deduping by reference identity. If a test fails after a refactor, treat it as a real regression on that contract until proven otherwise.
+Tests assert the **public contract** of `Ilingo` and the stores — the things documented in `architecture.md`: locale-first walk with fallback chain, serial intra-locale store walk (stop at first hit), plural selection via `Intl.PluralRules`, missing-key handler routing, `{{var}}` substitution, `merge()` deduping by reference identity. If a test fails after a refactor, treat it as a real regression on that contract until proven otherwise.
 
-For timing-sensitive tests (concurrent store entry, debounce, etc.), assert the **invariant** (e.g. both store calls entered within the same tick) rather than wall-clock thresholds — the latter flakes on CI scheduler jitter.
+For tests covering store call order (serial walk, fallthrough, debounce, etc.), assert the **invariant** (e.g. "later stores were not called when the first hit") with a recording fake — never wall-clock thresholds, which flake on CI scheduler jitter.
 
 ### Fakes Over Mocks
 

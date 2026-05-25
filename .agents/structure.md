@@ -67,7 +67,7 @@ src/
 test/
 └── unit/
     ├── module.spec.ts                # legacy core behaviour
-    ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, parallel lookup, clone()
+    ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, serial store walk, clone()
     ├── formatters-integration.spec.ts # Ilingo.get() with number/date/list modifiers, cache + dev-warn
     ├── custom-formatters.spec.ts     # registerFormatter + Config.formatters constructor sugar
     ├── loader-store.spec.ts          # LoaderStore lazy load, cache, miss cache, dedupe, invalidate, events

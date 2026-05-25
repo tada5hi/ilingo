@@ -400,34 +400,47 @@ describe('Ilingo — resolution path', () => {
         });
     });
 
-    describe('parallel lookup', () => {
-        it('queries every store in a locale concurrently, not serially', async () => {
-            // Record when each store's get() actually runs. Concurrent entry
-            // means both stores start in the same microtask burst — well
-            // before the 30ms simulated work has resolved. Asserting on
-            // entry order (not total elapsed time) avoids CI-jitter flakes.
-            const entries: { id: number, at: number }[] = [];
-            const makeStore = (id: number, hit?: string) => ({
-                async get(_ctx: { locale: string; group: string; key: string }) {
-                    entries.push({ id, at: Date.now() });
-                    await new Promise((r) => setTimeout(r, 30));
-                    return hit;
-                },
-                async set() { /* noop */ },
-                async getLocales() { return []; },
-            });
+    describe('serial-on-miss store walk', () => {
+        const makeRecordingStore = (
+            entries: { id: number }[],
+            id: number,
+            hit?: string,
+        ) => ({
+            async get(_ctx: { locale: string; group: string; key: string }) {
+                entries.push({ id });
+                return hit;
+            },
+            async set() { /* noop */ },
+            async getLocales() { return []; },
+        });
 
+        it('stops at the first hit and never calls later stores', async () => {
+            // When the earlier-registered store answers, the later store
+            // (think: a network adapter) MUST NOT be touched. That is the
+            // whole point of the locale-first, serial composition — a
+            // Memory hit should not trigger an HTTP request.
+            const entries: { id: number }[] = [];
             const ilingo = new Ilingo({});
-            ilingo.stores.add(makeStore(1));
-            ilingo.stores.add(makeStore(2, 'hello'));
+            ilingo.stores.add(makeRecordingStore(entries, 1, 'from store 1'));
+            ilingo.stores.add(makeRecordingStore(entries, 2, 'from store 2'));
 
             const result = await ilingo.get({ group: 'app', key: 'hi' });
 
-            expect(result).toEqual('hello');
-            expect(entries.map((e) => e.id)).toEqual([1, 2]);
-            // Both stores entered well within one tick — far less than the
-            // 30ms a sequential walk would have inserted between them.
-            expect(entries[1].at - entries[0].at).toBeLessThan(15);
+            expect(result).toEqual('from store 1');
+            expect(entries.map((e) => e.id)).toEqual([1]);
+        });
+
+        it('falls through to later stores when earlier ones miss', async () => {
+            const entries: { id: number }[] = [];
+            const ilingo = new Ilingo({});
+            ilingo.stores.add(makeRecordingStore(entries, 1));
+            ilingo.stores.add(makeRecordingStore(entries, 2));
+            ilingo.stores.add(makeRecordingStore(entries, 3, 'from store 3'));
+
+            const result = await ilingo.get({ group: 'app', key: 'hi' });
+
+            expect(result).toEqual('from store 3');
+            expect(entries.map((e) => e.id)).toEqual([1, 2, 3]);
         });
 
         it('preserves store insertion order on a tie within a locale', async () => {
