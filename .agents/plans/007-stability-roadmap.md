@@ -38,7 +38,7 @@ Each decision lands as a commit (often docs-only) that nails the contract. Items
 ## Track E — Bundle + browser story
 
 - [x] **`sideEffects: false` audit** — extended to all four published packages (`ilingo`, `@ilingo/fs`, `@ilingo/vue`, `@ilingo/vuelidate`). Audit confirmed no top-level effects anywhere (no module-scope `console.*`, no globals, no prototype patching, no CSS imports, no bare effectful imports; the one Vue SFC has no `<style>` block). Policy + contract recorded in `.agents/conventions.md` under Build Output.
-- [ ] **Bundle-size budget** per package in CI (`size-limit` or `pkg-size`). Fail PRs that blow past it without justification.
+- [x] **Bundle-size budget** per package in CI. `size-limit` with the `preset-small-lib` (esbuild + brotli) is configured at the repo root in `.size-limit.json`; CI runs `npm run size` after build and fails the job on budget violations. Seven entries: a full barrel per package plus three tree-shake-validation imports on `ilingo` (`Ilingo+MemoryStore`, `defineCatalog` only, `negotiateLocale+parseAcceptLanguage`). Headroom: ~10–15% over current numbers. Tree-shake floor is bounded at ~1.2 kB by `smob`/`pathtrace` not declaring `sideEffects:false` themselves — noted in `.agents/conventions.md` as a future drop-down opportunity.
 - [ ] **Cross-runtime smoke tests** for the `typeof process !== 'undefined'` guard around `NODE_ENV`. Cover Vite dev, Vite prod with DefinePlugin, raw browser ESM, Cloudflare Workers, Bun.
 
 ## Track F — Ecosystem decisions (in / out / deferred)

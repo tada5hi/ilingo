@@ -63,3 +63,15 @@ jobs:
                     node-version: ${{ matrix.node-version }}
             -   uses: ./.github/actions/build
             -   run: npm run test:coverage
+
+    size:
+        name: Bundle size
+        needs: [build]
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v6
+            -   uses: ./.github/actions/install
+                with:
+                    node-version: ${{ env.PRIMARY_NODE_VERSION }}
+            -   uses: ./.github/actions/build
+            -   run: npm run size
