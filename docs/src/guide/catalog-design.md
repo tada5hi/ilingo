@@ -32,15 +32,28 @@ The library is agnostic to how you split data across files — it only sees the 
 
 ### One file per locale
 
-Every locale lives in a single file (`en.ts`, `de.ts`, `en.json`, …). All groups for that locale are children of the same root.
+Every locale lives in a single file (`en.ts`, `de.ts`, `en.json`, …). All groups for that locale are children of the same root. For TS files, wrap the export in `defineLocale` so the per-key literal types survive the `export default` (otherwise TypeScript widens them — see [`defineLocale`](#definelocale-one-file-per-locale-authoring) below).
 
 ```typescript
 // locales/en.ts
-export default {
+import { defineLocale, definePlural } from 'ilingo';
+
+export default defineLocale({
     app:  { greeting: 'Hi {{name}}' },
-    cart: { items: { '@plural': { one: '...', other: '...' } } },
-};
+    cart: { items: definePlural({ one: '1 item', other: '{{count}} items' }) },
+});
 ```
+
+```typescript
+// locales/index.ts — combine into a single catalog
+import { defineCatalog } from 'ilingo';
+import en from './en';
+import de from './de';
+
+export const catalog = defineCatalog({ en, de });
+```
+
+JSON variant is the same shape minus the helper calls — see the `@plural` example under [Authoring plurals](#authoring-plurals-json-vs-tsjs).
 
 **Use it when:** locales are small (low hundreds of keys), translators work one locale at a time, you want git diffs to read top-to-bottom per language.
 
@@ -82,6 +95,43 @@ ilingo.get({ group: 'app', key: 'unknown' });  // type error
 `defineCatalog<const T>(catalog)` is a runtime identity function. The work it does is purely at compile time — its `const` generic preserves the per-key literal types so the inferred `Key<C, G>` is the natural set of leaf paths, not `string`.
 
 See [Type-Safe Keys](./type-safe-keys) for the inference rules and the `Ilingo<C>` API.
+
+## `defineLocale` — one-file-per-locale authoring
+
+When you split locales across files (`locales/en.ts`, `locales/de.ts`, …), each file declares the groups for a single locale. TypeScript widens the literal types at the `export default` boundary unless you tell it not to. `defineLocale` is the per-locale counterpart of `defineCatalog`: an identity function with a `const` generic that captures the narrow shape and validates against `GroupsRecord`.
+
+```typescript
+// locales/en.ts
+import { defineLocale, definePlural } from 'ilingo';
+
+export default defineLocale({
+    app:  { greeting: 'Hi {{name}}' },
+    cart: { items: definePlural({ one: '1 item', other: '{{count}} items' }) },
+});
+```
+
+`as const` would also preserve the types but does no shape validation — a stray top-level string would slip through silently and only fail at lookup. `defineLocale<const T extends GroupsRecord>(locale: T): T` catches that at the call site:
+
+```typescript
+defineLocale({
+    app: 'oops',
+    //   ^^^^^^ type error: not a GroupsRecord entry
+});
+```
+
+When you import the per-locale files into a combined catalog, the const generic flows through `defineCatalog`, so `Ilingo<typeof catalog>` still infers the full set of legal `(group, key)` pairs across every locale:
+
+```typescript
+// locales/index.ts
+import { defineCatalog } from 'ilingo';
+import en from './en';
+import de from './de';
+
+export const catalog = defineCatalog({ en, de });
+//                                    ^^^^^^^^^^
+// Key<typeof catalog, 'cart'> is 'items', not 'string',
+// because the literal types from each per-locale file are preserved.
+```
 
 ## Authoring plurals: JSON vs TS/JS
 

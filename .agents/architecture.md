@@ -106,6 +106,8 @@ Helpers in `packages/ilingo/src/types.ts`:
 
 `defineCatalog<const T>(c)` (`packages/ilingo/src/catalog.ts`) is a runtime identity function with a `const` generic that captures the catalog literal without losing inference — saves callers from sprinkling `as const`.
 
+`defineLocale<const T extends GroupsRecord>(locale)` is the per-locale counterpart, used when each locale lives in its own file (`locales/en.ts`). It preserves literal types through an `export default` and validates the shape against `GroupsRecord` so a stray top-level string is caught at compile time (where `as const` would let it through). Combines with `defineCatalog` — the per-locale const generics flow through `defineCatalog`'s own const generic, so the merged `Ilingo<typeof catalog>` still infers full key paths.
+
 `definePlural<const T>(plural)` is the TS/JS-friendly companion to the explicit `@plural` JSON marker. Returns `{ '@plural': leaf }` — same runtime shape as the JSON literal — with CLDR-category autocomplete and a compile error on missing-`other` / non-CLDR keys. Both forms produce identical runtime data: JSON files keep using the `"@plural"` literal (they can't call functions), TS/JS files use `definePlural()`.
 
 ### 8. ESM-first, dependency-light, browser-safe
@@ -251,7 +253,7 @@ Output:
 packages/ilingo/src/
 ├── module.ts                ← orchestrator (Ilingo class)
 ├── store/{types,memory}     ← port + default adapter
-├── catalog.ts               ← defineCatalog<const T>() helper
+├── catalog.ts               ← defineCatalog<const T>() + defineLocale<const T>() + definePlural<const T>() helpers
 ├── utils/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
 │   ├── negotiate.ts         ← negotiateLocale, parseAcceptLanguage (request-side locale picking)

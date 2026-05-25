@@ -10,7 +10,7 @@ import type {
     Formatter, MissingKeyContext, MissingKeyHandler,
 } from '../../src';
 import {
-    Ilingo, MemoryStore, defineCatalog, definePlural,
+    Ilingo, MemoryStore, defineCatalog, defineLocale, definePlural,
 } from '../../src';
 
 // A typical typed catalog mixing flat keys, nested namespaces, and
@@ -253,6 +253,60 @@ describe('defineCatalog — preserves narrow inference', () => {
         expectTypeOf<keyof typeof c>().toEqualTypeOf<'en'>();
         expectTypeOf<keyof (typeof c)['en']>().toEqualTypeOf<'app'>();
         expectTypeOf<keyof (typeof c)['en']['app']>().toEqualTypeOf<'greeting'>();
+    });
+});
+
+describe('defineLocale — one-file-per-locale authoring', () => {
+    it('keeps per-key literal types through an export-default round-trip', () => {
+        // Simulates a `locales/en.ts` file authored with defineLocale.
+        const en = defineLocale({
+            app:  { greeting: 'Hi' },
+            cart: { items: definePlural({ one: '1', other: '{{count}}' }) },
+        });
+
+        expectTypeOf<keyof typeof en>().toEqualTypeOf<'app' | 'cart'>();
+        expectTypeOf<keyof (typeof en)['app']>().toEqualTypeOf<'greeting'>();
+        // Plural leaves keep the `@plural` discriminator at the type level.
+        expectTypeOf<keyof (typeof en)['cart']['items']>().toEqualTypeOf<'@plural'>();
+    });
+
+    it('composes with defineCatalog, preserving inference through the seams', () => {
+        // The point of the helper: const inference flows from the per-locale
+        // file into the combined catalog without `as const` sprinkling.
+        const en = defineLocale({
+            app:  { greeting: 'Hi' },
+            cart: { items: definePlural({ one: '1', other: '{{count}}' }) },
+        });
+        const de = defineLocale({
+            app:  { greeting: 'Hallo' },
+            cart: { items: definePlural({ one: 'Artikel', other: '{{count}} Artikel' }) },
+        });
+
+        const catalog = defineCatalog({ en, de });
+        const ilingo = new Ilingo<typeof catalog>({
+            store: new MemoryStore({ data: catalog }),
+        });
+
+        ilingo.get({ group: 'app', key: 'greeting' });
+        ilingo.get({ group: 'cart', key: 'items', count: 1 });
+
+        ilingo.get({
+            group: 'app',
+            // @ts-expect-error 'unknown' is not a key of the `app` group
+            key: 'unknown',
+        });
+        // @ts-expect-error count is required for plural keys
+        ilingo.get({ group: 'cart', key: 'items' });
+    });
+
+    it('rejects a non-GroupsRecord shape at compile time', () => {
+        // A stray top-level string isn't a valid group body — must be a
+        // `LinesRecord` (nested object). The const generic constraint
+        // catches this where `as const` would not.
+        defineLocale({
+            // @ts-expect-error top-level string is not a GroupsRecord entry
+            app: 'oops, that should have been { greeting: "..." }',
+        });
     });
 });
 

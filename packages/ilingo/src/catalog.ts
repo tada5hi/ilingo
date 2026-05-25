@@ -5,7 +5,12 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { LocalesRecord, PluralForms, PluralLeaf } from './types';
+import type { 
+    GroupsRecord, 
+    LocalesRecord, 
+    PluralForms, 
+    PluralLeaf, 
+} from './types';
 
 /**
  * Helper that returns its argument unchanged but captures it with `const`
@@ -26,6 +31,36 @@ import type { LocalesRecord, PluralForms, PluralLeaf } from './types';
  */
 export function defineCatalog<const T extends LocalesRecord>(catalog: T): T {
     return catalog;
+}
+
+/**
+ * One-file-per-locale companion to `defineCatalog`. Captures the groups
+ * for a single locale with `const` inference so the per-key literal types
+ * survive an `export default`, and validates the shape against
+ * `GroupsRecord` so a misplaced top-level value (a stray string, the
+ * wrong nesting) is caught at compile time instead of failing silently
+ * at lookup.
+ *
+ * Combine multiple `defineLocale` files via `defineCatalog` — the const
+ * generics flow through, so `Ilingo<typeof catalog>` still infers the
+ * full set of legal `(group, key)` pairs.
+ *
+ * @example
+ *     // locales/en.ts
+ *     import { defineLocale, definePlural } from 'ilingo';
+ *
+ *     export default defineLocale({
+ *         app:  { greeting: 'Hi {{name}}' },
+ *         cart: { items: definePlural({ one: '1 item', other: '{{count}} items' }) },
+ *     });
+ *
+ *     // locales/index.ts
+ *     import en from './en';
+ *     import de from './de';
+ *     export const catalog = defineCatalog({ en, de });
+ */
+export function defineLocale<const T extends GroupsRecord>(locale: T): T {
+    return locale;
 }
 
 /**
