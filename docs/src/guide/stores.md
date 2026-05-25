@@ -17,6 +17,10 @@ export interface IStore {
 
 All methods are async — keep that contract even when the implementation is synchronous, because `Ilingo.lookup` awaits every store call.
 
+::: tip Frozen surface
+The `IStore` port is **frozen** at these three methods for the stable release. Optional capabilities (caching, invalidation, watching) layer as separate interfaces detected via type guards — `InvalidatingStore` below is the pattern. `has`, `delete`, `getKeys`, and batch `getAll` were considered and deferred (see the source JSDoc for the rationale per method); they will follow the same opt-in-interface pattern if added later.
+:::
+
 ## MemoryStore
 
 The default. Holds translations in a plain nested object:

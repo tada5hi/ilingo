@@ -6,6 +6,9 @@
  */
 
 import { describe, expectTypeOf, it } from 'vitest';
+import type {
+    Formatter, MissingKeyContext, MissingKeyHandler,
+} from '../../src';
 import {
     Ilingo, MemoryStore, defineCatalog, definePlural,
 } from '../../src';
@@ -239,5 +242,159 @@ describe('defineCatalog — preserves narrow inference', () => {
         expectTypeOf<keyof typeof c>().toEqualTypeOf<'en'>();
         expectTypeOf<keyof (typeof c)['en']>().toEqualTypeOf<'app'>();
         expectTypeOf<keyof (typeof c)['en']['app']>().toEqualTypeOf<'greeting'>();
+    });
+});
+
+describe('Ilingo<Catalog>.getResolvedLocale — mirrors get() typing', () => {
+    const ilingo = new Ilingo<Catalog>({
+        store: new MemoryStore({ data: catalog }),
+    });
+
+    it('accepts a known group/key and resolves to string | undefined', () => {
+        expectTypeOf(
+            ilingo.getResolvedLocale({ group: 'app', key: 'greeting' }),
+        ).resolves.toEqualTypeOf<string | undefined>();
+    });
+
+    it('rejects an unknown group at compile time', () => {
+        ilingo.getResolvedLocale({
+            // @ts-expect-error 'unknown' is not a valid group
+            group: 'unknown',
+            key: 'greeting',
+        });
+    });
+
+    it('rejects a non-leaf intermediate namespace key', () => {
+        ilingo.getResolvedLocale({
+            group: 'app',
+            // @ts-expect-error 'nested' is a namespace, not a leaf
+            key: 'nested',
+        });
+    });
+
+    it('requires `count` for a plural key', () => {
+        ilingo.getResolvedLocale({ group: 'cart', key: 'items', count: 1 });
+
+        // @ts-expect-error count is required for plural keys
+        ilingo.getResolvedLocale({ group: 'cart', key: 'items' });
+    });
+});
+
+describe('Ilingo<Catalog>.getResolvedLocaleChain — locale-only, unaffected by C', () => {
+    const ilingo = new Ilingo<Catalog>({
+        store: new MemoryStore({ data: catalog }),
+    });
+
+    it('accepts an arbitrary locale string and returns string[]', () => {
+        // The chain only depends on `locale` (+ configured fallback). The
+        // catalog generic must NOT bleed into this argument or the helper
+        // becomes unusable for arbitrary BCP-47 input.
+        expectTypeOf(
+            ilingo.getResolvedLocaleChain({ locale: 'en-GB' }),
+        ).toEqualTypeOf<string[]>();
+    });
+
+    it('accepts a locale not present in the catalog', () => {
+        // Regression: an over-eager `keyof C` constraint here would block
+        // any locale that hasn't been authored yet — exactly the case where
+        // a fallback chain matters most.
+        ilingo.getResolvedLocaleChain({ locale: 'fr' });
+    });
+});
+
+describe('MissingKeyContext — stays loose under a typed catalog', () => {
+    it('handler receives string-typed group/key/locale, not narrowed unions', () => {
+        // By design: the handler runs *after* the chain misses, so it sees
+        // arbitrary input — narrowing it to keys that exist in the catalog
+        // would defeat the purpose. Document the contract here so future
+        // refactors that try to thread `C` into MissingKeyContext fail loudly.
+        const handler: MissingKeyHandler = (ctx) => {
+            expectTypeOf(ctx).toEqualTypeOf<MissingKeyContext>();
+            expectTypeOf(ctx.group).toEqualTypeOf<string>();
+            expectTypeOf(ctx.key).toEqualTypeOf<string>();
+            expectTypeOf(ctx.locale).toEqualTypeOf<string>();
+            expectTypeOf(ctx.resolvedLocale).toEqualTypeOf<string | undefined>();
+            return undefined;
+        };
+
+        new Ilingo<Catalog>({
+            store: new MemoryStore({ data: catalog }),
+            onMissingKey: handler,
+        });
+    });
+});
+
+describe('Ilingo<Catalog>.registerFormatter — works on typed instance', () => {
+    it('accepts a Formatter regardless of the catalog generic', () => {
+        const ilingo = new Ilingo<Catalog>({
+            store: new MemoryStore({ data: catalog }),
+        });
+
+        const upper: Formatter = (value, _opts, locale) =>
+            String(value).toLocaleUpperCase(locale);
+
+        // No assertion needed beyond compile-time acceptance.
+        ilingo.registerFormatter('upper', upper);
+    });
+});
+
+describe('Ilingo<Catalog>.clone — returns loosely-typed Ilingo', () => {
+    it('drops the catalog generic on the cloned instance', () => {
+        // Documented limitation: clone() rebinds to `Ilingo<LocalesRecord>`
+        // so it can compose with foreign-typed parents (e.g. scoped catalogs
+        // in @ilingo/vue). Callers that need the narrow type back should
+        // construct a new `Ilingo<C>` manually.
+        const parent = new Ilingo<Catalog>({
+            store: new MemoryStore({ data: catalog }),
+        });
+
+        const child = parent.clone();
+        expectTypeOf(child).toEqualTypeOf<Ilingo>();
+        // The loose surface accepts any group/key, matching the no-generic case.
+        child.get({ group: 'anything', key: 'really.anything' });
+    });
+});
+
+describe('Ilingo<Catalog>.merge — accepts foreign-typed Ilingo', () => {
+    it('takes an Ilingo<LocalesRecord> regardless of self generic', () => {
+        const typed = new Ilingo<Catalog>({
+            store: new MemoryStore({ data: catalog }),
+        });
+        const loose = new Ilingo();
+
+        // Catalog-typed instances must still compose with loose ones —
+        // that's how dynamically-loaded stores get merged in.
+        typed.merge(loose);
+    });
+});
+
+describe('definePlural in a diverging-locale catalog — count still required', () => {
+    it('treats the union as plural when one locale uses definePlural', () => {
+        // Mirrors the structural-vs-string diverging case above, but using
+        // the `definePlural` helper — confirms the `@plural` marker survives
+        // the union with a plain string leaf and that `IsPluralKey` still
+        // returns true via the `Extract<...>`-based detection.
+        const diverge = defineCatalog({
+            en: {
+                cart: {
+                    items: definePlural({ one: '1 item', other: '{{count}} items' }),
+                },
+            },
+            de: {
+                cart: {
+                    // String in German — not plural-shaped on this branch.
+                    items: 'Artikel',
+                },
+            },
+        });
+
+        const il = new Ilingo<typeof diverge>({
+            store: new MemoryStore({ data: diverge }),
+        });
+
+        il.get({ group: 'cart', key: 'items', count: 1 });
+
+        // @ts-expect-error count is required because en is plural-shaped
+        il.get({ group: 'cart', key: 'items' });
     });
 });
