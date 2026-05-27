@@ -10,6 +10,7 @@ A lightweight library for translation and internationalization.
   - [FS](#fs-)
   - [Vue](#vue-)
   - [Vuelidate](#vuelidate-)
+  - [Validup](#validup-)
 - [License](#license)
 
 ## Usage
@@ -130,6 +131,14 @@ This package contains an adapter for vue.
 This package contains an adapter for the vuelidate library.
 
 [Documentation](./packages/vuelidate/README.md)
+
+### Validup 🛡️
+
+**`@ilingo/validup`**
+
+Sibling of `@ilingo/vuelidate` for the [validup](https://www.npmjs.com/package/validup) ecosystem — ships default EN/DE/FR/ES catalogs for the built-in `IssueCode`s, reactive Vue composables that translate `@validup/vue` field state, and an `<IValidup>` renderless component.
+
+[Documentation](./packages/validup/README.md)
 
 ## License
 

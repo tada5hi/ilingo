@@ -16,6 +16,9 @@
         },
         "packages/vuelidate": {
             "component": "vuelidate"
+        },
+        "packages/validup": {
+            "component": "validup"
         }
     },
     "plugins": [

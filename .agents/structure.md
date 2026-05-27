@@ -10,6 +10,7 @@ This is an npm-workspaces monorepo. Workspaces under `packages/` are publishable
 | [`@ilingo/fs`](../packages/fs)                         | 5.x     | File-system store adapter — extends `MemoryStore`, lazy-loads `<locale>/<group>.{js,mjs,cjs,ts,mts,json,conf}` |
 | [`@ilingo/vue`](../packages/vue)                       | 5.x     | Vue 3 plugin: `install()`, `provide/inject` for the `Ilingo` instance and reactive locale, `<ITranslate>` component, `useTranslation` composable |
 | [`@ilingo/vuelidate`](../packages/vuelidate)           | 6.x     | Vuelidate-message adapter on top of `@ilingo/vue` — ships built-in EN/DE/FR/ES translations for validator names |
+| [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Validup-message adapter — sibling of `@ilingo/vuelidate`. Ships EN/DE/FR/ES translations for built-in `IssueCode`s, reactive composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`), and an `<IValidup>` renderless component. Peer-deps `validup`, `@validup/vue`. |
 | [`@ilingo/docs`](../docs)                              | private | VitePress 1.x marketing + reference site. Deploys to GitHub Pages via `.github/workflows/docs.yml`. Never published to npm. |
 
 ## Package Dependency Layers
@@ -26,6 +27,7 @@ Layer 1:
 
 Layer 2:
   @ilingo/vuelidate      (peer: @ilingo/vue, ilingo, vue, @vueuse/core, @vuelidate/core)
+  @ilingo/validup        (peer: @ilingo/vue, ilingo, vue, @vueuse/core, validup, @validup/vue)
 ```
 
 Nx (`nx.json`) is configured so `build` depends on `^build`, which means workspace builds run in topological order automatically.
