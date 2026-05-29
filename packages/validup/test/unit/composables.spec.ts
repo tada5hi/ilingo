@@ -6,6 +6,7 @@
  */
 
 import { Ilingo } from 'ilingo';
+import { install as installIlingoVue } from '@ilingo/vue';
 import { Container, IssueCode, defineIssueItem } from 'validup';
 import type { Validator } from 'validup';
 import { useValidup } from '@validup/vue';
@@ -19,6 +20,20 @@ import {
     useTranslationsForField,
     useTranslationsForIssues,
 } from '../../src';
+
+/**
+ * Bundle the two-step install (`@ilingo/vue` then `@ilingo/validup`)
+ * into a single Vue plugin so test mounts express the wiring contract
+ * — vue-first, then validup — without each test repeating it.
+ */
+function ilingoTestPlugin(ilingo: Ilingo) {
+    return {
+        install(app: import('vue').App) {
+            installIlingoVue(app, ilingo);
+            install(app);
+        },
+    };
+}
 
 const isString: Validator = (ctx) => {
     if (typeof ctx.value !== 'string') {
@@ -36,16 +51,32 @@ async function flush(): Promise<void> {
 }
 
 describe('install', () => {
-    it('adds the default Store exactly once', () => {
+    it('adds the default Store exactly once when called twice on the same app', () => {
         const ilingo = new Ilingo();
-        const app = { use(plugin: any) { plugin.install(this); }, config: {}, provide() {} } as any;
-
-        // Install twice — second call should be a no-op for the Store add.
-        install(app, ilingo);
-        install(app, ilingo);
+        const app = mount(defineComponent({ template: '<div />' }), {
+            global: {
+                plugins: [
+                    { install: (a) => installIlingoVue(a, ilingo) },
+                    // Second call should be a no-op for the Store add.
+                    { install: (a) => install(a) },
+                    { install: (a) => install(a) },
+                ],
+            },
+        });
 
         const stores = Array.from(ilingo.stores).filter((s) => s instanceof Store);
         expect(stores).toHaveLength(1);
+        app.unmount();
+    });
+
+    it('throws a pointed error when @ilingo/vue is not installed first', () => {
+        const wrapper = () => mount(defineComponent({ template: '<div />' }), {
+            global: {
+                plugins: [{ install: (a) => install(a) }],
+            },
+        });
+
+        expect(wrapper).toThrowError(/install @ilingo\/vue first/i);
     });
 });
 
@@ -59,20 +90,12 @@ describe('useTranslationsForIssues', () => {
             }),
         ]);
 
+        const ilingo = new Ilingo({ locale: 'de' });
         const wrapper = mount(defineComponent({
-            setup() {
-                install(undefined as any, new Ilingo({ locale: 'de' }));
-                return { translations: useTranslationsForIssues(issuesRef) };
-            },
+            setup: () => ({ translations: useTranslationsForIssues(issuesRef) }),
             template: '<div>{{ translations.map((t) => t.message).join(",") }}</div>',
         }), {
-            global: {
-                plugins: [{
-                    install(app) {
-                        install(app, new Ilingo({ locale: 'de' }));
-                    },
-                }],
-            },
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
         });
 
         await flush();
@@ -100,6 +123,7 @@ describe('useTranslationsForField + useTranslationsForComposable', () => {
 
         const formState = reactive({ email: 42 as unknown as string });
 
+        const ilingo = new Ilingo({ locale: 'en' });
         const wrapper = mount(defineComponent({
             setup() {
                 const $v = useValidup(container, formState);
@@ -110,13 +134,7 @@ describe('useTranslationsForField + useTranslationsForComposable', () => {
             },
             template: '<div><span class="field">{{ fieldTranslations.map((t) => t.message).join(",") }}</span><span class="form">{{ formTranslations.map((t) => t.message).join(",") }}</span></div>',
         }), {
-            global: {
-                plugins: [{
-                    install(app) {
-                        install(app, new Ilingo({ locale: 'en' }));
-                    },
-                }],
-            },
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
         });
 
         await flush();

@@ -5,29 +5,35 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Options } from '@ilingo/vue';
-import { applyInstallInput } from '@ilingo/vue';
-import type { Ilingo } from 'ilingo';
+import { injectIlingoSafe } from '@ilingo/vue';
 import type { App, Plugin } from 'vue';
 import { Store, createStore } from './store';
 
 /**
- * Vue plugin install hook. Idempotently:
+ * Vue plugin install hook. Registers the default validation-message
+ * `Store` (EN / DE / FR / ES translations for the built-in validup
+ * `IssueCode`s) onto the `Ilingo` instance previously installed by
+ * `@ilingo/vue`.
  *
- * 1. Sets up (or merges into) the `Ilingo` instance and locale `Ref` via
- *    `@ilingo/vue`'s `applyInstallInput`.
- * 2. Adds the default `Store` (with EN / DE / FR / ES translations for
- *    the built-in validup `IssueCode`s) if no `@ilingo/validup` `Store`
- *    is already registered.
+ * **Order matters:** call `app.use(ilingoVue, …)` before
+ * `app.use(ilingoValidup)`. Without an existing `Ilingo` instance in
+ * the app context, this throws with a pointer to the missing setup —
+ * better than silently constructing a second instance that
+ * `<ITranslate>` and `useTranslation()` wouldn't see.
  *
- * Identity-checks via `instanceof Store`, so re-calling `install()` —
- * for example from a hot-reloaded test setup — won't stack duplicates.
+ * Idempotent: re-calling `install()` (e.g. from a hot-reloaded test
+ * setup) won't stack duplicate `Store` instances — the existing one is
+ * detected via `instanceof Store`.
  */
-export function install(
-    app: App,
-    input?: Options | Ilingo,
-): void {
-    const instance = applyInstallInput(app, input);
+export function install(app: App): void {
+    const instance = injectIlingoSafe(app);
+    if (!instance) {
+        throw new Error(
+            '@ilingo/validup: no Ilingo instance found in the app context. ' +
+            'Install @ilingo/vue first — e.g. `app.use(ilingoVue, { ... })` ' +
+            'before `app.use(ilingoValidup)`.',
+        );
+    }
 
     let found = false;
     for (const store of instance.stores) {
@@ -42,7 +48,7 @@ export function install(
     }
 }
 
-export default { install } satisfies Plugin<Options | Ilingo | undefined>;
+export default { install } satisfies Plugin<[]>;
 
 export * from './component';
 export * from './composables';

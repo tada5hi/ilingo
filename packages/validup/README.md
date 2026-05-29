@@ -70,12 +70,34 @@ const emailErrors = useTranslationsForField($v.fields.email);
 ### Vue plugin
 
 ```typescript
-import { install } from '@ilingo/validup';
+import { install as installIlingoVue } from '@ilingo/vue';
+import { install as installIlingoValidup } from '@ilingo/validup';
 
-install(app, ilingoOrOptions?);
+installIlingoVue(app, ilingo);     // first — owns the Ilingo instance
+installIlingoValidup(app);         // then — registers the validation catalog
 ```
 
-Calls `applyInstallInput` from `@ilingo/vue` to set up (or merge into) the shared `Ilingo` instance, then adds the default `Store` if one isn't already registered. Identity-checked via `instanceof Store`, so re-invoking `install()` is idempotent (handy for HMR / test setup).
+`@ilingo/validup`'s `install(app)` looks up the `Ilingo` instance previously installed by `@ilingo/vue` and adds the default `Store` (EN / DE / FR / ES translations for the built-in validup `IssueCode`s) if one isn't already present. It throws a pointed error when called without a pre-installed instance — better than silently constructing a second one that `<ITranslate>` and `useTranslation()` wouldn't see. Identity-checked via `instanceof Store`, so re-invoking is idempotent (handy for HMR / test setup).
+
+### Type-safe catalog composition
+
+The shipped catalog's shape is exported as `ValidupCatalog` for consumers using `Ilingo<Catalog>` to compose validation messages into their app catalog:
+
+```typescript
+import type { ValidupCatalog } from '@ilingo/validup';
+import type { Ilingo } from 'ilingo';
+
+type AppCatalog = {
+    en: { app: { greeting: string } } & ValidupCatalog['en'];
+    de: { app: { greeting: string } } & ValidupCatalog['de'];
+};
+
+const ilingo: Ilingo<AppCatalog> = new Ilingo<AppCatalog>({ ... });
+// ilingo.get({ group: 'validup', key: 'min_length' }) → typed
+// ilingo.get({ group: 'validup', key: 'typo' })       → TS error
+```
+
+Augment `ValidupCatalog` to add locales or extension `IssueCode`s — see the JSDoc on the exported `ValidupCatalogEntries` and `ValidupCatalog` interfaces.
 
 ### Composables
 
@@ -85,7 +107,9 @@ Calls `applyInstallInput` from `@ilingo/vue` to set up (or merge into) the share
 | `useTranslationsForField(fieldState)` | `MaybeRef<FieldState>` from `@validup/vue` → reactive translations of the field's dirty-gated `$errors`. |
 | `useTranslationsForComposable($v)` | `MaybeRef<Composable<T>>` from `@validup/vue` → reactive translations of every field's `$errors`. |
 
-All three re-run when the injected locale flips. The injected `Ilingo` instance and locale `Ref` come from `@ilingo/vue` — `install()` from this package wires both.
+All three re-run when the injected locale flips. The injected `Ilingo` instance and locale `Ref` come from `@ilingo/vue`'s `install()` — call that first, then this package's `install(app)` to register the default catalog.
+
+`useTranslationsForIssues` preserves the previously-resolved translations during async re-evaluation, so a locale switch on a form with visible errors doesn't blank the UI for a tick before the new translations paint.
 
 ### Pure helpers (no Vue dep)
 
@@ -136,7 +160,8 @@ ilingo.stores.add(new MemoryStore({
         de: { validup: { email_taken: 'Diese E-Mail ist bereits registriert' } },
     },
 }));
-// install(app, ilingo) — the default Store appends second; the closer locale wins.
+// installIlingoVue(app, ilingo); installIlingoValidup(app);
+// the default Store appends second; the closer locale wins.
 ```
 
 The `validup` group name is exported as `GROUP` if you'd rather build the catalog programmatically.
