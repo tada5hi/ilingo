@@ -67,6 +67,72 @@ describe('translateIssue', () => {
         const out = await translateIssue(group, ilingo);
         expect(out).toBe('None of the alternatives was successful');
     });
+
+    it('interpolates parameterized codes (min_length) from issue.params', async () => {
+        const ilingo = setupIlingo('en');
+        const issue = defineIssueItem({
+            path: ['name'],
+            message: 'min',
+            code: IssueCode.MIN_LENGTH,
+            params: { min: 3 },
+        });
+
+        const out = await translateIssue(issue, ilingo);
+        expect(out).toBe('The minimum length allowed is 3');
+    });
+
+    it('interpolates between with both min and max placeholders', async () => {
+        const ilingo = setupIlingo('en');
+        const issue = defineIssueItem({
+            path: ['age'],
+            message: 'range',
+            code: IssueCode.BETWEEN,
+            params: { min: 18, max: 120 },
+        });
+
+        const out = await translateIssue(issue, ilingo);
+        expect(out).toBe('The value must be between 18 and 120');
+    });
+
+    it('interpolates same_as with the other-field placeholder', async () => {
+        const ilingo = setupIlingo('en');
+        const issue = defineIssueItem({
+            path: ['passwordConfirm'],
+            message: 'mismatch',
+            code: IssueCode.SAME_AS,
+            params: { other: 'password' },
+        });
+
+        const out = await translateIssue(issue, ilingo);
+        expect(out).toBe('The value must equal password');
+    });
+
+    it('translates parameterized codes under a non-default locale', async () => {
+        const ilingo = setupIlingo('de');
+        const issue = defineIssueItem({
+            path: ['age'],
+            message: 'range',
+            code: IssueCode.BETWEEN,
+            params: { min: 18, max: 120 },
+        });
+
+        const out = await translateIssue(issue, ilingo);
+        expect(out).toBe('Der Wert muss zwischen 18 und 120 liegen');
+    });
+
+    it('translates bare format codes (uuid, base64, json) without params', async () => {
+        const ilingo = setupIlingo('en');
+        for (const [code, expected] of [
+            [IssueCode.UUID, 'The value is not a valid UUID'],
+            [IssueCode.BASE64, 'The value is not valid base64'],
+            [IssueCode.JSON, 'The value is not valid JSON'],
+            [IssueCode.STRONG_PASSWORD, 'The value does not meet the password strength requirements'],
+        ] as const) {
+            const issue = defineIssueItem({ path: ['x'], message: 'm', code });
+            const out = await translateIssue(issue, ilingo);
+            expect(out).toBe(expected);
+        }
+    });
 });
 
 describe('translateIssues', () => {
