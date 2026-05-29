@@ -56,9 +56,7 @@ const IValidup = defineComponent({
                 return output;
             }
 
-            return slots[SlotName.DEFAULT]({
-                translations: translations.value,
-            } satisfies SlotProps);
+            return slots[SlotName.DEFAULT]({ translations: translations.value } satisfies SlotProps);
         };
     },
 });

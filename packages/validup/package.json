@@ -54,19 +54,19 @@
     "homepage": "https://github.com/tada5hi/ilingo#readme",
     "devDependencies": {
         "@ilingo/vue": "^5.0.0",
-        "@validup/vue": "^1.0.0",
+        "@validup/vue": "^0.3.0",
         "@vueuse/core": "^14.1.0",
         "ilingo": "^5.0.0",
-        "validup": "^1.0.0",
+        "validup": "^0.4.0",
         "vite": "^7.3.1",
         "vue": "^3.5.26"
     },
     "peerDependencies": {
         "@ilingo/vue": "^5.0.0",
-        "@validup/vue": "^1.0.0",
+        "@validup/vue": "^0.3.0",
         "@vueuse/core": "^14.1.0",
         "ilingo": "^5.0.0",
-        "validup": "^1.0.0",
+        "validup": "^0.4.0",
         "vue": "^3.5.26"
     },
     "publishConfig": {

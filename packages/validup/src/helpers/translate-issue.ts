@@ -48,12 +48,18 @@ export async function translateIssue(
     ilingo: Ilingo,
     options: TranslateIssueOptions = {},
 ): Promise<string> {
-    const code = issue.code;
+    const { code } = issue;
     if (typeof code === 'string' && code.length > 0) {
         const translated = await ilingo.get({
             group: options.group ?? GROUP,
             key: code,
-            data: issue.data,
+            // validup widens IssueItem.data to `Record<string, unknown>` to
+            // cover the raw / ad-hoc branch; ilingo's `Data` is the narrower
+            // `Record<string, string | number>`. For the documented vocabulary
+            // codes the producer-side gatekeep guarantees string/number values
+            // at runtime, and ilingo's interpolator stringifies whatever it
+            // receives, so the cast at the boundary is safe.
+            data: issue.data as Record<string, string | number> | undefined,
             locale: options.locale,
         });
         if (typeof translated === 'string' && translated.length > 0) {
