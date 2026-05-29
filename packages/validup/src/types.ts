@@ -6,7 +6,6 @@
  */
 
 import type { IssueItem } from 'validup';
-import type { Ref } from 'vue';
 
 /**
  * Type-level shape of the `'validup'` group inside an `Ilingo<Catalog>`.
@@ -90,14 +89,6 @@ export interface IssueTranslation {
     issue: IssueItem;
     message: string;
 }
-
-/**
- * Reactive list of translated leaf issues. Produced by
- * `useTranslationsForIssues` and `useTranslationsForField`; rebuilds
- * automatically when the source `issues` change or when the injected
- * locale flips.
- */
-export type FieldTranslations = Ref<IssueTranslation[]>;
 
 export type KeyValue<T = unknown> = {
     key: string,

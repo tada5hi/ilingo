@@ -3,5 +3,6 @@
     "packages/fs": "5.0.0",
     "packages/vue": "5.0.0",
     "packages/vuelidate": "6.0.0",
-    "packages/validup": "0.1.0"
+    "packages/validup": "0.1.0",
+    "packages/validup-vue": "0.1.0"
 }

@@ -5,8 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Ilingo } from 'ilingo';
+import { Store } from '@ilingo/validup';
 import { install as installIlingoVue } from '@ilingo/vue';
+import { Ilingo } from 'ilingo';
 import { Container, IssueCode, defineIssueItem } from 'validup';
 import type { Validator } from 'validup';
 import { useValidup } from '@validup/vue';
@@ -14,7 +15,6 @@ import { mount } from '@vue/test-utils';
 import { defineComponent, nextTick, reactive, ref } from 'vue';
 import { describe, expect, it } from 'vitest';
 import {
-    Store,
     install,
     useTranslationsForComposable,
     useTranslationsForField,
@@ -22,9 +22,9 @@ import {
 } from '../../src';
 
 /**
- * Bundle the two-step install (`@ilingo/vue` then `@ilingo/validup`)
+ * Bundle the two-step install (`@ilingo/vue` then `@ilingo/validup-vue`)
  * into a single Vue plugin so test mounts express the wiring contract
- * — vue-first, then validup — without each test repeating it.
+ * — vue-first, then validup-vue — without each test repeating it.
  */
 function ilingoTestPlugin(ilingo: Ilingo) {
     return {

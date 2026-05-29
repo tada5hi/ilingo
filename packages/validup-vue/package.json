@@ -1,8 +1,8 @@
 {
-    "name": "@ilingo/validup",
+    "name": "@ilingo/validup-vue",
     "type": "module",
     "version": "0.1.0",
-    "description": "Translate validup Issues through ilingo — framework-agnostic core with default EN/DE/FR/ES catalogs.",
+    "description": "Vue 3 plugin + composables that wire @ilingo/validup into a Vue app.",
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
@@ -18,7 +18,9 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsdown",
+        "build:js": "tsdown",
+        "build:types": "vue-tsc --declaration --emitDeclarationOnly -p tsconfig.build.json",
+        "build": "npm run build:js && npm run build:types",
         "test": "vitest --config test/vitest.config.ts --run",
         "test:coverage": "vitest --config test/vitest.config.ts --run --coverage",
         "lint": "eslint",
@@ -32,7 +34,8 @@
         "validup",
         "validation",
         "i18n",
-        "translation"
+        "translation",
+        "vue"
     ],
     "author": {
         "name": "Peter Placzek",
@@ -43,20 +46,30 @@
     "repository": {
         "type": "git",
         "url": "https://github.com/tada5hi/ilingo.git",
-        "directory": "packages/validup"
+        "directory": "packages/validup-vue"
     },
     "bugs": {
         "url": "https://github.com/tada5hi/ilingo/issues"
     },
     "homepage": "https://github.com/tada5hi/ilingo#readme",
     "devDependencies": {
+        "@ilingo/validup": "^0.1.0",
+        "@ilingo/vue": "^5.0.0",
+        "@validup/vue": "^0.3.0",
+        "@vueuse/core": "^14.1.0",
         "ilingo": "^5.0.0",
         "validup": "^0.4.0",
-        "vite": "^7.3.1"
+        "vite": "^7.3.1",
+        "vue": "^3.5.26"
     },
     "peerDependencies": {
+        "@ilingo/validup": "^0.1.0",
+        "@ilingo/vue": "^5.0.0",
+        "@validup/vue": "^0.3.0",
+        "@vueuse/core": "^14.1.0",
         "ilingo": "^5.0.0",
-        "validup": "^0.4.0"
+        "validup": "^0.4.0",
+        "vue": "^3.5.26"
     },
     "publishConfig": {
         "access": "public"

@@ -7,10 +7,17 @@
 
 import { defineConfig } from 'tsdown';
 
+/**
+ * Pure-core build. No vue / @vueuse / @ilingo/vue / @validup/vue
+ * in the import graph — the Vue surface lives in `@ilingo/validup-vue`.
+ *
+ * `dts: true` lets tsdown emit `.d.mts` directly (no `vue-tsc` needed
+ * because no SFCs).
+ */
 export default defineConfig({
     entry: 'src/index.ts',
     format: 'esm',
-    dts: false,
+    dts: true,
     sourcemap: true,
     clean: true,
 });

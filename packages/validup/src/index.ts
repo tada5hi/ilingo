@@ -5,53 +5,19 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { injectIlingoSafe } from '@ilingo/vue';
-import type { App, Plugin } from 'vue';
-import { Store, createStore } from './store';
-
 /**
- * Vue plugin install hook. Registers the default validation-message
- * `Store` (EN / DE / FR / ES translations for the built-in validup
- * `IssueCode`s) onto the `Ilingo` instance previously installed by
- * `@ilingo/vue`.
+ * Public surface of `@ilingo/validup` (framework-agnostic core).
  *
- * **Order matters:** call `app.use(ilingoVue, …)` before
- * `app.use(ilingoValidup)`. Without an existing `Ilingo` instance in
- * the app context, this throws with a pointer to the missing setup —
- * better than silently constructing a second instance that
- * `<ITranslate>` and `useTranslation()` wouldn't see.
+ * Bridges `validup` `Issue`s to `ilingo` lookups with a pre-seeded EN /
+ * DE / FR / ES catalog. No `vue` / `@vueuse/core` / `@ilingo/vue` imports
+ * anywhere on this surface — embeddable in any runtime (Node SSR, edge,
+ * worker) that just needs to translate an issue tree.
  *
- * Idempotent: re-calling `install()` (e.g. from a hot-reloaded test
- * setup) won't stack duplicate `Store` instances — the existing one is
- * detected via `instanceof Store`.
+ * Vue consumers (composables, renderless component, install plugin)
+ * import from `@ilingo/validup/vue`, which re-exports everything here
+ * plus the Vue-coupled surface.
  */
-export function install(app: App): void {
-    const instance = injectIlingoSafe(app);
-    if (!instance) {
-        throw new Error(
-            '@ilingo/validup: no Ilingo instance found in the app context. ' +
-            'Install @ilingo/vue first — e.g. `app.use(ilingoVue, { ... })` ' +
-            'before `app.use(ilingoValidup)`.',
-        );
-    }
 
-    let found = false;
-    for (const store of instance.stores) {
-        if (store instanceof Store) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
-        instance.stores.add(createStore());
-    }
-}
-
-export default { install } satisfies Plugin<[]>;
-
-export * from './component';
-export * from './composables';
 export * from './constants';
 export * from './helpers';
 export * from './store';

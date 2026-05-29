@@ -134,11 +134,11 @@ This package contains an adapter for the vuelidate library.
 
 ### Validup 🛡️
 
-**`@ilingo/validup`**
+**`@ilingo/validup`** + **`@ilingo/validup-vue`**
 
-Sibling of `@ilingo/vuelidate` for the [validup](https://www.npmjs.com/package/validup) ecosystem — ships default EN/DE/FR/ES catalogs for the built-in `IssueCode`s, reactive Vue composables that translate `@validup/vue` field state, and an `<IValidup>` renderless component.
+Adapter pair for the [validup](https://www.npmjs.com/package/validup) ecosystem. `@ilingo/validup` is the framework-agnostic core — default EN/DE/FR/ES catalogs for the built-in `IssueCode`s, the pre-seeded `Store`, `translateIssue` / `translateIssues` helpers — embeddable in any runtime (Node SSR, edge, queue workers). `@ilingo/validup-vue` adds the Vue 3 plugin, composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`), and the `<IValidup>` renderless component. Mirrors the `validup` → `@validup/vue` split so Vue is opt-in, not a hard dep on the validation-message surface.
 
-[Documentation](./packages/validup/README.md)
+[Core](./packages/validup/README.md) · [Vue](./packages/validup-vue/README.md)
 
 ## License
 
