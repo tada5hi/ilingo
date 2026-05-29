@@ -33,7 +33,7 @@ export interface TranslateIssueOptions {
  *
  * Lookup order:
  * 1. If the issue has a `code` and the catalog has a matching entry,
- *    return it (with `issue.params` interpolated via ilingo's `{{name}}`
+ *    return it (with `issue.data` interpolated via ilingo's `{{name}}`
  *    syntax).
  * 2. Otherwise return the issue's eagerly-rendered `message` so the
  *    consumer always gets something displayable. The fallback message is
@@ -53,7 +53,7 @@ export async function translateIssue(
         const translated = await ilingo.get({
             group: options.group ?? GROUP,
             key: code,
-            data: issue.params,
+            data: issue.data,
             locale: options.locale,
         });
         if (typeof translated === 'string' && translated.length > 0) {

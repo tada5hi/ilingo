@@ -12,12 +12,12 @@ import type { LinesRecord } from 'ilingo';
  *
  * Keyed by `IssueCode` runtime value (e.g. `value_invalid`,
  * `one_of_failed`). Placeholders use ilingo's `{{name}}` syntax and are
- * substituted from the issue's `params` field — see the `IssueCode`
+ * substituted from the issue's `data` field — see the `IssueCode`
  * JSDoc in `validup/src/issue/constants.ts` for each code's documented
- * params contract.
+ * data contract.
  *
  * Extension codes (declared via TypeScript declaration merging on
- * `IssueParamsByCode` or shipped by adapter authors) are NOT covered by
+ * `IssueDataByCode` or shipped by adapter authors) are NOT covered by
  * this default catalog — register your own translations alongside the
  * built-ins.
  */

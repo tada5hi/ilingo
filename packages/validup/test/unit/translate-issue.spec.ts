@@ -68,13 +68,13 @@ describe('translateIssue', () => {
         expect(out).toBe('None of the alternatives was successful');
     });
 
-    it('interpolates parameterized codes (min_length) from issue.params', async () => {
+    it('interpolates parameterized codes (min_length) from issue.data', async () => {
         const ilingo = setupIlingo('en');
         const issue = defineIssueItem({
             path: ['name'],
             message: 'min',
             code: IssueCode.MIN_LENGTH,
-            params: { min: 3 },
+            data: { min: 3 },
         });
 
         const out = await translateIssue(issue, ilingo);
@@ -87,7 +87,7 @@ describe('translateIssue', () => {
             path: ['age'],
             message: 'range',
             code: IssueCode.BETWEEN,
-            params: { min: 18, max: 120 },
+            data: { min: 18, max: 120 },
         });
 
         const out = await translateIssue(issue, ilingo);
@@ -100,7 +100,7 @@ describe('translateIssue', () => {
             path: ['passwordConfirm'],
             message: 'mismatch',
             code: IssueCode.SAME_AS,
-            params: { other: 'password' },
+            data: { other: 'password' },
         });
 
         const out = await translateIssue(issue, ilingo);
@@ -113,14 +113,14 @@ describe('translateIssue', () => {
             path: ['age'],
             message: 'range',
             code: IssueCode.BETWEEN,
-            params: { min: 18, max: 120 },
+            data: { min: 18, max: 120 },
         });
 
         const out = await translateIssue(issue, ilingo);
         expect(out).toBe('Der Wert muss zwischen 18 und 120 liegen');
     });
 
-    it('translates bare format codes (uuid, base64, json) without params', async () => {
+    it('translates bare format codes (uuid, base64, json) without data', async () => {
         const ilingo = setupIlingo('en');
         for (const [code, expected] of [
             [IssueCode.UUID, 'The value is not a valid UUID'],
