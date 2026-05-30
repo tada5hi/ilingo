@@ -60,7 +60,7 @@ When creating new files, copy this header and use the **current year**.
 
 | Pattern                  | Example                                | Notes                                                                 |
 |--------------------------|----------------------------------------|-----------------------------------------------------------------------|
-| Port interfaces          | `IStore`                               | `I`-prefix used (see commit `137dfd5 fix: rename interface Store -> IStore`) |
+| Port interfaces          | `IStore`, `IIlingo`                    | `I`-prefix used (see commit `137dfd5 fix: rename interface Store -> IStore`). `IIlingo` is the public type contract of the orchestrator; prefer it in type positions, reserve the concrete `Ilingo` class for construction. |
 | Adapter classes          | `MemoryStore`, `FSStore`               | No `Adapter` suffix; descriptive concrete name                        |
 | Context types            | `StoreGetContext`, `GetContext`, `GetContextReactive` | Object passed to async methods — group + key + optional locale/data |
 | Config types             | `Config` + `ConfigInput`               | `packages/ilingo`: both names alias the same fully-optional shape (every field has a runtime default, so the split was misleading). `packages/fs`: `Config` is the resolved shape and `ConfigInput` is the un-normalized input (`directory: string \| string[]`) — keep the split when the input shape differs from the resolved shape. |
@@ -106,6 +106,7 @@ Conventional Commits, validated by commitlint:
 - `target: ES2022`, `module: ESNext`, `moduleResolution: bundler`, `lib: ["ESNext"]` (Vue packages add `"DOM", "DOM.Iterable"`).
 - `strict: false` repo-wide — do not turn on strictness as a side effect of other work; treat it as a separate migration if attempted.
 - Each Vue package keeps a `tsconfig.build.json` (`emitDeclarationOnly: true`, `outDir: dist`) consumed exclusively by `vue-tsc` to produce `.d.ts` for `.vue` SFCs. Non-Vue packages need no `tsconfig.build.json` — tsdown handles their `.d.mts`.
+- Each package's own `tsconfig.json` carries a `paths` map for the workspace packages it imports (e.g. `@ilingo/vuelidate` maps `ilingo` → `../ilingo/src/index.ts` and `@ilingo/vue` → `../vue/src/index.ts`) so the IDE and `tsc` type-check resolve cross-package imports to **source**, not the built `dist/`. The map lives in the *package* config (not the root) — TS anchors `paths` to the file that declares them, so the `../<pkg>/src/index.ts` values stay relative to that package dir. Each `tsconfig.build.json` resets `paths: {}` — `vue-tsc` declaration emission must resolve peers from `dist` (their published `.d.ts`), not source, or it pulls foreign `src/` into the program and fails the `rootDir` constraint. Runtime/bundle resolution is unaffected (tsdown externalises peers; `paths` is type-resolution only).
 
 ## Build Output
 

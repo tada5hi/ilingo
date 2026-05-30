@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Ilingo } from 'ilingo';
+import type { IIlingo } from 'ilingo';
 import {
     provide,
 } from 'vue';
@@ -18,7 +18,7 @@ import { inject } from '../helpers';
 const IlingoSymbol = Symbol.for('Ilingo');
 
 export function provideIlingo(
-    ilingo: Ilingo,
+    ilingo: IIlingo,
     app?: App,
 ) {
     if (typeof app === 'undefined') {
@@ -29,8 +29,8 @@ export function provideIlingo(
     app.provide(IlingoSymbol, ilingo);
 }
 
-export function injectIlingo(app?: App) : Ilingo {
-    const instance = inject<Ilingo>(IlingoSymbol, app);
+export function injectIlingo(app?: App) : IIlingo {
+    const instance = inject<IIlingo>(IlingoSymbol, app);
     if (!instance) {
         throw new Error('An ilingo instance is not present in the vue context.');
     }
@@ -38,6 +38,6 @@ export function injectIlingo(app?: App) : Ilingo {
     return instance;
 }
 
-export function injectIlingoSafe(app?: App) : Ilingo | undefined {
-    return inject<Ilingo>(IlingoSymbol, app);
+export function injectIlingoSafe(app?: App) : IIlingo | undefined {
+    return inject<IIlingo>(IlingoSymbol, app);
 }

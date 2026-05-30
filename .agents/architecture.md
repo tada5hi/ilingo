@@ -6,9 +6,10 @@ ilingo follows a small **port-and-adapter** design:
 
 - **Port**: `IStore` (`packages/ilingo/src/store/types.ts`) defines `get`, `set`, `getLocales`.
 - **Adapters**: `MemoryStore` (default, in-memory) and `FSStore` (lazy-loads files from disk, persists `set()` to JSON) implement the port.
-- **Orchestrator**: `Ilingo` (`packages/ilingo/src/module.ts`) holds a `Set<IStore>` plus per-instance state for the locale, fallback chain, missing-key handler, plural-rules cache, and warn-once memo. On each `get()` it walks a resolved locale chain in order; within each locale it queries stores **serially in insertion order** and stops at the first hit.
+- **Orchestrator**: `Ilingo` (`packages/ilingo/src/module.ts`, implementing the `IIlingo` interface) holds a `Map<symbol, IStore>` plus per-instance state for the locale, fallback chain, missing-key handler, plural-rules cache, and warn-once memo. On each `get()` it walks a resolved locale chain in order; within each locale it queries stores **serially in insertion order** and stops at the first hit.
+- **Public contract**: `IIlingo<C>` is the orchestrator's interface — every method on `Ilingo` plus the `stores` map and `formatters` registry. Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accept and return `IIlingo` in type positions so consumers can swap test doubles or decorating wrappers without depending on the concrete class. Construction still goes through the `Ilingo` class; runtime discrimination uses structural duck-typing (`'stores' in input`) so non-concrete `IIlingo` implementations are still recognised by `@ilingo/vue`'s `applyInstallInput`.
 
-Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`) wrap the orchestrator for a specific framework — Vue's `provide`/`inject` makes the `Ilingo` instance and locale `Ref` available to descendants of the app root.
+Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`) wrap the orchestrator for a specific framework — Vue's `provide`/`inject` makes the `IIlingo` instance and locale `Ref` available to descendants of the app root.
 
 ## Core Design Decisions
 
@@ -22,9 +23,19 @@ For each locale in the chain, the orchestrator walks the stores **serially in in
 
 Trade-off accepted: when every registered store *would* have hit, total latency is `sum(per-store latency)` rather than `max(per-store latency)`. Pre-stable history kept this as a `Promise.all` parallel walk; it was flipped to serial-on-miss in [#917 Track B](plans/007-stability-roadmap.md) so the default composition matches user intuition. Speculative concurrency was rarely useful in practice — the in-tree adapters are sync after their first warm-up — and the parallel default was an active footgun for network-backed adapters.
 
-### 3. Multi-store, identity-based deduping
+### 3. Multi-store, symbol-keyed deduping
 
-`Ilingo` holds a **set** of stores. `merge(otherIlingo)` is the only supported way to combine two instances; it adds foreign stores that are not already present (identity check, not deep equality). Set semantics keep `add` idempotent for the same reference.
+`Ilingo` holds a `Map<symbol, IStore>` — the symbol key is the store's **identity**, and the Map's insertion order is the query order. `register(store, id?)` is the registration primitive: with an `id` it is idempotent (a no-op if that key is already present, keeping the existing store); without one it mints a fresh `Symbol('ilingo.store')` and always adds. The constructor's `store` option routes through `register`.
+
+Library adapters register their catalog under a `Symbol.for('@scope/pkg')` global-registry symbol (`@ilingo/validup` → `Symbol.for('@ilingo/validup')`, `@ilingo/vuelidate` → `Symbol.for('@ilingo/vuelidate')`, each exported as `STORE_ID`). Because `Symbol.for` is identity-stable across module instances, re-registration — even from a duplicate package copy (pnpm / peer-dep mismatch) — collides on the same key and stays a no-op. This replaced an earlier `instanceof Store` scan, which double-registered across duplicate copies and couldn't dedupe app-seeded stores.
+
+`merge(otherIlingo)` folds another instance's stores in, deduping by symbol key: a foreign key already present is skipped (existing store wins), foreign keys not present are appended in order. `Symbol.for`-keyed library catalogs never stack across a merge; anonymously-keyed stores (minted `Symbol()`) are always distinct and always carried over. `clone()` copies the parent's `(symbol, store)` entries preserving keys, so a later `merge` between a clone and its parent dedupes correctly.
+
+**`group` is a shared key-space, not single-owner.** `MemoryStore.get()` returns `undefined` per *missing key*, so the orchestrator falls through store-by-store *within the same group*. An app therefore co-owns a library's group (e.g. `validup`): registering its own store **first** lets it add custom keys and override individual ones, while the library catalog (appended) supplies the built-in defaults for everything the app store misses. This is the canonical composition for "backend with its own translations + a validation library that ships its own."
+
+### 3a. `IIlingo` contract
+
+`module.ts` exports an `IIlingo` interface that `Ilingo` implements. Higher-layer packages type against `IIlingo` (the Vue provide/inject layer — `provideIlingo`/`injectIlingo`/`injectIlingoSafe` — and the library `register(ilingo: IIlingo)` helpers) so consumers can swap in alternative implementations without depending on the concrete class. The concrete `Ilingo` is still imported where an instance must be *constructed* (`new Ilingo()` in `applyInstallInput`); the `instanceof Ilingo` branch there was replaced with an `isIlingo(input)` guard (`'stores' in input`) so a non-concrete `IIlingo` is recognised.
 
 ### 4. Group/key/count model
 
@@ -171,7 +182,7 @@ async get(ctx: GetContext): Promise<string | undefined> {
 
 protected async lookup(chain, ctx) {
     for (const locale of chain) {
-        for (const store of this.stores) {
+        for (const store of this.stores.values()) {
             const candidate = await store.get({ locale, ...ctx });
             if (typeof candidate !== 'undefined') return { locale, leaf: candidate };
         }

@@ -1,7 +1,14 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "lib": ["ESNext", "DOM", "DOM.Iterable"]
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
+        "paths": {
+            "ilingo": ["../ilingo/src"],
+            "@ilingo/vue": ["../vue/src"],
+            "@ilingo/validup": ["../validup/src"],
+            "@ilingo/validup/store/memory": ["../validup/src/store/memory.ts"],
+            "@ilingo/validup/store/loader": ["../validup/src/store/loader.ts"]
+        }
     },
     "include": [
         "types/**/*.d.ts",

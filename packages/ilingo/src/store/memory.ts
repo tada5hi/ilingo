@@ -16,11 +16,16 @@ import type {
 } from './types';
 
 export class MemoryStore implements IStore {
+    readonly id: string | symbol;
+
     protected data: LocalesRecord;
 
     constructor(options: MemoryStoreOptions) {
+        this.id = options.id || Symbol('MemoryStore');
+
         this.data = options.data;
     }
+
 
     async get(context: StoreGetContext): Promise<Leaf | undefined> {
         if (

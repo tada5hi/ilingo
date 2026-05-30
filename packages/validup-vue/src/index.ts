@@ -6,12 +6,12 @@
  */
 
 import { injectIlingoSafe } from '@ilingo/vue';
-import { Store, createStore } from '@ilingo/validup';
+import { createMemoryStore } from '@ilingo/validup/store/memory';
 import type { App, Plugin } from 'vue';
 
 /**
  * Vue plugin install hook. Registers the default validation-message
- * `Store` (EN / DE / FR / ES translations for the built-in validup
+ * catalog (EN / DE / FR / ES translations for the built-in validup
  * `IssueCode`s) onto the `Ilingo` instance previously installed by
  * `@ilingo/vue`.
  *
@@ -21,9 +21,15 @@ import type { App, Plugin } from 'vue';
  * — better than silently constructing a second instance that
  * `<ITranslate>` and `useTranslation()` wouldn't see.
  *
+ * Uses the **eager** memory store (`@ilingo/validup/store/memory`) — Vue
+ * apps default to bundling all locales. Apps that want per-locale
+ * code-splitting can skip this and instead
+ * `ilingo.registerStore(createLoaderStore())` from `@ilingo/validup/store/loader`
+ * on the instance they pass to `@ilingo/vue`.
+ *
  * Idempotent: re-calling `install()` (e.g. from a hot-reloaded test
- * setup) won't stack duplicate `Store` instances — the existing one is
- * detected via `instanceof Store`.
+ * setup) won't stack duplicates — `Ilingo.registerStore` dedupes by the
+ * store's `STORE_ID` identity.
  */
 export function install(app: App): void {
     const instance = injectIlingoSafe(app);
@@ -35,17 +41,7 @@ export function install(app: App): void {
         );
     }
 
-    let found = false;
-    for (const store of instance.stores) {
-        if (store instanceof Store) {
-            found = true;
-            break;
-        }
-    }
-
-    if (!found) {
-        instance.stores.add(createStore());
-    }
+    instance.registerStore(createMemoryStore());
 }
 
 export default { install } satisfies Plugin<[]>;

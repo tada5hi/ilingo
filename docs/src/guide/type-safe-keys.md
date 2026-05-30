@@ -59,3 +59,17 @@ await ilingo.get({ group: 'cart',  key: 'items', count: 1 });  // OK
 Inference is structural — derived from the **union** of all locales in the catalog. Keep locales aligned to the same shape and `Key<C, G>` is the natural set of leaf paths. Diverging locales (e.g. `de.cart.items` exists but `en.cart.items` doesn't) widen the union but never break compilation.
 
 In practice: write your English catalog first, copy it for each new locale, then translate the values. The shape stays uniform automatically.
+
+## The `IIlingo` interface
+
+`IIlingo<C>` is the public type contract of the orchestrator — every method on the concrete `Ilingo` class plus the `stores` map and `formatters` registry. Library code that accepts or returns an orchestrator (`@ilingo/vue`'s `injectIlingo` / `provideIlingo` / `applyInstallInput`, `@ilingo/vuelidate`'s `register`, `@ilingo/validup`'s `translateIssue`) uses `IIlingo`, so consumers can swap in test doubles or decorating wrappers without depending on the concrete class.
+
+```typescript
+import type { IIlingo } from 'ilingo';
+
+function register(ilingo: IIlingo) {
+    ilingo.register(myStore, Symbol.for('@scope/pkg'));
+}
+```
+
+`new Ilingo()` is still the way to construct an instance. Prefer `IIlingo` as the type position; reserve `Ilingo` (the class) for construction.

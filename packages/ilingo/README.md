@@ -23,6 +23,7 @@ Ilingo is a lightweight library for translation and internationalization. The co
   - [Missing-key handler](#missing-key-handler)
   - [Formatters](#formatters)
   - [Type-safe keys](#type-safe-keys)
+  - [The `IIlingo` interface](#the-iilingo-interface)
   - [Slot placeholders & `tokenize()`](#slot-placeholders--tokenize)
   - [Custom formatters](#custom-formatters)
   - [Locale negotiation](#locale-negotiation)
@@ -474,6 +475,20 @@ Inference is structural, derived from the union of locales. Keep all locales ali
 
 `new Ilingo()` (no generic) preserves today's loose typing — `group: string, key: string` are accepted. The generic is opt-in.
 
+### The `IIlingo` interface
+
+`IIlingo<C>` is the public type contract of the orchestrator — every method on the concrete `Ilingo` class plus the `stores` map and `formatters` registry. Library code that accepts an orchestrator (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accepts and returns `IIlingo`, so consumers can swap in test doubles or decorating wrappers without depending on the concrete class.
+
+```typescript
+import type { IIlingo } from 'ilingo';
+
+function register(ilingo: IIlingo) {
+    ilingo.register(myStore, Symbol.for('@scope/pkg'));
+}
+```
+
+`new Ilingo()` is still the way to construct an instance. Prefer `IIlingo` as the type position; reserve `Ilingo` (the class) for construction and `instanceof` checks.
+
 ### Slot placeholders & `tokenize()`
 
 In addition to `{{var}}` data placeholders (and modifier syntax), messages can carry `{slot}` markers (single curly braces) for renderers that produce structured output rather than a string. The core `tokenize(str)` helper parses a message into `text` / `var` / `slot` tokens:
@@ -548,6 +563,21 @@ ilingo.setLocale(chosen);
 ## Store
 
 A store implements the `IStore` port — `get`, `set`, `getLocales`. This three-method surface is **frozen** for the stable release; optional capabilities (cache invalidation, file watching, …) layer as separate interfaces detected via type guards (see [Invalidation](#invalidation) below). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
+
+### Registering stores — `register(store, id?)`
+
+`Ilingo` holds its stores in a `public readonly stores: Map<symbol, IStore>`, keyed by a `symbol` identity, queried serially in insertion order (first hit wins). Add stores with `register`:
+
+```typescript
+const ilingo = new Ilingo({ store: appStore });        // constructor seeds the first store
+const key = ilingo.register(overrideStore);            // anonymous Symbol() → always added; returns the key
+ilingo.register(libraryStore, Symbol.for('@me/lib'));  // keyed → idempotent (no-op if that key exists)
+```
+
+- **Without `id`** — mints a fresh `Symbol()`, so the store is always added; the returned symbol lets you dedupe or replace later.
+- **With `id`** — idempotent: a no-op (keeping the existing store) if a store is already registered under that key. Library adapters pass a `Symbol.for('@scope/pkg')` so re-registration — even from a duplicate package copy — never stacks duplicates. This is how `@ilingo/validup` and `@ilingo/vuelidate` register their catalogs (each exports a `register(ilingo)` helper + `STORE_ID`).
+
+Because a `group` is a **shared key-space** (the walk falls through store-by-store per *missing key*), registering an app store before a library's catalog lets the app add or override individual keys of that group while the library supplies the defaults. `Ilingo` implements the `IIlingo` interface — type against `IIlingo` when you want to accept any orchestrator implementation.
 
 ### Memory Store
 

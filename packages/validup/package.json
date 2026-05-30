@@ -5,13 +5,21 @@
     "description": "Translate validup Issues through ilingo — framework-agnostic core with default EN/DE/FR/ES catalogs.",
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
+    "types": "./dist/index.d.mts",
     "sideEffects": false,
     "exports": {
         "./package.json": "./package.json",
         ".": {
-            "types": "./dist/index.d.ts",
+            "types": "./dist/index.d.mts",
             "import": "./dist/index.mjs"
+        },
+        "./store/memory": {
+            "types": "./dist/store/memory.d.mts",
+            "import": "./dist/store/memory.mjs"
+        },
+        "./store/loader": {
+            "types": "./dist/store/loader.d.mts",
+            "import": "./dist/store/loader.mjs"
         }
     },
     "files": [

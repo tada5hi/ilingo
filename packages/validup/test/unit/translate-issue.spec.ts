@@ -8,11 +8,12 @@
 import { Ilingo } from 'ilingo';
 import { IssueCode, ValidupError, defineIssueGroup, defineIssueItem } from 'validup';
 import { describe, expect, it } from 'vitest';
-import { Store, translateIssue, translateIssues } from '../../src';
+import { translateIssue, translateIssues } from '../../src';
+import { Store } from '../../src/store/memory';
 
 function setupIlingo(locale = 'en'): Ilingo {
     const ilingo = new Ilingo({ locale });
-    ilingo.stores.add(new Store());
+    ilingo.registerStore(new Store());
     return ilingo;
 }
 

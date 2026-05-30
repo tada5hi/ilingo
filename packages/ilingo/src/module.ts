@@ -14,6 +14,7 @@ import type {
     GetContext,
     GetParams,
     Groups,
+    IIlingo,
     Key,
     Leaf,
     LocalesRecord,
@@ -27,8 +28,18 @@ import {
     template,
 } from './utils';
 
-export class Ilingo<C extends LocalesRecord = LocalesRecord> {
-    public readonly stores: Set<IStore>;
+export class Ilingo<C extends LocalesRecord = LocalesRecord> implements IIlingo<C> {
+    /**
+     * Registered stores, keyed by a `symbol` identity. Insertion order is
+     * preserved (it drives the serial intra-locale store walk — earlier
+     * registrations are consulted first) and the symbol key is how
+     * registration deduplicates (see {@link registerStore}).
+     *
+     * Use `Symbol.for('@scope/pkg')` as the key for library catalogs so a
+     * duplicate package copy (pnpm / peer-dep mismatch) resolves to the
+     * same identity and re-registration stays a no-op.
+     */
+    public readonly stores: Map<symbol | string, IStore>;
 
     protected locale: string;
 
@@ -74,10 +85,34 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
             }
         }
 
-        this.stores = new Set<IStore>();
+        this.stores = new Map<symbol, IStore>();
         if (input.store) {
-            this.stores.add(input.store);
+            this.registerStore(input.store);
         }
+    }
+
+    /**
+     * Register a store, keyed by its own `store.id` identity.
+     *
+     * Idempotent: if a store is already registered under `store.id`, this
+     * is a no-op and the existing store is kept. Library catalogs set
+     * `id` to a `Symbol.for('@scope/pkg')` (e.g. `createMemoryStore()` /
+     * `createLoaderStore()` from `@ilingo/validup`), so re-registering —
+     * even from a duplicate package copy — never stacks duplicates.
+     * Anonymous stores default to a fresh `Symbol(...)`, so each is always
+     * added.
+     *
+     * Insertion order drives the serial intra-locale store walk, so a
+     * store registered earlier is consulted first and wins per key. To
+     * override individual keys of a library catalog, register your own
+     * store before registering the library's.
+     */
+    registerStore(store: IStore): void {
+        if (this.stores.has(store.id)) {
+            return;
+        }
+
+        this.stores.set(store.id, store);
     }
 
     /**
@@ -121,7 +156,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
      * Designed for consumers that need a scoped variant of an existing
      * orchestrator — e.g. `@ilingo/vue`'s `useScopedCatalog`.
      */
-    clone(overrides: ConfigInput = {}): Ilingo {
+    clone(overrides: ConfigInput = {}): IIlingo {
         const child = new Ilingo({
             store: overrides.store,
             locale: overrides.locale ?? this.locale,
@@ -132,10 +167,13 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
             fallback: 'fallback' in overrides ? overrides.fallback : this.fallback,
             onMissingKey: 'onMissingKey' in overrides ? overrides.onMissingKey : this.onMissingKey,
         });
-        // Inherit stores in order (overrides.store, if any, was already added
-        // first by the constructor — appending parent's keeps the precedence).
-        for (const store of this.stores) {
-            child.stores.add(store);
+        // Inherit stores in order, preserving each store's symbol identity
+        // (overrides.store, if any, was already added first by the
+        // constructor under a minted symbol — appending parent's keeps the
+        // precedence, and reusing the parent keys means a later merge()
+        // dedupes correctly).
+        for (const [id, store] of this.stores) {
+            child.stores.set(id, store);
         }
         // Share the formatter registry so custom registrations on the parent
         // are honoured. Trade-off: mutations on either side are visible to
@@ -152,21 +190,18 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
         return child;
     }
 
-    merge(instance: Ilingo<LocalesRecord>) {
-        const ownEntries = Array.from(this.stores.values());
-        const foreignEntries = Array.from(instance.stores.values());
-
-        for (const foreignEntry of foreignEntries) {
-            let foreignEntriesIndex = -1;
-            for (const [j, ownEntry] of ownEntries.entries()) {
-                if (ownEntry === foreignEntry) {
-                    foreignEntriesIndex = j;
-                    break;
-                }
-            }
-
-            if (foreignEntriesIndex === -1) {
-                this.stores.add(foreignEntry);
+    /**
+     * Fold another instance's stores into this one, deduping by symbol
+     * identity. A foreign store whose key is already present is skipped
+     * (the existing store wins); foreign keys not present here are appended
+     * in order. Library catalogs keyed by `Symbol.for('@scope/pkg')` thus
+     * never stack across a merge, while anonymously-keyed stores (minted
+     * `Symbol()`) are always distinct and so always carried over.
+     */
+    merge(instance: IIlingo) {
+        for (const [id, store] of instance.stores) {
+            if (!this.stores.has(id)) {
+                this.stores.set(id, store);
             }
         }
     }
@@ -189,7 +224,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
 
     async getLocales(): Promise<string[]> {
         const locales: string[] = [];
-        for (const store of this.stores) {
+        for (const store of this.stores.values()) {
             locales.push(...await store.getLocales());
         }
         return Array.from(new Set(locales));
@@ -263,7 +298,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
         }
 
         for (const locale of chain) {
-            for (const store of this.stores) {
+            for (const store of this.stores.values()) {
                 const candidate = await store.get({
                     locale,
                     group: ctx.group,

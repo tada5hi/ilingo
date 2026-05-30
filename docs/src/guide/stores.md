@@ -87,7 +87,7 @@ Both `LoaderStore` and `FSStore` implement it. `@ilingo/vue`'s `useTranslation` 
 ```typescript
 import { isInvalidatingStore } from 'ilingo';
 
-for (const store of ilingo.stores) {
+for (const store of ilingo.stores.values()) {
     if (isInvalidatingStore(store)) {
         store.on('invalidate', (locale, group) => {
             console.log(`reloaded ${locale ?? '*'}/${group ?? '*'}`);
@@ -114,24 +114,50 @@ await ilingo.get({ group: 'app', key: 'hi' });
 
 ## Multiple stores
 
-An `Ilingo` instance exposes a `public readonly stores: Set<IStore>` — add as many as you want. They are queried **serially in insertion order** within each locale, stopping at the first hit:
+An `Ilingo` instance exposes `public readonly stores: Map<symbol, IStore>` — the **symbol key is the store's identity**, and the Map's insertion order is the query order. Register as many as you want via `register(store, id?)`; they are queried **serially in insertion order** within each locale, stopping at the first hit:
 
 ```typescript
 const ilingo = new Ilingo({
     store: new MemoryStore({ data: { /* core strings */ } }),
 });
 
-// add more after construction — checked only when the Memory store misses
-ilingo.stores.add(new FSStore({ directory: './locales/overrides' }));
+// add more after construction — checked only when the earlier store misses
+ilingo.register(new FSStore({ directory: './locales/overrides' }));
 ```
 
-The constructor's `store` option seeds the first entry; everything else goes through `ilingo.stores.add(...)`. Set semantics make repeated adds of the same reference a no-op.
+`register(store, id?)`:
 
-The serial walk is the reason "local first, remote fallback" compositions work as written. A network-backed store registered after a Memory store is only consulted when the Memory store has nothing for `(locale, group, key)` — the orchestrator does not pre-fan-out across stores. Locale-first composition still applies: a closer locale always beats a farther one regardless of which store would have answered.
+- **Without `id`** — mints a fresh `Symbol()`, so the store is always added. Returns the minted symbol (keep it if you want to dedupe or replace later).
+- **With `id`** — idempotent. If a store is already registered under `id`, the call is a no-op and the existing store is kept. Library adapters pass a `Symbol.for('@scope/pkg')` so registering twice (or across a duplicate package copy) never stacks duplicates. Returns `id`.
+
+The constructor's `store` option is just `register(store)` under the hood (anonymous key). The serial walk is the reason "local first, remote fallback" compositions work as written: a network-backed store registered after a Memory store is only consulted when the Memory store has nothing for `(locale, group, key)` — the orchestrator does not pre-fan-out across stores. Locale-first composition still applies: a closer locale always beats a farther one regardless of which store would have answered.
+
+## Composing many sources — `group` is a shared key-space
+
+A real app pulls translations from several sources: the app's own catalog, plus library catalogs like `@ilingo/validup` (validation messages) or [`@ilingo/vuelidate`](/integrations/vuelidate). The model is **one instance, many stores, `group` as a shared key-space**:
+
+- Each source is its own store on the **same** `Ilingo` instance — so all sources share one set of formatters, one fallback chain, one missing-key handler.
+- A `group` (`app`, `email`, `validup`, …) is **not owned by a single store**. `MemoryStore.get()` returns `undefined` per *missing key*, so the orchestrator falls through store-by-store *within the same group*. That means an app can co-own a library's group — add its own keys, override individual ones — just by registering its own store **first**.
+
+```typescript
+import { Ilingo } from 'ilingo';
+import { FSStore } from '@ilingo/fs';
+import { register as registerValidup } from '@ilingo/validup';
+
+const ilingo = new Ilingo({ fallback: ['en'] });
+
+// app catalog FIRST → its keys win per (locale, group, key)
+ilingo.register(new FSStore({ directory: './locales' }));
+
+// library catalog appended → fills the built-in defaults the app store misses
+registerValidup(ilingo);
+```
+
+Now a lookup for `(en, validup, value_invalid)` falls through the app store (no such key) to the validup catalog, while `(en, validup, my_custom_code)` — a code the app defined under the `validup` group, e.g. via a `./locales/en/validup.json` file (`FSStore` derives the group from the filename) — is answered by the app store. Overriding a single built-in message works the same way: define `(en, validup, value_invalid)` in the app store and it wins, with every other code still served by the library.
 
 ## Merging instances
 
-`merge(other)` adds the foreign instance's stores that are not already present. Identity-based — the same `MemoryStore` reference is never added twice:
+`merge(other)` folds another instance's stores in, deduping **by symbol identity**: a foreign store whose key is already present is skipped (the existing one wins); foreign keys not present are appended in order. Library catalogs keyed by `Symbol.for('@scope/pkg')` never stack across a merge; anonymously-keyed stores are always distinct and so always carried over.
 
 ```typescript
 const base = new Ilingo({ store: storeA });

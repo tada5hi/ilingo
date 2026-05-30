@@ -14,11 +14,11 @@ npm install @ilingo/validup ilingo validup
 
 ```typescript
 import { Ilingo } from 'ilingo';
-import { Store, translateIssue } from '@ilingo/validup';
+import { register, translateIssue } from '@ilingo/validup';
 import { defineIssueItem, IssueCode } from 'validup';
 
 const ilingo = new Ilingo({ locale: 'en' });
-ilingo.stores.add(new Store());
+register(ilingo); // registers the EN/DE/FR/ES 'validup' catalog (idempotent)
 
 const issue = defineIssueItem({
     path: ['email'],
@@ -32,16 +32,32 @@ const message = await translateIssue(issue, ilingo);
 
 ## API
 
-### `Store`
+### `register(ilingo)` / `STORE_ID`
 
-A pre-seeded `MemoryStore` carrying EN / DE / FR / ES translations for the built-in validup `IssueCode`s. Add it to any `Ilingo` instance to make `IssueCode` lookups resolve.
+The ergonomic, framework-agnostic entry point. Registers the default `Store` on any `IIlingo` instance, idempotently — keyed by `STORE_ID` (`Symbol.for('@ilingo/validup')`), so calling it twice (or from a duplicate package copy) never stacks duplicates. Returns `true` if it added the catalog, `false` if it was already present.
 
 ```typescript
 import { Ilingo } from 'ilingo';
-import { Store, createStore } from '@ilingo/validup';
+import { register, STORE_ID } from '@ilingo/validup';
 
 const ilingo = new Ilingo();
-ilingo.stores.add(createStore()); // or `new Store()`
+register(ilingo);                 // → true
+register(ilingo);                 // → false (already registered)
+ilingo.stores.has(STORE_ID);      // → true
+```
+
+`@ilingo/validup-vue`'s install hook delegates to this same function, so the Vue and non-Vue paths share one definition of "is the catalog present".
+
+### `Store` / `createStore()`
+
+The underlying pre-seeded `MemoryStore` carrying EN / DE / FR / ES translations for the built-in validup `IssueCode`s. Prefer `register(ilingo)` above; reach for these when you need direct control over the store's identity or ordering:
+
+```typescript
+import { Ilingo } from 'ilingo';
+import { createStore, STORE_ID } from '@ilingo/validup';
+
+const ilingo = new Ilingo();
+ilingo.register(createStore(), STORE_ID); // exactly what register(ilingo) does
 ```
 
 ### `translateIssue(issue, ilingo, opts?)`
@@ -85,20 +101,31 @@ import {
 } from '@ilingo/validup';
 ```
 
-Each function returns a `LinesRecord` keyed by the built-in `IssueCode` runtime values. Register your own translations for extension codes by adding a `MemoryStore` *before* this package's `Store` — the serial store walk means the earlier store wins:
+Each function returns a `LinesRecord` keyed by the built-in `IssueCode` runtime values.
+
+### Extending / overriding the `validup` group
+
+The `validup` group is a **shared key-space** — it isn't owned solely by this package. ilingo's serial store walk falls through store-by-store *per key*, so an app co-owns the group by registering its own store **first**: it adds translations for its custom extension `IssueCode`s and overrides individual built-in messages, while this catalog supplies the defaults for everything else.
 
 ```typescript
 import { Ilingo, MemoryStore } from 'ilingo';
-import { Store } from '@ilingo/validup';
+import { register } from '@ilingo/validup';
 
 const ilingo = new Ilingo({ locale: 'en' });
-ilingo.stores.add(new MemoryStore({
+
+// app store FIRST → wins per (locale, group, key)
+ilingo.register(new MemoryStore({
     data: {
-        en: { validup: { email_taken: 'That email is already registered' } },
+        en: { validup: {
+            email_taken: 'That email is already registered', // custom extension code
+            value_invalid: 'Please check this field',         // overrides the built-in
+        } },
         de: { validup: { email_taken: 'Diese E-Mail ist bereits registriert' } },
     },
 }));
-ilingo.stores.add(new Store());  // appended second; the closer locale wins
+
+// built-in catalog appended → fills every code the app store doesn't define
+register(ilingo);
 ```
 
 The `validup` group name is exported as `GROUP` if you'd rather build the catalog programmatically.

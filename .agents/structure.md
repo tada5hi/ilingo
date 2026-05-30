@@ -10,7 +10,7 @@ This is an npm-workspaces monorepo. Workspaces under `packages/` are publishable
 | [`@ilingo/fs`](../packages/fs)                         | 5.x     | File-system store adapter — extends `MemoryStore`, lazy-loads `<locale>/<group>.{js,mjs,cjs,ts,mts,json,conf}` |
 | [`@ilingo/vue`](../packages/vue)                       | 5.x     | Vue 3 plugin: `install()`, `provide/inject` for the `Ilingo` instance and reactive locale, `<ITranslate>` component, `useTranslation` composable |
 | [`@ilingo/vuelidate`](../packages/vuelidate)           | 6.x     | Vuelidate-message adapter on top of `@ilingo/vue` — ships built-in EN/DE/FR/ES translations for validator names |
-| [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Framework-agnostic core for the validup ecosystem. Ships EN/DE/FR/ES translations for built-in `IssueCode`s, the pre-seeded `Store`, `translateIssue` / `translateIssues` helpers, the augmentable `ValidupCatalog` interface for type-safe `Ilingo<Catalog>` composition. **No Vue deps** — embeddable in Node SSR, edge runtimes, queue workers. Peer-deps `ilingo`, `validup`. |
+| [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Framework-agnostic core for the validup ecosystem. Ships EN/DE/FR/ES translations for built-in `IssueCode`s, the pre-seeded `Store`, `register(ilingo)` / `STORE_ID` (idempotent symbol-keyed registration on any `IIlingo`), `translateIssue` / `translateIssues` helpers, the augmentable `ValidupCatalog` interface for type-safe `Ilingo<Catalog>` composition. **No Vue deps** — embeddable in Node SSR, edge runtimes, queue workers. Peer-deps `ilingo`, `validup`. |
 | [`@ilingo/validup-vue`](../packages/validup-vue)       | 0.1.x   | Vue 3 plugin for `@ilingo/validup`. The `install` hook, three composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`), the `<IValidup>` renderless component, and the `FieldTranslations` `Ref` alias. Mirrors the `validup` → `@validup/vue` split. Peer-deps `@ilingo/validup`, `@ilingo/vue`, `vue`, `@vueuse/core`, `validup`, `@validup/vue`. |
 | [`@ilingo/docs`](../docs)                              | private | VitePress 1.x marketing + reference site. Deploys to GitHub Pages via `.github/workflows/docs.yml`. Never published to npm. |
 
@@ -43,7 +43,8 @@ Nx (`nx.json`) is configured so `build` depends on `^build`, which means workspa
 ```
 src/
 ├── index.ts                  # barrel: re-exports config, module, store, utils, types
-├── module.ts                 # Ilingo class — Set<IStore>, locale + fallback chain, plural rules cache,
+├── module.ts                 # IIlingo interface + Ilingo class — Map<symbol,IStore> + register(store,id?),
+│                             #   locale + fallback chain, plural rules cache,
 │                             #   per-instance warn-once memo, get / getResolvedLocale[Chain] / merge / format
 ├── types.ts                  # LinesRecord, Leaf, PluralForms, PluralLeaf, GetContext (with count),
 │                             #   MissingKeyContext, MissingKeyHandler, Fallback, FallbackResolver, Data,

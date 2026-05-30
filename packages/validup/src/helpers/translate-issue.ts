@@ -6,7 +6,7 @@
  */
 
 import { isProductionEnv } from 'ilingo';
-import type { Ilingo } from 'ilingo';
+import type { IIlingo } from 'ilingo';
 import type { Issue, IssueItem } from 'validup';
 import { flattenIssueItems } from 'validup';
 import { GROUP } from '../constants';
@@ -118,7 +118,7 @@ export interface TranslateIssueOptions {
  */
 export async function translateIssue(
     issue: Issue,
-    ilingo: Ilingo,
+    ilingo: IIlingo,
     options: TranslateIssueOptions = {},
 ): Promise<string> {
     const { code } = issue;
@@ -161,7 +161,7 @@ export async function translateIssue(
  */
 export async function translateIssues(
     issues: Issue[],
-    ilingo: Ilingo,
+    ilingo: IIlingo,
     options: TranslateIssueOptions = {},
 ): Promise<Array<{ issue: IssueItem, message: string }>> {
     const flat = flattenIssueItems(issues);

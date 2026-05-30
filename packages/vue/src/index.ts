@@ -5,6 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import type { IIlingo } from 'ilingo';
 import { Ilingo } from 'ilingo';
 import type { App, Plugin } from 'vue';
 import { ref } from 'vue';
@@ -20,10 +21,20 @@ import {
 } from './composables';
 import type { Options } from './types';
 
+/**
+ * Discriminate an `IIlingo` instance from an `Options` object. Any
+ * orchestrator (the concrete `Ilingo` or a swapped-in `IIlingo`) exposes
+ * the `stores` map; an `Options` object carries a single `store`. Used in
+ * place of `instanceof Ilingo` so a non-concrete `IIlingo` is recognised.
+ */
+function isIlingo(input: Options | IIlingo): input is IIlingo {
+    return 'stores' in input;
+}
+
 export function applyInstallInput(
     app: App,
-    input?: Options | Ilingo,
-): Ilingo {
+    input?: Options | IIlingo,
+): IIlingo {
     let locale = injectLocaleSafe(app);
     const localeExisted = typeof locale !== 'undefined' && !!locale.value;
     let instance = injectIlingoSafe(app);
@@ -31,7 +42,7 @@ export function applyInstallInput(
 
     if (!input) {
         instance = new Ilingo();
-    } else if (input instanceof Ilingo) {
+    } else if (isIlingo(input)) {
         if (instance) {
             instance.merge(input);
         } else {
@@ -47,7 +58,7 @@ export function applyInstallInput(
         }
 
         if (instance) {
-            instance.stores.add(input.store);
+            instance.registerStore(input.store);
         } else {
             instance = new Ilingo({ store: input.store });
         }
@@ -68,13 +79,13 @@ export function applyInstallInput(
     return instance;
 }
 
-export function install(app: App, input?: Options | Ilingo): void {
+export function install(app: App, input?: Options | IIlingo): void {
     const instance = applyInstallInput(app, input);
 
     app.component('ITranslate', ITranslate);
     app.component('ITranslateT', ITranslateT);
 
-    const directivesEnabled = !(input && !(input instanceof Ilingo) && input.directives === false);
+    const directivesEnabled = !(input && !isIlingo(input) && input.directives === false);
     if (directivesEnabled) {
         // applyInstallInput always ensures a locale Ref is provided to the
         // app, so the non-safe injectLocale is justified here. If that
@@ -85,7 +96,7 @@ export function install(app: App, input?: Options | Ilingo): void {
     }
 }
 
-export default { install } satisfies Plugin<Options | Ilingo | undefined>;
+export default { install } satisfies Plugin<Options | IIlingo | undefined>;
 
 export { default as ITranslate } from './component.vue';
 export { ITranslateT } from './component-t';

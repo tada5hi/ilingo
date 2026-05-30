@@ -31,6 +31,18 @@ install(app);
 app.mount('#app');
 ```
 
+`install(app)` registers the built-in EN / DE / FR / ES validator-message catalog (the `vuelidate` group) on the app's `Ilingo` instance. If you manage the instance yourself, register it directly with the framework-agnostic `register(ilingo)` — idempotent, keyed by `STORE_ID` (`Symbol.for('@ilingo/vuelidate')`):
+
+```typescript
+import { Ilingo } from 'ilingo';
+import { register } from '@ilingo/vuelidate';
+
+const ilingo = new Ilingo();
+register(ilingo); // idempotent; install(app) delegates to this
+```
+
+The `vuelidate` group is a shared key-space — register your own store **first** to override individual validator messages while this catalog supplies the defaults.
+
 ```vue
 
 <script setup>

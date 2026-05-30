@@ -15,7 +15,11 @@ import { defineConfig } from 'tsdown';
  * because no SFCs).
  */
 export default defineConfig({
-    entry: 'src/index.ts',
+    entry: [
+        'src/index.ts',
+        'src/store/memory.ts',
+        'src/store/loader.ts',
+    ],
     format: 'esm',
     dts: true,
     sourcemap: true,

@@ -6,20 +6,31 @@
  */
 
 /**
- * Public surface of `@ilingo/validup` (framework-agnostic core).
+ * Public surface of `@ilingo/validup` (framework-agnostic **core**).
  *
- * Bridges `validup` `Issue`s to `ilingo` lookups with a pre-seeded EN /
- * DE / FR / ES catalog. No `vue` / `@vueuse/core` / `@ilingo/vue` imports
- * anywhere on this surface — embeddable in any runtime (Node SSR, edge,
- * worker) that just needs to translate an issue tree.
+ * Bridges `validup` `Issue`s to `ilingo` lookups. This entry is
+ * intentionally **data-free** — it carries the group/identity constants,
+ * the `translateIssue` / `translateIssues` helpers, and the catalog types,
+ * but imports **no** translation modules. So pulling in `@ilingo/validup`
+ * (e.g. for `translateIssue` on a lazy-loaded app) never bundles the
+ * EN / DE / FR / ES catalogs.
  *
- * Vue consumers (composables, renderless component, install plugin)
- * import from `@ilingo/validup/vue`, which re-exports everything here
- * plus the Vue-coupled surface.
+ * The catalog stores live behind dedicated subpaths so you pay only for
+ * the backend you choose:
+ *
+ * - `@ilingo/validup/store/memory` — `createMemoryStore()` (eager; all
+ *   locales bundled) + `Store`, `extendStore()`, the raw per-locale
+ *   catalogs.
+ * - `@ilingo/validup/store/loader` — `createLoaderStore()` (lazy;
+ *   per-locale dynamic `import()` chunks).
+ *
+ * Register either with `ilingo.registerStore(store)` — it dedupes by the
+ * store's `STORE_ID` identity.
+ *
+ * Vue consumers add `@ilingo/validup-vue` for composables, the renderless
+ * component, and the install plugin.
  */
 
 export * from './constants';
 export * from './helpers';
-export * from './store';
-export * from './translations';
 export * from './types';

@@ -8,12 +8,13 @@
 import { Ilingo } from 'ilingo';
 import { IssueCode } from 'validup';
 import { describe, expect, it } from 'vitest';
-import { Store, createStore } from '../../src';
+import { STORE_ID } from '../../src/constants';
+import { Store, createMemoryStore } from '../../src/store/memory';
 
 describe('Store', () => {
     it('ships all four locales for the built-in IssueCodes', async () => {
         const ilingo = new Ilingo({ locale: 'en' });
-        ilingo.stores.add(createStore());
+        ilingo.registerStore(createMemoryStore());
 
         for (const [locale, expected] of [
             ['en', 'The value is invalid'],
@@ -30,8 +31,9 @@ describe('Store', () => {
         }
     });
 
-    it('createStore returns a Store instance (identity check for install())', () => {
-        const store = createStore();
+    it('createMemoryStore returns a Store instance keyed by STORE_ID', () => {
+        const store = createMemoryStore();
         expect(store).toBeInstanceOf(Store);
+        expect(store.id).toBe(STORE_ID);
     });
 });

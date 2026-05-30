@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Ilingo } from 'ilingo';
+import type { IIlingo } from 'ilingo';
 import type { Directive, Ref } from 'vue';
 import { watchEffect } from 'vue';
 
@@ -87,7 +87,7 @@ const STOP_KEY = Symbol.for('ilingo.v-t.stop');
 type ElementWithStop = HTMLElement & { [STOP_KEY]?: () => void };
 
 export function createVTDirective(
-    instance: Ilingo,
+    instance: IIlingo,
     localeRef: Ref<string>,
 ): Directive<HTMLElement, VTBinding> {
     function apply(el: ElementWithStop, value: VTBinding) {

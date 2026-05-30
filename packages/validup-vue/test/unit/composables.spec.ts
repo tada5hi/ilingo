@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { Store } from '@ilingo/validup';
+import { Store } from '@ilingo/validup/store/memory';
 import { install as installIlingoVue } from '@ilingo/vue';
 import { Ilingo } from 'ilingo';
 import { Container, IssueCode, defineIssueItem } from 'validup';
@@ -64,7 +64,7 @@ describe('install', () => {
             },
         });
 
-        const stores = Array.from(ilingo.stores).filter((s) => s instanceof Store);
+        const stores = Array.from(ilingo.stores.values()).filter((s) => s instanceof Store);
         expect(stores).toHaveLength(1);
         app.unmount();
     });

@@ -201,7 +201,7 @@ describe('Ilingo — resolution path', () => {
                 }),
                 locale: 'pt-BR',
             });
-            ilingo.stores.add(new MemoryStore({
+            ilingo.registerStore(new MemoryStore({
                 data: { pt: { app: { hi: 'olá (store2)' } } },
             }));
             expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('olá (store2)');
@@ -406,6 +406,10 @@ describe('Ilingo — resolution path', () => {
             id: number,
             hit?: string,
         ) => ({
+            // Unique store identity per fake — Ilingo.registerStore keys the
+            // store Map by `store.id`, so without a distinct id every fake
+            // would collide on one key and overwrite the previous one.
+            id: Symbol(`recording-store-${id}`),
             async get(_ctx: { locale: string; group: string; key: string }) {
                 entries.push({ id });
                 return hit;
@@ -421,8 +425,8 @@ describe('Ilingo — resolution path', () => {
             // Memory hit should not trigger an HTTP request.
             const entries: { id: number }[] = [];
             const ilingo = new Ilingo({});
-            ilingo.stores.add(makeRecordingStore(entries, 1, 'from store 1'));
-            ilingo.stores.add(makeRecordingStore(entries, 2, 'from store 2'));
+            ilingo.registerStore(makeRecordingStore(entries, 1, 'from store 1'));
+            ilingo.registerStore(makeRecordingStore(entries, 2, 'from store 2'));
 
             const result = await ilingo.get({ group: 'app', key: 'hi' });
 
@@ -433,9 +437,9 @@ describe('Ilingo — resolution path', () => {
         it('falls through to later stores when earlier ones miss', async () => {
             const entries: { id: number }[] = [];
             const ilingo = new Ilingo({});
-            ilingo.stores.add(makeRecordingStore(entries, 1));
-            ilingo.stores.add(makeRecordingStore(entries, 2));
-            ilingo.stores.add(makeRecordingStore(entries, 3, 'from store 3'));
+            ilingo.registerStore(makeRecordingStore(entries, 1));
+            ilingo.registerStore(makeRecordingStore(entries, 2));
+            ilingo.registerStore(makeRecordingStore(entries, 3, 'from store 3'));
 
             const result = await ilingo.get({ group: 'app', key: 'hi' });
 
@@ -449,7 +453,7 @@ describe('Ilingo — resolution path', () => {
                     data: { en: { app: { hi: 'from store 1' } } },
                 }),
             });
-            ilingo.stores.add(new MemoryStore({
+            ilingo.registerStore(new MemoryStore({
                 data: { en: { app: { hi: 'from store 2' } } },
             }));
 

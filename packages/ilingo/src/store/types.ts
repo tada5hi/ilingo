@@ -45,6 +45,8 @@ export type StoreSetContext = StoreGetContext & {
  * Re-evaluate each only when a concrete consumer surfaces.
  */
 export interface IStore {
+    readonly id: string | symbol;
+
     /**
      * Resolve a `(locale, group, key)` to a leaf value.
      *
@@ -73,6 +75,7 @@ export interface IStore {
 }
 
 export type MemoryStoreOptions = {
+    id?: string | symbol,
     data: LocalesRecord,
 };
 

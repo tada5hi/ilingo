@@ -5,10 +5,14 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+import type { IStore } from './store';
+import type { Formatter, FormatterRegistry  } from './utils';
+import type { ConfigInput } from './config';
+
 export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
 /**
- * CLDR-categorised translation options that live inside a [[PluralLeaf]]
+ * CLDR-categorized translation options that live inside a [[PluralLeaf]]
  * — the `{ other, zero?, one?, two?, few?, many? }` shape under the
  * `@plural` discriminator. `other` is required; every other category is
  * optional. Used by `Ilingo.selectPluralForm()` to pick a string for a
@@ -207,3 +211,43 @@ export type FallbackResolver = (locale: string) => string[];
  * the default locale.
  */
 export type Fallback = string | string[] | FallbackResolver | false;
+
+/**
+ * Public contract of the {@link Ilingo} orchestrator. Higher-layer
+ * packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …)
+ * accept and return `IIlingo` so consumers can swap in alternative
+ * implementations (test doubles, decorators) without depending on the
+ * concrete class.
+ */
+export interface IIlingo<C extends LocalesRecord = LocalesRecord> {
+    readonly stores: Map<symbol | string, IStore>;
+    formatters: FormatterRegistry;
+
+    registerStore(store: IStore): void;
+
+    registerFormatter(name: string, formatter: Formatter): void;
+
+    clone(overrides?: ConfigInput): IIlingo;
+
+    merge(instance: IIlingo): void;
+
+    setLocale(key: string): void;
+
+    resetLocale(): void;
+
+    getLocale(): string;
+
+    getLocales(): Promise<string[]>;
+
+    getResolvedLocaleChain(ctx: Pick<GetContext, 'locale'>): string[];
+
+    getResolvedLocale<G extends Groups<C>, K extends Key<C, G> & string>(
+        ctx: GetParams<C, G, K>,
+    ): Promise<string | undefined>;
+
+    get<G extends Groups<C>, K extends Key<C, G> & string>(
+        ctx: GetParams<C, G, K>,
+    ): Promise<string | undefined>;
+
+    format(input: string, data: Record<string, any>, locale?: string): string;
+}

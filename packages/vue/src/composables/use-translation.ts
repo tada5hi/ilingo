@@ -31,7 +31,7 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
     // computedAsync re-runs on the next tick because `invalidationTick.value`
     // is in its dep set.
     const unsubscribes: Array<() => void> = [];
-    for (const store of instance.stores) {
+    for (const store of instance.stores.values()) {
         if (!isInvalidatingStore(store)) continue;
         const stop = store.on('invalidate', (invLocale, invGroup) => {
             if (invLocale !== undefined && invLocale !== (ctx.locale ?? locale.value)) return;

@@ -6,7 +6,7 @@
  */
 
 import { computedAsync } from '@vueuse/core';
-import type { Ilingo, LocalesRecord } from 'ilingo';
+import type { IIlingo, LocalesRecord } from 'ilingo';
 import { MemoryStore } from 'ilingo';
 import type { Ref } from 'vue';
 import { unref } from 'vue';
@@ -17,7 +17,7 @@ import { extractReactiveData } from './utils';
 
 export interface UseScopedCatalogResult {
     /** The scoped `Ilingo` instance — exposed for advanced cases. */
-    instance: Ilingo;
+    instance: IIlingo;
     /**
      * `useTranslation`-shaped lookup bound to the scoped instance. Use this
      * inside the same setup that called `useScopedCatalog` — provide/inject
