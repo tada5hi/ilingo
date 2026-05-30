@@ -14,11 +14,12 @@ npm install @ilingo/validup ilingo validup
 
 ```typescript
 import { Ilingo } from 'ilingo';
-import { register, translateIssue } from '@ilingo/validup';
+import { translateIssue } from '@ilingo/validup';
+import { createMemoryStore } from '@ilingo/validup/store/memory';
 import { defineIssueItem, IssueCode } from 'validup';
 
 const ilingo = new Ilingo({ locale: 'en' });
-register(ilingo); // registers the EN/DE/FR/ES 'validup' catalog (idempotent)
+ilingo.registerStore(createMemoryStore()); // EN/DE/FR/ES 'validup' catalog (idempotent)
 
 const issue = defineIssueItem({
     path: ['email'],
@@ -32,33 +33,50 @@ const message = await translateIssue(issue, ilingo);
 
 ## API
 
-### `register(ilingo)` / `STORE_ID`
+The package core (`@ilingo/validup`) is **data-free** — it carries the
+`translateIssue(s)` helpers, the `GROUP` / `STORE_ID` constants, and the
+catalog types, but no translation modules. The catalog stores live behind
+two subpaths so you pay only for the backend you choose.
 
-The ergonomic, framework-agnostic entry point. Registers the default `Store` on any `IIlingo` instance, idempotently — keyed by `STORE_ID` (`Symbol.for('@ilingo/validup')`), so calling it twice (or from a duplicate package copy) never stacks duplicates. Returns `true` if it added the catalog, `false` if it was already present.
+### `@ilingo/validup/store/memory` — eager
 
-```typescript
-import { Ilingo } from 'ilingo';
-import { register, STORE_ID } from '@ilingo/validup';
-
-const ilingo = new Ilingo();
-register(ilingo);                 // → true
-register(ilingo);                 // → false (already registered)
-ilingo.stores.has(STORE_ID);      // → true
-```
-
-`@ilingo/validup-vue`'s install hook delegates to this same function, so the Vue and non-Vue paths share one definition of "is the catalog present".
-
-### `Store` / `createStore()`
-
-The underlying pre-seeded `MemoryStore` carrying EN / DE / FR / ES translations for the built-in validup `IssueCode`s. Prefer `register(ilingo)` above; reach for these when you need direct control over the store's identity or ordering:
+`createMemoryStore()` builds an in-memory store with all four locales
+materialised up front, keyed by `STORE_ID`. `Ilingo.registerStore` dedupes
+by `store.id`, so registering twice (or from a duplicate package copy) is a
+no-op:
 
 ```typescript
 import { Ilingo } from 'ilingo';
-import { createStore, STORE_ID } from '@ilingo/validup';
+import { createMemoryStore } from '@ilingo/validup/store/memory';
+import { STORE_ID } from '@ilingo/validup';
 
 const ilingo = new Ilingo();
-ilingo.register(createStore(), STORE_ID); // exactly what register(ilingo) does
+ilingo.registerStore(createMemoryStore());
+ilingo.registerStore(createMemoryStore()); // no-op — same STORE_ID
+ilingo.stores.has(STORE_ID);               // → true
 ```
+
+This subpath also exports `Store`, `extendStore()`, and the raw per-locale
+catalogs (`useEnglishTranslation()` …).
+
+### `@ilingo/validup/store/loader` — lazy
+
+`createLoaderStore()` builds a `LoaderStore` that fetches each locale on
+first use via dynamic `import()` — every locale is a separate bundle chunk,
+so a browser app ships only the locales it actually renders. Importing this
+subpath pulls in *none* of the translation data up front.
+
+```typescript
+import { Ilingo } from 'ilingo';
+import { createLoaderStore } from '@ilingo/validup/store/loader';
+
+const ilingo = new Ilingo();
+ilingo.registerStore(createLoaderStore());
+```
+
+`@ilingo/validup-vue`'s install hook registers the **eager** memory store
+(Vue apps default to bundling all locales); opt into the loader by skipping
+it and registering `createLoaderStore()` yourself.
 
 ### `translateIssue(issue, ilingo, opts?)`
 
@@ -98,10 +116,10 @@ import {
     useGermanTranslation,
     useFrenchTranslation,
     useSpanishTranslation,
-} from '@ilingo/validup';
+} from '@ilingo/validup/store/memory';
 ```
 
-Each function returns a `LinesRecord` keyed by the built-in `IssueCode` runtime values.
+Each function returns a `LinesRecord` keyed by the built-in `IssueCode` runtime values. (They live on the `./store/memory` subpath — the eager entry — so the data-free core stays free of translation modules.)
 
 ### Extending / overriding the `validup` group
 
@@ -109,12 +127,12 @@ The `validup` group is a **shared key-space** — it isn't owned solely by this 
 
 ```typescript
 import { Ilingo, MemoryStore } from 'ilingo';
-import { register } from '@ilingo/validup';
+import { createMemoryStore } from '@ilingo/validup/store/memory';
 
 const ilingo = new Ilingo({ locale: 'en' });
 
 // app store FIRST → wins per (locale, group, key)
-ilingo.register(new MemoryStore({
+ilingo.registerStore(new MemoryStore({
     data: {
         en: { validup: {
             email_taken: 'That email is already registered', // custom extension code
@@ -125,7 +143,7 @@ ilingo.register(new MemoryStore({
 }));
 
 // built-in catalog appended → fills every code the app store doesn't define
-register(ilingo);
+ilingo.registerStore(createMemoryStore());
 ```
 
 The `validup` group name is exported as `GROUP` if you'd rather build the catalog programmatically.
