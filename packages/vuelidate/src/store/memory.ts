@@ -6,8 +6,8 @@
  */
 
 import {
-    type IStore,
     MemoryStore,
+    type MutableStore,
     type Namespaces,
     parseLinesRecord,
 } from 'ilingo';
@@ -67,7 +67,7 @@ export function createMemoryStore(): Store {
  * store. Construct that store with `{ id: STORE_ID }` if you also want it
  * to dedupe as the vuelidate catalog on `Ilingo.registerStore`.
  */
-export async function extendStore(store: IStore) {
+export async function extendStore(store: MutableStore) {
     const translations : Namespaces = {
         en: useEnglishTranslation(),
         de: useGermanTranslation(),

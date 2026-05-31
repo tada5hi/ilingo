@@ -135,11 +135,19 @@ Port — `packages/ilingo/src/store/types.ts`:
 export type StoreGetContext = { locale: string, namespace: string, key: string };
 export type StoreSetContext = StoreGetContext & { value: Leaf };
 
+// ilingo is read-first: the orchestrator only ever calls get/getLocales.
 export interface IStore {
+    readonly id: string | symbol;
     get(context: StoreGetContext): Promise<Leaf | undefined>;
-    set(context: StoreSetContext): Promise<void>;
     getLocales(): Promise<string[]>;
 }
+
+// Writing is an opt-in capability (mirrors InvalidatingStore). Implemented
+// by MemoryStore + FSStore; extendStore() takes a MutableStore.
+export interface MutableStore extends IStore {
+    set(context: StoreSetContext): Promise<void>;
+}
+export function isMutableStore(store: IStore): store is MutableStore;
 ```
 
 Adapter — `packages/ilingo/src/store/memory.ts` (unwraps the `@plural` marker; bare `{ one, other }` objects are namespaces, not plurals):

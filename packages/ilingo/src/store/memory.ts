@@ -9,13 +9,13 @@ import { getPathValue, setPathValue } from 'pathtrace';
 import type { Leaf, Locales } from '../types';
 import { isPluralLeaf } from '../utils/identify';
 import type {
-    IStore,
     MemoryStoreOptions,
+    MutableStore,
     StoreGetContext,
     StoreSetContext,
 } from './types';
 
-export class MemoryStore implements IStore {
+export class MemoryStore implements MutableStore {
     readonly id: string | symbol;
 
     protected data: Locales;

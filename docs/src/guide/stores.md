@@ -1,6 +1,6 @@
 # Stores
 
-A **store** is anything that can return a translation leaf for a given `(locale, namespace, key)`. The `IStore` port has three methods:
+A **store** is anything that can return a translation leaf for a given `(locale, namespace, key)`. ilingo is **read-first** — its job is to *read* a datasource — so the `IStore` port is the read contract: `id`, `get`, `getLocales`.
 
 ```typescript
 import type { Leaf } from 'ilingo';
@@ -9,16 +9,28 @@ export type StoreGetContext = { locale: string, namespace: string, key: string }
 export type StoreSetContext = StoreGetContext & { value: Leaf };
 
 export interface IStore {
+    readonly id: string | symbol;
     get(context: StoreGetContext): Promise<Leaf | undefined>;
-    set(context: StoreSetContext): Promise<void>;
     getLocales(): Promise<string[]>;
 }
 ```
 
-All methods are async — keep that contract even when the implementation is synchronous, because `Ilingo.lookup` awaits every store call.
+The orchestrator only ever calls `get` (and `getLocales`) — it never writes. So a read-only adapter (a remote/HTTP datasource) implements just these. **Writing is an opt-in capability**, `MutableStore`:
+
+```typescript
+import type { IStore, StoreSetContext } from 'ilingo';
+
+export interface MutableStore extends IStore {
+    set(context: StoreSetContext): Promise<void>;
+}
+
+export function isMutableStore(store: IStore): store is MutableStore; // type guard
+```
+
+`MemoryStore` (in-memory mutation) and `FSStore` (writes through to disk) implement it; `extendStore(...)` takes a `MutableStore`. All methods are async — keep that contract even when the implementation is synchronous, because `Ilingo.lookup` awaits every store call.
 
 ::: tip Frozen surface
-The `IStore` port is **frozen** at these three methods for the stable release. Optional capabilities (caching, invalidation, watching) layer as separate interfaces detected via type guards — `InvalidatingStore` below is the pattern. `has`, `delete`, `getKeys`, and batch `getAll` were considered and deferred (see the source JSDoc for the rationale per method); they will follow the same opt-in-interface pattern if added later.
+The `IStore` **read** port is **frozen** at `id` / `get` / `getLocales` for the stable release. Capabilities beyond reading layer as separate interfaces detected via type guards — `MutableStore` (writing) and `InvalidatingStore` (caching, below) are the pattern. `has`, `delete`, `getKeys`, and batch `getAll` were considered and deferred (see the source JSDoc for the rationale per method); they would follow the same opt-in-interface pattern if added later.
 :::
 
 ## MemoryStore
@@ -168,21 +180,19 @@ base.merge(themed); // base now queries storeA then storeB
 
 ## Writing a custom store
 
-Implement the interface as a class — not an object literal — so signature drift is caught at compile time:
+Implement the interface as a class — not an object literal — so signature drift is caught at compile time. Because the `IStore` port is read-only, a remote datasource implements just `id` / `get` / `getLocales` — **no `set` stub**:
 
 ```typescript
-import type { IStore, StoreGetContext, StoreSetContext, Leaf } from 'ilingo';
+import type { IStore, StoreGetContext, Leaf } from 'ilingo';
 
 export class HttpStore implements IStore {
+    readonly id = Symbol.for('app/http-store');
+
     async get(ctx: StoreGetContext): Promise<Leaf | undefined> {
         const res = await fetch(`/i18n/${ctx.locale}/${ctx.namespace}.json`);
         if (!res.ok) return undefined;
         const data = await res.json();
         return data[ctx.key];
-    }
-
-    async set(_ctx: StoreSetContext): Promise<void> {
-        throw new Error('read-only');
     }
 
     async getLocales(): Promise<string[]> {
@@ -191,8 +201,11 @@ export class HttpStore implements IStore {
 }
 ```
 
+If your store *is* writable, implement `MutableStore` instead (add `set(ctx: StoreSetContext)`); `isMutableStore(store)` lets callers detect it.
+
 Rules of thumb:
 
+- Give every store a stable `id` (use `Symbol.for('@scope/name')` for a library catalog so it dedupes across duplicate copies); `Ilingo.registerStore` keys the store map by it.
 - Return `undefined` on miss. **Never throw.** Throwing breaks the fallback walk.
 - Returning `PluralForms` (the unwrapped CLDR-categorised options) is allowed but optional. String-only stores are valid. Custom stores that hold raw `PluralLeaf` (`{ "@plural": ... }`) values should unwrap before returning, matching `MemoryStore` and `LoaderStore`.
 - If you need a load cache, extending `MemoryStore` and using the parent map is idiomatic (`FSStore` does this).

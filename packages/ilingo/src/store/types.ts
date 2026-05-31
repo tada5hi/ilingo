@@ -24,16 +24,20 @@ export type StoreSetContext = StoreGetContext & {
 };
 
 /**
- * Read/write port for translation backends. The surface is intentionally
- * minimal — `get`, `set`, `getLocales` — and is **frozen** for the stable
- * release: external adapters can rely on these three methods being the
- * complete required contract.
+ * **Read** port for translation backends — the contract `Ilingo` relies on.
+ * ilingo's job is to *read* a datasource: the orchestrator only ever calls
+ * `get` (and `getLocales`), never `set`. So the required surface is just
+ * `id` + `get` + `getLocales`, and it is **frozen** at those — external
+ * adapters can rely on this being the complete required contract.
  *
- * Extensions are layered as optional interfaces detected via type guards
- * (today: `InvalidatingStore` for caches that can be dropped). New
- * capabilities like `has`, `delete`, `getKeys`, or batch `getAll` will
- * follow the same opt-in pattern rather than expanding this interface —
- * each was considered for inclusion and deferred:
+ * Writing is an *optional* capability layered as a separate interface
+ * detected via a type guard — see {@link MutableStore} / {@link isMutableStore}
+ * (only stores that hold mutable state, like `MemoryStore` / `FSStore`,
+ * implement it). This mirrors {@link InvalidatingStore} for caches.
+ *
+ * Other capabilities (`has`, `delete`, `getKeys`, batch `getAll`) follow
+ * the same opt-in pattern rather than expanding this interface — each was
+ * considered for inclusion and deferred:
  *
  * - `has(ctx)` — `get(ctx)` already returns `undefined` for misses; a
  *   separate `has` doubles the round-trip count for network-backed stores
@@ -60,18 +64,37 @@ export interface IStore {
     get(context: StoreGetContext): Promise<Leaf | undefined>;
 
     /**
-     * Persist a `(locale, namespace, key)` → leaf mapping. Implementations
-     * that are read-only may throw; callers writing through `Ilingo` do
-     * not invoke `set` themselves.
-     */
-    set(context: StoreSetContext): Promise<void>;
-
-    /**
      * Enumerate the locales the store can currently resolve. Used by
      * `Ilingo.getLocales()` to aggregate across every registered store
      * and by `negotiateLocale()` callers that want the supported list.
      */
     getLocales(): Promise<string[]>;
+}
+
+/**
+ * Optional **write** capability for stores that hold mutable state. ilingo
+ * is read-first — the orchestrator never writes — so `set` is *not* part of
+ * the required {@link IStore} port; a read-only adapter (a remote/HTTP
+ * datasource, a {@link LoaderStore} you don't mutate) need not implement it.
+ *
+ * Implemented by `MemoryStore` (in-memory mutation) and `FSStore` (writes
+ * through to disk). `extendStore(...)` and any caller that seeds a store at
+ * runtime should type the argument as `MutableStore`. Detect at runtime
+ * with {@link isMutableStore}.
+ */
+export interface MutableStore extends IStore {
+    /**
+     * Persist a `(locale, namespace, key)` → leaf mapping.
+     */
+    set(context: StoreSetContext): Promise<void>;
+}
+
+/**
+ * Type guard for {@link MutableStore} — true when the store exposes a
+ * `set` method.
+ */
+export function isMutableStore(store: IStore): store is MutableStore {
+    return typeof (store as Partial<MutableStore>).set === 'function';
 }
 
 export type MemoryStoreOptions = {
