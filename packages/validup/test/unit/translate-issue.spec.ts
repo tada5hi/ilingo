@@ -58,14 +58,14 @@ describe('translateIssue', () => {
 
     it('translates an IssueGroup via its own code', async () => {
         const ilingo = setupIlingo('en');
-        const group = defineIssueGroup({
+        const namespace = defineIssueGroup({
             code: IssueCode.ONE_OF_FAILED,
             message: 'None of the branches succeeded',
             path: [],
             issues: [],
         });
 
-        const out = await translateIssue(group, ilingo);
+        const out = await translateIssue(namespace, ilingo);
         expect(out).toBe('None of the alternatives was successful');
     });
 

@@ -19,7 +19,7 @@ import type {
     InvalidateListener,
     InvalidatingStore,
     Leaf,
-    LinesRecord,
+    Lines,
     StoreGetContext,
     StoreSetContext,
 } from 'ilingo';
@@ -75,7 +75,7 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
 
     // ------------------------------------------
     override async get(context: StoreGetContext): Promise<Leaf | undefined> {
-        await this.loadGroup(context.group, context.locale);
+        await this.loadNamespace(context.namespace, context.locale);
 
         return super.get(context);
     }
@@ -83,11 +83,11 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
     override async set(context: StoreSetContext): Promise<void> {
         // Ensure the in-memory record reflects the latest on-disk state
         // before merging the new value, so the write does not drop sibling keys.
-        await this.loadGroup(context.group, context.locale);
+        await this.loadNamespace(context.namespace, context.locale);
 
         await super.set(context);
 
-        await this.persist(context.locale, context.group);
+        await this.persist(context.locale, context.namespace);
     }
 
     // ------------------------------------------
@@ -109,24 +109,24 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
      * Drop cached file content for the matching scope. The next `get()` for
      * an affected key will re-read from disk.
      */
-    invalidate(locale?: string, group?: string): void {
+    invalidate(locale?: string, namespace?: string): void {
         if (typeof locale === 'undefined') {
             this.loaded = {};
             this.data = {};
-        } else if (typeof group === 'undefined') {
+        } else if (typeof namespace === 'undefined') {
             delete this.loaded[locale];
             delete this.data[locale];
         } else {
-            const groups = this.loaded[locale];
-            if (groups) {
-                this.loaded[locale] = groups.filter((g) => g !== group);
+            const namespaces = this.loaded[locale];
+            if (namespaces) {
+                this.loaded[locale] = namespaces.filter((g) => g !== namespace);
             }
             if (this.data[locale]) {
-                delete this.data[locale][group];
+                delete this.data[locale][namespace];
             }
         }
         for (const listener of this.listeners) {
-            listener(locale, group);
+            listener(locale, namespace);
         }
     }
 
@@ -151,32 +151,32 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
 
     // ------------------------------------------
 
-    protected isLoaded(group: string, locale: string): boolean {
+    protected isLoaded(namespace: string, locale: string): boolean {
         this.loaded[locale] = this.loaded[locale] || [];
 
-        return this.loaded[locale].includes(group);
+        return this.loaded[locale].includes(namespace);
     }
 
-    protected setIsLoaded(group: string, locale: string) {
+    protected setIsLoaded(namespace: string, locale: string) {
         this.loaded[locale] = this.loaded[locale] || [];
 
-        this.loaded[locale].push(group);
+        this.loaded[locale].push(namespace);
     }
 
     // ------------------------------------------
 
-    async loadGroup(group: string, locale: string): Promise<Record<string, any>> {
+    async loadNamespace(namespace: string, locale: string): Promise<Record<string, any>> {
         // only load file once
-        if (this.isLoaded(group, locale)) {
+        if (this.isLoaded(namespace, locale)) {
             /* istanbul ignore next */
             return {};
         }
 
-        this.initLines(group, locale);
-        this.setIsLoaded(group, locale);
+        this.initLines(namespace, locale);
+        this.setIsLoaded(namespace, locale);
 
         const locations = await locateMany(
-            this.addExtensionPattern(group),
+            this.addExtensionPattern(namespace),
             this.buildLocatorOptionsForLocale(locale),
         );
 
@@ -190,27 +190,27 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
             return {};
         }
 
-        this.data[locale][group] = this.mergeFiles(files);
+        this.data[locale][namespace] = this.mergeFiles(files);
 
-        return this.data[locale][group];
+        return this.data[locale][namespace];
     }
 
     /**
-     * Persist the current in-memory record for `(locale, group)` to a JSON
+     * Persist the current in-memory record for `(locale, namespace)` to a JSON
      * file inside `writeDirectory`. Always writes the merged record so that
-     * subsequent `loadGroup` calls observe the change.
+     * subsequent `loadNamespace` calls observe the change.
      *
      * Atomic via write-temp-then-rename. If the source data was originally a
      * `.ts` / `.js` / `.cjs` file the original is left untouched and the new
      * `.json` sits alongside it; on next load both are merged by smob and the
      * new JSON keys win because the loader applies later sources on top.
      */
-    protected async persist(locale: string, group: string): Promise<void> {
+    protected async persist(locale: string, namespace: string): Promise<void> {
         const targetDir = path.join(this.writeDirectory, locale);
-        const targetFile = path.join(targetDir, `${group}.json`);
+        const targetFile = path.join(targetDir, `${namespace}.json`);
         const tmpFile = `${targetFile}.${process.pid}.tmp`;
 
-        const record = (this.data[locale] && this.data[locale][group]) || {};
+        const record = (this.data[locale] && this.data[locale][namespace]) || {};
         const content = `${JSON.stringify(record, null, 4)}\n`;
 
         await mkdir(targetDir, { recursive: true });
@@ -220,7 +220,7 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
 
     /**
      * Start watching the configured directories. Each `(directory, locale,
-     * group)` file change calls `invalidate(locale, group)`. Errors loading
+     * namespace)` file change calls `invalidate(locale, namespace)`. Errors loading
      * chokidar (e.g. consumer hasn't installed the optional peer) throw a
      * clear message — caught and rethrown as a deferred error so the
      * constructor doesn't reject.
@@ -245,8 +245,8 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
             persistent: false,
         });
         const onPath = (changedPath: string) => {
-            const parsed = this.parseLocaleGroup(changedPath);
-            if (parsed) this.invalidate(parsed.locale, parsed.group);
+            const parsed = this.parseLocaleNamespace(changedPath);
+            if (parsed) this.invalidate(parsed.locale, parsed.namespace);
         };
         this.watcher.on('add', onPath);
         this.watcher.on('change', onPath);
@@ -255,11 +255,11 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
 
     /**
      * Map a file path under one of the configured directories to its
-     * `(locale, group)` pair. Returns `undefined` if the path doesn't sit
-     * exactly under `<dir>/<locale>/<group>.<ext>` (e.g. a deeper nesting,
+     * `(locale, namespace)` pair. Returns `undefined` if the path doesn't sit
+     * exactly under `<dir>/<locale>/<namespace>.<ext>` (e.g. a deeper nesting,
      * or a sibling file not owned by us).
      */
-    protected parseLocaleGroup(filePath: string): { locale: string, group: string } | undefined {
+    protected parseLocaleNamespace(filePath: string): { locale: string, namespace: string } | undefined {
         const absPath = path.resolve(filePath);
         for (const dir of this.directories) {
             const absDir = path.resolve(dir);
@@ -270,7 +270,7 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
                     const [locale, file] = parts;
                     const dotIdx = file.lastIndexOf('.');
                     if (dotIdx > 0 && isBCP47LanguageCode(locale)) {
-                        return { locale, group: file.slice(0, dotIdx) };
+                        return { locale, namespace: file.slice(0, dotIdx) };
                     }
                 }
             }
@@ -299,7 +299,7 @@ export class FSStore extends MemoryStore implements InvalidatingStore {
     }
 
     protected mergeFiles(files: unknown[]) {
-        const lineRecord: LinesRecord = {};
+        const lineRecord: Lines = {};
         for (const file of files) {
             if (isLineRecord(file)) {
                 this.merger(lineRecord, file);

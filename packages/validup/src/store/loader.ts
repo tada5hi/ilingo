@@ -5,8 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { type LinesRecord, LoaderStore } from 'ilingo';
-import { GROUP, STORE_ID } from '../constants';
+import { type Lines, LoaderStore } from 'ilingo';
+import { NAMESPACE, STORE_ID } from '../constants';
 
 /**
  * Per-locale dynamic loaders. Each `import()` is a distinct module
@@ -15,7 +15,7 @@ import { GROUP, STORE_ID } from '../constants';
  * fetched. Importing this entry point pulls in *none* of the translation
  * data up front (unlike `@ilingo/validup/store/memory`).
  */
-const loaders: Record<string, () => Promise<LinesRecord>> = {
+const loaders: Record<string, () => Promise<Lines>> = {
     en: () => import('../translations/en').then((m) => m.useEnglishTranslation()),
     de: () => import('../translations/de').then((m) => m.useGermanTranslation()),
     fr: () => import('../translations/fr').then((m) => m.useFrenchTranslation()),
@@ -39,8 +39,8 @@ export function createLoaderStore(): LoaderStore {
     return new LoaderStore({
         id: STORE_ID,
         locales: Object.keys(loaders),
-        loader: (locale, group) => {
-            if (group !== GROUP) {
+        loader: (locale, namespace) => {
+            if (namespace !== NAMESPACE) {
                 return undefined;
             }
             const load = loaders[locale];

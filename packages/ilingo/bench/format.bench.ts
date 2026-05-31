@@ -20,7 +20,7 @@ describe('format() — template + number formatter', () => {
 
     bench('ilingo.get (number(currency=EUR))', async () => {
         await ilingo.get({
-            group: 'app',
+            namespace: 'app',
             key: 'cart.total',
             data: { amount: 42.5 },
         });

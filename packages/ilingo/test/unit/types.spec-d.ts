@@ -63,37 +63,37 @@ describe('Ilingo<Catalog> — typed key inference', () => {
         store: new MemoryStore({ data: catalog }),
     });
 
-    it('accepts a flat group/key pair', () => {
+    it('accepts a flat namespace/key pair', () => {
         expectTypeOf(
-            ilingo.get({ group: 'app', key: 'greeting' }),
+            ilingo.get({ namespace: 'app', key: 'greeting' }),
         ).resolves.toEqualTypeOf<string | undefined>();
     });
 
     it('accepts a dotted nested key', () => {
         expectTypeOf(
-            ilingo.get({ group: 'app', key: 'nested.deep.leaf' }),
+            ilingo.get({ namespace: 'app', key: 'nested.deep.leaf' }),
         ).resolves.toEqualTypeOf<string | undefined>();
     });
 
-    it('rejects an unknown group at compile time', () => {
+    it('rejects an unknown namespace at compile time', () => {
         ilingo.get({
-            // @ts-expect-error 'unknown' is not a valid group
-            group: 'unknown',
+            // @ts-expect-error 'unknown' is not a valid namespace
+            namespace: 'unknown',
             key: 'greeting',
         });
     });
 
-    it('rejects an unknown key within a known group', () => {
+    it('rejects an unknown key within a known namespace', () => {
         ilingo.get({
-            group: 'app',
-            // @ts-expect-error 'unknown' is not a key of the `app` group
+            namespace: 'app',
+            // @ts-expect-error 'unknown' is not a key of the `app` namespace
             key: 'unknown',
         });
     });
 
     it('rejects a half-correct dotted key', () => {
         ilingo.get({
-            group: 'app',
+            namespace: 'app',
             // @ts-expect-error 'nested.unknown' is not a key
             key: 'nested.unknown',
         });
@@ -105,12 +105,12 @@ describe('Ilingo<Catalog> — typed key inference', () => {
         // The runtime would have returned undefined for that path; rejecting
         // it at the type level matches the actual contract.
         ilingo.get({
-            group: 'app',
+            namespace: 'app',
             // @ts-expect-error 'nested' is a namespace, not a leaf
             key: 'nested',
         });
         ilingo.get({
-            group: 'app',
+            namespace: 'app',
             // @ts-expect-error 'nested.deep' is also a namespace, not a leaf
             key: 'nested.deep',
         });
@@ -118,15 +118,15 @@ describe('Ilingo<Catalog> — typed key inference', () => {
 
     it('requires `count` for an explicit @plural leaf', () => {
         // OK with count.
-        ilingo.get({ group: 'cart', key: 'items', count: 1 });
+        ilingo.get({ namespace: 'cart', key: 'items', count: 1 });
 
         // @ts-expect-error count is required for plural keys
-        ilingo.get({ group: 'cart', key: 'items' });
+        ilingo.get({ namespace: 'cart', key: 'items' });
     });
 
     it('does not require count for a regular string leaf', () => {
         // No count needed when leaf is plain string.
-        ilingo.get({ group: 'app', key: 'greeting' });
+        ilingo.get({ namespace: 'app', key: 'greeting' });
     });
 
     it('requires count when locales diverge and at least one is plural', () => {
@@ -156,10 +156,10 @@ describe('Ilingo<Catalog> — typed key inference', () => {
         });
 
         // OK: count provided.
-        il.get({ group: 'app', key: 'items', count: 1 });
+        il.get({ namespace: 'app', key: 'items', count: 1 });
 
         // @ts-expect-error count is required because en defines a plural shape
-        il.get({ group: 'app', key: 'items' });
+        il.get({ namespace: 'app', key: 'items' });
     });
 
     it('treats a bare { one, other } literal as a nested namespace, not a plural', () => {
@@ -181,11 +181,11 @@ describe('Ilingo<Catalog> — typed key inference', () => {
         const il = new Ilingo<typeof c>({ store: new MemoryStore({ data: c }) });
 
         // OK: inner keys are plain string leaves, no count needed.
-        il.get({ group: 'cart', key: 'items.one' });
-        il.get({ group: 'cart', key: 'items.other' });
+        il.get({ namespace: 'cart', key: 'items.one' });
+        il.get({ namespace: 'cart', key: 'items.other' });
 
         il.get({
-            group: 'cart',
+            namespace: 'cart',
             // @ts-expect-error bare { one, other } is a namespace, not a leaf
             key: 'items',
         });
@@ -195,10 +195,10 @@ describe('Ilingo<Catalog> — typed key inference', () => {
 describe('Ilingo — no generic preserves backward compat (loose typing)', () => {
     const ilingo = new Ilingo();
 
-    it('accepts arbitrary string groups + keys when no catalog is supplied', () => {
+    it('accepts arbitrary string namespaces + keys when no catalog is supplied', () => {
         // Without a generic, the API is intentionally loose.
-        ilingo.get({ group: 'whatever', key: 'really.anything' });
-        ilingo.get({ group: 'whatever', key: 'really.anything', count: 5 });
+        ilingo.get({ namespace: 'whatever', key: 'really.anything' });
+        ilingo.get({ namespace: 'whatever', key: 'really.anything', count: 5 });
     });
 });
 
@@ -234,10 +234,10 @@ describe('definePlural — TS/JS authoring helper', () => {
         });
 
         // count is required because the leaf is plural-shaped
-        ilingo.get({ group: 'cart', key: 'items', count: 2 });
+        ilingo.get({ namespace: 'cart', key: 'items', count: 2 });
 
         // @ts-expect-error count is required for plural keys
-        ilingo.get({ group: 'cart', key: 'items' });
+        ilingo.get({ namespace: 'cart', key: 'items' });
     });
 });
 
@@ -287,24 +287,24 @@ describe('defineLocale — one-file-per-locale authoring', () => {
             store: new MemoryStore({ data: catalog }),
         });
 
-        ilingo.get({ group: 'app', key: 'greeting' });
-        ilingo.get({ group: 'cart', key: 'items', count: 1 });
+        ilingo.get({ namespace: 'app', key: 'greeting' });
+        ilingo.get({ namespace: 'cart', key: 'items', count: 1 });
 
         ilingo.get({
-            group: 'app',
-            // @ts-expect-error 'unknown' is not a key of the `app` group
+            namespace: 'app',
+            // @ts-expect-error 'unknown' is not a key of the `app` namespace
             key: 'unknown',
         });
         // @ts-expect-error count is required for plural keys
-        ilingo.get({ group: 'cart', key: 'items' });
+        ilingo.get({ namespace: 'cart', key: 'items' });
     });
 
-    it('rejects a non-GroupsRecord shape at compile time', () => {
-        // A stray top-level string isn't a valid group body — must be a
-        // `LinesRecord` (nested object). The const generic constraint
+    it('rejects a non-Namespaces shape at compile time', () => {
+        // A stray top-level string isn't a valid namespace body — must be a
+        // `Lines` (nested object). The const generic constraint
         // catches this where `as const` would not.
         defineLocale({
-            // @ts-expect-error top-level string is not a GroupsRecord entry
+            // @ts-expect-error top-level string is not a Namespaces entry
             app: 'oops, that should have been { greeting: "..." }',
         });
     });
@@ -315,33 +315,33 @@ describe('Ilingo<Catalog>.getResolvedLocale — mirrors get() typing', () => {
         store: new MemoryStore({ data: catalog }),
     });
 
-    it('accepts a known group/key and resolves to string | undefined', () => {
+    it('accepts a known namespace/key and resolves to string | undefined', () => {
         expectTypeOf(
-            ilingo.getResolvedLocale({ group: 'app', key: 'greeting' }),
+            ilingo.getResolvedLocale({ namespace: 'app', key: 'greeting' }),
         ).resolves.toEqualTypeOf<string | undefined>();
     });
 
-    it('rejects an unknown group at compile time', () => {
+    it('rejects an unknown namespace at compile time', () => {
         ilingo.getResolvedLocale({
-            // @ts-expect-error 'unknown' is not a valid group
-            group: 'unknown',
+            // @ts-expect-error 'unknown' is not a valid namespace
+            namespace: 'unknown',
             key: 'greeting',
         });
     });
 
     it('rejects a non-leaf intermediate namespace key', () => {
         ilingo.getResolvedLocale({
-            group: 'app',
+            namespace: 'app',
             // @ts-expect-error 'nested' is a namespace, not a leaf
             key: 'nested',
         });
     });
 
     it('requires `count` for a plural key', () => {
-        ilingo.getResolvedLocale({ group: 'cart', key: 'items', count: 1 });
+        ilingo.getResolvedLocale({ namespace: 'cart', key: 'items', count: 1 });
 
         // @ts-expect-error count is required for plural keys
-        ilingo.getResolvedLocale({ group: 'cart', key: 'items' });
+        ilingo.getResolvedLocale({ namespace: 'cart', key: 'items' });
     });
 });
 
@@ -368,14 +368,14 @@ describe('Ilingo<Catalog>.getResolvedLocaleChain — locale-only, unaffected by 
 });
 
 describe('MissingKeyContext — stays loose under a typed catalog', () => {
-    it('handler receives string-typed group/key/locale, not narrowed unions', () => {
+    it('handler receives string-typed namespace/key/locale, not narrowed unions', () => {
         // By design: the handler runs *after* the chain misses, so it sees
         // arbitrary input — narrowing it to keys that exist in the catalog
         // would defeat the purpose. Document the contract here so future
         // refactors that try to thread `C` into MissingKeyContext fail loudly.
         const handler: MissingKeyHandler = (ctx) => {
             expectTypeOf(ctx).toEqualTypeOf<MissingKeyContext>();
-            expectTypeOf(ctx.group).toEqualTypeOf<string>();
+            expectTypeOf(ctx.namespace).toEqualTypeOf<string>();
             expectTypeOf(ctx.key).toEqualTypeOf<string>();
             expectTypeOf(ctx.locale).toEqualTypeOf<string>();
             expectTypeOf(ctx.resolvedLocale).toEqualTypeOf<string | undefined>();
@@ -405,7 +405,7 @@ describe('Ilingo<Catalog>.registerFormatter — works on typed instance', () => 
 
 describe('Ilingo<Catalog>.clone — returns loosely-typed Ilingo', () => {
     it('drops the catalog generic on the cloned instance', () => {
-        // Documented limitation: clone() rebinds to `Ilingo<LocalesRecord>`
+        // Documented limitation: clone() rebinds to `Ilingo<Locales>`
         // so it can compose with foreign-typed parents (e.g. scoped catalogs
         // in @ilingo/vue). Callers that need the narrow type back should
         // construct a new `Ilingo<C>` manually.
@@ -415,13 +415,13 @@ describe('Ilingo<Catalog>.clone — returns loosely-typed Ilingo', () => {
 
         const child = parent.clone();
         expectTypeOf(child).toEqualTypeOf<Ilingo>();
-        // The loose surface accepts any group/key, matching the no-generic case.
-        child.get({ group: 'anything', key: 'really.anything' });
+        // The loose surface accepts any namespace/key, matching the no-generic case.
+        child.get({ namespace: 'anything', key: 'really.anything' });
     });
 });
 
 describe('Ilingo<Catalog>.merge — accepts foreign-typed Ilingo', () => {
-    it('takes an Ilingo<LocalesRecord> regardless of self generic', () => {
+    it('takes an Ilingo<Locales> regardless of self generic', () => {
         const typed = new Ilingo<Catalog>({
             store: new MemoryStore({ data: catalog }),
         });
@@ -456,9 +456,9 @@ describe('definePlural in a diverging-locale catalog — count still required', 
             store: new MemoryStore({ data: diverge }),
         });
 
-        il.get({ group: 'cart', key: 'items', count: 1 });
+        il.get({ namespace: 'cart', key: 'items', count: 1 });
 
         // @ts-expect-error count is required because en is plural-shaped
-        il.get({ group: 'cart', key: 'items' });
+        il.get({ namespace: 'cart', key: 'items' });
     });
 });

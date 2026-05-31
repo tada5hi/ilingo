@@ -34,7 +34,7 @@ const store = new MemoryStore({
     data: {
         // locale: de
         de: {
-            // group: app
+            // namespace: app
             app: {
                 key: 'Hallo mein Name ist {{name}}'
             }
@@ -54,7 +54,7 @@ const ilingo = new Ilingo({
 });
 ```
 
-To retrieve text from any of the language files, simply pass the filename/group and the access key
+To retrieve text from any of the language files, simply pass the filename/namespace and the access key
 as the first parameter, separated by a period (.).
 
 After that you can simply access the locale string, as described in the following:
@@ -67,13 +67,13 @@ const ilingo = new Ilingo({
 });
 
 await ilingo.get({ 
-    group: 'app', 
+    namespace: 'app', 
     key: 'key'
 });
 // Hello my name is {{name}}
 
 await ilingo.get({ 
-    group: 'app', 
+    namespace: 'app', 
     key: 'key', 
     data: {
         name: 'Peter'
@@ -82,7 +82,7 @@ await ilingo.get({
 // Hello my name is Peter
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'key',
     data: {
         name: 'Peter'

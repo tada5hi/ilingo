@@ -5,7 +5,7 @@ A **catalog** is the nested object you hand to `MemoryStore({ data })` (or persi
 ```typescript
 const catalog = {
     en: {                       // locale
-        app: {                  // group (logical namespace)
+        app: {                  // namespace (logical namespace)
             greeting: 'Hi {{name}}',
             farewell: 'Bye',
             cart: {
@@ -24,7 +24,7 @@ const catalog = {
 };
 ```
 
-The shape is `Record<locale, Record<group, nested-record-of-leaves>>`. Each leaf is either a `string` or a `{ "@plural": { ... } }` wrapper. Everything in between is just nested keys you can address with dotted paths.
+The shape is `Record<locale, Record<namespace, nested-record-of-leaves>>`. Each leaf is either a `string` or a `{ "@plural": { ... } }` wrapper. Everything in between is just nested keys you can address with dotted paths.
 
 ## Layout choices
 
@@ -32,7 +32,7 @@ The library is agnostic to how you split data across files — it only sees the 
 
 ### One file per locale
 
-Every locale lives in a single file (`en.ts`, `de.ts`, `en.json`, …). All groups for that locale are children of the same root. For TS files, wrap the export in `defineLocale` so the per-key literal types survive the `export default` (otherwise TypeScript widens them — see [`defineLocale`](#definelocale-one-file-per-locale-authoring) below).
+Every locale lives in a single file (`en.ts`, `de.ts`, `en.json`, …). All namespaces for that locale are children of the same root. For TS files, wrap the export in `defineLocale` so the per-key literal types survive the `export default` (otherwise TypeScript widens them — see [`defineLocale`](#definelocale-one-file-per-locale-authoring) below).
 
 ```typescript
 // locales/en.ts
@@ -57,9 +57,9 @@ JSON variant is the same shape minus the helper calls — see the `@plural` exam
 
 **Use it when:** locales are small (low hundreds of keys), translators work one locale at a time, you want git diffs to read top-to-bottom per language.
 
-### One file per `(locale, group)`
+### One file per `(locale, namespace)`
 
-The pattern `FSStore` walks: `<directory>/<locale>/<group>.json`. Each file holds a single group for a single locale.
+The pattern `FSStore` walks: `<directory>/<locale>/<namespace>.json`. Each file holds a single namespace for a single locale.
 
 ```
 locales/
@@ -71,11 +71,11 @@ locales/
         cart.json
 ```
 
-**Use it when:** the catalog is large, multiple translators work in parallel, or you want lazy loading where each group's file is fetched only when its first key is read (`FSStore` and `LoaderStore` both support this).
+**Use it when:** the catalog is large, multiple translators work in parallel, or you want lazy loading where each namespace's file is fetched only when its first key is read (`FSStore` and `LoaderStore` both support this).
 
 ## `defineCatalog` — keep literal types narrow
 
-The catalog literal carries information the type system can use to infer legal `(group, key)` pairs and detect plural leaves. TypeScript will widen literal types (`'Hi'` → `string`) the moment the value lands in a typed variable, so reach for `defineCatalog` instead of `as const` sprinkling.
+The catalog literal carries information the type system can use to infer legal `(namespace, key)` pairs and detect plural leaves. TypeScript will widen literal types (`'Hi'` → `string`) the moment the value lands in a typed variable, so reach for `defineCatalog` instead of `as const` sprinkling.
 
 ```typescript
 import { Ilingo, MemoryStore, defineCatalog } from 'ilingo';
@@ -88,8 +88,8 @@ const ilingo = new Ilingo<typeof catalog>({
     store: new MemoryStore({ data: catalog }),
 });
 
-ilingo.get({ group: 'app', key: 'greeting' }); // OK
-ilingo.get({ group: 'app', key: 'unknown' });  // type error
+ilingo.get({ namespace: 'app', key: 'greeting' }); // OK
+ilingo.get({ namespace: 'app', key: 'unknown' });  // type error
 ```
 
 `defineCatalog<const T>(catalog)` is a runtime identity function. The work it does is purely at compile time — its `const` generic preserves the per-key literal types so the inferred `Key<C, G>` is the natural set of leaf paths, not `string`.
@@ -98,7 +98,7 @@ See [Type-Safe Keys](./type-safe-keys) for the inference rules and the `Ilingo<C
 
 ## `defineLocale` — one-file-per-locale authoring
 
-When you split locales across files (`locales/en.ts`, `locales/de.ts`, …), each file declares the groups for a single locale. TypeScript widens the literal types at the `export default` boundary unless you tell it not to. `defineLocale` is the per-locale counterpart of `defineCatalog`: an identity function with a `const` generic that captures the narrow shape and validates against `GroupsRecord`.
+When you split locales across files (`locales/en.ts`, `locales/de.ts`, …), each file declares the namespaces for a single locale. TypeScript widens the literal types at the `export default` boundary unless you tell it not to. `defineLocale` is the per-locale counterpart of `defineCatalog`: an identity function with a `const` generic that captures the narrow shape and validates against `Namespaces`.
 
 ```typescript
 // locales/en.ts
@@ -110,16 +110,16 @@ export default defineLocale({
 });
 ```
 
-`as const` would also preserve the types but does no shape validation — a stray top-level string would slip through silently and only fail at lookup. `defineLocale<const T extends GroupsRecord>(locale: T): T` catches that at the call site:
+`as const` would also preserve the types but does no shape validation — a stray top-level string would slip through silently and only fail at lookup. `defineLocale<const T extends Namespaces>(locale: T): T` catches that at the call site:
 
 ```typescript
 defineLocale({
     app: 'oops',
-    //   ^^^^^^ type error: not a GroupsRecord entry
+    //   ^^^^^^ type error: not a Namespaces entry
 });
 ```
 
-When you import the per-locale files into a combined catalog, the const generic flows through `defineCatalog`, so `Ilingo<typeof catalog>` still infers the full set of legal `(group, key)` pairs across every locale:
+When you import the per-locale files into a combined catalog, the const generic flows through `defineCatalog`, so `Ilingo<typeof catalog>` still infers the full set of legal `(namespace, key)` pairs across every locale:
 
 ```typescript
 // locales/index.ts
@@ -132,6 +132,29 @@ export const catalog = defineCatalog({ en, de });
 // Key<typeof catalog, 'cart'> is 'items', not 'string',
 // because the literal types from each per-locale file are preserved.
 ```
+
+## `defineNamespace` — one-file-per-namespace authoring
+
+When you split *namespaces* into their own files (`locales/en/app.ts`, `locales/en/cart.ts`, …), `defineNamespace<const T extends Lines>(namespace: T): T` is the per-namespace counterpart — same const-capture and shape validation (against `Lines`):
+
+```typescript
+// locales/en/app.ts
+import { defineNamespace, definePlural } from 'ilingo';
+
+export default defineNamespace({
+    greeting: 'Hi {{name}}',
+    items: definePlural({ one: '1 item', other: '{{count}} items' }),
+});
+```
+
+`Lines` is recursive, so a namespace nests arbitrarily and you address a leaf with a dotted key:
+
+```typescript
+defineNamespace({ nav: { home: 'Home', settings: { title: 'Settings' } } });
+// ilingo.get({ namespace: 'app', key: 'nav.settings.title' })
+```
+
+Compose namespace files into a locale with `defineLocale`, then locales into the catalog with `defineCatalog` — the const generics flow through all three.
 
 ## Authoring plurals: JSON vs TS/JS
 
@@ -200,8 +223,8 @@ const catalog = defineCatalog({
     },
 });
 
-await ilingo.get({ group: 'form', key: 'kind.other.label' });   // "Other"
-await ilingo.get({ group: 'form', key: 'kind' });               // undefined (not a leaf)
+await ilingo.get({ namespace: 'form', key: 'kind.other.label' });   // "Other"
+await ilingo.get({ namespace: 'form', key: 'kind' });               // undefined (not a leaf)
 ```
 
 This is the inverse design from libraries that auto-detect bare `{ one, other }` shapes — the explicit `@plural` discriminator means a UI catalog with an enum dropdown labelled "Other" never collides with the plural selector.
@@ -211,7 +234,7 @@ This is the inverse design from libraries that auto-detect bare `{ one, other }`
 | At this position | The value can be |
 |---|---|
 | Top-level | A locale code (`'en'`, `'de'`, `'pt-BR'`, …) — BCP-47 |
-| Locale | A `Record<group, ...>` where each group is your logical namespace |
+| Locale | A `Record<namespace, ...>` where each namespace is your logical namespace |
 | Group | A nested `Record<string, …>` — any depth |
 | Leaf | `string` (the translation) OR `{ "@plural": { other: string, zero?: string, ... } }` |
 

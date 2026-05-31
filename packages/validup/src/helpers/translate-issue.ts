@@ -9,7 +9,7 @@ import { isProductionEnv } from 'ilingo';
 import type { IIlingo } from 'ilingo';
 import type { Issue, IssueItem } from 'validup';
 import { flattenIssueItems } from 'validup';
-import { GROUP } from '../constants';
+import { NAMESPACE } from '../constants';
 
 /**
  * Coerce validup's `Record<string, unknown>` issue-data shape into
@@ -93,11 +93,11 @@ export interface TranslateIssueOptions {
      */
     locale?: string;
     /**
-     * Catalog group name to look up codes under. Defaults to `'validup'`
-     * (the group used by the default `Store`). Override when you've
-     * mounted the translations under a different group.
+     * Catalog namespace name to look up codes under. Defaults to `'validup'`
+     * (the namespace used by the default `Store`). Override when you've
+     * mounted the translations under a different namespace.
      */
-    group?: string;
+    namespace?: string;
 }
 
 /**
@@ -124,7 +124,7 @@ export async function translateIssue(
     const { code } = issue;
     if (typeof code === 'string' && code.length > 0) {
         const translated = await ilingo.get({
-            group: options.group ?? GROUP,
+            namespace: options.namespace ?? NAMESPACE,
             key: code,
             // validup widens `IssueItem.data` to `Record<string, unknown>` to
             // cover the raw / ad-hoc branch. `coerceIssueData` narrows that
@@ -151,7 +151,7 @@ export async function translateIssue(
  * is one batch, not N serial awaits. Sync stores (`MemoryStore`) finish in
  * a single microtask burst; async stores (`LoaderStore`, `FSStore` cold
  * load) overlap their I/O instead of stacking it. The store-level
- * dedup on `(locale, group, key)` means repeated identical lookups
+ * dedup on `(locale, namespace, key)` means repeated identical lookups
  * (common on a form with many fields hitting the same code) cost no extra
  * work at the underlying stores.
  *

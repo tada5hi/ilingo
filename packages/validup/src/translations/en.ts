@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { LinesRecord } from 'ilingo';
+import type { Lines } from 'ilingo';
 
 /**
  * Default English translations for the built-in validup `IssueCode`s.
@@ -21,7 +21,7 @@ import type { LinesRecord } from 'ilingo';
  * this default catalog — register your own translations alongside the
  * built-ins.
  */
-export function useEnglishTranslation(): LinesRecord {
+export function useEnglishTranslation(): Lines {
     return {
         // Generic / structural
         value_invalid: 'The value is invalid',

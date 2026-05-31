@@ -5,11 +5,12 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { 
-    GroupsRecord, 
-    LocalesRecord, 
-    PluralForms, 
-    PluralLeaf, 
+import type {
+    Lines,
+    Locales,
+    Namespaces,
+    PluralForms,
+    PluralLeaf,
 } from './types';
 
 /**
@@ -26,24 +27,24 @@ import type {
  *     const ilingo = new Ilingo<typeof catalog>({
  *         store: new MemoryStore({ data: catalog }),
  *     });
- *     ilingo.get({ group: 'app', key: 'greeting' });  // OK
- *     ilingo.get({ group: 'app', key: 'unknown' });   // type error
+ *     ilingo.get({ namespace: 'app', key: 'greeting' });  // OK
+ *     ilingo.get({ namespace: 'app', key: 'unknown' });   // type error
  */
-export function defineCatalog<const T extends LocalesRecord>(catalog: T): T {
+export function defineCatalog<const T extends Locales>(catalog: T): T {
     return catalog;
 }
 
 /**
- * One-file-per-locale companion to `defineCatalog`. Captures the groups
+ * One-file-per-locale companion to `defineCatalog`. Captures the namespaces
  * for a single locale with `const` inference so the per-key literal types
  * survive an `export default`, and validates the shape against
- * `GroupsRecord` so a misplaced top-level value (a stray string, the
+ * `Namespaces` so a misplaced top-level value (a stray string, the
  * wrong nesting) is caught at compile time instead of failing silently
  * at lookup.
  *
  * Combine multiple `defineLocale` files via `defineCatalog` — the const
  * generics flow through, so `Ilingo<typeof catalog>` still infers the
- * full set of legal `(group, key)` pairs.
+ * full set of legal `(namespace, key)` pairs.
  *
  * @example
  *     // locales/en.ts
@@ -59,8 +60,33 @@ export function defineCatalog<const T extends LocalesRecord>(catalog: T): T {
  *     import de from './de';
  *     export const catalog = defineCatalog({ en, de });
  */
-export function defineLocale<const T extends GroupsRecord>(locale: T): T {
+export function defineLocale<const T extends Namespaces>(locale: T): T {
     return locale;
+}
+
+/**
+ * One-file-per-namespace companion to `defineCatalog` / `defineLocale`.
+ * Captures the lines of a single namespace with `const` inference so the
+ * per-key literal types survive an `export default`, and validates the
+ * shape against `Lines` so a misplaced value (the wrong nesting, a
+ * non-string/`@plural` leaf) is caught at compile time.
+ *
+ * Use when each namespace lives in its own file (`locales/en/app.ts`).
+ * Combine via `defineLocale` / `defineCatalog` — the const generics flow
+ * through, so `Ilingo<typeof catalog>` still infers the full set of legal
+ * `(namespace, key)` pairs.
+ *
+ * @example
+ *     // locales/en/app.ts
+ *     import { defineNamespace, definePlural } from 'ilingo';
+ *
+ *     export default defineNamespace({
+ *         greeting: 'Hi {{name}}',
+ *         items: definePlural({ one: '1 item', other: '{{count}} items' }),
+ *     });
+ */
+export function defineNamespace<const T extends Lines>(namespace: T): T {
+    return namespace;
 }
 
 /**

@@ -7,7 +7,7 @@
 
 import { isObject } from 'smob';
 import type {
-    LinesRecord,
+    Lines,
     PluralCategory,
     PluralForms,
     PluralLeaf,
@@ -68,7 +68,7 @@ export function isPluralLeaf(value: unknown): value is PluralLeaf {
     return PLURAL_MARKER in obj && isPluralForms(obj[PLURAL_MARKER]);
 }
 
-export function isLineRecord(value: unknown): value is LinesRecord {
+export function isLineRecord(value: unknown): value is Lines {
     if (!isObject(value)) {
         return false;
     }

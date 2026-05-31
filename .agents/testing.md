@@ -65,7 +65,7 @@ The Vue package uses **happy-dom** for the DOM environment and **@vue/test-utils
 
 ```
 unit/
-├── module.spec.ts              # FSStore.loadGroup against test/data/language/ + fallback semantics
+├── module.spec.ts              # FSStore.loadNamespace against test/data/language/ + fallback semantics
 ├── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
 │                               #   split read/write directories
 └── watch.spec.ts               # FSStore({ watch: true }) emits invalidate on file change;
@@ -81,7 +81,7 @@ data/
   ```typescript
   const ilingo = new Ilingo({ store: new MemoryStore({ data: { ... } }) });
   ```
-- `test/data/language/<locale>/<group>.{ts,js,json,cjs}` doubles as both a fixture and a smoke test of `FSStore`'s loader extension matrix.
+- `test/data/language/<locale>/<namespace>.{ts,js,json,cjs}` doubles as both a fixture and a smoke test of `FSStore`'s loader extension matrix.
 
 ## Testing Philosophy
 
@@ -169,5 +169,5 @@ Inspect those workflows for the exact matrix; the package-level `engines` field 
 
 1. Place test files under `packages/<pkg>/test/unit/` with the `.spec.ts` extension. Mirror the `src/` directory for discoverability.
 2. Import from `../../src` (relative), **not** the package's published name — tests run against TypeScript source via Vitest, not the built `dist/`.
-3. If the test needs locale files on disk, drop them into `packages/<pkg>/test/data/language/<locale>/<group>.<ext>` and load via `FSStore` — don't write to a temp directory.
+3. If the test needs locale files on disk, drop them into `packages/<pkg>/test/data/language/<locale>/<namespace>.<ext>` and load via `FSStore` — don't write to a temp directory.
 4. Run `npm run test --workspace=packages/<pkg>` to verify, then `npm run lint` (top-level) before committing. The `test/` directory is excluded from lint (`/.eslintrc` `ignorePatterns`), so style rules are relaxed there, but type errors will still surface during the build.

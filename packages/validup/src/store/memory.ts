@@ -6,12 +6,12 @@
  */
 
 import {
-    type GroupsRecord,
     type IStore,
     MemoryStore,
+    type Namespaces,
     parseLinesRecord,
 } from 'ilingo';
-import { GROUP, STORE_ID } from '../constants';
+import { NAMESPACE, STORE_ID } from '../constants';
 import {
     useEnglishTranslation,
     useFrenchTranslation,
@@ -21,7 +21,7 @@ import {
 
 /**
  * Eager in-memory catalog: all four shipped locales (`en`, `de`, `fr`,
- * `es`) for the `validup` group are materialised up front. This entry
+ * `es`) for the `validup` namespace are materialised up front. This entry
  * point (`@ilingo/validup/store/memory`) statically imports the
  * translation modules, so importing it bundles every locale.
  *
@@ -67,7 +67,7 @@ export function createMemoryStore(): Store {
  * to dedupe as the validup catalog on `Ilingo.registerStore`.
  */
 export async function extendStore(store: IStore) {
-    const translations : GroupsRecord = {
+    const translations : Namespaces = {
         en: useEnglishTranslation(),
         de: useGermanTranslation(),
         fr: useFrenchTranslation(),
@@ -84,7 +84,7 @@ export async function extendStore(store: IStore) {
             promises.push(
                 store.set({
                     locale,
-                    group: GROUP,
+                    namespace: NAMESPACE,
                     key: pair.key,
                     value: pair.value,
                 }),

@@ -10,7 +10,7 @@ export type Config = {
     writeDirectory: string,
     /**
      * When `true`, watch the configured `directory` paths via `chokidar`
-     * and invalidate the matching `(locale, group)` cache entry on each
+     * and invalidate the matching `(locale, namespace)` cache entry on each
      * change. Subscribers registered via `FSStore.on('invalidate', ...)`
      * are notified.
      *

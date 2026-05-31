@@ -18,7 +18,7 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
     const instance = injectIlingo();
     const locale = injectLocale();
 
-    const defaultValue = `${ctx.group}.${ctx.key}`;
+    const defaultValue = `${ctx.namespace}.${ctx.key}`;
 
     // Bumping this ref forces the computedAsync below to re-run. Used by the
     // invalidation subscriptions further down — without a tracked dep that
@@ -26,7 +26,7 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
     const invalidationTick = ref(0);
 
     // Subscribe to invalidation events from any InvalidatingStore in the
-    // instance's store set. Filter by (group, key) — a watcher event for an
+    // instance's store set. Filter by (namespace, key) — a watcher event for an
     // unrelated key should not cause us to re-render. The composable's
     // computedAsync re-runs on the next tick because `invalidationTick.value`
     // is in its dep set.
@@ -35,7 +35,7 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
         if (!isInvalidatingStore(store)) continue;
         const stop = store.on('invalidate', (invLocale, invGroup) => {
             if (invLocale !== undefined && invLocale !== (ctx.locale ?? locale.value)) return;
-            if (invGroup !== undefined && invGroup !== ctx.group) return;
+            if (invGroup !== undefined && invGroup !== ctx.namespace) return;
             invalidationTick.value += 1;
         });
         unsubscribes.push(stop);
@@ -57,7 +57,7 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
                 data: ctx.data ?
                     extractReactiveData(ctx.data) :
                     undefined,
-                group: ctx.group,
+                namespace: ctx.namespace,
                 key: ctx.key,
                 count: unref(ctx.count),
             });

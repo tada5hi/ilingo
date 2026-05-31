@@ -20,7 +20,7 @@ describe('Custom formatters (#906)', () => {
             String(value).toLocaleUpperCase(locale));
 
         expect(
-            await ilingo.get({ group: 'app', key: 'shout', data: { name: 'peter' } }),
+            await ilingo.get({ namespace: 'app', key: 'shout', data: { name: 'peter' } }),
         ).toEqual('Hi PETER!');
     });
 
@@ -36,7 +36,7 @@ describe('Custom formatters (#906)', () => {
         });
 
         expect(
-            await ilingo.get({ group: 'app', key: 'shout', data: { name: 'peter' } }),
+            await ilingo.get({ namespace: 'app', key: 'shout', data: { name: 'peter' } }),
         ).toEqual('Hi PETER!');
     });
 
@@ -52,7 +52,7 @@ describe('Custom formatters (#906)', () => {
         });
 
         expect(
-            await ilingo.get({ group: 'app', key: 'owe', data: { amount: 99 } }),
+            await ilingo.get({ namespace: 'app', key: 'owe', data: { amount: 99 } }),
         ).toEqual('You owe NUM:99');
     });
 
@@ -72,7 +72,7 @@ describe('Custom formatters (#906)', () => {
         });
 
         expect(
-            await child.get({ group: 'app', key: 'hi', data: { name: 'peter' } }),
+            await child.get({ namespace: 'app', key: 'hi', data: { name: 'peter' } }),
         ).toEqual('hi PETER');
         // Shared registry: the parent now sees the formatter too.
         expect(parent.formatters.has('upper')).toBe(true);
@@ -92,7 +92,7 @@ describe('Custom formatters (#906)', () => {
             }),
         });
         expect(
-            await child.get({ group: 'scoped', key: 'hi', data: { name: 'peter' } }),
+            await child.get({ namespace: 'scoped', key: 'hi', data: { name: 'peter' } }),
         ).toEqual('hi PETER');
     });
 });

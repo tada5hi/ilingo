@@ -34,7 +34,7 @@ const message = await translateIssue(issue, ilingo);
 ## API
 
 The package core (`@ilingo/validup`) is **data-free** — it carries the
-`translateIssue(s)` helpers, the `GROUP` / `STORE_ID` constants, and the
+`translateIssue(s)` helpers, the `NAMESPACE` / `STORE_ID` constants, and the
 catalog types, but no translation modules. The catalog stores live behind
 two subpaths so you pay only for the backend you choose.
 
@@ -86,7 +86,7 @@ Resolve a single `Issue` (item *or* group) to a localized string. Lookup order i
 
 Flatten an `Issue[]` to its leaf `IssueItem`s and translate each in parallel via `Promise.all`. Useful in SSR template loops, queue workers, log formatters — anywhere outside Vue.
 
-Options on both: `{ locale?: string, group?: string }`. The default group is `'validup'`; override when you've mounted translations under a different name.
+Options on both: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
 
 ### Type-safe catalog composition
 
@@ -102,8 +102,8 @@ type AppCatalog = {
 };
 
 const ilingo: Ilingo<AppCatalog> = new Ilingo<AppCatalog>({ /* ... */ });
-// ilingo.get({ group: 'validup', key: 'min_length' }) → typed
-// ilingo.get({ group: 'validup', key: 'typo' })       → TS error
+// ilingo.get({ namespace: 'validup', key: 'min_length' }) → typed
+// ilingo.get({ namespace: 'validup', key: 'typo' })       → TS error
 ```
 
 The interface is augmentable so adapter authors / consumers shipping extension `IssueCode`s via `IssueDataByCode` can extend it with their own keys.
@@ -119,11 +119,11 @@ import {
 } from '@ilingo/validup/store/memory';
 ```
 
-Each function returns a `LinesRecord` keyed by the built-in `IssueCode` runtime values. (They live on the `./store/memory` subpath — the eager entry — so the data-free core stays free of translation modules.)
+Each function returns a `Lines` keyed by the built-in `IssueCode` runtime values. (They live on the `./store/memory` subpath — the eager entry — so the data-free core stays free of translation modules.)
 
-### Extending / overriding the `validup` group
+### Extending / overriding the `validup` namespace
 
-The `validup` group is a **shared key-space** — it isn't owned solely by this package. ilingo's serial store walk falls through store-by-store *per key*, so an app co-owns the group by registering its own store **first**: it adds translations for its custom extension `IssueCode`s and overrides individual built-in messages, while this catalog supplies the defaults for everything else.
+The `validup` namespace is a **shared key-space** — it isn't owned solely by this package. ilingo's serial store walk falls through store-by-store *per key*, so an app co-owns the namespace by registering its own store **first**: it adds translations for its custom extension `IssueCode`s and overrides individual built-in messages, while this catalog supplies the defaults for everything else.
 
 ```typescript
 import { Ilingo, MemoryStore } from 'ilingo';
@@ -131,7 +131,7 @@ import { createMemoryStore } from '@ilingo/validup/store/memory';
 
 const ilingo = new Ilingo({ locale: 'en' });
 
-// app store FIRST → wins per (locale, group, key)
+// app store FIRST → wins per (locale, namespace, key)
 ilingo.registerStore(new MemoryStore({
     data: {
         en: { validup: {
@@ -146,7 +146,7 @@ ilingo.registerStore(new MemoryStore({
 ilingo.registerStore(createMemoryStore());
 ```
 
-The `validup` group name is exported as `GROUP` if you'd rather build the catalog programmatically.
+The `validup` namespace name is exported as `NAMESPACE` if you'd rather build the catalog programmatically.
 
 ## Going Vue
 

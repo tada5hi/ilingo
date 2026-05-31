@@ -21,7 +21,7 @@ describe('get() — cache hit, simple string leaf', () => {
 
     bench('ilingo.get', async () => {
         await ilingo.get({
-            group: 'app', 
+            namespace: 'app', 
             key: 'greeting', 
             data: { name: 'Peter' }, 
         });

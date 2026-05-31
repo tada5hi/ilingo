@@ -86,9 +86,9 @@ const total = ref('Total: €49.90');
 
 async function renderAll () {
     const [greetingValue, itemsValue, totalValue] = await Promise.all([
-        ilingo.get({ group: 'cart', key: 'greeting', locale: state.locale, data: { name: state.name } }),
-        ilingo.get({ group: 'cart', key: 'items', locale: state.locale, count: state.count }),
-        ilingo.get({ group: 'cart', key: 'total', locale: state.locale, data: { amount: state.amount } }),
+        ilingo.get({ namespace: 'cart', key: 'greeting', locale: state.locale, data: { name: state.name } }),
+        ilingo.get({ namespace: 'cart', key: 'items', locale: state.locale, count: state.count }),
+        ilingo.get({ namespace: 'cart', key: 'total', locale: state.locale, data: { amount: state.amount } }),
     ]);
     greeting.value = greetingValue ?? '';
     items.value = itemsValue ?? '';

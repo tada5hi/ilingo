@@ -23,12 +23,12 @@ describe('FSStore.set persistence', () => {
         await rm(tmpDir, { recursive: true, force: true });
     });
 
-    it('writes a new key to <writeDirectory>/<locale>/<group>.json', async () => {
+    it('writes a new key to <writeDirectory>/<locale>/<namespace>.json', async () => {
         const store = new FSStore({ directory: tmpDir });
 
         await store.set({
             locale: 'en',
-            group: 'app',
+            namespace: 'app',
             key: 'greeting',
             value: 'Hello {{name}}',
         });
@@ -47,7 +47,7 @@ describe('FSStore.set persistence', () => {
         const writer = new FSStore({ directory: tmpDir });
         await writer.set({
             locale: 'de',
-            group: 'app',
+            namespace: 'app',
             key: 'greeting',
             value: 'Hallo {{name}}',
         });
@@ -57,7 +57,7 @@ describe('FSStore.set persistence', () => {
 
         expect(
             await ilingo.get({
-                group: 'app',
+                namespace: 'app',
                 key: 'greeting',
                 locale: 'de',
                 data: { name: 'Peter' },
@@ -68,10 +68,10 @@ describe('FSStore.set persistence', () => {
     it('preserves sibling keys when setting a new one', async () => {
         const store = new FSStore({ directory: tmpDir });
         await store.set({
-            locale: 'en', group: 'app', key: 'first', value: 'A',
+            locale: 'en', namespace: 'app', key: 'first', value: 'A',
         });
         await store.set({
-            locale: 'en', group: 'app', key: 'second', value: 'B',
+            locale: 'en', namespace: 'app', key: 'second', value: 'B',
         });
 
         const written = JSON.parse(
@@ -85,7 +85,7 @@ describe('FSStore.set persistence', () => {
         const store = new FSStore({ directory: tmpDir });
         await store.set({
             locale: 'en',
-            group: 'form',
+            namespace: 'form',
             key: 'nested.deep.key',
             value: 'deeply nested',
         });
@@ -108,7 +108,7 @@ describe('FSStore.set persistence', () => {
             writeDirectory: writeDir,
         });
         await store.set({
-            locale: 'en', group: 'app', key: 'k', value: 'v',
+            locale: 'en', namespace: 'app', key: 'k', value: 'v',
         });
 
         const written = JSON.parse(

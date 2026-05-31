@@ -45,9 +45,9 @@ Runtime: `definePlural` returns `{ '@plural': leaf }` — identical to the JSON 
 ## Selection rules
 
 ```typescript
-await ilingo.get({ group: 'cart', key: 'items', count: 0 }); // 'other' (en has no 'zero')
-await ilingo.get({ group: 'cart', key: 'items', count: 1 }); // 'one'
-await ilingo.get({ group: 'cart', key: 'items', count: 5 }); // 'other'
+await ilingo.get({ namespace: 'cart', key: 'items', count: 0 }); // 'other' (en has no 'zero')
+await ilingo.get({ namespace: 'cart', key: 'items', count: 1 }); // 'one'
+await ilingo.get({ namespace: 'cart', key: 'items', count: 5 }); // 'other'
 ```
 
 - If the selected category is **absent**, `other` is used.

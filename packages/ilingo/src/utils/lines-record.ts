@@ -1,11 +1,11 @@
-import type { LinesRecord, PluralLeaf } from '../types.ts';
+import type { Lines, PluralLeaf } from '../types.ts';
 import { isPluralLeaf } from 'ilingo';
 
 export type LinesRecordParsed = {
     key: string,
     value: string | PluralLeaf
 };
-export function parseLinesRecord(record: LinesRecord, parent?: string): LinesRecordParsed[] {
+export function parseLinesRecord(record: Lines, parent?: string): LinesRecordParsed[] {
     const output : LinesRecordParsed[] = [];
     const keys = Object.keys(record);
     for (const key of keys) {

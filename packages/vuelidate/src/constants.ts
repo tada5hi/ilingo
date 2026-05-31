@@ -6,10 +6,10 @@
  */
 
 /**
- * Catalog group name used by the shipped vuelidate-message stores. All
- * keys under this group are built-in validator names.
+ * Catalog namespace name used by the shipped vuelidate-message stores. All
+ * keys under this namespace are built-in validator names.
  */
-export const GROUP = 'vuelidate';
+export const NAMESPACE = 'vuelidate';
 
 /**
  * Stable identity under which the shipped catalog stores

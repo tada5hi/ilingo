@@ -62,10 +62,10 @@ When creating new files, copy this header and use the **current year**.
 |--------------------------|----------------------------------------|-----------------------------------------------------------------------|
 | Port interfaces          | `IStore`, `IIlingo`                    | `I`-prefix used (see commit `137dfd5 fix: rename interface Store -> IStore`). `IIlingo` is the public type contract of the orchestrator; prefer it in type positions, reserve the concrete `Ilingo` class for construction. |
 | Adapter classes          | `MemoryStore`, `FSStore`               | No `Adapter` suffix; descriptive concrete name                        |
-| Context types            | `StoreGetContext`, `GetContext`, `GetContextReactive` | Object passed to async methods — group + key + optional locale/data |
+| Context types            | `StoreGetContext`, `GetContext`, `GetContextReactive` | Object passed to async methods — namespace + key + optional locale/data |
 | Config types             | `Config` + `ConfigInput`               | `packages/ilingo`: both names alias the same fully-optional shape (every field has a runtime default, so the split was misleading). `packages/fs`: `Config` is the resolved shape and `ConfigInput` is the un-normalized input (`directory: string \| string[]`) — keep the split when the input shape differs from the resolved shape. |
 | Options types            | `MemoryStoreOptions`, vue `Options`    | Constructor / install argument shapes                                 |
-| Lines records            | `LinesRecord`, `GroupsRecord`, `LocalesRecord` | Plural-noun + `Record` — the nested data shape                  |
+| Data-shape records       | `Lines`, `Namespaces`, `Locales` | Nested catalog shapes — `Locales` = `Record<locale, Namespaces>`, `Namespaces` = `Record<namespace, Lines>`, `Lines` = nested string/`@plural` leaves. Bare plural nouns; the `…Record` suffix was dropped once the name-helper generics moved to `LocalesNamespace<C>` / `AnyLocalesNamespace<C>` and freed `Namespaces` / `Locales`. |
 | File names               | `kebab-case.ts`                        | `use-translation.ts`, `has-own-property.ts`                            |
 
 ## File Organization

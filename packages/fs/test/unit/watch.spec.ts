@@ -36,7 +36,7 @@ describe('FSStore.watch (#904)', () => {
     it('invalidate() drops the cache so next get() re-reads disk', async () => {
         const store = new FSStore({ directory: tmpDir });
 
-        expect(await store.get({ locale: 'en', group: 'app', key: 'hi' }))
+        expect(await store.get({ locale: 'en', namespace: 'app', key: 'hi' }))
             .toEqual('Hello');
 
         // Mutate the file directly (simulating an editor save).
@@ -46,27 +46,27 @@ describe('FSStore.watch (#904)', () => {
         );
 
         // Without invalidate, cache still serves the old value.
-        expect(await store.get({ locale: 'en', group: 'app', key: 'hi' }))
+        expect(await store.get({ locale: 'en', namespace: 'app', key: 'hi' }))
             .toEqual('Hello');
 
         store.invalidate('en', 'app');
 
-        expect(await store.get({ locale: 'en', group: 'app', key: 'hi' }))
+        expect(await store.get({ locale: 'en', namespace: 'app', key: 'hi' }))
             .toEqual('Hallo');
     });
 
     it('watch: true emits invalidate when a watched file changes', async () => {
         const store = new FSStore({ directory: tmpDir, watch: true });
         // Pre-load so there's something to invalidate.
-        await store.get({ locale: 'en', group: 'app', key: 'hi' });
+        await store.get({ locale: 'en', namespace: 'app', key: 'hi' });
 
         // Allow chokidar to attach (it's async; `ready` event isn't surfaced
         // by the store but a short timeout reliably covers attachment time).
         await new Promise((r) => setTimeout(r, 100));
 
         const events: Array<[string | undefined, string | undefined]> = [];
-        store.on('invalidate', (locale, group) => {
-            events.push([locale, group]);
+        store.on('invalidate', (locale, namespace) => {
+            events.push([locale, namespace]);
         });
 
         await writeFile(
@@ -84,7 +84,7 @@ describe('FSStore.watch (#904)', () => {
         expect(events).toContainEqual(['en', 'app']);
 
         // The next get() reflects the new content (cache was dropped).
-        expect(await store.get({ locale: 'en', group: 'app', key: 'hi' }))
+        expect(await store.get({ locale: 'en', namespace: 'app', key: 'hi' }))
             .toEqual('Hallo (updated)');
 
         await store.close();

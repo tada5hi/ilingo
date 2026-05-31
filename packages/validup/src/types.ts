@@ -8,8 +8,8 @@
 import type { IssueItem } from 'validup';
 
 /**
- * Type-level shape of the `'validup'` group inside an `Ilingo<Catalog>`.
- * Consumers compose this into their own catalog so `ilingo.get({ group:
+ * Type-level shape of the `'validup'` namespace inside an `Ilingo<Catalog>`.
+ * Consumers compose this into their own catalog so `ilingo.get({ namespace:
  * 'validup', key: ... })` becomes type-checked end-to-end:
  *
  * ```ts
@@ -31,7 +31,7 @@ import type { IssueItem } from 'validup';
  * translation entry.
  *
  * Runtime shape comes from `./translations/{en,de,fr,es}.ts` — keep
- * the two in sync. The group name (`'validup'`) is the `GROUP`
+ * the two in sync. The namespace name (`'validup'`) is the `NAMESPACE`
  * constant in `./constants.ts`.
  */
 export interface ValidupCatalogEntries {

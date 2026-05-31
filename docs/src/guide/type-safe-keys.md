@@ -1,6 +1,6 @@
 # Type-Safe Keys
 
-`Ilingo` is generic in the catalog shape. Pass a typed catalog and the compiler refuses typos, unknown groups, and plural-key calls that forget `count`.
+`Ilingo` is generic in the catalog shape. Pass a typed catalog and the compiler refuses typos, unknown namespaces, and plural-key calls that forget `count`.
 
 ## Setup
 
@@ -33,26 +33,26 @@ const ilingo = new Ilingo<typeof catalog>({
 ## Compile-time checks
 
 ```typescript
-await ilingo.get({ group: 'app', key: 'greeting' });           // OK
-await ilingo.get({ group: 'app', key: 'nested.deep.leaf' });   // OK — dotted paths inferred
-await ilingo.get({ group: 'app', key: 'unknown' });            // ❌ type error
-await ilingo.get({ group: 'unknown', key: 'greeting' });       // ❌ type error
-await ilingo.get({ group: 'cart',  key: 'items' });            // ❌ type error — count is required
-await ilingo.get({ group: 'cart',  key: 'items', count: 1 });  // OK
+await ilingo.get({ namespace: 'app', key: 'greeting' });           // OK
+await ilingo.get({ namespace: 'app', key: 'nested.deep.leaf' });   // OK — dotted paths inferred
+await ilingo.get({ namespace: 'app', key: 'unknown' });            // ❌ type error
+await ilingo.get({ namespace: 'unknown', key: 'greeting' });       // ❌ type error
+await ilingo.get({ namespace: 'cart',  key: 'items' });            // ❌ type error — count is required
+await ilingo.get({ namespace: 'cart',  key: 'items', count: 1 });  // OK
 ```
 
 ## How it works
 
 `defineCatalog<const T>(c)` is a runtime no-op identity function. The const generic captures the catalog literal without widening its types — saves you from sprinkling `as const`. Under the hood, the type system computes:
 
-- `Groups<C>` — union of top-level group names from any locale.
-- `Key<C, G>` — union of dotted leaf paths within group `G`.
+- `Namespaces<C>` — union of top-level namespace names from any locale.
+- `Key<C, G>` — union of dotted leaf paths within namespace `G`.
 - `IsPluralKey<C, G, K>` — `true` if the leaf at `(G, K)` is a plural object. Makes `count` required at the type level.
 - `GetParams<C, G, K>` — the shape of `data` required by `{{var}}` placeholders in the leaf.
 
 ## Opt out
 
-`new Ilingo()` (no generic) preserves the loose typing — `group: string`, `key: string`. The generic is purely opt-in. You can also pass a partial catalog type and rely on `string` for unmodeled groups.
+`new Ilingo()` (no generic) preserves the loose typing — `namespace: string`, `key: string`. The generic is purely opt-in. You can also pass a partial catalog type and rely on `string` for unmodeled namespaces.
 
 ## Diverging locales
 

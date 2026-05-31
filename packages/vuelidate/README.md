@@ -31,7 +31,7 @@ install(app);
 app.mount('#app');
 ```
 
-`install(app)` registers the built-in EN / DE / FR / ES validator-message catalog (the `vuelidate` group) on the app's `Ilingo` instance, via the **eager** store. If you manage the instance yourself, register a catalog store directly — `Ilingo.registerStore` dedupes by the store's `STORE_ID` (`Symbol.for('@ilingo/vuelidate')`), so it's idempotent:
+`install(app)` registers the built-in EN / DE / FR / ES validator-message catalog (the `vuelidate` namespace) on the app's `Ilingo` instance, via the **eager** store. If you manage the instance yourself, register a catalog store directly — `Ilingo.registerStore` dedupes by the store's `STORE_ID` (`Symbol.for('@ilingo/vuelidate')`), so it's idempotent:
 
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -49,7 +49,7 @@ import { createLoaderStore } from '@ilingo/vuelidate/store/loader';
 ilingo.registerStore(createLoaderStore());
 ```
 
-The `vuelidate` group is a shared key-space — register your own store **first** to override individual validator messages while this catalog supplies the defaults.
+The `vuelidate` namespace is a shared key-space — register your own store **first** to override individual validator messages while this catalog supplies the defaults.
 
 ```vue
 

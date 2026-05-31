@@ -56,7 +56,7 @@ const catalog = defineCatalog({
 
 Why: the structural form collided with sibling keys named after CLDR categories (e.g. an enum dropdown with an "other" option). The explicit marker eliminates the ambiguity. See [Catalog Design](../guide/catalog-design#authoring-plurals-json-vs-tsjs) for the authoring story.
 
-A bare `{ one, other }` object still type-checks as a regular nested namespace; it just no longer triggers plural selection at lookup. Typed catalogs (`Ilingo<typeof catalog>`) catch the gotcha at compile time — `ilingo.get({ group: 'cart', key: 'items' })` becomes a type error because `items` is no longer a leaf.
+A bare `{ one, other }` object still type-checks as a regular nested namespace; it just no longer triggers plural selection at lookup. Typed catalogs (`Ilingo<typeof catalog>`) catch the gotcha at compile time — `ilingo.get({ namespace: 'cart', key: 'items' })` becomes a type error because `items` is no longer a leaf.
 
 ### Plural type names: `PluralLeaf` is now the wrapper
 
@@ -137,7 +137,7 @@ Also new: `Ilingo` now implements an exported `IIlingo` interface — accept `II
 
 ```typescript
 await store.set({
-    locale: 'en', group: 'cart', key: 'items',
+    locale: 'en', namespace: 'cart', key: 'items',
     value: { one: '1 item', other: '{{count}} items' },
 });
 ```
@@ -146,7 +146,7 @@ await store.set({
 
 ```typescript
 await store.set({
-    locale: 'en', group: 'cart', key: 'items',
+    locale: 'en', namespace: 'cart', key: 'items',
     value: { '@plural': { one: '1 item', other: '{{count}} items' } },
 });
 ```

@@ -9,7 +9,7 @@ import { describe, it, expect } from "vitest";
 import {Ilingo, MemoryStore} from "../../src";
 
 describe('src/module.ts', () => {
-    it('should get/set directory + locale + groups', async () => {
+    it('should get/set directory + locale + namespaces', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
                 data: {
@@ -27,8 +27,8 @@ describe('src/module.ts', () => {
             })
         });
 
-        expect(await ilingo.get({group: 'foo', key: 'line', locale: 'ru'})).toEqual('bar-baz');
-        expect(await ilingo.get({group: 'foo', key: 'line'})).toEqual('baz-boz')
+        expect(await ilingo.get({namespace: 'foo', key: 'line', locale: 'ru'})).toEqual('bar-baz');
+        expect(await ilingo.get({namespace: 'foo', key: 'line'})).toEqual('baz-boz')
 
         ilingo.setLocale('en');
         expect(ilingo.getLocale()).toEqual('en');
@@ -72,17 +72,17 @@ describe('src/module.ts', () => {
             store: new MemoryStore({
                 data: {
                     en: {
-                        group: {
+                        namespace: {
                             foo: 'My name is {{name}}'
                         }
                     },
                     de: {
-                        group: {
+                        namespace: {
                             foo: 'Mein Name ist {{name}}'
                         }
                     },
                     fr: {
-                        group: {
+                        namespace: {
                             foo: 'Mon nom est {{name}}'
                         }
                     }
@@ -90,13 +90,13 @@ describe('src/module.ts', () => {
             })
         });
 
-        expect(await language.get({group: 'group', key: 'foo'})).toEqual('My name is {{name}}');
-        expect(await language.get({group: 'group', key: 'foo', locale: 'de'})).toEqual('Mein Name ist {{name}}');
-        expect(await language.get({group: 'group', key: 'foo', locale: 'fr'})).toEqual('Mon nom est {{name}}');
+        expect(await language.get({namespace: 'namespace', key: 'foo'})).toEqual('My name is {{name}}');
+        expect(await language.get({namespace: 'namespace', key: 'foo', locale: 'de'})).toEqual('Mein Name ist {{name}}');
+        expect(await language.get({namespace: 'namespace', key: 'foo', locale: 'fr'})).toEqual('Mon nom est {{name}}');
 
-        expect(await language.get({group: 'group', key: 'foo', data: {name: 'Peter'}})).toEqual('My name is Peter');
-        expect(await language.get({group: 'group', key: 'foo', locale: 'de', data: {name: 'Peter'}})).toEqual('Mein Name ist Peter');
-        expect(await language.get({group: 'group', key: 'foo', locale: 'fr', data: {name: 'Peter'}})).toEqual('Mon nom est Peter');
+        expect(await language.get({namespace: 'namespace', key: 'foo', data: {name: 'Peter'}})).toEqual('My name is Peter');
+        expect(await language.get({namespace: 'namespace', key: 'foo', locale: 'de', data: {name: 'Peter'}})).toEqual('Mein Name ist Peter');
+        expect(await language.get({namespace: 'namespace', key: 'foo', locale: 'fr', data: {name: 'Peter'}})).toEqual('Mon nom est Peter');
     });
 
     it('should format input string', async () => {
@@ -132,7 +132,7 @@ describe('src/module.ts', () => {
 
         instanceA.merge(instanceB);
 
-        expect(await instanceA.get({group: 'app', key: 'foo'})).toEqual('bar');
-        expect(await instanceA.get({group: 'app', key: 'bar'})).toEqual('boz');
+        expect(await instanceA.get({namespace: 'app', key: 'foo'})).toEqual('bar');
+        expect(await instanceA.get({namespace: 'app', key: 'bar'})).toEqual('boz');
     })
 })

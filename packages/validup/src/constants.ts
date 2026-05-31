@@ -6,11 +6,11 @@
  */
 
 /**
- * Catalog group name used by the default store. All keys under this
- * group are validup `IssueCode` runtime values (e.g. `value_invalid`,
+ * Catalog namespace name used by the default store. All keys under this
+ * namespace are validup `IssueCode` runtime values (e.g. `value_invalid`,
  * `one_of_failed`).
  */
-export const GROUP = 'validup';
+export const NAMESPACE = 'validup';
 
 /**
  * Stable identity under which the shipped catalog stores

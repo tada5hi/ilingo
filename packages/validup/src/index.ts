@@ -9,7 +9,7 @@
  * Public surface of `@ilingo/validup` (framework-agnostic **core**).
  *
  * Bridges `validup` `Issue`s to `ilingo` lookups. This entry is
- * intentionally **data-free** — it carries the group/identity constants,
+ * intentionally **data-free** — it carries the namespace/identity constants,
  * the `translateIssue` / `translateIssues` helpers, and the catalog types,
  * but imports **no** translation modules. So pulling in `@ilingo/validup`
  * (e.g. for `translateIssue` on a lazy-loaded app) never bundles the

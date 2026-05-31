@@ -5,17 +5,17 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Leaf, LocalesRecord, PluralLeaf } from '../types';
+import type { Leaf, Locales, PluralLeaf } from '../types';
 
 export type StoreGetContext = {
     locale: string,
-    group: string,
+    namespace: string,
     key: string,
 };
 
 export type StoreSetContext = StoreGetContext & {
     /**
-     * Value to persist at the `(locale, group, key)` position. Plain
+     * Value to persist at the `(locale, namespace, key)` position. Plain
      * translations are strings; plural translations must use the
      * `{ "@plural": { ... } }` wrapper so they round-trip with `get()`
      * (which only recognises the wrapped form when reading back).
@@ -38,9 +38,9 @@ export type StoreSetContext = StoreGetContext & {
  * - `has(ctx)` — `get(ctx)` already returns `undefined` for misses; a
  *   separate `has` doubles the round-trip count for network-backed stores
  *   without buying meaningful API ergonomics.
- * - `delete(ctx)` / `getKeys(group)` — no in-tree consumer; speculative.
- * - `getAll(locale, group)` — bulk loading is the job of `LoaderStore`,
- *   which pre-warms a whole group on first access.
+ * - `delete(ctx)` / `getKeys(namespace)` — no in-tree consumer; speculative.
+ * - `getAll(locale, namespace)` — bulk loading is the job of `LoaderStore`,
+ *   which pre-warms a whole namespace on first access.
  *
  * Re-evaluate each only when a concrete consumer surfaces.
  */
@@ -48,7 +48,7 @@ export interface IStore {
     readonly id: string | symbol;
 
     /**
-     * Resolve a `(locale, group, key)` to a leaf value.
+     * Resolve a `(locale, namespace, key)` to a leaf value.
      *
      * The returned value is `Leaf` — `string | PluralForms` — which is
      * the *post-unwrap* shape: stores that hold the catalog-side
@@ -60,7 +60,7 @@ export interface IStore {
     get(context: StoreGetContext): Promise<Leaf | undefined>;
 
     /**
-     * Persist a `(locale, group, key)` → leaf mapping. Implementations
+     * Persist a `(locale, namespace, key)` → leaf mapping. Implementations
      * that are read-only may throw; callers writing through `Ilingo` do
      * not invoke `set` themselves.
      */
@@ -76,16 +76,16 @@ export interface IStore {
 
 export type MemoryStoreOptions = {
     id?: string | symbol,
-    data: LocalesRecord,
+    data: Locales,
 };
 
 /**
  * Listener for a store's `invalidate` event. Receives the scope of the
  * invalidation: a `locale` (drop entries for that locale), a
- * `(locale, group)` tuple (drop only that group), or `undefined` for both
+ * `(locale, namespace)` tuple (drop only that namespace), or `undefined` for both
  * (drop everything).
  */
-export type InvalidateListener = (locale?: string, group?: string) => void;
+export type InvalidateListener = (locale?: string, namespace?: string) => void;
 
 /**
  * Stores that cache lookups and can drop those caches expose this surface
@@ -100,13 +100,13 @@ export interface InvalidatingStore extends IStore {
      * Drop cached entries.
      *
      * - `invalidate()` — drop everything.
-     * - `invalidate(locale)` — drop all groups for `locale`.
-     * - `invalidate(locale, group)` — drop just one group.
+     * - `invalidate(locale)` — drop all namespaces for `locale`.
+     * - `invalidate(locale, namespace)` — drop just one namespace.
      *
      * After invalidation the next `get()` for the affected key re-runs the
      * underlying load (a fresh file read, a re-import, etc.).
      */
-    invalidate(locale?: string, group?: string): void;
+    invalidate(locale?: string, namespace?: string): void;
 
     /**
      * Subscribe to invalidation events. Listeners are fired *after* the

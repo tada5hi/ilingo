@@ -23,7 +23,7 @@ describe('Store', () => {
             ['es', 'El valor no es válido'],
         ] as const) {
             const message = await ilingo.get({
-                group: 'validup',
+                namespace: 'validup',
                 key: IssueCode.VALUE_INVALID,
                 locale,
             });

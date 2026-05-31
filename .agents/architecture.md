@@ -31,7 +31,7 @@ Library adapters register their catalog under a `Symbol.for('@scope/pkg')` globa
 
 `merge(otherIlingo)` folds another instance's stores in, deduping by symbol key: a foreign key already present is skipped (existing store wins), foreign keys not present are appended in order. `Symbol.for`-keyed library catalogs never stack across a merge; anonymously-keyed stores (minted `Symbol()`) are always distinct and always carried over. `clone()` copies the parent's `(symbol, store)` entries preserving keys, so a later `merge` between a clone and its parent dedupes correctly.
 
-**`group` is a shared key-space, not single-owner.** `MemoryStore.get()` returns `undefined` per *missing key*, so the orchestrator falls through store-by-store *within the same group*. An app therefore co-owns a library's group (e.g. `validup`): registering its own store **first** lets it add custom keys and override individual ones, while the library catalog (appended) supplies the built-in defaults for everything the app store misses. This is the canonical composition for "backend with its own translations + a validation library that ships its own."
+**`namespace` is a shared key-space, not single-owner.** `MemoryStore.get()` returns `undefined` per *missing key*, so the orchestrator falls through store-by-store *within the same namespace*. An app therefore co-owns a library's namespace (e.g. `validup`): registering its own store **first** lets it add custom keys and override individual ones, while the library catalog (appended) supplies the built-in defaults for everything the app store misses. This is the canonical composition for "backend with its own translations + a validation library that ships its own."
 
 ### 3a. `IIlingo` contract
 
@@ -39,7 +39,7 @@ Library adapters register their catalog under a `Symbol.for('@scope/pkg')` globa
 
 ### 4. Group/key/count model
 
-Translations are addressed by `(locale, group, key)` plus an optional `count` for pluralization. The `group` is a logical namespace — typically a filename when using `FSStore` (`packages/fs/src/module.ts` resolves `<directory>/<locale>/<group>.{js,mjs,cjs,ts,mts,json,conf}`). The `key` is a `pathtrace`-style dotted path within that group's nested object.
+Translations are addressed by `(locale, namespace, key)` plus an optional `count` for pluralization. The `namespace` is a logical namespace — typically a filename when using `FSStore` (`packages/fs/src/module.ts` resolves `<directory>/<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}`). The `key` is a `pathtrace`-style dotted path within that namespace's nested object.
 
 ### 5. Plural leaves: `@plural` wrapper is the only recognised form
 
@@ -55,20 +55,20 @@ Stores that cache lookups implement `InvalidatingStore extends IStore`:
 
 ```typescript
 export interface InvalidatingStore extends IStore {
-    invalidate(locale?: string, group?: string): void;
-    on(event: 'invalidate', listener: (locale?, group?) => void): () => void;
+    invalidate(locale?: string, namespace?: string): void;
+    on(event: 'invalidate', listener: (locale?, namespace?) => void): () => void;
 }
 ```
 
-`invalidate(...)` drops scoped cache entries (`()` = everything, `(locale)` = all groups, `(locale, group)` = one). The `on('invalidate')` event fires after the cache is dropped — subscribers see the post-invalidate state.
+`invalidate(...)` drops scoped cache entries (`()` = everything, `(locale)` = all namespaces, `(locale, namespace)` = one). The `on('invalidate')` event fires after the cache is dropped — subscribers see the post-invalidate state.
 
 Both `LoaderStore` (core) and `FSStore` (`@ilingo/fs`) implement it. Detect at runtime via `isInvalidatingStore(store)` — the type guard checks for both `invalidate` and `on` methods.
 
-`@ilingo/vue`'s `useTranslation` walks `instance.stores` at composable-setup time, subscribes to every `InvalidatingStore`, and bumps an internal trigger ref on `invalidate` events that match the current `(locale, group)`. The `computedAsync` reads the ref in its dep set, so the re-fetch happens automatically. Unsubscribes are wired to `onScopeDispose`.
+`@ilingo/vue`'s `useTranslation` walks `instance.stores` at composable-setup time, subscribes to every `InvalidatingStore`, and bumps an internal trigger ref on `invalidate` events that match the current `(locale, namespace)`. The `computedAsync` reads the ref in its dep set, so the re-fetch happens automatically. Unsubscribes are wired to `onScopeDispose`.
 
 ### `LoaderStore`
 
-`packages/ilingo/src/store/loader.ts`. Lazy-loaded store backed by a user-supplied `loader(locale, group) => Promise<LinesRecord | undefined>`. Caches per `(locale, group)` so the loader is called at most once per pair until `invalidate()` is called. De-duplicates concurrent `get()`s for the same pair via an in-flight map.
+`packages/ilingo/src/store/loader.ts`. Lazy-loaded store backed by a user-supplied `loader(locale, namespace) => Promise<Lines | undefined>`. Caches per `(locale, namespace)` so the loader is called at most once per pair until `invalidate()` is called. De-duplicates concurrent `get()`s for the same pair via an in-flight map.
 
 Misses (loader returning `undefined`) are cached too — the loader isn't re-called for known-missing pairs. Designed for browser code-splitting: typical loader is `(l, g) => import(\`./locales/${l}/${g}.json\`).then(m => m.default)`.
 
@@ -76,7 +76,7 @@ Misses (loader returning `undefined`) are cached too — the loader isn't re-cal
 
 ### `FSStore.watch`
 
-`packages/fs/src/module.ts`. Optional `watch: boolean` config field. When true, lazy-imports `chokidar` (declared as an *optional* peer dependency in `@ilingo/fs/package.json`) and starts a watcher over the configured directories. File changes under `<dir>/<locale>/<group>.<ext>` are mapped back to `(locale, group)` via `parseLocaleGroup`, which strips the directory prefix and validates the locale segment against `isBCP47LanguageCode`.
+`packages/fs/src/module.ts`. Optional `watch: boolean` config field. When true, lazy-imports `chokidar` (declared as an *optional* peer dependency in `@ilingo/fs/package.json`) and starts a watcher over the configured directories. File changes under `<dir>/<locale>/<namespace>.<ext>` are mapped back to `(locale, namespace)` via `parseLocaleNamespace`, which strips the directory prefix and validates the locale segment against `isBCP47LanguageCode`.
 
 `chokidar` is an optional peer because most production deployments don't want a file watcher running — and the dep weight is ~1MB. If `watch: true` is set without chokidar installed, the store logs a one-line error and continues without watching (the rest of the store works normally).
 
@@ -105,19 +105,19 @@ The locale handed to a formatter is the **resolved** locale (the one that actual
 
 ### 7. Type-safe keys via a generic `Ilingo<Catalog>`
 
-`Ilingo` is generic in the catalog: `class Ilingo<C extends LocalesRecord = LocalesRecord>`. When `C` is the default `LocalesRecord` (no generic supplied) the API stays as loose as before — `group: string`, `key: string`. When `C` is a concrete catalog, `Groups<C>` / `Key<C, G>` infer the legal pairs and `IsPluralKey<C, G, K>` makes `count` *required* at the type level for plural leaves.
+`Ilingo` is generic in the catalog: `class Ilingo<C extends Locales = Locales>`. When `C` is the default `Locales` (no generic supplied) the API stays as loose as before — `namespace: string`, `key: string`. When `C` is a concrete catalog, `Namespaces<C>` / `Key<C, G>` infer the legal pairs and `IsPluralKey<C, G, K>` makes `count` *required* at the type level for plural leaves.
 
 Helpers in `packages/ilingo/src/types.ts`:
 
-- `AnyGroups<C>` — pick any locale's group map (catalogs SHOULD share a shape across locales).
-- `Groups<C>` — union of top-level group names.
+- `AnyNamespaces<C>` — pick any locale's namespace map (catalogs SHOULD share a shape across locales).
+- `Namespaces<C>` — union of top-level namespace names.
 - `LeafAt<T, K>` — walk a dotted key path through a typed object; `never` on miss.
-- `DottedPaths<T>` — enumerate all dotted leaf paths; short-circuits to `string` for open-shape inputs (so `LocalesRecord` reduces to a `string`-typed key, not `never`).
+- `DottedPaths<T>` — enumerate all dotted leaf paths; short-circuits to `string` for open-shape inputs (so `Locales` reduces to a `string`-typed key, not `never`).
 - `Key<C, G>`, `IsPluralKey<C, G, K>`, `GetParams<C, G, K>`.
 
 `defineCatalog<const T>(c)` (`packages/ilingo/src/catalog.ts`) is a runtime identity function with a `const` generic that captures the catalog literal without losing inference — saves callers from sprinkling `as const`.
 
-`defineLocale<const T extends GroupsRecord>(locale)` is the per-locale counterpart, used when each locale lives in its own file (`locales/en.ts`). It preserves literal types through an `export default` and validates the shape against `GroupsRecord` so a stray top-level string is caught at compile time (where `as const` would let it through). Combines with `defineCatalog` — the per-locale const generics flow through `defineCatalog`'s own const generic, so the merged `Ilingo<typeof catalog>` still infers full key paths.
+`defineLocale<const T extends Namespaces>(locale)` is the per-locale counterpart, used when each locale lives in its own file (`locales/en.ts`). It preserves literal types through an `export default` and validates the shape against `Namespaces` so a stray top-level string is caught at compile time (where `as const` would let it through). Combines with `defineCatalog` — the per-locale const generics flow through `defineCatalog`'s own const generic, so the merged `Ilingo<typeof catalog>` still infers full key paths.
 
 `definePlural<const T>(plural)` is the TS/JS-friendly companion to the explicit `@plural` JSON marker. Returns `{ '@plural': leaf }` — same runtime shape as the JSON literal — with CLDR-category autocomplete and a compile error on missing-`other` / non-CLDR keys. Both forms produce identical runtime data: JSON files keep using the `"@plural"` literal (they can't call functions), TS/JS files use `definePlural()`.
 
@@ -132,7 +132,7 @@ Each package's runtime dependencies are minimal — `pathtrace` and `smob` in co
 Port — `packages/ilingo/src/store/types.ts`:
 
 ```typescript
-export type StoreGetContext = { locale: string, group: string, key: string };
+export type StoreGetContext = { locale: string, namespace: string, key: string };
 export type StoreSetContext = StoreGetContext & { value: Leaf };
 
 export interface IStore {
@@ -146,9 +146,9 @@ Adapter — `packages/ilingo/src/store/memory.ts` (unwraps the `@plural` marker;
 
 ```typescript
 async get(ctx: StoreGetContext): Promise<Leaf | undefined> {
-    const group = this.data[ctx.locale]?.[ctx.group];
-    if (!group) return undefined;
-    const out = getPathValue(group, ctx.key);
+    const namespace = this.data[ctx.locale]?.[ctx.namespace];
+    if (!namespace) return undefined;
+    const out = getPathValue(namespace, ctx.key);
     if (typeof out === 'string') return out;
     if (isPluralLeaf(out)) return out['@plural'];
     return undefined;
@@ -196,7 +196,7 @@ protected async lookup(chain, ctx) {
 
 `Config.onMissingKey?: (ctx) => string | undefined`. Invoked when the chain × stores walk exhausts without a hit. Receives a `MissingKeyContext` carrying the *resolved* `locale` (never undefined) plus `resolvedLocale` = the chain terminator. Returning a string makes that string the result of `get()`; returning `undefined` keeps the result `undefined`.
 
-If `onMissingKey` is not configured, the built-in default warns once per `(requestedLocale, group, key)` per instance, silenced when `process.env.NODE_ENV === 'production'`. The warn-once set is per-instance so multiple `Ilingo` instances don't dedupe each other's warnings.
+If `onMissingKey` is not configured, the built-in default warns once per `(requestedLocale, namespace, key)` per instance, silenced when `process.env.NODE_ENV === 'production'`. The warn-once set is per-instance so multiple `Ilingo` instances don't dedupe each other's warnings.
 
 ### Vue Plugin Pattern
 
@@ -228,7 +228,7 @@ Creates a fresh `Ilingo` instance with a `MemoryStore` for the scoped messages r
 
 ```
 Input:
-  └── ctx: { group, key, locale?, data?, count? }    (caller — code, <ITranslate>, useTranslation)
+  └── ctx: { namespace, key, locale?, data?, count? }    (caller — code, <ITranslate>, useTranslation)
 
 Processing:
   1. requestedLocale = ctx.locale ?? instance default
@@ -253,10 +253,10 @@ Output:
 ## Error Handling
 
 - Misses return `undefined`. They are never errors.
-- `FSStore.loadGroup` short-circuits the "already loaded" case (`isLoaded` guard).
+- `FSStore.loadNamespace` short-circuits the "already loaded" case (`isLoaded` guard).
 - File-loading errors from `locter`/`load` propagate. There is no project-wide error wrapper.
 - `template()` does **not** error on a missing data key — the `{{var}}` stays in the output.
-- Vue's `useTranslation` falls back to `"${group}.${key}"` when `Ilingo.get` returns `undefined` (the orchestrator's `onMissingKey` runs first and may substitute).
+- Vue's `useTranslation` falls back to `"${namespace}.${key}"` when `Ilingo.get` returns `undefined` (the orchestrator's `onMissingKey` runs first and may substitute).
 
 ## File Structure (architectural layers)
 
@@ -286,7 +286,7 @@ There are no environment variables. All configuration is passed via constructor 
 | Object                    | Shape                                                                                                                                |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | `new Ilingo(input)`       | `{ store?: IStore, locale?: string, fallback?: Fallback, onMissingKey?: MissingKeyHandler }`                                          |
-| `new MemoryStore(opts)`   | `{ data: LocalesRecord }`                                                                                                            |
+| `new MemoryStore(opts)`   | `{ data: Locales }`                                                                                                            |
 | `new FSStore(input)`      | `{ directory?: string \| string[], writeDirectory?: string }`                                                                       |
 | Vue `install(app, input)` | `Options { store, locale } \| Ilingo \| undefined`                                                                                  |
 

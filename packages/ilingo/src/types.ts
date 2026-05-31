@@ -52,11 +52,11 @@ export type ValueOrNestedValue<T> = {
  * leaf position the value is `string | PluralLeaf` (a plain translation
  * or the `@plural` wrapper); nested namespaces nest the same shape.
  */
-export type LinesRecord = ValueOrNestedValue<string | PluralLeaf>;
-// default: Record<group, Lines>
-export type GroupsRecord = Record<string, LinesRecord>;
-// default: Record<locale, Groups>
-export type LocalesRecord = Record<string, GroupsRecord>;
+export type Lines = ValueOrNestedValue<string | PluralLeaf>;
+// default: Record<namespace, Lines>
+export type Namespaces = Record<string, Lines>;
+// default: Record<locale, Namespaces>
+export type Locales = Record<string, Namespaces>;
 
 export type DotKey = `${string}.${string}`;
 
@@ -65,7 +65,7 @@ export type Data = Record<string, string | number>;
 export type GetContext = {
     data?: Data,
     locale?: string,
-    group: string,
+    namespace: string,
     key: string,
     count?: number,
 };
@@ -73,24 +73,24 @@ export type GetContext = {
 // ─── Generic catalog navigation ──────────────────────────────────────────────
 //
 // When `Ilingo` is parameterised with a concrete catalog shape, these helpers
-// expose the legal `(group, key)` pairs and detect plural-shaped leaves so the
+// expose the legal `(namespace, key)` pairs and detect plural-shaped leaves so the
 // compiler can refuse typos and require `count` where the leaf demands it.
 //
-// All of these collapse to `string` (group / key) and `false` (plural) when
-// `C` is the default `LocalesRecord`, so existing callers keep their unsafe
+// All of these collapse to `string` (namespace / key) and `false` (plural) when
+// `C` is the default `Locales`, so existing callers keep their unsafe
 // but-loose typing without surprise.
 
 /**
- * Pick any locale's group map from the catalog. All locales SHOULD share the
+ * Pick any locale's namespace map from the catalog. All locales SHOULD share the
  * same shape; if they diverge, this is the union of all per-locale shapes,
  * which is the safest default for inference.
  */
-export type AnyGroups<C extends LocalesRecord> = C[keyof C];
+export type AnyLocalesNamespace<C extends Locales> = C[keyof C];
 
 /**
- * Top-level group names declared by the catalog.
+ * Top-level namespace names declared by the catalog.
  */
-export type Groups<C extends LocalesRecord> = keyof AnyGroups<C> & string;
+export type LocalesNamespace<C extends Locales> = keyof AnyLocalesNamespace<C> & string;
 
 /**
  * Walk a dotted path through a typed object and return the leaf value.
@@ -111,7 +111,7 @@ export type LeafAt<T, K extends string> =    K extends `${infer Head}.${infer Ta
  * inner `one` / `other`.
  *
  * Open shapes (those with a `string` index signature like the default
- * `LinesRecord`) short-circuit to plain `string` — there are no concrete
+ * `Lines`) short-circuit to plain `string` — there are no concrete
  * keys to enumerate, so any string is acceptable.
  */
 export type DottedPaths<T> = string extends keyof T ? string :
@@ -132,9 +132,9 @@ export type DottedPaths<T> = string extends keyof T ? string :
                 never;
 
 /**
- * Legal dotted keys within a specific group of the catalog.
+ * Legal dotted keys within a specific namespace of the catalog.
  */
-export type Key<C extends LocalesRecord, G extends Groups<C>> =    AnyGroups<C>[G] extends infer T ?
+export type Key<C extends Locales, G extends LocalesNamespace<C>> =    AnyLocalesNamespace<C>[G] extends infer T ?
     DottedPaths<T> extends infer P ?
         P extends string ? P : string :
         string :
@@ -155,31 +155,31 @@ export type Key<C extends LocalesRecord, G extends Groups<C>> =    AnyGroups<C>[
  * The `[X] extends [never]` wrapping disables the distributive-conditional
  * behaviour so `never` (no plural anywhere) is detected directly.
  */
-// Open shapes (default LocalesRecord) have a `string` index signature at
-// the group level; their leaf type union always includes `PluralLeaf`,
+// Open shapes (default Locales) have a `string` index signature at
+// the namespace level; their leaf type union always includes `PluralLeaf`,
 // which would make every call site require `count`. Short-circuit to
 // false there — only concrete catalogs participate in plural inference.
 export type IsPluralKey<
-    C extends LocalesRecord,
-    G extends Groups<C>,
+    C extends Locales,
+    G extends LocalesNamespace<C>,
     K extends string,
-> = string extends keyof AnyGroups<C>[G] ?
+> = string extends keyof AnyLocalesNamespace<C>[G] ?
     false :
-    [Extract<LeafAt<AnyGroups<C>[G], K>, PluralLeaf>] extends [never] ?
+    [Extract<LeafAt<AnyLocalesNamespace<C>[G], K>, PluralLeaf>] extends [never] ?
         false :
         true;
 
 /**
  * The full `ctx` argument to `Ilingo.get()` when parameterised with a
- * catalog. Defaults to today's loose `GetContext` when `C` is `LocalesRecord`.
+ * catalog. Defaults to today's loose `GetContext` when `C` is `Locales`.
  *
  * If the leaf at `(G, K)` is plural, `count: number` is required; otherwise
  * `count` is optional.
  */
-export type GetParams<C extends LocalesRecord, G extends Groups<C>, K extends Key<C, G> & string> =    & {
+export type GetParams<C extends Locales, G extends LocalesNamespace<C>, K extends Key<C, G> & string> =    & {
     data?: Data,
     locale?: string,
-    group: G,
+    namespace: G,
     key: K,
 } &
     (IsPluralKey<C, G, K> extends true ?
@@ -219,7 +219,7 @@ export type Fallback = string | string[] | FallbackResolver | false;
  * implementations (test doubles, decorators) without depending on the
  * concrete class.
  */
-export interface IIlingo<C extends LocalesRecord = LocalesRecord> {
+export interface IIlingo<C extends Locales = Locales> {
     readonly stores: Map<symbol | string, IStore>;
     formatters: FormatterRegistry;
 
@@ -241,11 +241,11 @@ export interface IIlingo<C extends LocalesRecord = LocalesRecord> {
 
     getResolvedLocaleChain(ctx: Pick<GetContext, 'locale'>): string[];
 
-    getResolvedLocale<G extends Groups<C>, K extends Key<C, G> & string>(
+    getResolvedLocale<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
         ctx: GetParams<C, G, K>,
     ): Promise<string | undefined>;
 
-    get<G extends Groups<C>, K extends Key<C, G> & string>(
+    get<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
         ctx: GetParams<C, G, K>,
     ): Promise<string | undefined>;
 

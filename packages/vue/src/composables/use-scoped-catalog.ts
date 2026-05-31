@@ -6,7 +6,7 @@
  */
 
 import { computedAsync } from '@vueuse/core';
-import type { IIlingo, LocalesRecord } from 'ilingo';
+import type { IIlingo, Locales } from 'ilingo';
 import { MemoryStore } from 'ilingo';
 import type { Ref } from 'vue';
 import { unref } from 'vue';
@@ -49,14 +49,14 @@ export interface UseScopedCatalogResult {
  *     const { t } = useScopedCatalog({
  *         messages: { en: { modal: { greeting: 'Scoped hello' } } },
  *     });
- *     const greeting = t({ group: 'modal', key: 'greeting' });
+ *     const greeting = t({ namespace: 'modal', key: 'greeting' });
  *
  *     // Descendants — child components just call useTranslation:
  *     <ScopedRoot>
  *         <ChildThatCallsUseTranslation />
  *     </ScopedRoot>
  */
-export function useScopedCatalog(options: { messages: LocalesRecord }): UseScopedCatalogResult {
+export function useScopedCatalog(options: { messages: Locales }): UseScopedCatalogResult {
     const parent = injectIlingo();
     const locale = injectLocale();
 
@@ -77,13 +77,13 @@ export function useScopedCatalog(options: { messages: LocalesRecord }): UseScope
     provideIlingo(instance);
 
     function t(ctx: GetContextReactive): Ref<string> {
-        const defaultValue = `${ctx.group}.${ctx.key}`;
+        const defaultValue = `${ctx.namespace}.${ctx.key}`;
         return computedAsync(
             async () => {
                 const value = await instance.get({
                     locale: ctx.locale ?? locale.value,
                     data: ctx.data ? extractReactiveData(ctx.data) : undefined,
-                    group: ctx.group,
+                    namespace: ctx.namespace,
                     key: ctx.key,
                     count: unref(ctx.count),
                 });

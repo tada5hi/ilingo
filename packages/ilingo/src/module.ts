@@ -13,11 +13,11 @@ import type {
     Fallback,
     GetContext,
     GetParams,
-    Groups,
     IIlingo,
     Key,
     Leaf,
-    LocalesRecord,
+    Locales,
+    LocalesNamespace,
     MissingKeyHandler,
 } from './types';
 import type { Formatter } from './utils';
@@ -28,7 +28,7 @@ import {
     template,
 } from './utils';
 
-export class Ilingo<C extends LocalesRecord = LocalesRecord> implements IIlingo<C> {
+export class Ilingo<C extends Locales = Locales> implements IIlingo<C> {
     /**
      * Registered stores, keyed by a `symbol` identity. Insertion order is
      * preserved (it drives the serial intra-locale store walk — earlier
@@ -57,7 +57,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> implements IIlingo<
     public formatters: FormatterRegistry;
 
     /**
-     * Per-instance set of `(locale, group, key)` triples that have already
+     * Per-instance set of `(locale, namespace, key)` triples that have already
      * triggered a missing-key warning. Kept on the instance — not module
      * scope — so multiple `Ilingo` instances do not dedupe each other's
      * warnings.
@@ -125,7 +125,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> implements IIlingo<
      *     ilingo.registerFormatter('upper', (value, _opts, locale) =>
      *         String(value).toLocaleUpperCase(locale));
      *     await ilingo.get({
-     *         group: 'app', key: 'shout',
+     *         namespace: 'app', key: 'shout',
      *         data: { name: 'peter' },
      *     });
      *     // "{{name, upper}}" → "PETER"
@@ -243,9 +243,9 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> implements IIlingo<
 
     /**
      * Which locale in the chain actually yielded a value for the given
-     * `(group, key)`, or `undefined` if the key is missing in every locale.
+     * `(namespace, key)`, or `undefined` if the key is missing in every locale.
      */
-    async getResolvedLocale<G extends Groups<C>, K extends Key<C, G> & string>(
+    async getResolvedLocale<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
         ctx: GetParams<C, G, K>,
     ): Promise<string | undefined> {
         const internal = ctx as unknown as GetContext;
@@ -256,7 +256,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> implements IIlingo<
 
     // ----------------------------------------------------
 
-    async get<G extends Groups<C>, K extends Key<C, G> & string>(
+    async get<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
         ctx: GetParams<C, G, K>,
     ): Promise<string | undefined> {
         const internal = ctx as unknown as GetContext;
@@ -291,7 +291,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> implements IIlingo<
      */
     protected async lookup(
         chain: string[],
-        ctx: Pick<GetContext, 'group' | 'key'>,
+        ctx: Pick<GetContext, 'namespace' | 'key'>,
     ): Promise<{ locale: string, leaf: Leaf } | undefined> {
         if (this.stores.size === 0) {
             return undefined;
@@ -301,7 +301,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> implements IIlingo<
             for (const store of this.stores.values()) {
                 const candidate = await store.get({
                     locale,
-                    group: ctx.group,
+                    namespace: ctx.namespace,
                     key: ctx.key,
                 });
                 if (typeof candidate !== 'undefined') {
@@ -335,12 +335,12 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> implements IIlingo<
             return undefined;
         }
 
-        const id = `${requestedLocale}|${ctx.group}|${ctx.key}`;
+        const id = `${requestedLocale}|${ctx.namespace}|${ctx.key}`;
         if (!this.warnedKeys.has(id)) {
             this.warnedKeys.add(id);
             // eslint-disable-next-line no-console
             console.warn(
-                `[ilingo] missing translation for "${ctx.group}.${ctx.key}" ` +
+                `[ilingo] missing translation for "${ctx.namespace}.${ctx.key}" ` +
                 `(locale=${requestedLocale})`,
             );
         }

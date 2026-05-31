@@ -1,11 +1,11 @@
 # Stores
 
-A **store** is anything that can return a translation leaf for a given `(locale, group, key)`. The `IStore` port has three methods:
+A **store** is anything that can return a translation leaf for a given `(locale, namespace, key)`. The `IStore` port has three methods:
 
 ```typescript
 import type { Leaf } from 'ilingo';
 
-export type StoreGetContext = { locale: string, group: string, key: string };
+export type StoreGetContext = { locale: string, namespace: string, key: string };
 export type StoreSetContext = StoreGetContext & { value: Leaf };
 
 export interface IStore {
@@ -43,7 +43,7 @@ You can also `set()` at runtime — useful when translations come from an API:
 ```typescript
 await store.set({
     locale: 'es',
-    group: 'app',
+    namespace: 'app',
     key: 'hi',
     value: '¡Hola, {{name}}!',
 });
@@ -51,15 +51,15 @@ await store.set({
 
 ## LoaderStore
 
-For browser / SPA apps that code-split locales, `LoaderStore` lazy-loads translation data via a user-supplied function and caches the result per `(locale, group)`:
+For browser / SPA apps that code-split locales, `LoaderStore` lazy-loads translation data via a user-supplied function and caches the result per `(locale, namespace)`:
 
 ```typescript
 import { Ilingo, LoaderStore } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new LoaderStore({
-        loader: async (locale, group) => {
-            const m = await import(`./locales/${locale}/${group}.json`);
+        loader: async (locale, namespace) => {
+            const m = await import(`./locales/${locale}/${namespace}.json`);
             return m.default;
         },
         locales: ['en', 'de', 'fr'],
@@ -67,7 +67,7 @@ const ilingo = new Ilingo({
 });
 ```
 
-- Concurrent `get()`s for the same `(locale, group)` share one loader call.
+- Concurrent `get()`s for the same `(locale, namespace)` share one loader call.
 - Misses (loader returning `undefined`) are cached too — the loader isn't re-called for known-missing pairs.
 - Implements `InvalidatingStore` — see [Cache invalidation](#cache-invalidation).
 
@@ -77,8 +77,8 @@ Stores that cache lookups can implement `InvalidatingStore`:
 
 ```typescript
 export interface InvalidatingStore extends IStore {
-    invalidate(locale?: string, group?: string): void;
-    on(event: 'invalidate', listener: (locale?: string, group?: string) => void): () => void;
+    invalidate(locale?: string, namespace?: string): void;
+    on(event: 'invalidate', listener: (locale?: string, namespace?: string) => void): () => void;
 }
 ```
 
@@ -89,8 +89,8 @@ import { isInvalidatingStore } from 'ilingo';
 
 for (const store of ilingo.stores.values()) {
     if (isInvalidatingStore(store)) {
-        store.on('invalidate', (locale, group) => {
-            console.log(`reloaded ${locale ?? '*'}/${group ?? '*'}`);
+        store.on('invalidate', (locale, namespace) => {
+            console.log(`reloaded ${locale ?? '*'}/${namespace ?? '*'}`);
         });
     }
 }
@@ -109,7 +109,7 @@ const ilingo = new Ilingo({
 });
 
 // reads ./locales/en/app.json (or .ts / .mjs / .cjs / .conf) on first access
-await ilingo.get({ group: 'app', key: 'hi' });
+await ilingo.get({ namespace: 'app', key: 'hi' });
 ```
 
 ## Multiple stores
@@ -130,14 +130,14 @@ ilingo.register(new FSStore({ directory: './locales/overrides' }));
 - **Without `id`** — mints a fresh `Symbol()`, so the store is always added. Returns the minted symbol (keep it if you want to dedupe or replace later).
 - **With `id`** — idempotent. If a store is already registered under `id`, the call is a no-op and the existing store is kept. Library adapters pass a `Symbol.for('@scope/pkg')` so registering twice (or across a duplicate package copy) never stacks duplicates. Returns `id`.
 
-The constructor's `store` option is just `register(store)` under the hood (anonymous key). The serial walk is the reason "local first, remote fallback" compositions work as written: a network-backed store registered after a Memory store is only consulted when the Memory store has nothing for `(locale, group, key)` — the orchestrator does not pre-fan-out across stores. Locale-first composition still applies: a closer locale always beats a farther one regardless of which store would have answered.
+The constructor's `store` option is just `register(store)` under the hood (anonymous key). The serial walk is the reason "local first, remote fallback" compositions work as written: a network-backed store registered after a Memory store is only consulted when the Memory store has nothing for `(locale, namespace, key)` — the orchestrator does not pre-fan-out across stores. Locale-first composition still applies: a closer locale always beats a farther one regardless of which store would have answered.
 
-## Composing many sources — `group` is a shared key-space
+## Composing many sources — `namespace` is a shared key-space
 
-A real app pulls translations from several sources: the app's own catalog, plus library catalogs like `@ilingo/validup` (validation messages) or [`@ilingo/vuelidate`](/integrations/vuelidate). The model is **one instance, many stores, `group` as a shared key-space**:
+A real app pulls translations from several sources: the app's own catalog, plus library catalogs like `@ilingo/validup` (validation messages) or [`@ilingo/vuelidate`](/integrations/vuelidate). The model is **one instance, many stores, `namespace` as a shared key-space**:
 
 - Each source is its own store on the **same** `Ilingo` instance — so all sources share one set of formatters, one fallback chain, one missing-key handler.
-- A `group` (`app`, `email`, `validup`, …) is **not owned by a single store**. `MemoryStore.get()` returns `undefined` per *missing key*, so the orchestrator falls through store-by-store *within the same group*. That means an app can co-own a library's group — add its own keys, override individual ones — just by registering its own store **first**.
+- A `namespace` (`app`, `email`, `validup`, …) is **not owned by a single store**. `MemoryStore.get()` returns `undefined` per *missing key*, so the orchestrator falls through store-by-store *within the same namespace*. That means an app can co-own a library's namespace — add its own keys, override individual ones — just by registering its own store **first**.
 
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -146,14 +146,14 @@ import { register as registerValidup } from '@ilingo/validup';
 
 const ilingo = new Ilingo({ fallback: ['en'] });
 
-// app catalog FIRST → its keys win per (locale, group, key)
+// app catalog FIRST → its keys win per (locale, namespace, key)
 ilingo.register(new FSStore({ directory: './locales' }));
 
 // library catalog appended → fills the built-in defaults the app store misses
 registerValidup(ilingo);
 ```
 
-Now a lookup for `(en, validup, value_invalid)` falls through the app store (no such key) to the validup catalog, while `(en, validup, my_custom_code)` — a code the app defined under the `validup` group, e.g. via a `./locales/en/validup.json` file (`FSStore` derives the group from the filename) — is answered by the app store. Overriding a single built-in message works the same way: define `(en, validup, value_invalid)` in the app store and it wins, with every other code still served by the library.
+Now a lookup for `(en, validup, value_invalid)` falls through the app store (no such key) to the validup catalog, while `(en, validup, my_custom_code)` — a code the app defined under the `validup` namespace, e.g. via a `./locales/en/validup.json` file (`FSStore` derives the namespace from the filename) — is answered by the app store. Overriding a single built-in message works the same way: define `(en, validup, value_invalid)` in the app store and it wins, with every other code still served by the library.
 
 ## Merging instances
 
@@ -175,7 +175,7 @@ import type { IStore, StoreGetContext, StoreSetContext, Leaf } from 'ilingo';
 
 export class HttpStore implements IStore {
     async get(ctx: StoreGetContext): Promise<Leaf | undefined> {
-        const res = await fetch(`/i18n/${ctx.locale}/${ctx.group}.json`);
+        const res = await fetch(`/i18n/${ctx.locale}/${ctx.namespace}.json`);
         if (!res.ok) return undefined;
         const data = await res.json();
         return data[ctx.key];

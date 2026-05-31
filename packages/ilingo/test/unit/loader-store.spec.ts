@@ -9,20 +9,20 @@ import { describe, expect, it, vi } from 'vitest';
 import { Ilingo, LoaderStore, isInvalidatingStore } from '../../src';
 
 describe('LoaderStore (#903)', () => {
-    it('lazy-loads a (locale, group) on first get, then caches', async () => {
-        const loader = vi.fn(async (locale: string, group: string) => {
-            if (locale === 'en' && group === 'app') return { greeting: 'Hello' };
+    it('lazy-loads a (locale, namespace) on first get, then caches', async () => {
+        const loader = vi.fn(async (locale: string, namespace: string) => {
+            if (locale === 'en' && namespace === 'app') return { greeting: 'Hello' };
             return undefined;
         });
 
         const store = new LoaderStore({ loader });
         const ilingo = new Ilingo({ store });
 
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello');
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello');
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello');
 
-        // Loader called exactly once for the (locale, group) — subsequent
+        // Loader called exactly once for the (locale, namespace) — subsequent
         // get()s hit the cache.
         expect(loader).toHaveBeenCalledTimes(1);
     });
@@ -32,16 +32,16 @@ describe('LoaderStore (#903)', () => {
         const store = new LoaderStore({ loader });
         const ilingo = new Ilingo({ store });
 
-        await ilingo.get({ group: 'app', key: 'x' });
-        await ilingo.get({ group: 'app', key: 'y' });
-        await ilingo.get({ group: 'app', key: 'z' });
+        await ilingo.get({ namespace: 'app', key: 'x' });
+        await ilingo.get({ namespace: 'app', key: 'y' });
+        await ilingo.get({ namespace: 'app', key: 'z' });
 
-        // All three keys live in the same (locale=en, group=app) bucket;
+        // All three keys live in the same (locale=en, namespace=app) bucket;
         // the loader was called once and its `undefined` was cached.
         expect(loader).toHaveBeenCalledTimes(1);
     });
 
-    it('de-duplicates concurrent loads for the same (locale, group)', async () => {
+    it('de-duplicates concurrent loads for the same (locale, namespace)', async () => {
         let resolveLoader: (v: { hi: string } | undefined) => void = () => {};
         const loader = vi.fn(() => new Promise<{ hi: string } | undefined>((r) => {
             resolveLoader = r;
@@ -51,9 +51,9 @@ describe('LoaderStore (#903)', () => {
         const ilingo = new Ilingo({ store });
 
         // Fire three concurrent get()s before the loader resolves.
-        const p1 = ilingo.get({ group: 'app', key: 'hi' });
-        const p2 = ilingo.get({ group: 'app', key: 'hi' });
-        const p3 = ilingo.get({ group: 'app', key: 'hi' });
+        const p1 = ilingo.get({ namespace: 'app', key: 'hi' });
+        const p2 = ilingo.get({ namespace: 'app', key: 'hi' });
+        const p3 = ilingo.get({ namespace: 'app', key: 'hi' });
 
         resolveLoader({ hi: 'Hello' });
 
@@ -72,31 +72,31 @@ describe('LoaderStore (#903)', () => {
         const store = new LoaderStore({ loader });
         const ilingo = new Ilingo({ store });
 
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello 1');
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello 1');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello 1');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello 1');
 
         store.invalidate();
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello 2');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello 2');
 
         store.invalidate('en');
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello 3');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello 3');
 
         store.invalidate('en', 'app');
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello 4');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello 4');
 
         // Invalidating an unrelated scope must NOT drop our entry.
         store.invalidate('de');
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello 4');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello 4');
 
         store.invalidate('en', 'unrelated');
-        expect(await ilingo.get({ group: 'app', key: 'greeting' })).toEqual('Hello 4');
+        expect(await ilingo.get({ namespace: 'app', key: 'greeting' })).toEqual('Hello 4');
     });
 
     it('on("invalidate") fires with the invalidation scope', async () => {
         const store = new LoaderStore({ loader: async () => ({}) });
         const events: Array<[string | undefined, string | undefined]> = [];
-        const stop = store.on('invalidate', (locale, group) => {
-            events.push([locale, group]);
+        const stop = store.on('invalidate', (locale, namespace) => {
+            events.push([locale, namespace]);
         });
 
         store.invalidate();
@@ -128,9 +128,9 @@ describe('LoaderStore (#903)', () => {
         });
         const ilingo = new Ilingo({ store });
 
-        expect(await ilingo.get({ group: 'cart', key: 'items', count: 1 }))
+        expect(await ilingo.get({ namespace: 'cart', key: 'items', count: 1 }))
             .toEqual('1 item');
-        expect(await ilingo.get({ group: 'cart', key: 'items', count: 7 }))
+        expect(await ilingo.get({ namespace: 'cart', key: 'items', count: 7 }))
             .toEqual('7 items');
     });
 
@@ -150,8 +150,8 @@ describe('LoaderStore (#903)', () => {
         // No loads yet → empty.
         expect(await store.getLocales()).toEqual([]);
 
-        await store.get({ locale: 'en', group: 'app', key: 'hi' });
-        await store.get({ locale: 'de', group: 'app', key: 'hi' });
+        await store.get({ locale: 'en', namespace: 'app', key: 'hi' });
+        await store.get({ locale: 'de', namespace: 'app', key: 'hi' });
 
         expect((await store.getLocales()).sort()).toEqual(['de', 'en']);
     });
@@ -160,8 +160,8 @@ describe('LoaderStore (#903)', () => {
         const loader = vi.fn(async () => ({}));
         const store = new LoaderStore({ loader });
 
-        await store.set({ locale: 'en', group: 'app', key: 'hi', value: 'Hello' });
-        expect(await store.get({ locale: 'en', group: 'app', key: 'hi' })).toEqual('Hello');
+        await store.set({ locale: 'en', namespace: 'app', key: 'hi', value: 'Hello' });
+        expect(await store.get({ locale: 'en', namespace: 'app', key: 'hi' })).toEqual('Hello');
 
         // Loader called once during set()'s preloading; subsequent get() reads cache.
         expect(loader).toHaveBeenCalledTimes(1);
@@ -185,7 +185,7 @@ describe('LoaderStore (#903)', () => {
         const ilingo = new Ilingo({ store });
 
         // Start the slow load.
-        const p1 = ilingo.get({ group: 'app', key: 'hi' });
+        const p1 = ilingo.get({ namespace: 'app', key: 'hi' });
         // Invalidate while it's in flight.
         store.invalidate('en', 'app');
         // Now resolve the slow load — its result must NOT land in the cache.
@@ -193,7 +193,7 @@ describe('LoaderStore (#903)', () => {
         await p1;
 
         // Fresh get must re-run the loader (the stale result was dropped).
-        expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('Fresh');
+        expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('Fresh');
         expect(loader).toHaveBeenCalledTimes(2);
     });
 
@@ -203,28 +203,28 @@ describe('LoaderStore (#903)', () => {
         // when a translation was set at runtime.
         const store = new LoaderStore({ loader: async () => ({}) });
         const events: Array<[string | undefined, string | undefined]> = [];
-        store.on('invalidate', (locale, group) => {
-            events.push([locale, group]);
+        store.on('invalidate', (locale, namespace) => {
+            events.push([locale, namespace]);
         });
 
-        await store.set({ locale: 'en', group: 'app', key: 'hi', value: 'Hello' });
+        await store.set({ locale: 'en', namespace: 'app', key: 'hi', value: 'Hello' });
 
         expect(events).toEqual([['en', 'app']]);
     });
 
-    it('cache keys do not collide when group/locale strings contain a pipe', async () => {
+    it('cache keys do not collide when namespace/locale strings contain a pipe', async () => {
         // Regression: previous KEY_SEP was '|', which could collide if a
-        // group name contained '|' (e.g. group="a|b"). NUL byte is now used.
+        // namespace name contained '|' (e.g. namespace="a|b"). NUL byte is now used.
         const loaded: string[] = [];
         const store = new LoaderStore({
-            loader: async (locale, group) => {
-                loaded.push(`${locale}/${group}`);
-                return { hi: `from ${group}` };
+            loader: async (locale, namespace) => {
+                loaded.push(`${locale}/${namespace}`);
+                return { hi: `from ${namespace}` };
             },
         });
 
-        const v1 = await store.get({ locale: 'en', group: 'a|b', key: 'hi' });
-        const v2 = await store.get({ locale: 'en|a', group: 'b', key: 'hi' });
+        const v1 = await store.get({ locale: 'en', namespace: 'a|b', key: 'hi' });
+        const v2 = await store.get({ locale: 'en|a', namespace: 'b', key: 'hi' });
 
         expect(v1).toEqual('from a|b');
         expect(v2).toEqual('from b');

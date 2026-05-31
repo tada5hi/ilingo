@@ -19,10 +19,10 @@ ilingo wins on every scenario despite the async API surface (every `get()` is a 
 
 - Tool: [vitest's `bench` mode](https://vitest.dev/api/vi.html#bench), which delegates to [tinybench](https://github.com/tinylibs/tinybench) for warmup, sample count, and statistical noise handling.
 - Reported metric: `hz` (operations per second) — tinybench's headline number, derived from sample mean over a several-hundred-thousand-call window.
-- Catalog: a synthetic ~30-key catalog spanning two groups, plain strings, nested namespaces, one plural leaf, one number-format leaf. See `packages/ilingo/bench/setup.ts`.
+- Catalog: a synthetic ~30-key catalog spanning two namespaces, plain strings, nested namespaces, one plural leaf, one number-format leaf. See `packages/ilingo/bench/setup.ts`.
 - Hardware (the numbers above): Apple M4 Pro, macOS Darwin 24.6.0 arm64, Node v24.15.0. Your numbers will vary in absolute terms — the *ratio* between contenders is the durable part.
 - ilingo and i18next instances are constructed once outside the timed block; the bench measures only the per-call cost.
-- For a fair compare, the two libraries are configured to do the same work: same fallback chain (`pt-BR → pt → en` in the fallback scenario), same plural categories, same `Intl.NumberFormat({ currency: 'EUR' })` formatter. i18next's namespace concept maps onto our `group` argument; its plural-suffix convention (`items_one`, `items_other`) is rebuilt from our `@plural` shape at setup time.
+- For a fair compare, the two libraries are configured to do the same work: same fallback chain (`pt-BR → pt → en` in the fallback scenario), same plural categories, same `Intl.NumberFormat({ currency: 'EUR' })` formatter. i18next's namespace concept maps onto our `namespace` argument; its plural-suffix convention (`items_one`, `items_other`) is rebuilt from our `@plural` shape at setup time.
 
 ## Why ilingo is fast
 
@@ -70,7 +70,7 @@ describe('your scenario', () => {
     const i18n = makeI18next();
 
     bench('ilingo', async () => {
-        await ilingo.get({ group: 'app', key: 'greeting' });
+        await ilingo.get({ namespace: 'app', key: 'greeting' });
     });
 
     bench('i18next', () => {
@@ -79,7 +79,7 @@ describe('your scenario', () => {
 });
 ```
 
-The shared `setup.ts` already exports pre-built ilingo and i18next instances against the same catalog. Add a comparative `bench()` block per contender — vitest groups them in the output.
+The shared `setup.ts` already exports pre-built ilingo and i18next instances against the same catalog. Add a comparative `bench()` block per contender — vitest namespaces them in the output.
 
 ## Caveats
 
