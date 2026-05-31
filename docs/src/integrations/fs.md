@@ -19,7 +19,7 @@ const ilingo = new Ilingo({
 });
 ```
 
-Locale strings live in subdirectories — one per locale — with one file per group:
+Locale strings live in subdirectories — one per locale — with one file per namespace:
 
 ```bash
 └── language
@@ -33,7 +33,7 @@ Locale strings live in subdirectories — one per locale — with one file per g
 
 ## Supported file extensions
 
-`FSStore` resolves `<directory>/<locale>/<group>.<ext>` across the following extensions, in order:
+`FSStore` resolves `<directory>/<locale>/<namespace>.<ext>` across the following extensions, in order:
 
 `.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, `.json`, `.conf`
 
@@ -86,16 +86,16 @@ const store = new FSStore({
 });
 ```
 
-For each `(locale, group)`, files from both directories are loaded and merged. Later directories win on conflicts.
+For each `(locale, namespace)`, files from both directories are loaded and merged. Later directories win on conflicts.
 
 ## Persistence
 
-`FSStore.set(...)` writes the updated group back to disk as JSON:
+`FSStore.set(...)` writes the updated namespace back to disk as JSON:
 
 ```typescript
 await store.set({
     locale: 'en',
-    group: 'app',
+    namespace: 'app',
     key: 'greeting',
     value: 'Hello, {{name}}!',
 });
@@ -113,11 +113,11 @@ const store = new FSStore({
 
 Writes are **atomic** — `FSStore` writes to a temporary file in the same directory then `rename`s it over the target. The full merged record is serialised; sibling keys are preserved.
 
-If the original source for a group was a `.ts`/`.js`/`.cjs` file, that file is left untouched. The new `.json` lives alongside it. On the next load, `smob` merges both — the newer JSON wins.
+If the original source for a namespace was a `.ts`/`.js`/`.cjs` file, that file is left untouched. The new `.json` lives alongside it. On the next load, `smob` merges both — the newer JSON wins.
 
 ## Watch mode (dev hot-reload)
 
-`FSStore({ watch: true })` keeps the cache in sync with the filesystem via [chokidar](https://github.com/paulmillr/chokidar). Each file change under the configured `directory` paths invalidates the matching `(locale, group)` cache entry and emits an `invalidate` event:
+`FSStore({ watch: true })` keeps the cache in sync with the filesystem via [chokidar](https://github.com/paulmillr/chokidar). Each file change under the configured `directory` paths invalidates the matching `(locale, namespace)` cache entry and emits an `invalidate` event:
 
 ```typescript
 import { FSStore } from '@ilingo/fs';
@@ -127,8 +127,8 @@ const store = new FSStore({
     watch: process.env.NODE_ENV !== 'production',
 });
 
-store.on('invalidate', (locale, group) => {
-    console.log(`[i18n] reloaded ${locale}/${group}`);
+store.on('invalidate', (locale, namespace) => {
+    console.log(`[i18n] reloaded ${locale}/${namespace}`);
 });
 ```
 
@@ -149,8 +149,8 @@ If chokidar isn't installed and `watch: true` is set, the store logs a clear err
 Even without watch mode, you can drop cache entries manually — useful when an external process (CMS, deploy script) updates a translation file:
 
 ```typescript
-store.invalidate('en', 'app');   // drop one (locale, group)
-store.invalidate('en');          // drop all groups for en
+store.invalidate('en', 'app');   // drop one (locale, namespace)
+store.invalidate('en');          // drop all namespaces for en
 store.invalidate();              // drop everything
 ```
 
@@ -161,7 +161,7 @@ Call `store.close()` on app shutdown and in tests to stop the watcher and detach
 ## When to use
 
 - Translation files are part of the codebase and edited by humans (translators, contributors).
-- You want hot-reloading: `FSStore` lazy-loads per group on first access, so dev-server restarts are not needed. Pair with `watch: true` for instant in-process refresh.
+- You want hot-reloading: `FSStore` lazy-loads per namespace on first access, so dev-server restarts are not needed. Pair with `watch: true` for instant in-process refresh.
 - You need durable runtime edits (CMS-like flows): the persistence story round-trips cleanly.
 
 For network-loaded translations, see [`LoaderStore`](/guide/stores#loaderstore) or write a custom store — see [Guide → Stores → Writing a custom store](/guide/stores).

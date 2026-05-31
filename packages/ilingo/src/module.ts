@@ -13,10 +13,11 @@ import type {
     Fallback,
     GetContext,
     GetParams,
-    Groups,
+    IIlingo,
     Key,
     Leaf,
-    LocalesRecord,
+    Locales,
+    LocalesNamespace,
     MissingKeyHandler,
 } from './types';
 import type { Formatter } from './utils';
@@ -27,8 +28,18 @@ import {
     template,
 } from './utils';
 
-export class Ilingo<C extends LocalesRecord = LocalesRecord> {
-    public readonly stores: Set<IStore>;
+export class Ilingo<C extends Locales = Locales> implements IIlingo<C> {
+    /**
+     * Registered stores, keyed by a `symbol` identity. Insertion order is
+     * preserved (it drives the serial intra-locale store walk — earlier
+     * registrations are consulted first) and the symbol key is how
+     * registration deduplicates (see {@link registerStore}).
+     *
+     * Use `Symbol.for('@scope/pkg')` as the key for library catalogs so a
+     * duplicate package copy (pnpm / peer-dep mismatch) resolves to the
+     * same identity and re-registration stays a no-op.
+     */
+    public readonly stores: Map<symbol | string, IStore>;
 
     protected locale: string;
 
@@ -46,7 +57,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
     public formatters: FormatterRegistry;
 
     /**
-     * Per-instance set of `(locale, group, key)` triples that have already
+     * Per-instance set of `(locale, namespace, key)` triples that have already
      * triggered a missing-key warning. Kept on the instance — not module
      * scope — so multiple `Ilingo` instances do not dedupe each other's
      * warnings.
@@ -74,10 +85,34 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
             }
         }
 
-        this.stores = new Set<IStore>();
+        this.stores = new Map<symbol, IStore>();
         if (input.store) {
-            this.stores.add(input.store);
+            this.registerStore(input.store);
         }
+    }
+
+    /**
+     * Register a store, keyed by its own `store.id` identity.
+     *
+     * Idempotent: if a store is already registered under `store.id`, this
+     * is a no-op and the existing store is kept. Library catalogs set
+     * `id` to a `Symbol.for('@scope/pkg')` (e.g. `createMemoryStore()` /
+     * `createLoaderStore()` from `@ilingo/validup`), so re-registering —
+     * even from a duplicate package copy — never stacks duplicates.
+     * Anonymous stores default to a fresh `Symbol(...)`, so each is always
+     * added.
+     *
+     * Insertion order drives the serial intra-locale store walk, so a
+     * store registered earlier is consulted first and wins per key. To
+     * override individual keys of a library catalog, register your own
+     * store before registering the library's.
+     */
+    registerStore(store: IStore): void {
+        if (this.stores.has(store.id)) {
+            return;
+        }
+
+        this.stores.set(store.id, store);
     }
 
     /**
@@ -90,7 +125,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
      *     ilingo.registerFormatter('upper', (value, _opts, locale) =>
      *         String(value).toLocaleUpperCase(locale));
      *     await ilingo.get({
-     *         group: 'app', key: 'shout',
+     *         namespace: 'app', key: 'shout',
      *         data: { name: 'peter' },
      *     });
      *     // "{{name, upper}}" → "PETER"
@@ -121,7 +156,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
      * Designed for consumers that need a scoped variant of an existing
      * orchestrator — e.g. `@ilingo/vue`'s `useScopedCatalog`.
      */
-    clone(overrides: ConfigInput = {}): Ilingo {
+    clone(overrides: ConfigInput = {}): IIlingo {
         const child = new Ilingo({
             store: overrides.store,
             locale: overrides.locale ?? this.locale,
@@ -132,10 +167,13 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
             fallback: 'fallback' in overrides ? overrides.fallback : this.fallback,
             onMissingKey: 'onMissingKey' in overrides ? overrides.onMissingKey : this.onMissingKey,
         });
-        // Inherit stores in order (overrides.store, if any, was already added
-        // first by the constructor — appending parent's keeps the precedence).
-        for (const store of this.stores) {
-            child.stores.add(store);
+        // Inherit stores in order, preserving each store's symbol identity
+        // (overrides.store, if any, was already added first by the
+        // constructor under a minted symbol — appending parent's keeps the
+        // precedence, and reusing the parent keys means a later merge()
+        // dedupes correctly).
+        for (const [id, store] of this.stores) {
+            child.stores.set(id, store);
         }
         // Share the formatter registry so custom registrations on the parent
         // are honoured. Trade-off: mutations on either side are visible to
@@ -152,21 +190,18 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
         return child;
     }
 
-    merge(instance: Ilingo<LocalesRecord>) {
-        const ownEntries = Array.from(this.stores.values());
-        const foreignEntries = Array.from(instance.stores.values());
-
-        for (const foreignEntry of foreignEntries) {
-            let foreignEntriesIndex = -1;
-            for (const [j, ownEntry] of ownEntries.entries()) {
-                if (ownEntry === foreignEntry) {
-                    foreignEntriesIndex = j;
-                    break;
-                }
-            }
-
-            if (foreignEntriesIndex === -1) {
-                this.stores.add(foreignEntry);
+    /**
+     * Fold another instance's stores into this one, deduping by symbol
+     * identity. A foreign store whose key is already present is skipped
+     * (the existing store wins); foreign keys not present here are appended
+     * in order. Library catalogs keyed by `Symbol.for('@scope/pkg')` thus
+     * never stack across a merge, while anonymously-keyed stores (minted
+     * `Symbol()`) are always distinct and so always carried over.
+     */
+    merge(instance: IIlingo) {
+        for (const [id, store] of instance.stores) {
+            if (!this.stores.has(id)) {
+                this.stores.set(id, store);
             }
         }
     }
@@ -189,7 +224,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
 
     async getLocales(): Promise<string[]> {
         const locales: string[] = [];
-        for (const store of this.stores) {
+        for (const store of this.stores.values()) {
             locales.push(...await store.getLocales());
         }
         return Array.from(new Set(locales));
@@ -208,9 +243,9 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
 
     /**
      * Which locale in the chain actually yielded a value for the given
-     * `(group, key)`, or `undefined` if the key is missing in every locale.
+     * `(namespace, key)`, or `undefined` if the key is missing in every locale.
      */
-    async getResolvedLocale<G extends Groups<C>, K extends Key<C, G> & string>(
+    async getResolvedLocale<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
         ctx: GetParams<C, G, K>,
     ): Promise<string | undefined> {
         const internal = ctx as unknown as GetContext;
@@ -221,7 +256,7 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
 
     // ----------------------------------------------------
 
-    async get<G extends Groups<C>, K extends Key<C, G> & string>(
+    async get<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
         ctx: GetParams<C, G, K>,
     ): Promise<string | undefined> {
         const internal = ctx as unknown as GetContext;
@@ -229,17 +264,24 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
         const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
 
         const hit = await this.lookup(chain, internal);
+        return hit ?
+            this.render(hit.leaf, hit.locale, internal) :
+            this.handleMissingKey(internal, requestedLocale, chain);
+    }
 
-        if (!hit) {
-            return this.handleMissingKey(internal, requestedLocale, chain);
+    /**
+     * The post-lookup half of `get()`: pick the plural form for `ctx.count`,
+     * auto-merge `count` into the interpolation data (so `{{count}}` works
+     * without restating it), and substitute `{{var}}` placeholders against
+     * the *resolved* locale.
+     */
+    protected render(leaf: Leaf, locale: string, ctx: GetContext): string {
+        const message = this.selectPluralForm(leaf, locale, ctx.count);
+        const data: Data = { ...(ctx.data || {}) };
+        if (typeof ctx.count === 'number' && typeof data.count === 'undefined') {
+            data.count = ctx.count;
         }
-
-        const message = this.selectPluralForm(hit.leaf, hit.locale, internal.count);
-        const data: Data = { ...(internal.data || {}) };
-        if (typeof internal.count === 'number' && typeof data.count === 'undefined') {
-            data.count = internal.count;
-        }
-        return this.format(message, data, hit.locale);
+        return this.format(message, data, locale);
     }
 
     // ----------------------------------------------------
@@ -256,17 +298,17 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
      */
     protected async lookup(
         chain: string[],
-        ctx: Pick<GetContext, 'group' | 'key'>,
+        ctx: Pick<GetContext, 'namespace' | 'key'>,
     ): Promise<{ locale: string, leaf: Leaf } | undefined> {
         if (this.stores.size === 0) {
             return undefined;
         }
 
         for (const locale of chain) {
-            for (const store of this.stores) {
+            for (const store of this.stores.values()) {
                 const candidate = await store.get({
                     locale,
-                    group: ctx.group,
+                    namespace: ctx.namespace,
                     key: ctx.key,
                 });
                 if (typeof candidate !== 'undefined') {
@@ -300,12 +342,12 @@ export class Ilingo<C extends LocalesRecord = LocalesRecord> {
             return undefined;
         }
 
-        const id = `${requestedLocale}|${ctx.group}|${ctx.key}`;
+        const id = `${requestedLocale}|${ctx.namespace}|${ctx.key}`;
         if (!this.warnedKeys.has(id)) {
             this.warnedKeys.add(id);
             // eslint-disable-next-line no-console
             console.warn(
-                `[ilingo] missing translation for "${ctx.group}.${ctx.key}" ` +
+                `[ilingo] missing translation for "${ctx.namespace}.${ctx.key}" ` +
                 `(locale=${requestedLocale})`,
             );
         }

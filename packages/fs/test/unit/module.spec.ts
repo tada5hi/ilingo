@@ -33,19 +33,19 @@ describe('src/store/file-system', function () {
         const language = new Ilingo({ store });
 
         let output = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'nested.key'
         });
         expect(output).toEqual('I am nested');
 
         output = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'nested.deep.key'
         });
         expect(output).toEqual('I am deep nested');
 
         output = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'nested.keyWithParam',
             data: {
                 param: 'foo'
@@ -58,19 +58,19 @@ describe('src/store/file-system', function () {
         language.setLocale('de');
 
         output = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'nested.key'
         });
         expect(output).toEqual('Ich bin verschachtelt');
 
         output = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'nested.deep.key'
         });
         expect(output).toEqual('Ich bin tief verschachtelt');
 
         output = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'nested.keyWithParam',
             data: {
                 param: 'foo'
@@ -83,21 +83,21 @@ describe('src/store/file-system', function () {
         const language = new Ilingo({ store });
 
         let line = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'email'
         });
         expect(line).toBeDefined();
         expect(line).toEqual('The input must be a valid email address.');
 
         line = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'email',
             locale: 'de'
         });
         expect(line).toEqual('Die Eingabe muss eine gültige E-Mail sein.');
 
         line = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'maxLength',
             data: {
                 max: 10
@@ -107,7 +107,7 @@ describe('src/store/file-system', function () {
         expect(line).toEqual('The length of the input must be less than 10.');
 
         line = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'maxLength',
             data: {
                 max: 5
@@ -119,7 +119,7 @@ describe('src/store/file-system', function () {
         language.setLocale('de');
 
         line = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'maxLength',
             data: {
                 max: 5
@@ -136,7 +136,7 @@ describe('src/store/file-system', function () {
         // which does have `form.maxLength` — so the key resolves through the
         // fallback.
         let line = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'maxLength',
             data: {
                 max: 10
@@ -146,7 +146,7 @@ describe('src/store/file-system', function () {
         expect(line).toEqual('The length of the input must be less than 10.');
 
         line = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'foo'
         });
         expect(line).toBeUndefined();
@@ -158,7 +158,7 @@ describe('src/store/file-system', function () {
         // With `fallback: false` the chain is just ['ru']; since 'ru' has no
         // data the lookup misses without falling through to the default.
         const line = await language.get({
-            group: 'form',
+            namespace: 'form',
             key: 'maxLength',
             data: { max: 10 },
             locale: 'ru',

@@ -47,12 +47,12 @@ import { useTranslation } from '@ilingo/vue';
 
 const count = ref(1);
 const greeting = useTranslation({
-    group: 'app',
+    namespace: 'app',
     key: 'hi',
     data: { name: 'Paul' },
 });
 const items = useTranslation({
-    group: 'cart',
+    namespace: 'cart',
     key: 'items',
     count,
 });
@@ -78,7 +78,7 @@ For inline use:
 </template>
 ```
 
-`path` is `group.key`. The component is auto-registered by the plugin.
+`path` is `namespace.key`. The component is auto-registered by the plugin.
 
 ## `<ITranslateT>` — slot-aware interpolation
 
@@ -99,7 +99,7 @@ Message: `"Hi {{user}}, please {cta} to continue."`. The `{{var}}` placeholders 
 
 - Default wrapper element is `<span>`; override with `tag="p"`, `tag="div"`, etc. Pass `tag=""` to render a fragment with no wrapper.
 - Unfilled slot placeholders stay as literal `{slot}` text — never throws.
-- Reacts to `path` prop changes (no stale group/key after a dynamic flip).
+- Reacts to `path` prop changes (no stale namespace/key after a dynamic flip).
 
 ## `v-t` directive
 
@@ -109,7 +109,7 @@ For elements whose entire `textContent` is a single translation, the `v-t` direc
 <template>
     <p v-t="'app.greeting'"></p>
     <p v-t="{ path: 'app.greet', data: { name: 'Peter' } }"></p>
-    <p v-t="{ group: 'cart', key: 'items', count: 3 }"></p>
+    <p v-t="{ namespace: 'cart', key: 'items', count: 3 }"></p>
 </template>
 ```
 
@@ -137,7 +137,7 @@ const { t } = useScopedCatalog({
     },
 });
 
-const greeting = t({ group: 'modal', key: 'greeting' });
+const greeting = t({ namespace: 'modal', key: 'greeting' });
 </script>
 ```
 

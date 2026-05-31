@@ -47,7 +47,7 @@ ilingo.getResolvedLocaleChain({ locale: 'pt-BR' });
 // ['pt-BR', 'pt', 'en']
 
 // Which locale actually yielded a value?
-await ilingo.getResolvedLocale({ group: 'app', key: 'hi' });
+await ilingo.getResolvedLocale({ namespace: 'app', key: 'hi' });
 // 'pt'   (e.g. when 'pt-BR' had no entry but 'pt' did)
 // undefined   (when no store had the key anywhere in the chain)
 ```
@@ -58,8 +58,8 @@ These are read-only — they do not memoise into `data`, run formatters, or trig
 
 ```typescript
 ilingo.setLocale('de');                // permanent
-await ilingo.get({ group: 'app', key: 'hi' });           // uses 'de'
-await ilingo.get({ group: 'app', key: 'hi', locale: 'fr' }); // one-off override
+await ilingo.get({ namespace: 'app', key: 'hi' });           // uses 'de'
+await ilingo.get({ namespace: 'app', key: 'hi', locale: 'fr' }); // one-off override
 ```
 
 In Vue, the locale is exposed as a `Ref<string>` — see [Integrations → Vue](/integrations/vue).

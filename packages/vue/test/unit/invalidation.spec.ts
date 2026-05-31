@@ -21,7 +21,7 @@ describe('useTranslation — store invalidation (#903 + #904)', () => {
         const Probe = defineComponent({
             template: '<p data-test="t">{{ text }}</p>',
             setup() {
-                const text = useTranslation({ group: 'app', key: 'hi' });
+                const text = useTranslation({ namespace: 'app', key: 'hi' });
                 return { text };
             },
         });
@@ -46,7 +46,7 @@ describe('useTranslation — store invalidation (#903 + #904)', () => {
         expect(wrapper.find('[data-test="t"]').text()).toEqual('Hello v2');
     });
 
-    it('ignores invalidations scoped to a different group', async () => {
+    it('ignores invalidations scoped to a different namespace', async () => {
         let version = 0;
         const store = new LoaderStore({
             loader: async () => ({ hi: `Hello v${++version}` }),
@@ -55,7 +55,7 @@ describe('useTranslation — store invalidation (#903 + #904)', () => {
         const Probe = defineComponent({
             template: '<p data-test="t">{{ text }}</p>',
             setup() {
-                const text = useTranslation({ group: 'app', key: 'hi' });
+                const text = useTranslation({ namespace: 'app', key: 'hi' });
                 return { text };
             },
         });
@@ -74,7 +74,7 @@ describe('useTranslation — store invalidation (#903 + #904)', () => {
         expect(wrapper.find('[data-test="t"]').text()).toEqual('Hello v1');
 
         // Unrelated invalidation — should NOT trigger a re-run.
-        store.invalidate('en', 'unrelated-group');
+        store.invalidate('en', 'unrelated-namespace');
         await flushPromises();
 
         expect(wrapper.find('[data-test="t"]').text()).toEqual('Hello v1');

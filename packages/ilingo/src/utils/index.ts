@@ -9,6 +9,7 @@ export * from './env';
 export * from './formatters';
 export * from './identify';
 export * from './language';
+export * from './lines-record';
 export * from './locale';
 export * from './negotiate';
 export * from './template';

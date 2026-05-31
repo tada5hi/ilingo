@@ -44,7 +44,7 @@ export type Config = {
      * chain is exhausted. Returning a string makes that string the result
      * of `get()`; returning `undefined` (or nothing) keeps `get()`'s
      * result `undefined`. When omitted, the runtime warns once per
-     * `(locale, group, key)` triple in non-production environments.
+     * `(locale, namespace, key)` triple in non-production environments.
      */
     onMissingKey?: MissingKeyHandler,
 

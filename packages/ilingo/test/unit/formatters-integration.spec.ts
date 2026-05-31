@@ -30,11 +30,11 @@ describe('Ilingo — Intl formatters (#896)', () => {
         });
 
         expect(
-            await ilingo.get({ group: 'app', key: 'owe', data: { amount: 99 } }),
+            await ilingo.get({ namespace: 'app', key: 'owe', data: { amount: 99 } }),
         ).toMatch(/€99/);
 
         expect(
-            await ilingo.get({ group: 'app', key: 'owe', data: { amount: 99 }, locale: 'de' }),
+            await ilingo.get({ namespace: 'app', key: 'owe', data: { amount: 99 }, locale: 'de' }),
         ).toMatch(/99,00\s?€/);
     });
 
@@ -49,7 +49,7 @@ describe('Ilingo — Intl formatters (#896)', () => {
 
         expect(
             await ilingo.get({
-                group: 'app',
+                namespace: 'app',
                 key: 'signed',
                 data: { date: '2026-05-22T12:00:00Z' },
             }),
@@ -67,7 +67,7 @@ describe('Ilingo — Intl formatters (#896)', () => {
 
         expect(
             await ilingo.get({
-                group: 'app',
+                namespace: 'app',
                 key: 'invited',
                 data: { people: ['Alice', 'Bob', 'Carol'] },
             }),
@@ -87,7 +87,7 @@ describe('Ilingo — Intl formatters (#896)', () => {
         });
 
         expect(
-            await ilingo.get({ group: 'app', key: 'owe', data: { amount: 1234.5 }, locale: 'pt-BR' }),
+            await ilingo.get({ namespace: 'app', key: 'owe', data: { amount: 1234.5 }, locale: 'pt-BR' }),
         ).toEqual('1.234,5');
     });
 
@@ -98,10 +98,10 @@ describe('Ilingo — Intl formatters (#896)', () => {
             }),
         });
 
-        expect(await ilingo.get({ group: 'app', key: 'greet', data: { name: 'Peter' } }))
+        expect(await ilingo.get({ namespace: 'app', key: 'greet', data: { name: 'Peter' } }))
             .toEqual('Peter');
         // Same template again — should not warn a second time.
-        await ilingo.get({ group: 'app', key: 'greet', data: { name: 'Peter' } });
+        await ilingo.get({ namespace: 'app', key: 'greet', data: { name: 'Peter' } });
 
         expect(warn).toHaveBeenCalledTimes(1);
         expect(warn.mock.calls[0][0]).toContain('weird');
@@ -117,7 +117,7 @@ describe('Ilingo — Intl formatters (#896)', () => {
         const cacheSize = () => (ilingo.formatters as any).cache.size;
 
         for (let i = 0; i < 5; i++) {
-            await ilingo.get({ group: 'app', key: 'owe', data: { amount: i } });
+            await ilingo.get({ namespace: 'app', key: 'owe', data: { amount: i } });
         }
 
         // One `Intl.NumberFormat` entry total — same locale, same options.
@@ -142,7 +142,7 @@ describe('Ilingo — Intl formatters (#896)', () => {
             }),
         });
 
-        expect(await ilingo.get({ group: 'cart', key: 'items', count: 1 })).toEqual('1 item');
-        expect(await ilingo.get({ group: 'cart', key: 'items', count: 1234 })).toEqual('1,234 items');
+        expect(await ilingo.get({ namespace: 'cart', key: 'items', count: 1 })).toEqual('1 item');
+        expect(await ilingo.get({ namespace: 'cart', key: 'items', count: 1234 })).toEqual('1,234 items');
     });
 });

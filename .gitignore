@@ -11,7 +11,7 @@ reports
 .env
 coverage
 .nx
-.claude/settings.local.json
+.claude/
 .agents/plans
 docs/src/.vitepress/cache
 docs/src/.vitepress/dist

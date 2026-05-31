@@ -4,12 +4,12 @@ import { injectLocale, useTranslation } from '@ilingo/vue';
 
 const locale = injectLocale();
 const greeting = useTranslation({
-    group: 'cart',
+    namespace: 'cart',
     key: 'greeting',
     data: { name: 'Paul' },
 });
 const items = useTranslation({
-    group: 'cart',
+    namespace: 'cart',
     key: 'items',
     count: 3,
 });

@@ -27,13 +27,13 @@ const ilingo = new Ilingo({
     }),
 });
 
-await ilingo.get({ group: 'app', key: 'owe', data: { amount: 99 } });
+await ilingo.get({ namespace: 'app', key: 'owe', data: { amount: 99 } });
 // "You owe €99.00"
 
-await ilingo.get({ group: 'app', key: 'signed', data: { date: '2026-05-22T12:00:00Z' } });
+await ilingo.get({ namespace: 'app', key: 'signed', data: { date: '2026-05-22T12:00:00Z' } });
 // "Signed May 22, 2026"
 
-await ilingo.get({ group: 'app', key: 'invited', data: { people: ['Alice', 'Bob', 'Carol'] } });
+await ilingo.get({ namespace: 'app', key: 'invited', data: { people: ['Alice', 'Bob', 'Carol'] } });
 // "Alice, Bob, and Carol"
 ```
 

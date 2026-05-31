@@ -1,0 +1,13 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
+        "paths": {
+            "ilingo": ["../ilingo/src/index.ts"]
+        }
+    },
+    "include": [
+        "types/**/*.d.ts",
+        "src/**/*.ts"
+    ]
+}

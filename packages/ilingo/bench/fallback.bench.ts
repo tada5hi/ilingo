@@ -53,7 +53,7 @@ describe('get() — cache miss with 3-deep fallback', () => {
 
     bench('ilingo.get (3-deep fallback)', async () => {
         await ilingo.get({
-            group: 'app', 
+            namespace: 'app', 
             key: 'greeting', 
             data: { name: 'Peter' }, 
         });

@@ -1,0 +1,72 @@
+{
+    "name": "@ilingo/validup",
+    "type": "module",
+    "version": "0.1.0",
+    "description": "Translate validup Issues through ilingo — framework-agnostic core with default EN/DE/FR/ES catalogs.",
+    "main": "./dist/index.mjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.mts",
+    "sideEffects": false,
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "types": "./dist/index.d.mts",
+            "import": "./dist/index.mjs"
+        },
+        "./store/memory": {
+            "types": "./dist/store/memory.d.mts",
+            "import": "./dist/store/memory.mjs"
+        },
+        "./store/loader": {
+            "types": "./dist/store/loader.d.mts",
+            "import": "./dist/store/loader.mjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsdown",
+        "test": "vitest --config test/vitest.config.ts --run",
+        "test:coverage": "vitest --config test/vitest.config.ts --run --coverage",
+        "lint": "eslint",
+        "lint:fix": "npm run lint -- --fix"
+    },
+    "engines": {
+        "node": ">=22.0.0"
+    },
+    "keywords": [
+        "ilingo",
+        "validup",
+        "validation",
+        "i18n",
+        "translation"
+    ],
+    "author": {
+        "name": "Peter Placzek",
+        "email": "contact@tada5hi.net",
+        "url": "https://github.com/tada5hi"
+    },
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tada5hi/ilingo.git",
+        "directory": "packages/validup"
+    },
+    "bugs": {
+        "url": "https://github.com/tada5hi/ilingo/issues"
+    },
+    "homepage": "https://github.com/tada5hi/ilingo#readme",
+    "devDependencies": {
+        "ilingo": "^5.0.0",
+        "validup": "^0.4.0",
+        "vite": "^7.3.1"
+    },
+    "peerDependencies": {
+        "ilingo": "^5.0.0",
+        "validup": "^0.4.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

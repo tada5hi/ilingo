@@ -56,7 +56,7 @@ const catalog = defineCatalog({
 
 Why: the structural form collided with sibling keys named after CLDR categories (e.g. an enum dropdown with an "other" option). The explicit marker eliminates the ambiguity. See [Catalog Design](../guide/catalog-design#authoring-plurals-json-vs-tsjs) for the authoring story.
 
-A bare `{ one, other }` object still type-checks as a regular nested namespace; it just no longer triggers plural selection at lookup. Typed catalogs (`Ilingo<typeof catalog>`) catch the gotcha at compile time — `ilingo.get({ group: 'cart', key: 'items' })` becomes a type error because `items` is no longer a leaf.
+A bare `{ one, other }` object still type-checks as a regular nested namespace; it just no longer triggers plural selection at lookup. Typed catalogs (`Ilingo<typeof catalog>`) catch the gotcha at compile time — `ilingo.get({ namespace: 'cart', key: 'items' })` becomes a type error because `items` is no longer a leaf.
 
 ### Plural type names: `PluralLeaf` is now the wrapper
 
@@ -106,6 +106,29 @@ function handle(value: unknown) {
 
 When every registered store would have hit, total latency is now `sum(per-store)` instead of `max(per-store)`. In practice the in-tree adapters are sync after first warm-up, so the worst case rarely fires. See [Stores: Multiple stores](../guide/stores#multiple-stores) for the new contract.
 
+### `Ilingo.stores` is a `Map`, not a `Set`
+
+The store collection changed from `Set<IStore>` to `Map<symbol, IStore>` — the symbol key is the store's identity (it drives `merge`/`clone` deduping), insertion order is still the query order. A new `register(store, id?)` method is the way to add stores.
+
+**Before:**
+
+```typescript
+ilingo.stores.add(myStore);
+for (const store of ilingo.stores) { /* ... */ }
+```
+
+**After:**
+
+```typescript
+ilingo.register(myStore);                       // anonymous Symbol() key
+ilingo.register(myStore, Symbol.for('@me/x'));  // keyed → idempotent
+for (const store of ilingo.stores.values()) { /* ... */ }
+```
+
+**Action required:** replace `ilingo.stores.add(...)` with `ilingo.register(...)`, and any iteration over `ilingo.stores` with `ilingo.stores.values()` (iterating the Map directly now yields `[symbol, store]` entries). `merge()` now dedupes by symbol key instead of reference identity — library catalogs keyed by `Symbol.for(...)` no longer stack across a merge.
+
+Also new: `Ilingo` now implements an exported `IIlingo` interface — accept `IIlingo` in type positions when you want to allow swapped-in implementations. See [Stores: Multiple stores](../guide/stores#multiple-stores).
+
 ### `StoreSetContext.value` is narrower
 
 `value` you pass to `store.set(...)` must now be `string | PluralLeaf` (the wrapper). Passing the bare `{ one, other }` shape used to silently round-trip (because the structural form was recognised on read) — it no longer does.
@@ -114,7 +137,7 @@ When every registered store would have hit, total latency is now `sum(per-store)
 
 ```typescript
 await store.set({
-    locale: 'en', group: 'cart', key: 'items',
+    locale: 'en', namespace: 'cart', key: 'items',
     value: { one: '1 item', other: '{{count}} items' },
 });
 ```
@@ -123,7 +146,7 @@ await store.set({
 
 ```typescript
 await store.set({
-    locale: 'en', group: 'cart', key: 'items',
+    locale: 'en', namespace: 'cart', key: 'items',
     value: { '@plural': { one: '1 item', other: '{{count}} items' } },
 });
 ```
@@ -146,6 +169,7 @@ No breaking changes.
 |---|---|
 | `@plural` wrapper required | author plural leaves anywhere (JSON or TS) |
 | `PluralLeaf` rename | import any of the renamed types or guards |
+| `stores` is a `Map` | call `ilingo.stores.add(...)` or iterate `ilingo.stores` |
 | Serial store walk | run a custom store with side effects |
 | `StoreSetContext.value` narrower | call `store.set(...)` with a plural value directly |
 | `FSStore.get` widening | type-check `FSStore.get` results against `string` |

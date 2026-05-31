@@ -51,11 +51,11 @@ const v$ = useVuelidate({
 </template>
 ```
 
-`<IVuelidate>` reads the Vuelidate validation state and renders translated messages for every failed validator. The messages are pulled from the `vuelidate` group of the ilingo instance — which the plugin populates automatically.
+`<IVuelidate>` reads the Vuelidate validation state and renders translated messages for every failed validator. The messages are pulled from the `vuelidate` namespace of the ilingo instance — which the plugin populates automatically.
 
 ## Built-in validator coverage
 
-The bundled `vuelidate` group covers Vuelidate's standard validators:
+The bundled `vuelidate` namespace covers Vuelidate's standard validators:
 
 `alpha`, `alphaNum`, `between`, `decimal`, `email`, `integer`, `ipAddress`, `macAddress`, `maxLength`, `maxValue`, `minLength`, `minValue`, `numeric`, `not`, `or`, `and`, `required`, `requiredIf`, `requiredUnless`, `sameAs`, `url`.
 
@@ -63,7 +63,7 @@ Each message uses `{{var}}` substitution for the relevant parameter — e.g. `mi
 
 ## Overriding messages
 
-Validator messages live in the `vuelidate` group. Override per-locale by adding to the same group:
+Validator messages live in the `vuelidate` namespace. Override per-locale by adding to the same namespace:
 
 ```typescript
 import { install } from '@ilingo/vuelidate';

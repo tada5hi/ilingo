@@ -32,7 +32,7 @@ describe('useScopedCatalog (#902)', () => {
                         en: { modal: { greeting: 'Scoped hello' } },
                     },
                 });
-                const text = t({ group: 'modal', key: 'greeting' });
+                const text = t({ namespace: 'modal', key: 'greeting' });
                 return { text };
             },
         });
@@ -55,7 +55,7 @@ describe('useScopedCatalog (#902)', () => {
         const Body = defineComponent({
             template: '<p data-test="body">{{ text }}</p>',
             setup() {
-                const text = useTranslation({ group: 'modal', key: 'greeting' });
+                const text = useTranslation({ namespace: 'modal', key: 'greeting' });
                 return { text };
             },
         });
@@ -86,7 +86,7 @@ describe('useScopedCatalog (#902)', () => {
         const ModalBody = defineComponent({
             template: '<p data-test="modal">{{ text }}</p>',
             setup() {
-                const text = useTranslation({ group: 'modal', key: 'greeting' });
+                const text = useTranslation({ namespace: 'modal', key: 'greeting' });
                 return { text };
             },
         });
@@ -104,7 +104,7 @@ describe('useScopedCatalog (#902)', () => {
         const Sibling = defineComponent({
             template: '<p data-test="sibling">{{ text }}</p>',
             setup() {
-                const text = useTranslation({ group: 'modal', key: 'greeting' });
+                const text = useTranslation({ namespace: 'modal', key: 'greeting' });
                 return { text };
             },
         });
@@ -142,7 +142,7 @@ describe('useScopedCatalog (#902)', () => {
                 // parent's `fallback: 'de'` honoured, the chain reaches the
                 // German parent translation. Without it, the lookup would fall
                 // to 'en' (the default) and pick up the wrong message.
-                const text = t({ group: 'app', key: 'farewell', locale: 'ru' });
+                const text = t({ namespace: 'app', key: 'farewell', locale: 'ru' });
                 return { text };
             },
         });
@@ -185,7 +185,7 @@ describe('useScopedCatalog (#902)', () => {
                 const { t } = useScopedCatalog({
                     messages: { en: { modal: { greeting: 'Scoped hello' } } },
                 });
-                const text = t({ group: 'app', key: 'foo' });
+                const text = t({ namespace: 'app', key: 'foo' });
                 return { text };
             },
         });

@@ -8,11 +8,11 @@
 import type { FormatterRegistry } from './formatters';
 import { parseFormatterOptions, parseModifier } from './formatters';
 
-export interface TemplateContext {
+export type TemplateContext = {
     locale: string;
     formatters: FormatterRegistry;
     onUnknownFormatter?: (name: string) => void;
-}
+};
 
 const DEFAULT_REGEX = /\{\{\s*([^,}]+?)(?:\s*,\s*([^}]+?))?\s*\}\}/g;
 

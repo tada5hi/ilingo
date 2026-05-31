@@ -53,5 +53,11 @@
             "@vuelidate/core"
         ],
         "limit": "2.5 KB"
+    },
+    {
+        "name": "@ilingo/validup — core barrel (data-free; guards no eager catalogs)",
+        "path": "packages/validup/dist/index.mjs",
+        "ignore": ["ilingo", "validup"],
+        "limit": "2 KB"
     }
 ]

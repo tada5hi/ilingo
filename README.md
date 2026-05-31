@@ -10,6 +10,7 @@ A lightweight library for translation and internationalization.
   - [FS](#fs-)
   - [Vue](#vue-)
   - [Vuelidate](#vuelidate-)
+  - [Validup](#validup-)
 - [License](#license)
 
 ## Usage
@@ -33,7 +34,7 @@ const store = new MemoryStore({
     data: {
         // locale: de
         de: {
-            // group: app
+            // namespace: app
             app: {
                 key: 'Hallo mein Name ist {{name}}'
             }
@@ -53,7 +54,7 @@ const ilingo = new Ilingo({
 });
 ```
 
-To retrieve text from any of the language files, simply pass the filename/group and the access key
+To retrieve text from any of the language files, simply pass the filename/namespace and the access key
 as the first parameter, separated by a period (.).
 
 After that you can simply access the locale string, as described in the following:
@@ -66,13 +67,13 @@ const ilingo = new Ilingo({
 });
 
 await ilingo.get({ 
-    group: 'app', 
+    namespace: 'app', 
     key: 'key'
 });
 // Hello my name is {{name}}
 
 await ilingo.get({ 
-    group: 'app', 
+    namespace: 'app', 
     key: 'key', 
     data: {
         name: 'Peter'
@@ -81,7 +82,7 @@ await ilingo.get({
 // Hello my name is Peter
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'key',
     data: {
         name: 'Peter'
@@ -130,6 +131,14 @@ This package contains an adapter for vue.
 This package contains an adapter for the vuelidate library.
 
 [Documentation](./packages/vuelidate/README.md)
+
+### Validup 🛡️
+
+**`@ilingo/validup`** + **`@ilingo/validup-vue`**
+
+Adapter pair for the [validup](https://www.npmjs.com/package/validup) ecosystem. `@ilingo/validup` is the framework-agnostic core — default EN/DE/FR/ES catalogs for the built-in `IssueCode`s, the pre-seeded `Store`, `translateIssue` / `translateIssues` helpers — embeddable in any runtime (Node SSR, edge, queue workers). `@ilingo/validup-vue` adds the Vue 3 plugin, composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`), and the `<IValidup>` renderless component. Mirrors the `validup` → `@validup/vue` split so Vue is opt-in, not a hard dep on the validation-message surface.
+
+[Core](./packages/validup/README.md) · [Vue](./packages/validup-vue/README.md)
 
 ## License
 

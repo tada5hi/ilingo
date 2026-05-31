@@ -21,7 +21,7 @@ describe('get() — plural lookup', () => {
     // case for product counters / list lengths.
     bench('ilingo.get (plural, count=5)', async () => {
         await ilingo.get({
-            group: 'app', 
+            namespace: 'app', 
             key: 'cart.items', 
             count: 5, 
         });

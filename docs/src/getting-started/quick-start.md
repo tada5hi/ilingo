@@ -48,21 +48,21 @@ const ilingo = new Ilingo({
 
 ```typescript
 await ilingo.get({
-    group: 'cart',
+    namespace: 'cart',
     key: 'greeting',
     data: { name: 'Peter' },
 });
 // "Welcome, Peter!"
 
 await ilingo.get({
-    group: 'cart',
+    namespace: 'cart',
     key: 'items',
     count: 3,
 });
 // "3 items in your cart"
 
 await ilingo.get({
-    group: 'cart',
+    namespace: 'cart',
     key: 'greeting',
     locale: 'de',
     data: { name: 'Peter' },

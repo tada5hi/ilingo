@@ -71,26 +71,26 @@ const ilingo = new Ilingo({
 
 // ─── 1. plain string lookup ────────────────────────────────────────────
 {
-    const out = await ilingo.get({ group: 'app', key: 'greeting', data: { name: 'Peter' } });
+    const out = await ilingo.get({ namespace: 'app', key: 'greeting', data: { name: 'Peter' } });
     equal(out, 'Hi Peter', '[1] cache-hit string with interpolation');
 }
 
 // ─── 2. plural form selection (count=1) ────────────────────────────────
 {
-    const out = await ilingo.get({ group: 'app', key: 'cart.items', count: 1 });
+    const out = await ilingo.get({ namespace: 'app', key: 'cart.items', count: 1 });
     equal(out, '1 item', '[2] plural one form');
 }
 
 // ─── 3. plural form selection (count=5) ────────────────────────────────
 {
-    const out = await ilingo.get({ group: 'app', key: 'cart.items', count: 5 });
+    const out = await ilingo.get({ namespace: 'app', key: 'cart.items', count: 5 });
     equal(out, '5 items', '[3] plural other form');
 }
 
 // ─── 4. locale switch ──────────────────────────────────────────────────
 {
     ilingo.setLocale('de');
-    const out = await ilingo.get({ group: 'app', key: 'greeting', data: { name: 'Peter' } });
+    const out = await ilingo.get({ namespace: 'app', key: 'greeting', data: { name: 'Peter' } });
     equal(out, 'Hallo Peter', '[4] locale switch to de');
     ilingo.setLocale('en');
 }
@@ -98,7 +98,7 @@ const ilingo = new Ilingo({
 // ─── 5. BCP-47 fallback chain (pt-BR → pt → en) ────────────────────────
 {
     const out = await ilingo.get({
-        group: 'app',
+        namespace: 'app',
         key: 'greeting',
         data: { name: 'Peter' },
         locale: 'pt-BR',
@@ -109,7 +109,7 @@ const ilingo = new Ilingo({
 // ─── 6. resolved-locale reporting ──────────────────────────────────────
 {
     const out = await ilingo.getResolvedLocale({
-        group: 'app',
+        namespace: 'app',
         key: 'greeting',
         locale: 'pt-BR',
     });
@@ -118,7 +118,7 @@ const ilingo = new Ilingo({
 
 // ─── 7. missing key returns undefined, doesn't throw ───────────────────
 {
-    const out = await ilingo.get({ group: 'app', key: 'definitely-missing' });
+    const out = await ilingo.get({ namespace: 'app', key: 'definitely-missing' });
     equal(out, undefined, '[7] missing key returns undefined');
 }
 

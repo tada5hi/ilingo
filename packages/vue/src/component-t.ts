@@ -63,15 +63,15 @@ export const ITranslateT = defineComponent({
 
         const text = computedAsync(
             async () => {
-                const { group, key } = parsed.value;
+                const { namespace, key } = parsed.value;
                 const value = await instance.get({
-                    group,
+                    namespace,
                     key,
                     data: props.data ? extractReactiveData(props.data) : undefined,
                     locale: props.locale ?? localeRef.value,
                     count: props.count,
                 });
-                return value ?? `${group}.${key}`;
+                return value ?? `${namespace}.${key}`;
             },
             '',
         );
@@ -122,13 +122,13 @@ export const ITranslateT = defineComponent({
     },
 });
 
-function parsePath(path: string): { group: string, key: string } {
+function parsePath(path: string): { namespace: string, key: string } {
     const index = path.indexOf('.');
-    // Reject missing dot, leading dot (empty group), and trailing dot (empty key).
+    // Reject missing dot, leading dot (empty namespace), and trailing dot (empty key).
     if (index <= 0 || index >= path.length - 1) {
         throw new SyntaxError(
-            `[ilingo] <ITranslateT path="${path}"> requires a "group.key" path.`,
+            `[ilingo] <ITranslateT path="${path}"> requires a "namespace.key" path.`,
         );
     }
-    return { group: path.slice(0, index), key: path.slice(index + 1) };
+    return { namespace: path.slice(0, index), key: path.slice(index + 1) };
 }

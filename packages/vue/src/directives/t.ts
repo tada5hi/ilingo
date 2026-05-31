@@ -5,16 +5,16 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Ilingo } from 'ilingo';
+import type { IIlingo } from 'ilingo';
 import type { Directive, Ref } from 'vue';
 import { watchEffect } from 'vue';
 
 /**
  * Binding accepted by the `v-t` directive.
  *
- * - `string` — shorthand for `{ path }`. Parsed as `"group.key"`.
+ * - `string` — shorthand for `{ path }`. Parsed as `"namespace.key"`.
  * - `{ path, data?, locale?, count? }` — explicit context.
- * - `{ group, key, data?, locale?, count? }` — alternative explicit form.
+ * - `{ namespace, key, data?, locale?, count? }` — alternative explicit form.
  */
 export type VTBindingDataMap = Record<string, string | number>;
 
@@ -26,7 +26,7 @@ export type VTBindingPath = {
 };
 
 export type VTBindingGroupKey = {
-    group: string,
+    namespace: string,
     key: string,
     data?: VTBindingDataMap,
     locale?: string,
@@ -36,7 +36,7 @@ export type VTBindingGroupKey = {
 export type VTBinding = string | VTBindingPath | VTBindingGroupKey;
 
 type Resolved = {
-    group: string,
+    namespace: string,
     key: string,
     data?: Record<string, string | number>,
     locale?: string,
@@ -48,9 +48,9 @@ function resolveBinding(value: VTBinding): Resolved {
         return splitPath(value);
     }
     if ('path' in value) {
-        const { group, key } = splitPath(value.path);
+        const { namespace, key } = splitPath(value.path);
         return {
-            group,
+            namespace,
             key,
             data: value.data,
             locale: value.locale,
@@ -60,15 +60,15 @@ function resolveBinding(value: VTBinding): Resolved {
     return value;
 }
 
-function splitPath(path: string): { group: string, key: string } {
+function splitPath(path: string): { namespace: string, key: string } {
     const index = path.indexOf('.');
-    // Reject missing dot, leading dot (empty group), and trailing dot (empty key).
+    // Reject missing dot, leading dot (empty namespace), and trailing dot (empty key).
     if (index <= 0 || index >= path.length - 1) {
         throw new SyntaxError(
-            `[ilingo] v-t="${path}" requires a "group.key" path.`,
+            `[ilingo] v-t="${path}" requires a "namespace.key" path.`,
         );
     }
-    return { group: path.slice(0, index), key: path.slice(index + 1) };
+    return { namespace: path.slice(0, index), key: path.slice(index + 1) };
 }
 
 /**
@@ -87,7 +87,7 @@ const STOP_KEY = Symbol.for('ilingo.v-t.stop');
 type ElementWithStop = HTMLElement & { [STOP_KEY]?: () => void };
 
 export function createVTDirective(
-    instance: Ilingo,
+    instance: IIlingo,
     localeRef: Ref<string>,
 ): Directive<HTMLElement, VTBinding> {
     function apply(el: ElementWithStop, value: VTBinding) {
@@ -109,20 +109,20 @@ export function createVTDirective(
             (async () => {
                 try {
                     const text = await instance.get({
-                        group: ctx.group,
+                        namespace: ctx.namespace,
                         key: ctx.key,
                         data: ctx.data,
                         count: ctx.count,
                         locale: localeOverride,
                     });
                     if (cancelled) return;
-                    el.textContent = text ?? `${ctx.group}.${ctx.key}`;
+                    el.textContent = text ?? `${ctx.namespace}.${ctx.key}`;
                 } catch {
                     // A rejected store / formatter shouldn't propagate as an
                     // unhandled promise rejection. Degrade to the same
-                    // group.key fallback we use when get() returns undefined.
+                    // namespace.key fallback we use when get() returns undefined.
                     if (cancelled) return;
-                    el.textContent = `${ctx.group}.${ctx.key}`;
+                    el.textContent = `${ctx.namespace}.${ctx.key}`;
                 }
             })();
         });

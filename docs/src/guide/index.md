@@ -12,7 +12,7 @@ ilingo follows a small **port-and-adapter** design. Three pieces:
               ▼
 ┌──────────────────────────────────┐
 │            IStore                │   ← port
-│  get(locale, group, key)         │
+│  get(locale, namespace, key)         │
 │  set(...)                        │
 │  getLocales()                    │
 └──────────────────────────────────┘
@@ -27,7 +27,7 @@ MemoryStore           FSStore           ← stock adapters
 ## The flow of a `get()`
 
 ```
-Input: { group, key, locale?, data?, count? }
+Input: { namespace, key, locale?, data?, count? }
 
 1. requestedLocale = ctx.locale ?? instance default
 2. chain           = resolveLocaleChain(requested, fallback config, 'en')

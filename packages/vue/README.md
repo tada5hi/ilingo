@@ -31,7 +31,7 @@ const store = new MemoryStore({
     data: {
         // locale: de
         de: {
-            // group: app
+            // namespace: app
             app: {
                 key: 'Hallo mein Name ist {{name}}',
             },
@@ -63,7 +63,7 @@ app.mount('#app');
     }
     
     const translation = useTranslation({
-        group: 'app', 
+        namespace: 'app', 
         key: 'key', 
         data: {
             name: 'Paul'
@@ -116,7 +116,7 @@ Message: `"Hi {{user}}, please {cta} to continue."`
 
 <p v-t="{ path: 'app.greet', data: { name: 'Peter' } }"></p>
 
-<p v-t="{ group: 'cart', key: 'items', count: 3 }"></p>
+<p v-t="{ namespace: 'cart', key: 'items', count: 3 }"></p>
 ```
 
 The directive is registered globally during `install()`. Opt out per-app via `install(app, { store, directives: false })`.
@@ -137,7 +137,7 @@ const { t } = useScopedCatalog({
     },
 });
 
-const greeting = t({ group: 'modal', key: 'greeting' });
+const greeting = t({ namespace: 'modal', key: 'greeting' });
 </script>
 ```
 

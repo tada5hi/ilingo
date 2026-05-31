@@ -25,7 +25,7 @@ function plugin(messages: Record<string, unknown>, locale = 'en', options: { dir
 }
 
 describe('v-t directive (#901)', () => {
-    it('updates textContent on a <p v-t="\'group.key\'"> element', async () => {
+    it('updates textContent on a <p v-t="\'namespace.key\'"> element', async () => {
         const Wrapper = defineComponent({
             template: '<p data-test="t" v-t="\'app.hi\'"></p>',
         });
@@ -153,7 +153,7 @@ describe('v-t directive (#901)', () => {
         expect(wrapper.find('[data-test="t"]').text()).toEqual('Hallo');
     });
 
-    it('falls back to group.key when instance.get() rejects', async () => {
+    it('falls back to namespace.key when instance.get() rejects', async () => {
         // Regression: the async IIFE inside the directive's watchEffect
         // previously had no try/catch; a rejected get() would surface as
         // an unhandled promise rejection and leave the textContent stale.
@@ -180,7 +180,7 @@ describe('v-t directive (#901)', () => {
         });
 
         await flushPromises();
-        // Catches the rejection; falls back to the group.key contract used
+        // Catches the rejection; falls back to the namespace.key contract used
         // when get() returns undefined.
         expect(wrapper.find('[data-test="t"]').text()).toEqual('app.hi');
     });
