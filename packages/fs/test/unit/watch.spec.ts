@@ -28,7 +28,7 @@ describe('FSStore.watch (#904)', () => {
         await rm(tmpDir, { recursive: true, force: true });
     });
 
-    it('FSStore is an InvalidatingStore', () => {
+    it('FSStore is an IInvalidatingStore', () => {
         const store = new FSStore({ directory: tmpDir });
         expect(isInvalidatingStore(store)).toBe(true);
     });

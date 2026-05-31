@@ -31,9 +31,9 @@ export type StoreSetContext = StoreGetContext & {
  * adapters can rely on this being the complete required contract.
  *
  * Writing is an *optional* capability layered as a separate interface
- * detected via a type guard — see {@link MutableStore} / {@link isMutableStore}
+ * detected via a type guard — see {@link IMutableStore} / {@link isMutableStore}
  * (only stores that hold mutable state, like `MemoryStore` / `FSStore`,
- * implement it). This mirrors {@link InvalidatingStore} for caches.
+ * implement it). This mirrors {@link IInvalidatingStore} for caches.
  *
  * Other capabilities (`has`, `delete`, `getKeys`, batch `getAll`) follow
  * the same opt-in pattern rather than expanding this interface — each was
@@ -79,10 +79,15 @@ export interface IStore {
  *
  * Implemented by `MemoryStore` (in-memory mutation) and `FSStore` (writes
  * through to disk). `extendStore(...)` and any caller that seeds a store at
- * runtime should type the argument as `MutableStore`. Detect at runtime
+ * runtime should type the argument as `IMutableStore`. Detect at runtime
  * with {@link isMutableStore}.
+ *
+ * The port stays **async** so it can cover async backends uniformly. A
+ * store that *also* supports synchronous writes (e.g. `MemoryStore`) may
+ * expose a concrete `setSync(...)` for seeding data after construction
+ * without an `await` — that is store-specific, not part of this contract.
  */
-export interface MutableStore extends IStore {
+export interface IMutableStore extends IStore {
     /**
      * Persist a `(locale, namespace, key)` → leaf mapping.
      */
@@ -90,11 +95,11 @@ export interface MutableStore extends IStore {
 }
 
 /**
- * Type guard for {@link MutableStore} — true when the store exposes a
+ * Type guard for {@link IMutableStore} — true when the store exposes a
  * `set` method.
  */
-export function isMutableStore(store: IStore): store is MutableStore {
-    return typeof (store as Partial<MutableStore>).set === 'function';
+export function isMutableStore(store: IStore): store is IMutableStore {
+    return typeof (store as Partial<IMutableStore>).set === 'function';
 }
 
 export type MemoryStoreOptions = {
@@ -118,7 +123,7 @@ export type InvalidateListener = (locale?: string, namespace?: string) => void;
  *
  * Optional — not every `IStore` caches. Detect with `isInvalidatingStore`.
  */
-export interface InvalidatingStore extends IStore {
+export interface IInvalidatingStore extends IStore {
     /**
      * Drop cached entries.
      *
@@ -141,7 +146,7 @@ export interface InvalidatingStore extends IStore {
     on(event: 'invalidate', listener: InvalidateListener): () => void;
 }
 
-export function isInvalidatingStore(store: IStore): store is InvalidatingStore {
-    return typeof (store as Partial<InvalidatingStore>).invalidate === 'function' &&
-        typeof (store as Partial<InvalidatingStore>).on === 'function';
+export function isInvalidatingStore(store: IStore): store is IInvalidatingStore {
+    return typeof (store as Partial<IInvalidatingStore>).invalidate === 'function' &&
+        typeof (store as Partial<IInvalidatingStore>).on === 'function';
 }

@@ -86,7 +86,7 @@ export function coerceIssueData(
 /**
  * Options for `translateIssue` / `translateIssues`.
  */
-export interface TranslateIssueOptions {
+export type TranslateIssueOptions = {
     /**
      * Override the locale for this lookup. Defaults to the `Ilingo`
      * instance's current locale.
@@ -98,7 +98,7 @@ export interface TranslateIssueOptions {
      * mounted the translations under a different namespace.
      */
     namespace?: string;
-}
+};
 
 /**
  * Resolve a single validup `Issue` to a translated string via the

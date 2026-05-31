@@ -55,7 +55,7 @@ data/
 unit/
 ├── component-t.spec.ts         # <ITranslateT> — slot rendering, vars, fragments, error paths
 ├── directive-t.spec.ts         # v-t directive — string/object bindings, reactive locale, opt-out
-├── invalidation.spec.ts        # useTranslation re-runs on InvalidatingStore.invalidate() (scoped)
+├── invalidation.spec.ts        # useTranslation re-runs on IInvalidatingStore.invalidate() (scoped)
 └── scoped-catalog.spec.ts      # useScopedCatalog — same-component t, descendant provide, no-leak, fallback
 ```
 

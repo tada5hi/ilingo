@@ -16,8 +16,8 @@ import {
 import type { Merger } from 'smob';
 import { createMerger } from 'smob';
 import type {
+    IInvalidatingStore,
     InvalidateListener,
-    InvalidatingStore,
     Leaf,
     Lines,
     StoreGetContext,
@@ -34,7 +34,7 @@ type ChokidarLike = {
     },
 };
 
-export class FSStore extends MemoryStore implements InvalidatingStore {
+export class FSStore extends MemoryStore implements IInvalidatingStore {
     protected loaded: Record<string, string[]>;
 
     protected directories: string[];

@@ -264,17 +264,24 @@ export class Ilingo<C extends Locales = Locales> implements IIlingo<C> {
         const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
 
         const hit = await this.lookup(chain, internal);
+        return hit ?
+            this.render(hit.leaf, hit.locale, internal) :
+            this.handleMissingKey(internal, requestedLocale, chain);
+    }
 
-        if (!hit) {
-            return this.handleMissingKey(internal, requestedLocale, chain);
+    /**
+     * The post-lookup half of `get()`: pick the plural form for `ctx.count`,
+     * auto-merge `count` into the interpolation data (so `{{count}}` works
+     * without restating it), and substitute `{{var}}` placeholders against
+     * the *resolved* locale.
+     */
+    protected render(leaf: Leaf, locale: string, ctx: GetContext): string {
+        const message = this.selectPluralForm(leaf, locale, ctx.count);
+        const data: Data = { ...(ctx.data || {}) };
+        if (typeof ctx.count === 'number' && typeof data.count === 'undefined') {
+            data.count = ctx.count;
         }
-
-        const message = this.selectPluralForm(hit.leaf, hit.locale, internal.count);
-        const data: Data = { ...(internal.data || {}) };
-        if (typeof internal.count === 'number' && typeof data.count === 'undefined') {
-            data.count = internal.count;
-        }
-        return this.format(message, data, hit.locale);
+        return this.format(message, data, locale);
     }
 
     // ----------------------------------------------------

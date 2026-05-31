@@ -15,22 +15,22 @@ export interface IStore {
 }
 ```
 
-The orchestrator only ever calls `get` (and `getLocales`) — it never writes. So a read-only adapter (a remote/HTTP datasource) implements just these. **Writing is an opt-in capability**, `MutableStore`:
+The orchestrator only ever calls `get` (and `getLocales`) — it never writes. So a read-only adapter (a remote/HTTP datasource) implements just these. **Writing is an opt-in capability**, `IMutableStore`:
 
 ```typescript
 import type { IStore, StoreSetContext } from 'ilingo';
 
-export interface MutableStore extends IStore {
+export interface IMutableStore extends IStore {
     set(context: StoreSetContext): Promise<void>;
 }
 
-export function isMutableStore(store: IStore): store is MutableStore; // type guard
+export function isMutableStore(store: IStore): store is IMutableStore; // type guard
 ```
 
-`MemoryStore` (in-memory mutation) and `FSStore` (writes through to disk) implement it; `extendStore(...)` takes a `MutableStore`. All methods are async — keep that contract even when the implementation is synchronous, because `Ilingo.lookup` awaits every store call.
+`MemoryStore` (in-memory mutation) and `FSStore` (writes through to disk) implement it; `extendStore(...)` takes a `IMutableStore`. All methods are async — keep that contract even when the implementation is synchronous, because `Ilingo.lookup` awaits every store call.
 
 ::: tip Frozen surface
-The `IStore` **read** port is **frozen** at `id` / `get` / `getLocales` for the stable release. Capabilities beyond reading layer as separate interfaces detected via type guards — `MutableStore` (writing) and `InvalidatingStore` (caching, below) are the pattern. `has`, `delete`, `getKeys`, and batch `getAll` were considered and deferred (see the source JSDoc for the rationale per method); they would follow the same opt-in-interface pattern if added later.
+The `IStore` **read** port is **frozen** at `id` / `get` / `getLocales` for the stable release. Capabilities beyond reading layer as separate interfaces detected via type guards — `IMutableStore` (writing) and `IInvalidatingStore` (caching, below) are the pattern. `has`, `delete`, `getKeys`, and batch `getAll` were considered and deferred (see the source JSDoc for the rationale per method); they would follow the same opt-in-interface pattern if added later.
 :::
 
 ## MemoryStore
@@ -50,16 +50,17 @@ const store = new MemoryStore({
 const ilingo = new Ilingo({ store });
 ```
 
-You can also `set()` at runtime — useful when translations come from an API:
+You can also write at runtime — useful when translations come from an API. `set()` satisfies the async `IMutableStore` port, but `MemoryStore` is in-memory, so it *also* exposes a synchronous **`setSync()`** for seeding data after construction without an `await`:
 
 ```typescript
-await store.set({
-    locale: 'es',
-    namespace: 'app',
-    key: 'hi',
-    value: '¡Hola, {{name}}!',
-});
+// synchronous — no await needed (MemoryStore-specific)
+store.setSync({ locale: 'es', namespace: 'app', key: 'hi', value: '¡Hola, {{name}}!' });
+
+// the async port method — same effect; delegates to setSync()
+await store.set({ locale: 'es', namespace: 'app', key: 'hi', value: '¡Hola, {{name}}!' });
 ```
+
+`setSync` (and the matching `getSync` / `getLocalesSync`) are concrete `MemoryStore` methods, **not** part of the async `IStore` / `IMutableStore` port — an async-only backend (`LoaderStore`, a remote datasource) can't answer synchronously, so the port stays async and only stores that genuinely hold data in memory offer the sync variants.
 
 ## LoaderStore
 
@@ -81,20 +82,20 @@ const ilingo = new Ilingo({
 
 - Concurrent `get()`s for the same `(locale, namespace)` share one loader call.
 - Misses (loader returning `undefined`) are cached too — the loader isn't re-called for known-missing pairs.
-- Implements `InvalidatingStore` — see [Cache invalidation](#cache-invalidation).
+- Implements `IInvalidatingStore` — see [Cache invalidation](#cache-invalidation).
 
 ## Cache invalidation
 
-Stores that cache lookups can implement `InvalidatingStore`:
+Stores that cache lookups can implement `IInvalidatingStore`:
 
 ```typescript
-export interface InvalidatingStore extends IStore {
+export interface IInvalidatingStore extends IStore {
     invalidate(locale?: string, namespace?: string): void;
     on(event: 'invalidate', listener: (locale?: string, namespace?: string) => void): () => void;
 }
 ```
 
-Both `LoaderStore` and `FSStore` implement it. `@ilingo/vue`'s `useTranslation` automatically subscribes to every `InvalidatingStore` in the instance's store set — so file changes under `FSStore({ watch: true })` show up in the rendered UI without a remount.
+Both `LoaderStore` and `FSStore` implement it. `@ilingo/vue`'s `useTranslation` automatically subscribes to every `IInvalidatingStore` in the instance's store set — so file changes under `FSStore({ watch: true })` show up in the rendered UI without a remount.
 
 ```typescript
 import { isInvalidatingStore } from 'ilingo';
@@ -201,7 +202,7 @@ export class HttpStore implements IStore {
 }
 ```
 
-If your store *is* writable, implement `MutableStore` instead (add `set(ctx: StoreSetContext)`); `isMutableStore(store)` lets callers detect it.
+If your store *is* writable, implement `IMutableStore` instead (add `set(ctx: StoreSetContext)`); `isMutableStore(store)` lets callers detect it.
 
 Rules of thumb:
 

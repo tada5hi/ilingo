@@ -6,8 +6,8 @@
  */
 
 import {
+    type IMutableStore,
     MemoryStore,
-    type MutableStore,
     type Namespaces,
     parseLinesRecord,
 } from 'ilingo';
@@ -66,7 +66,7 @@ export function createMemoryStore(): Store {
  * store. Construct that store with `{ id: STORE_ID }` if you also want it
  * to dedupe as the validup catalog on `Ilingo.registerStore`.
  */
-export async function extendStore(store: MutableStore) {
+export async function extendStore(store: IMutableStore) {
     const translations : Namespaces = {
         en: useEnglishTranslation(),
         de: useGermanTranslation(),

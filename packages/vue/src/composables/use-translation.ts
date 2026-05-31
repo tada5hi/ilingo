@@ -25,7 +25,7 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
     // changes on invalidate, computedAsync has no reason to re-execute.
     const invalidationTick = ref(0);
 
-    // Subscribe to invalidation events from any InvalidatingStore in the
+    // Subscribe to invalidation events from any IInvalidatingStore in the
     // instance's store set. Filter by (namespace, key) — a watcher event for an
     // unrelated key should not cause us to re-render. The composable's
     // computedAsync re-runs on the next tick because `invalidationTick.value`

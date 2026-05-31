@@ -15,7 +15,7 @@ import { injectIlingo, provideIlingo } from './instance';
 import { injectLocale } from './locale';
 import { extractReactiveData } from './utils';
 
-export interface UseScopedCatalogResult {
+export type UseScopedCatalogResult = {
     /** The scoped `Ilingo` instance — exposed for advanced cases. */
     instance: IIlingo;
     /**
@@ -25,7 +25,7 @@ export interface UseScopedCatalogResult {
      * the parent instance.
      */
     t(ctx: GetContextReactive): Ref<string>;
-}
+};
 
 /**
  * Scope a per-component message catalog. Creates a fresh `Ilingo` instance,

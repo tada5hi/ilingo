@@ -576,7 +576,7 @@ ilingo.setLocale(chosen);
 
 ## Store
 
-A store implements the read `IStore` port — `id`, `get`, `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract, and it is **frozen** for the stable release. **Writing** is an opt-in capability — `MutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `MutableStore`, and `isMutableStore(store)` is the runtime guard. Other capabilities (cache invalidation, file watching, …) layer the same way (see [Invalidation](#invalidation) below). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
+A store implements the read `IStore` port — `id`, `get`, `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract, and it is **frozen** for the stable release. **Writing** is an opt-in capability — `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Other capabilities (cache invalidation, file watching, …) layer the same way (see [Invalidation](#invalidation) below). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
 
 ### Registering stores — `register(store, id?)`
 
@@ -623,10 +623,10 @@ Concurrent `get()`s for the same `(locale, namespace)` share one loader invocati
 
 ### Invalidation
 
-Stores that cache lookups can implement `InvalidatingStore`:
+Stores that cache lookups can implement `IInvalidatingStore`:
 
 ```typescript
-export interface InvalidatingStore extends IStore {
+export interface IInvalidatingStore extends IStore {
     invalidate(locale?: string, namespace?: string): void;
     on(event: 'invalidate', listener: (locale?: string, namespace?: string) => void): () => void;
 }

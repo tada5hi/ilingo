@@ -85,10 +85,10 @@ export interface ValidupCatalog {
  * A single translated leaf issue — the original `IssueItem` plus the
  * localized `message` resolved via the active `Ilingo` instance.
  */
-export interface IssueTranslation {
+export type IssueTranslation = {
     issue: IssueItem;
     message: string;
-}
+};
 
 export type KeyValue<T = unknown> = {
     key: string,

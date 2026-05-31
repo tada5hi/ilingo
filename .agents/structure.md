@@ -58,7 +58,7 @@ src/
 ├── store/
 │   ├── index.ts              # barrel
 │   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext (value: Leaf),
-│   │                         #   MemoryStoreOptions, InvalidatingStore + isInvalidatingStore guard
+│   │                         #   MemoryStoreOptions, IInvalidatingStore + isInvalidatingStore guard
 │   ├── memory.ts             # MemoryStore — returns string | PluralForms | undefined (unwraps the @plural marker)
 │   └── loader.ts             # LoaderStore — lazy load + per-(locale,namespace) cache + invalidate
 └── utils/

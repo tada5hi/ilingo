@@ -9,13 +9,13 @@ import { getPathValue, setPathValue } from 'pathtrace';
 import type { Leaf, Locales } from '../types';
 import { isPluralLeaf } from '../utils/identify';
 import type {
+    IMutableStore,
     MemoryStoreOptions,
-    MutableStore,
     StoreGetContext,
     StoreSetContext,
 } from './types';
 
-export class MemoryStore implements MutableStore {
+export class MemoryStore implements IMutableStore {
     readonly id: string | symbol;
 
     protected data: Locales;
@@ -26,8 +26,11 @@ export class MemoryStore implements MutableStore {
         this.data = options.data;
     }
 
-
     async get(context: StoreGetContext): Promise<Leaf | undefined> {
+        return this.getSync(context);
+    }
+
+    getSync(context: StoreGetContext): Leaf | undefined {
         if (
             !this.data[context.locale] ||
             !this.data[context.locale][context.namespace]
@@ -55,7 +58,7 @@ export class MemoryStore implements MutableStore {
         return undefined;
     }
 
-    async set(context: StoreSetContext): Promise<void> {
+    setSync(context: StoreSetContext): void {
         this.initLines(context.namespace, context.locale);
 
         setPathValue(
@@ -63,6 +66,10 @@ export class MemoryStore implements MutableStore {
             context.key,
             context.value,
         );
+    }
+
+    async set(context: StoreSetContext): Promise<void> {
+        this.setSync(context);
     }
 
     protected initLines(namespace: string, locale: string) {
@@ -75,7 +82,11 @@ export class MemoryStore implements MutableStore {
         }
     }
 
-    async getLocales(): Promise<string[]> {
+    getLocalesSync(): string[] {
         return Object.keys(this.data);
+    }
+
+    async getLocales(): Promise<string[]> {
+        return this.getLocalesSync();
     }
 }

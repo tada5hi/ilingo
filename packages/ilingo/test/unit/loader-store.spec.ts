@@ -113,7 +113,7 @@ describe('LoaderStore (#903)', () => {
         ]);
     });
 
-    it('is an InvalidatingStore (type guard)', () => {
+    it('is an IInvalidatingStore (type guard)', () => {
         const store = new LoaderStore({ loader: async () => ({}) });
         expect(isInvalidatingStore(store)).toBe(true);
     });

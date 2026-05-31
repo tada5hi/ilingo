@@ -4,8 +4,8 @@
 
 ilingo follows a small **port-and-adapter** design:
 
-- **Port**: `IStore` (`packages/ilingo/src/store/types.ts`) defines `get`, `set`, `getLocales`.
-- **Adapters**: `MemoryStore` (default, in-memory) and `FSStore` (lazy-loads files from disk, persists `set()` to JSON) implement the port.
+- **Port**: `IStore` (`packages/ilingo/src/store/types.ts`) is the **read** contract — `id`, `get`, `getLocales` (ilingo reads a datasource; the orchestrator never writes). Writing is the opt-in `IMutableStore` (`set`); `MemoryStore` also exposes concrete sync `setSync` / `getSync` / `getLocalesSync` for in-memory seeding without `await` (not part of the async port).
+- **Adapters**: `MemoryStore` (default, in-memory; implements `IMutableStore`) and `FSStore` (lazy-loads files from disk, persists `set()` to JSON) implement the port.
 - **Orchestrator**: `Ilingo` (`packages/ilingo/src/module.ts`, implementing the `IIlingo` interface) holds a `Map<symbol, IStore>` plus per-instance state for the locale, fallback chain, missing-key handler, plural-rules cache, and warn-once memo. On each `get()` it walks a resolved locale chain in order; within each locale it queries stores **serially in insertion order** and stops at the first hit.
 - **Public contract**: `IIlingo<C>` is the orchestrator's interface — every method on `Ilingo` plus the `stores` map and `formatters` registry. Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accept and return `IIlingo` in type positions so consumers can swap test doubles or decorating wrappers without depending on the concrete class. Construction still goes through the `Ilingo` class; runtime discrimination uses structural duck-typing (`'stores' in input`) so non-concrete `IIlingo` implementations are still recognised by `@ilingo/vue`'s `applyInstallInput`.
 
@@ -51,10 +51,10 @@ The orchestrator selects a form using `Intl.PluralRules` keyed by the *resolved*
 
 ### Cache invalidation
 
-Stores that cache lookups implement `InvalidatingStore extends IStore`:
+Stores that cache lookups implement `IInvalidatingStore extends IStore`:
 
 ```typescript
-export interface InvalidatingStore extends IStore {
+export interface IInvalidatingStore extends IStore {
     invalidate(locale?: string, namespace?: string): void;
     on(event: 'invalidate', listener: (locale?, namespace?) => void): () => void;
 }
@@ -64,7 +64,7 @@ export interface InvalidatingStore extends IStore {
 
 Both `LoaderStore` (core) and `FSStore` (`@ilingo/fs`) implement it. Detect at runtime via `isInvalidatingStore(store)` — the type guard checks for both `invalidate` and `on` methods.
 
-`@ilingo/vue`'s `useTranslation` walks `instance.stores` at composable-setup time, subscribes to every `InvalidatingStore`, and bumps an internal trigger ref on `invalidate` events that match the current `(locale, namespace)`. The `computedAsync` reads the ref in its dep set, so the re-fetch happens automatically. Unsubscribes are wired to `onScopeDispose`.
+`@ilingo/vue`'s `useTranslation` walks `instance.stores` at composable-setup time, subscribes to every `IInvalidatingStore`, and bumps an internal trigger ref on `invalidate` events that match the current `(locale, namespace)`. The `computedAsync` reads the ref in its dep set, so the re-fetch happens automatically. Unsubscribes are wired to `onScopeDispose`.
 
 ### `LoaderStore`
 
@@ -142,12 +142,12 @@ export interface IStore {
     getLocales(): Promise<string[]>;
 }
 
-// Writing is an opt-in capability (mirrors InvalidatingStore). Implemented
-// by MemoryStore + FSStore; extendStore() takes a MutableStore.
-export interface MutableStore extends IStore {
+// Writing is an opt-in capability (mirrors IInvalidatingStore). Implemented
+// by MemoryStore + FSStore; extendStore() takes a IMutableStore.
+export interface IMutableStore extends IStore {
     set(context: StoreSetContext): Promise<void>;
 }
-export function isMutableStore(store: IStore): store is MutableStore;
+export function isMutableStore(store: IStore): store is IMutableStore;
 ```
 
 Adapter — `packages/ilingo/src/store/memory.ts` (unwraps the `@plural` marker; bare `{ one, other }` objects are namespaces, not plurals):
