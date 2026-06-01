@@ -20,7 +20,7 @@ describe('FSStore.watch (#904)', () => {
         await mkdir(path.join(tmpDir, 'en'), { recursive: true });
         await writeFile(
             path.join(tmpDir, 'en', 'app.json'),
-            JSON.stringify({ hi: 'Hello' }),
+            JSON.stringify({ type: 'translations', data: { hi: 'Hello' } }),
         );
     });
 
@@ -42,7 +42,7 @@ describe('FSStore.watch (#904)', () => {
         // Mutate the file directly (simulating an editor save).
         await writeFile(
             path.join(tmpDir, 'en', 'app.json'),
-            JSON.stringify({ hi: 'Hallo' }),
+            JSON.stringify({ type: 'translations', data: { hi: 'Hallo' } }),
         );
 
         // Without invalidate, cache still serves the old value.
@@ -71,7 +71,7 @@ describe('FSStore.watch (#904)', () => {
 
         await writeFile(
             path.join(tmpDir, 'en', 'app.json'),
-            JSON.stringify({ hi: 'Hallo (updated)' }),
+            JSON.stringify({ type: 'translations', data: { hi: 'Hallo (updated)' } }),
         );
 
         // Poll briefly for the event.

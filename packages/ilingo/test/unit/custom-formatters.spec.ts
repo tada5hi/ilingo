@@ -6,13 +6,14 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { Ilingo, MemoryStore } from '../../src';
+import { Ilingo, MemoryStore, defineCatalog } from '../../src';
+import { toCatalog } from '../helpers/catalog';
 
 describe('Custom formatters (#906)', () => {
     it('registerFormatter() exposes a custom modifier inside templates', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: { en: { app: { shout: 'Hi {{name, upper}}!' } } },
+                data: toCatalog({ en: { app: { shout: 'Hi {{name, upper}}!' } } }),
             }),
         });
 
@@ -27,7 +28,7 @@ describe('Custom formatters (#906)', () => {
     it('Config.formatters registers at construction time', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: { en: { app: { shout: 'Hi {{name, upper}}!' } } },
+                data: toCatalog({ en: { app: { shout: 'Hi {{name, upper}}!' } } }),
             }),
             formatters: {
                 upper: (value, _opts, locale) =>
@@ -43,7 +44,7 @@ describe('Custom formatters (#906)', () => {
     it('Config.formatters can override a built-in formatter', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: { en: { app: { owe: 'You owe {{amount, number}}' } } },
+                data: toCatalog({ en: { app: { owe: 'You owe {{amount, number}}' } } }),
             }),
             formatters: {
                 // Replace the built-in `number` with one that always prefixes 'NUM:'.
@@ -60,10 +61,10 @@ describe('Custom formatters (#906)', () => {
         // Regression for PR #918 review: clone() previously accepted
         // overrides.formatters via Partial<Config> but didn't apply them at
         // runtime — silent no-op.
-        const parent = new Ilingo({ store: new MemoryStore({ data: {} }) });
+        const parent = new Ilingo({ store: new MemoryStore({ data: defineCatalog([]) }) });
         const child = parent.clone({
             store: new MemoryStore({
-                data: { en: { app: { hi: 'hi {{name, upper}}' } } },
+                data: toCatalog({ en: { app: { hi: 'hi {{name, upper}}' } } }),
             }),
             formatters: {
                 upper: (value, _opts, locale) =>
@@ -80,7 +81,7 @@ describe('Custom formatters (#906)', () => {
 
     it('clone() shares the formatter registry — custom formatters work in the child', async () => {
         const parent = new Ilingo({
-            store: new MemoryStore({ data: {} }),
+            store: new MemoryStore({ data: defineCatalog([]) }),
             formatters: {
                 upper: (value, _opts, locale) =>
                     String(value).toLocaleUpperCase(locale),
@@ -88,7 +89,7 @@ describe('Custom formatters (#906)', () => {
         });
         const child = parent.clone({
             store: new MemoryStore({
-                data: { en: { scoped: { hi: 'hi {{name, upper}}' } } },
+                data: toCatalog({ en: { scoped: { hi: 'hi {{name, upper}}' } } }),
             }),
         });
         expect(

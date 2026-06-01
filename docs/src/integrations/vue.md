@@ -12,15 +12,15 @@ npm install @ilingo/vue
 
 ```typescript
 import { install } from '@ilingo/vue';
-import { MemoryStore } from 'ilingo';
+import { MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 import { createApp } from 'vue';
 import App from './App.vue';
 
 const store = new MemoryStore({
-    data: {
-        en: { app: { hi: 'Hello, {{name}}!' } },
-        de: { app: { hi: 'Hallo, {{name}}!' } },
-    },
+    data: defineCatalog([
+        defineLocale('en', [defineNamespace('app', [defineTranslations({ hi: 'Hello, {{name}}!' })])]),
+        defineLocale('de', [defineNamespace('app', [defineTranslations({ hi: 'Hallo, {{name}}!' })])]),
+    ]),
 });
 
 const app = createApp(App);

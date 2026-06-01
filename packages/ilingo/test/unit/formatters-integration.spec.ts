@@ -7,6 +7,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Ilingo, MemoryStore } from '../../src';
+import { toCatalog } from '../helpers/catalog';
 
 describe('Ilingo — Intl formatters (#896)', () => {
     let warn: ReturnType<typeof vi.spyOn>;
@@ -22,10 +23,10 @@ describe('Ilingo — Intl formatters (#896)', () => {
     it('formats a currency value in the resolved locale', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: {
+                data: toCatalog({
                     en: { app: { owe: 'You owe {{amount, number(style=currency, currency=EUR)}}' } },
                     de: { app: { owe: 'Sie schulden {{amount, number(style=currency, currency=EUR)}}' } },
-                },
+                }),
             }),
         });
 
@@ -41,9 +42,9 @@ describe('Ilingo — Intl formatters (#896)', () => {
     it('formats a date in the resolved locale', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: {
+                data: toCatalog({
                     en: { app: { signed: 'Signed {{date, date(dateStyle=medium, timeZone=UTC)}}' } },
-                },
+                }),
             }),
         });
 
@@ -59,9 +60,9 @@ describe('Ilingo — Intl formatters (#896)', () => {
     it('formats a list in the resolved locale', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: {
+                data: toCatalog({
                     en: { app: { invited: '{{people, list(style=long, type=conjunction)}}' } },
-                },
+                }),
             }),
         });
 
@@ -80,9 +81,9 @@ describe('Ilingo — Intl formatters (#896)', () => {
         const ilingo = new Ilingo({
             fallback: 'de',
             store: new MemoryStore({
-                data: {
+                data: toCatalog({
                     de: { app: { owe: '{{amount, number(style=decimal)}}' } },
-                },
+                }),
             }),
         });
 
@@ -94,7 +95,7 @@ describe('Ilingo — Intl formatters (#896)', () => {
     it('falls back to raw value on an unknown modifier and dev-warns once', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: { en: { app: { greet: '{{name, weird}}' } } },
+                data: toCatalog({ en: { app: { greet: '{{name, weird}}' } } }),
             }),
         });
 
@@ -110,7 +111,7 @@ describe('Ilingo — Intl formatters (#896)', () => {
     it('formatter cache lives on the instance — repeated renders do not reallocate Intl', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: { en: { app: { owe: '{{amount, number(style=decimal)}}' } } },
+                data: toCatalog({ en: { app: { owe: '{{amount, number(style=decimal)}}' } } }),
             }),
         });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,7 +128,7 @@ describe('Ilingo — Intl formatters (#896)', () => {
     it('count auto-injects into data and renders through a formatter', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: {
+                data: toCatalog({
                     en: {
                         cart: {
                             items: {
@@ -138,7 +139,7 @@ describe('Ilingo — Intl formatters (#896)', () => {
                             },
                         },
                     },
-                },
+                }),
             }),
         });
 

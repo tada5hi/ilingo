@@ -10,12 +10,13 @@ import { MemoryStore } from 'ilingo';
 import { defineComponent, h } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { ITranslateT, install } from '../../src';
+import { toCatalog } from '../helpers/catalog';
 
 function makeApp(messages: Record<string, Record<string, Record<string, unknown>>>) {
     return {
         install(app: import('vue').App) {
             install(app, {
-                store: new MemoryStore({ data: messages }),
+                store: new MemoryStore({ data: toCatalog(messages) }),
                 locale: 'en',
             });
         },

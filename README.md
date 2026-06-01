@@ -28,24 +28,31 @@ const ilingo = new Ilingo({
 The **default** (memory-) store can be initialized with some default data.
 
 ```typescript
-import { Ilingo, MemoryStore } from 'ilingo';
+import {
+    Ilingo,
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineTranslations,
+} from 'ilingo';
 
 const store = new MemoryStore({
-    data: {
+    data: defineCatalog([
         // locale: de
-        de: {
+        defineLocale('de', [
             // namespace: app
-            app: {
-                key: 'Hallo mein Name ist {{name}}'
-            }
-        },
+            defineNamespace('app', [
+                defineTranslations({ key: 'Hallo mein Name ist {{name}}' }),
+            ]),
+        ]),
         // locale: en
-        en: {
-            app: {
-                key: 'Hello my name is {{name}}'
-            }
-        },
-    }
+        defineLocale('en', [
+            defineNamespace('app', [
+                defineTranslations({ key: 'Hello my name is {{name}}' }),
+            ]),
+        ]),
+    ]),
 });
 
 const ilingo = new Ilingo({

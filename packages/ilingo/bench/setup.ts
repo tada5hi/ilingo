@@ -7,6 +7,7 @@
 
 import i18next from 'i18next';
 import { Ilingo, MemoryStore } from '../src';
+import { toCatalog } from '../test/helpers/catalog';
 
 /**
  * Shared synthetic catalog for both contenders. ~30 keys per locale, two
@@ -86,14 +87,14 @@ export const catalog = {
             field5: 'fünf',
         },
     },
-} as const;
+};
 
 /**
  * Pre-built ilingo instance (cached, single locale 'en').
  */
 export function makeIlingo() {
     return new Ilingo({
-        store: new MemoryStore({ data: catalog }),
+        store: new MemoryStore({ data: toCatalog(catalog) }),
         locale: 'en',
     });
 }

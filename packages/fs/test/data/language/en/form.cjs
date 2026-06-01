@@ -6,13 +6,16 @@
  */
 
 module.exports = {
-    email: 'The input must be a valid email address.',
-    maxLength: 'The length of the input must be less than {{max}}.',
-    nested: {
-        key: 'I am nested',
-        deep: {
-            key: 'I am deep nested'
-        },
-        keyWithParam: 'I am nested with param {{param}}'
+    type: 'translations',
+    data: {
+        email: 'The input must be a valid email address.',
+        maxLength: 'The length of the input must be less than {{max}}.',
+        nested: {
+            key: 'I am nested',
+            deep: {
+                key: 'I am deep nested'
+            },
+            keyWithParam: 'I am nested with param {{param}}'
+        }
     }
 };

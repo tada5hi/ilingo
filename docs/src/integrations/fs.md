@@ -31,6 +31,8 @@ Locale strings live in subdirectories — one per locale — with one file per n
         └── forum.json
 ```
 
+A **dotted namespace maps to a dotted filename**: a `defineNamespace('app.nav', …)` slice (namespace `app.nav`) is loaded from `<locale>/app.nav.json`. The filename — minus extension — *is* the namespace you pass to `get`.
+
 ## Supported file extensions
 
 `FSStore` resolves `<directory>/<locale>/<namespace>.<ext>` across the following extensions, in order:
@@ -41,19 +43,25 @@ Loading is provided by [`locter`](https://github.com/Tada5hi/locter) — first m
 
 ## File formats
 
+Each file holds a single namespace's **translations node** — a `{ "type": "translations", "data": { … } }` object. Plurals are plural nodes inside `data`.
+
 ### JSON
 
 ```json
 {
-    "greeting": "Hello, {{name}}!",
-    "nested": {
-        "deep": "Deep value"
-    },
-    "cart": {
-        "items": {
-            "@plural": {
-                "one": "{{count}} item",
-                "other": "{{count}} items"
+    "type": "translations",
+    "data": {
+        "greeting": "Hello, {{name}}!",
+        "nested": {
+            "deep": "Deep value"
+        },
+        "cart": {
+            "items": {
+                "type": "plural",
+                "data": {
+                    "one": "{{count}} item",
+                    "other": "{{count}} items"
+                }
             }
         }
     }
@@ -62,18 +70,24 @@ Loading is provided by [`locter`](https://github.com/Tada5hi/locter) — first m
 
 ### TypeScript / JavaScript (ESM)
 
+The default export is a translations node — build it with `defineTranslations` (and `definePlural` for plurals):
+
 ```typescript
-export default {
+import { defineTranslations } from 'ilingo';
+
+export default defineTranslations({
     greeting: 'Hello, {{name}}!',
-};
+});
 ```
 
 ### CommonJS
 
 ```javascript
-module.exports = {
+const { defineTranslations } = require('ilingo');
+
+module.exports = defineTranslations({
     greeting: 'Hello, {{name}}!',
-};
+});
 ```
 
 ## Multiple directories

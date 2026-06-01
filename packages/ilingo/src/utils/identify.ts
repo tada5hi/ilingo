@@ -7,13 +7,14 @@
 
 import { isObject } from 'smob';
 import type {
-    Lines,
+    CatalogNode,
+    LocaleNode,
+    NamespaceNode,
     PluralCategory,
     PluralForms,
-    PluralLeaf,
+    PluralNode,
+    TranslationsNode,
 } from '../types';
-
-export const PLURAL_MARKER = '@plural';
 
 const PLURAL_CATEGORIES = new Set<PluralCategory>([
     'zero',
@@ -25,15 +26,10 @@ const PLURAL_CATEGORIES = new Set<PluralCategory>([
 ]);
 
 /**
- * Validates the inner CLDR-categorised options carried by a plural leaf
+ * Validates the inner CLDR-categorised options carried by a plural node
  * — a `{ one, other, ... }` object whose keys are CLDR categories and
  * whose values are strings, with `other` always present. Used by
- * `isPluralLeaf` to check the contents of the `@plural` wrapper.
- *
- * Not a top-level plural detector: a bare object of this shape sitting
- * directly at a catalog leaf is treated as a regular nested namespace.
- * Wrap it in `{ "@plural": { ... } }` (JSON) or `definePlural({ ... })`
- * (TS) to mark it as a plural leaf.
+ * `isPluralNode` to check the `data` of a `{ type: 'plural' }` node.
  */
 export function isPluralForms(value: unknown): value is PluralForms {
     if (!isObject(value)) {
@@ -56,39 +52,42 @@ export function isPluralForms(value: unknown): value is PluralForms {
 }
 
 /**
- * Detects the `{ "@plural": { ... } }` wrapper — the only recognised
- * plural-leaf form. The marker disambiguates plurals from regular
- * namespaces that happen to use CLDR-category key names.
+ * Detects a plural leaf — the tagged `{ type: 'plural', data: PluralForms }`
+ * node. The `type` discriminator disambiguates a plural from a regular
+ * nested translations object whose keys happen to be CLDR-category names.
  */
-export function isPluralLeaf(value: unknown): value is PluralLeaf {
-    if (!isObject(value)) {
-        return false;
-    }
-    const obj = value as Record<string, unknown>;
-    return PLURAL_MARKER in obj && isPluralForms(obj[PLURAL_MARKER]);
+export function isPluralNode(value: unknown): value is PluralNode {
+    return isObject(value) &&
+        (value as { type?: unknown }).type === 'plural' &&
+        isPluralForms((value as { data?: unknown }).data);
 }
 
-export function isLineRecord(value: unknown): value is Lines {
-    if (!isObject(value)) {
-        return false;
-    }
+/** Detects a `{ type: 'translations', data }` node. */
+export function isTranslationsNode(value: unknown): value is TranslationsNode {
+    return isObject(value) &&
+        (value as { type?: unknown }).type === 'translations' &&
+        isObject((value as { data?: unknown }).data);
+}
 
-    if (isPluralLeaf(value)) {
-        return false;
-    }
+/** Detects a `{ type: 'namespace', name, data }` node. */
+export function isNamespaceNode(value: unknown): value is NamespaceNode {
+    return isObject(value) &&
+        (value as { type?: unknown }).type === 'namespace' &&
+        typeof (value as { name?: unknown }).name === 'string' &&
+        Array.isArray((value as { data?: unknown }).data);
+}
 
-    const ob = value as Record<string, any>;
-    const keys = Object.keys(ob);
-    for (const key of keys) {
-        /* istanbul ignore next */
-        if (
-            typeof ob[key] !== 'string' &&
-            !isPluralLeaf(ob[key]) &&
-            !isLineRecord(ob[key])
-        ) {
-            return false;
-        }
-    }
+/** Detects a `{ type: 'locale', name, data }` node. */
+export function isLocaleNode(value: unknown): value is LocaleNode {
+    return isObject(value) &&
+        (value as { type?: unknown }).type === 'locale' &&
+        typeof (value as { name?: unknown }).name === 'string' &&
+        Array.isArray((value as { data?: unknown }).data);
+}
 
-    return true;
+/** Detects a `{ type: 'catalog', data }` root node. */
+export function isCatalogNode(value: unknown): value is CatalogNode {
+    return isObject(value) &&
+        (value as { type?: unknown }).type === 'catalog' &&
+        Array.isArray((value as { data?: unknown }).data);
 }

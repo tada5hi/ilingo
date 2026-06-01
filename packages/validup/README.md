@@ -92,26 +92,6 @@ Translate an `IssueGroup[]` — each by its **own** `code` (e.g. `one_of_failed`
 
 Options on all three: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
 
-### Type-safe catalog composition
-
-The shipped catalog's shape is exported as `ValidupCatalog` for consumers using `Ilingo<Catalog>`:
-
-```typescript
-import type { ValidupCatalog } from '@ilingo/validup';
-import type { Ilingo } from 'ilingo';
-
-type AppCatalog = {
-    en: { app: { greeting: string } } & ValidupCatalog['en'];
-    de: { app: { greeting: string } } & ValidupCatalog['de'];
-};
-
-const ilingo: Ilingo<AppCatalog> = new Ilingo<AppCatalog>({ /* ... */ });
-// ilingo.get({ namespace: 'validup', key: 'min_length' }) → typed
-// ilingo.get({ namespace: 'validup', key: 'typo' })       → TS error
-```
-
-The interface is augmentable so adapter authors / consumers shipping extension `IssueCode`s via `IssueDataByCode` can extend it with their own keys.
-
 ### Default catalogs
 
 ```typescript
@@ -123,27 +103,35 @@ import {
 } from '@ilingo/validup/store/memory';
 ```
 
-Each function returns a `Lines` keyed by the built-in `IssueCode` runtime values. (They live on the `./store/memory` subpath — the eager entry — so the data-free core stays free of translation modules.)
+Each function returns a `Translations` keyed by the built-in `IssueCode` runtime values. (They live on the `./store/memory` subpath — the eager entry — so the data-free core stays free of translation modules.)
 
 ### Extending / overriding the `validup` namespace
 
 The `validup` namespace is a **shared key-space** — it isn't owned solely by this package. ilingo's serial store walk falls through store-by-store *per key*, so an app co-owns the namespace by registering its own store **first**: it adds translations for its custom extension `IssueCode`s and overrides individual built-in messages, while this catalog supplies the defaults for everything else.
 
 ```typescript
-import { Ilingo, MemoryStore } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 import { createMemoryStore } from '@ilingo/validup/store/memory';
 
 const ilingo = new Ilingo({ locale: 'en' });
 
 // app store FIRST → wins per (locale, namespace, key)
 ilingo.registerStore(new MemoryStore({
-    data: {
-        en: { validup: {
-            email_taken: 'That email is already registered', // custom extension code
-            value_invalid: 'Please check this field',         // overrides the built-in
-        } },
-        de: { validup: { email_taken: 'Diese E-Mail ist bereits registriert' } },
-    },
+    data: defineCatalog([
+        defineLocale('en', [
+            defineNamespace('validup', [
+                defineTranslations({
+                    email_taken: 'That email is already registered', // custom extension code
+                    value_invalid: 'Please check this field',        // overrides the built-in
+                }),
+            ]),
+        ]),
+        defineLocale('de', [
+            defineNamespace('validup', [
+                defineTranslations({ email_taken: 'Diese E-Mail ist bereits registriert' }),
+            ]),
+        ]),
+    ]),
 }));
 
 // built-in catalog appended → fills every code the app store doesn't define

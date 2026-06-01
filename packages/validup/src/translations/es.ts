@@ -5,9 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Lines } from 'ilingo';
+import type { Translations } from 'ilingo';
 
-export function useSpanishTranslation(): Lines {
+export function useSpanishTranslation(): Translations {
     return {
         // Generic / structural
         value_invalid: 'El valor no es válido',

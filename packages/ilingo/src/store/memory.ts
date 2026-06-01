@@ -6,8 +6,9 @@
  */
 
 import { getPathValue, setPathValue } from 'pathtrace';
+import { normalizeCatalog } from '../catalog/normalize';
 import type { Leaf, Locales } from '../types';
-import { isPluralLeaf } from '../utils/identify';
+import { isPluralNode } from '../utils/identify';
 import type {
     IMutableStore,
     MemoryStoreOptions,
@@ -23,7 +24,7 @@ export class MemoryStore implements IMutableStore {
     constructor(options: MemoryStoreOptions) {
         this.id = options.id || Symbol('MemoryStore');
 
-        this.data = options.data;
+        this.data = normalizeCatalog(options.data);
     }
 
     async get(context: StoreGetContext): Promise<Leaf | undefined> {
@@ -47,12 +48,11 @@ export class MemoryStore implements IMutableStore {
             return output;
         }
 
-        // Plural forms must use the explicit `{ "@plural": { ... } }`
-        // wrapper. Bare `{ one, other }` objects are treated as ordinary
-        // nested namespaces — the wrapper is the only signal that an
-        // object should be interpreted as a CLDR-categorised plural leaf.
-        if (isPluralLeaf(output)) {
-            return output['@plural'];
+        // Plural leaves are the tagged `{ type: 'plural', data }` node.
+        // A bare nested object is an ordinary key group, never a plural —
+        // the `type` discriminator is the only signal of a plural leaf.
+        if (isPluralNode(output)) {
+            return output.data;
         }
 
         return undefined;

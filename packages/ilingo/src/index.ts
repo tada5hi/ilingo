@@ -6,6 +6,7 @@
  */
 
 export * from './catalog';
+export * from './catalog/normalize';
 export * from './config';
 export * from './module';
 export * from './store';

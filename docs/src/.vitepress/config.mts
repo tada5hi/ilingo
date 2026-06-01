@@ -60,7 +60,6 @@ export default defineConfig({
                     items: [
                         { text: 'Pluralization', link: '/guide/pluralization' },
                         { text: 'Formatters', link: '/guide/formatters' },
-                        { text: 'Type-Safe Keys', link: '/guide/type-safe-keys' },
                         { text: 'Missing-Key Handler', link: '/guide/missing-key' },
                     ],
                 },

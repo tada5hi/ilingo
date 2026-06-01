@@ -6,114 +6,107 @@
  */
 
 import type {
-    Lines,
-    Locales,
-    Namespaces,
+    CatalogNode,
+    LocaleNode,
+    NamespaceChild,
+    NamespaceNode,
     PluralForms,
-    PluralLeaf,
+    PluralNode,
+    Translations,
+    TranslationsNode,
 } from './types';
 
 /**
- * Helper that returns its argument unchanged but captures it with `const`
- * type inference, so the catalog literal keeps its narrowest shape
- * (per-key string literals, `@plural`-wrapped plural leaves, etc.)
- * without the caller having to add `as const` everywhere.
+ * A terminal group of translations for the surrounding namespace. The data
+ * is a flat or key-nested map of `string | PluralNode` leaves — a nested
+ * object extends the dotted *key* path (`{ nav: { home } }` → `nav.home`).
  *
  * @example
- *     const catalog = defineCatalog({
- *         en: { app: { greeting: 'Hi {{name}}' } },
- *         de: { app: { greeting: 'Hallo {{name}}' } },
+ *     defineTranslations({
+ *         greeting: 'Hi {{name}}',
+ *         nav: { home: 'Home', settings: 'Settings' }, // → nav.home, nav.settings
  *     });
- *     const ilingo = new Ilingo<typeof catalog>({
- *         store: new MemoryStore({ data: catalog }),
- *     });
- *     ilingo.get({ namespace: 'app', key: 'greeting' });  // OK
- *     ilingo.get({ namespace: 'app', key: 'unknown' });   // type error
  */
-export function defineCatalog<const T extends Locales>(catalog: T): T {
-    return catalog;
+export function defineTranslations(data: Translations): TranslationsNode {
+    return { type: 'translations', data };
 }
 
 /**
- * One-file-per-locale companion to `defineCatalog`. Captures the namespaces
- * for a single locale with `const` inference so the per-key literal types
- * survive an `export default`, and validates the shape against
- * `Namespaces` so a misplaced top-level value (a stray string, the
- * wrong nesting) is caught at compile time instead of failing silently
- * at lookup.
+ * A namespace. Its children are sub-namespaces and/or translations groups — a
+ * nested `defineNamespace` extends the dotted *namespace* path
+ * (`app` ▸ `nav` → namespace `app.nav`), while translations inside it populate the
+ * namespace's keys.
  *
- * Combine multiple `defineLocale` files via `defineCatalog` — the const
- * generics flow through, so `Ilingo<typeof catalog>` still infers the
- * full set of legal `(namespace, key)` pairs.
+ * @example
+ *     defineNamespace('app', [
+ *         defineTranslations({ greeting: 'Hi {{name}}' }),
+ *         defineNamespace('nav', [ defineTranslations({ home: 'Home' }) ]), // → app.nav
+ *     ]);
+ */
+export function defineNamespace(name: string, data: NamespaceChild[]): NamespaceNode {
+    return {
+        type: 'namespace', 
+        name, 
+        data, 
+    };
+}
+
+/**
+ * One locale's content — a list of namespaces (and, reserved for the future
+ * default-namespace feature, bare translations groups). Compose locales into a
+ * catalog with `defineCatalog`.
  *
  * @example
  *     // locales/en.ts
- *     import { defineLocale, definePlural } from 'ilingo';
+ *     import { defineLocale, defineNamespace, defineTranslations, definePlural } from 'ilingo';
  *
- *     export default defineLocale({
- *         app:  { greeting: 'Hi {{name}}' },
- *         cart: { items: definePlural({ one: '1 item', other: '{{count}} items' }) },
- *     });
- *
- *     // locales/index.ts
- *     import en from './en';
- *     import de from './de';
- *     export const catalog = defineCatalog({ en, de });
+ *     export default defineLocale('en', [
+ *         defineNamespace('app', [ defineTranslations({ greeting: 'Hi {{name}}' }) ]),
+ *         defineNamespace('cart', [
+ *             defineTranslations({ items: definePlural({ one: '1 item', other: '{{count}} items' }) }),
+ *         ]),
+ *     ]);
  */
-export function defineLocale<const T extends Namespaces>(locale: T): T {
-    return locale;
+export function defineLocale(name: string, data: NamespaceChild[]): LocaleNode {
+    return {
+        type: 'locale', 
+        name, 
+        data, 
+    };
 }
 
 /**
- * One-file-per-namespace companion to `defineCatalog` / `defineLocale`.
- * Captures the lines of a single namespace with `const` inference so the
- * per-key literal types survive an `export default`, and validates the
- * shape against `Lines` so a misplaced value (the wrong nesting, a
- * non-string/`@plural` leaf) is caught at compile time.
- *
- * Use when each namespace lives in its own file (`locales/en/app.ts`).
- * Combine via `defineLocale` / `defineCatalog` — the const generics flow
- * through, so `Ilingo<typeof catalog>` still infers the full set of legal
- * `(namespace, key)` pairs.
+ * Root of a catalog tree — a list of locales. The result is the canonical
+ * ingestion format consumed by `MemoryStore({ data })` (and reduced to the
+ * internal lookup shape by `normalizeCatalog`).
  *
  * @example
- *     // locales/en/app.ts
- *     import { defineNamespace, definePlural } from 'ilingo';
+ *     import { defineCatalog } from 'ilingo';
+ *     import en from './locales/en';
+ *     import de from './locales/de';
  *
- *     export default defineNamespace({
- *         greeting: 'Hi {{name}}',
- *         items: definePlural({ one: '1 item', other: '{{count}} items' }),
- *     });
+ *     export const catalog = defineCatalog([en, de]);
+ *     const ilingo = new Ilingo({ store: new MemoryStore({ data: catalog }) });
  */
-export function defineNamespace<const T extends Lines>(namespace: T): T {
-    return namespace;
+export function defineCatalog(data: LocaleNode[]): CatalogNode {
+    return { type: 'catalog', data };
 }
 
 /**
- * TS/JS-friendly companion for the explicit `@plural` marker. Wraps the
- * given CLDR-categorised forms into `{ '@plural': leaf }` — the same
- * runtime shape an authored JSON file would carry — so callers writing
- * catalogs in TypeScript don't have to type the magic key by hand.
+ * A plural leaf. Wraps the CLDR-categorised forms into the tagged
+ * `{ type: 'plural', data }` node — the only recognised plural form. The
+ * `PluralForms` parameter requires `other` and restricts the keys to CLDR
+ * categories, so a missing `other` or a misspelled category is a compile
+ * error and the categories autocomplete.
  *
- * The `const` generic preserves the literal type of each plural form for
- * downstream type inference (e.g. inside `defineCatalog`).
- *
- * JSON files cannot call functions, so they continue to use the
- * `{ "@plural": { "one": "...", "other": "..." } }` literal shape. Both
- * forms produce identical runtime data.
+ * JSON files cannot call functions, so they write the literal
+ * `{ "type": "plural", "data": { "one": "...", "other": "..." } }` instead.
  *
  * @example
- *     const catalog = defineCatalog({
- *         en: {
- *             cart: {
- *                 items: definePlural({
- *                     one: '{{count}} item',
- *                     other: '{{count}} items',
- *                 }),
- *             },
- *         },
+ *     defineTranslations({
+ *         items: definePlural({ one: '{{count}} item', other: '{{count}} items' }),
  *     });
  */
-export function definePlural<const T extends PluralForms>(plural: T): { '@plural': T } & PluralLeaf {
-    return { '@plural': plural };
+export function definePlural(data: PluralForms): PluralNode {
+    return { type: 'plural', data };
 }

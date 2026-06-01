@@ -6,7 +6,7 @@
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
-import { LoaderStore } from 'ilingo';
+import { LoaderStore, defineTranslations } from 'ilingo';
 import { defineComponent } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { install, useTranslation } from '../../src';
@@ -15,7 +15,7 @@ describe('useTranslation — store invalidation (#903 + #904)', () => {
     it('re-runs the computedAsync when the injected store fires invalidate', async () => {
         let version = 0;
         const store = new LoaderStore({
-            loader: async () => ({ hi: `Hello v${++version}` }),
+            loader: async () => defineTranslations({ hi: `Hello v${++version}` }),
         });
 
         const Probe = defineComponent({
@@ -49,7 +49,7 @@ describe('useTranslation — store invalidation (#903 + #904)', () => {
     it('ignores invalidations scoped to a different namespace', async () => {
         let version = 0;
         const store = new LoaderStore({
-            loader: async () => ({ hi: `Hello v${++version}` }),
+            loader: async () => defineTranslations({ hi: `Hello v${++version}` }),
         });
 
         const Probe = defineComponent({

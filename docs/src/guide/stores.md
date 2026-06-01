@@ -3,10 +3,10 @@
 A **store** is anything that can return a translation leaf for a given `(locale, namespace, key)`. ilingo is **read-first** — its job is to *read* a datasource — so the `IStore` port is the read contract: `id`, `get`, `getLocales`.
 
 ```typescript
-import type { Leaf, PluralLeaf } from 'ilingo';
+import type { Leaf, PluralNode } from 'ilingo';
 
 export type StoreGetContext = { locale: string, namespace: string, key: string };
-export type StoreSetContext = StoreGetContext & { value: string | PluralLeaf };
+export type StoreSetContext = StoreGetContext & { value: string | PluralNode };
 
 export interface IStore {
     readonly id: string | symbol;
@@ -35,16 +35,16 @@ The `IStore` **read** port is **frozen** at `id` / `get` / `getLocales` for the 
 
 ## MemoryStore
 
-The default. Holds translations in a plain nested object:
+The default. Holds the catalog tree built with the `define*` helpers (see [Catalog Design](./catalog-design)):
 
 ```typescript
-import { Ilingo, MemoryStore } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 
 const store = new MemoryStore({
-    data: {
-        en: { app: { hi: 'Hello, {{name}}!' } },
-        de: { app: { hi: 'Hallo, {{name}}!' } },
-    },
+    data: defineCatalog([
+        defineLocale('en', [defineNamespace('app', [defineTranslations({ hi: 'Hello, {{name}}!' })])]),
+        defineLocale('de', [defineNamespace('app', [defineTranslations({ hi: 'Hallo, {{name}}!' })])]),
+    ]),
 });
 
 const ilingo = new Ilingo({ store });
@@ -71,6 +71,8 @@ import { Ilingo, LoaderStore } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new LoaderStore({
+        // the module's default export is a translations node (e.g. defineTranslations({ ... })
+        // or a JSON `{ "type": "translations", "data": { … } }`)
         loader: async (locale, namespace) => {
             const m = await import(`./locales/${locale}/${namespace}.json`);
             return m.default;
@@ -131,7 +133,7 @@ An `Ilingo` instance exposes `public readonly stores: Map<symbol | string, IStor
 
 ```typescript
 const ilingo = new Ilingo({
-    store: new MemoryStore({ data: { /* core strings */ } }),
+    store: new MemoryStore({ data: defineCatalog([/* core strings */]) }),
 });
 
 // add more after construction — checked only when the earlier store misses
@@ -208,5 +210,5 @@ Rules of thumb:
 
 - Give every store a stable `id` (use `Symbol.for('@scope/name')` for a library catalog so it dedupes across duplicate copies); `Ilingo.registerStore` keys the store map by it.
 - Return `undefined` on miss. **Never throw.** Throwing breaks the fallback walk.
-- Returning `PluralForms` (the unwrapped CLDR-categorised options) is allowed but optional. String-only stores are valid. Custom stores that hold raw `PluralLeaf` (`{ "@plural": ... }`) values should unwrap before returning, matching `MemoryStore` and `LoaderStore`.
+- Returning `PluralForms` (the unwrapped CLDR-categorised options) is allowed but optional. String-only stores are valid. Custom stores that hold a raw plural node (`{ type: 'plural', data: { … } }`) should unwrap to the inner `PluralForms` before returning, matching `MemoryStore` and `LoaderStore`.
 - If you need a load cache, extending `MemoryStore` and using the parent map is idiomatic (`FSStore` does this).

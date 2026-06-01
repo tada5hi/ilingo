@@ -2,45 +2,42 @@
 
 Leaves can be **plural objects** keyed by CLDR category (`zero | one | two | few | many | other`). `Ilingo` selects the matching form via `Intl.PluralRules` keyed by the *resolved* locale.
 
-## The `@plural` wrapper
+## TS/JS: `definePlural`
 
-Plural forms are recognised only when wrapped in `{ "@plural": { ... } }`:
+Author plurals with the `definePlural` helper. Its argument type is `PluralForms`, so you get autocomplete for the CLDR categories and a compile error on a missing `other` / non-CLDR key:
+
+```typescript
+import { defineNamespace, defineTranslations, definePlural } from 'ilingo';
+
+defineNamespace('cart', [
+    defineTranslations({
+        items: definePlural({
+            one: '{{count}} item',
+            other: '{{count}} items',
+        }),
+    }),
+]);
+```
+
+`definePlural` returns a plural node (`{ type: 'plural', data: forms }`). A plain `{ one, other }` object passed to `defineTranslations` is **not** a plural — it's a key-nested map, so siblings called `one`, `other`, etc. are reachable via dotted access. Only a node produced by `definePlural` (or the literal `{ "type": "plural", ... }` form in JSON) is interpreted as a plural.
+
+## JSON
+
+JSON cannot call functions, so a plural is spelled as a literal plural node inside the file's translations node:
 
 ```json
 {
-    "cart": {
+    "type": "translations",
+    "data": {
         "items": {
-            "@plural": {
-                "one": "{{count}} item",
-                "other": "{{count}} items"
-            }
+            "type": "plural",
+            "data": { "one": "{{count}} item", "other": "{{count}} items" }
         }
     }
 }
 ```
 
-The marker disambiguates plurals from regular namespaces that happen to use CLDR-category keys. A bare `{ one, other }` object — without the marker — is treated as an ordinary nested namespace, so siblings called `one`, `other`, etc. are reachable via dotted access without being interpreted as plural categories.
-
-## TS/JS: `definePlural`
-
-JSON cannot call functions, but TS/JS can — use `definePlural` to get autocomplete and a compile error on missing-`other` / non-CLDR keys:
-
-```typescript
-import { defineCatalog, definePlural } from 'ilingo';
-
-const catalog = defineCatalog({
-    en: {
-        cart: {
-            items: definePlural({
-                one: '{{count}} item',
-                other: '{{count}} items',
-            }),
-        },
-    },
-});
-```
-
-Runtime: `definePlural` returns `{ '@plural': leaf }` — identical to the JSON form. Type system: the const generic preserves the literal types so `Ilingo<typeof catalog>` still treats `items` as a plural key requiring `count`.
+Both forms produce identical runtime data — `Intl.PluralRules` doesn't care which authoring path produced the leaf.
 
 ## Selection rules
 
@@ -59,4 +56,4 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 5 }); // 'other'
 
 ## Round-tripping
 
-Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts `string | PluralLeaf` (the `{ "@plural": ... }` wrapper). `FSStore.set` persists them as JSON unchanged.
+Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts a `string` or a plural **node** (`definePlural(...)` / `{ type: 'plural', data }`), not the unwrapped `PluralForms`, so the store recognises and unwraps it on read. `FSStore.set` persists it as JSON unchanged.

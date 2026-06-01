@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { type Lines, LoaderStore } from 'ilingo';
+import { LoaderStore, type TranslationsNode, defineTranslations } from 'ilingo';
 import { NAMESPACE, STORE_ID } from '../constants';
 
 /**
@@ -15,11 +15,11 @@ import { NAMESPACE, STORE_ID } from '../constants';
  * fetched. Importing this entry point pulls in *none* of the translation
  * data up front (unlike `@ilingo/vuelidate/store/memory`).
  */
-const loaders: Record<string, () => Promise<Lines>> = {
-    en: () => import('../translations/en').then((m) => m.useEnglishTranslation()),
-    de: () => import('../translations/de').then((m) => m.useGermanTranslation()),
-    fr: () => import('../translations/fr').then((m) => m.useFrenchTranslation()),
-    es: () => import('../translations/es').then((m) => m.useSpanishTranslation()),
+const loaders: Record<string, () => Promise<TranslationsNode>> = {
+    en: () => import('../translations/en').then((m) => defineTranslations(m.useEnglishTranslation())),
+    de: () => import('../translations/de').then((m) => defineTranslations(m.useGermanTranslation())),
+    fr: () => import('../translations/fr').then((m) => defineTranslations(m.useFrenchTranslation())),
+    es: () => import('../translations/es').then((m) => defineTranslations(m.useSpanishTranslation())),
 };
 
 /**

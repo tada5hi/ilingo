@@ -35,7 +35,7 @@ const message = await translateIssue(issue, ilingo);
 
 ## Data-free core, two store subpaths
 
-The package entry (`@ilingo/validup`) is **data-free** — it carries the helpers, the `NAMESPACE` / `STORE_ID` constants, and the catalog types, but imports **no** translation modules. The catalogs live behind two subpaths so you pay only for the backend you choose. Register either with `ilingo.registerStore(store)`, which dedupes by the store's `STORE_ID` identity.
+The package entry (`@ilingo/validup`) is **data-free** — it carries the helpers and the `NAMESPACE` / `STORE_ID` constants, but imports **no** translation modules. The catalogs live behind two subpaths so you pay only for the backend you choose. Register either with `ilingo.registerStore(store)`, which dedupes by the store's `STORE_ID` identity.
 
 ### `@ilingo/validup/store/memory` — eager
 
@@ -88,45 +88,33 @@ const groups = await translateIssueGroups(groupIssues, ilingo);
 // → [{ issue, message }, …]  (issue is the IssueGroup, not its children)
 ```
 
-## Type-safe catalog composition
-
-The shipped catalog shape is exported as `ValidupCatalog` for consumers using `Ilingo<Catalog>`:
-
-```typescript
-import type { ValidupCatalog } from '@ilingo/validup';
-import { Ilingo } from 'ilingo';
-
-type AppCatalog = {
-    en: { app: { greeting: string } } & ValidupCatalog['en'];
-    de: { app: { greeting: string } } & ValidupCatalog['de'];
-};
-
-const ilingo = new Ilingo<AppCatalog>({ /* ... */ });
-// ilingo.get({ namespace: 'validup', key: 'min_length' }) → typed
-// ilingo.get({ namespace: 'validup', key: 'typo' })       → TS error
-```
-
-The interface is **augmentable** — adapter authors and consumers shipping extension `IssueCode`s via validup's `IssueDataByCode` declaration merging can extend it (and `ValidupCatalogEntries`) with their own keys.
-
 ## Extending / overriding the `validup` namespace
 
 The `validup` namespace is a **shared key-space** — it isn't owned solely by this package. ilingo's serial store walk falls through store-by-store *per key*, so an app co-owns the namespace by registering its own store **first**: it adds translations for custom extension `IssueCode`s and overrides individual built-in messages, while this catalog (appended) supplies the defaults for everything else.
 
 ```typescript
-import { Ilingo, MemoryStore } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 import { createMemoryStore } from '@ilingo/validup/store/memory';
 
 const ilingo = new Ilingo({ locale: 'en' });
 
 // app store FIRST → wins per (locale, namespace, key)
 ilingo.registerStore(new MemoryStore({
-    data: {
-        en: { validup: {
-            email_taken: 'That email is already registered', // custom extension code
-            value_invalid: 'Please check this field',          // overrides the built-in
-        } },
-        de: { validup: { email_taken: 'Diese E-Mail ist bereits registriert' } },
-    },
+    data: defineCatalog([
+        defineLocale('en', [
+            defineNamespace('validup', [
+                defineTranslations({
+                    email_taken: 'That email is already registered', // custom extension code
+                    value_invalid: 'Please check this field',        // overrides the built-in
+                }),
+            ]),
+        ]),
+        defineLocale('de', [
+            defineNamespace('validup', [
+                defineTranslations({ email_taken: 'Diese E-Mail ist bereits registriert' }),
+            ]),
+        ]),
+    ]),
 }));
 
 // built-in catalog appended → fills every code the app store doesn't define

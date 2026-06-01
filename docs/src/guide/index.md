@@ -52,5 +52,4 @@ The chain is walked **locale-first**: the closest locale beats the farthest one 
 | `{{var}}` substitution + data merging | [Templates & Data](./templates) |
 | CLDR-category plural selection | [Pluralization](./pluralization) |
 | `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.ListFormat` | [Formatters](./formatters) |
-| Compile-time typo prevention | [Type-Safe Keys](./type-safe-keys) |
 | Custom miss reporting | [Missing-Key Handler](./missing-key) |

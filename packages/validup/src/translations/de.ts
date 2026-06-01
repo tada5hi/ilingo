@@ -5,9 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Lines } from 'ilingo';
+import type { Translations } from 'ilingo';
 
-export function useGermanTranslation(): Lines {
+export function useGermanTranslation(): Translations {
     return {
         // Generic / structural
         value_invalid: 'Der Wert ist ungültig',

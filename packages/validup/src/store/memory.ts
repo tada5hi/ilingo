@@ -9,7 +9,11 @@ import {
     type IMutableStore,
     MemoryStore,
     type Namespaces,
-    parseLinesRecord,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineTranslations,
+    parseTranslationsRecord,
 } from 'ilingo';
 import { NAMESPACE, STORE_ID } from '../constants';
 import {
@@ -33,12 +37,12 @@ export class Store extends MemoryStore {
     constructor() {
         super({
             id: STORE_ID,
-            data: {
-                en: { validup: useEnglishTranslation() },
-                de: { validup: useGermanTranslation() },
-                fr: { validup: useFrenchTranslation() },
-                es: { validup: useSpanishTranslation() },
-            },
+            data: defineCatalog([
+                defineLocale('en', [defineNamespace(NAMESPACE, [defineTranslations(useEnglishTranslation())])]),
+                defineLocale('de', [defineNamespace(NAMESPACE, [defineTranslations(useGermanTranslation())])]),
+                defineLocale('fr', [defineNamespace(NAMESPACE, [defineTranslations(useFrenchTranslation())])]),
+                defineLocale('es', [defineNamespace(NAMESPACE, [defineTranslations(useSpanishTranslation())])]),
+            ]),
         });
     }
 }
@@ -79,7 +83,7 @@ export async function extendStore(store: IMutableStore) {
     const locales = Object.keys(translations);
     for (const locale of locales) {
         const records = translations[locale];
-        const pairs = parseLinesRecord(records);
+        const pairs = parseTranslationsRecord(records);
         for (const pair of pairs) {
             promises.push(
                 store.set({

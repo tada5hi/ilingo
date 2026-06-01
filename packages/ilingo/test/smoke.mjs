@@ -25,7 +25,15 @@
  *               `bun packages/ilingo/test/smoke.mjs`
  */
 
-import { Ilingo, MemoryStore } from '../dist/index.mjs';
+import {
+    Ilingo,
+    MemoryStore,
+    defineCatalog,
+    defineTranslations,
+    defineLocale,
+    defineNamespace,
+    definePlural,
+} from '../dist/index.mjs';
 
 /**
  * Runtime-neutral equality assertion. Mirrors the call shape of
@@ -43,28 +51,35 @@ function equal(actual, expected, message) {
 
 const ilingo = new Ilingo({
     store: new MemoryStore({
-        data: {
-            en: {
-                app: {
-                    greeting: 'Hi {{name}}',
-                    cart: {
-                        items: {
-                            '@plural': {
+        data: defineCatalog([
+            defineLocale('en', [
+                defineNamespace('app', [
+                    defineTranslations({
+                        greeting: 'Hi {{name}}',
+                        cart: {
+                            items: definePlural({
                                 one: '{{count}} item',
                                 other: '{{count}} items',
-                            },
+                            }),
                         },
-                    },
-                },
-            },
-            de: {
-                app: {
-                    greeting: 'Hallo {{name}}',
-                    cart: { items: { '@plural': { one: '{{count}} Artikel', other: '{{count}} Artikel' } } },
-                },
-            },
-            'pt-BR': { app: {} }, // empty — forces fallback
-        },
+                    }),
+                ]),
+            ]),
+            defineLocale('de', [
+                defineNamespace('app', [
+                    defineTranslations({
+                        greeting: 'Hallo {{name}}',
+                        cart: {
+                            items: definePlural({ one: '{{count}} Artikel', other: '{{count}} Artikel' }),
+                        },
+                    }),
+                ]),
+            ]),
+            // empty namespace — forces fallback
+            defineLocale('pt-BR', [
+                defineNamespace('app', [defineTranslations({})]),
+            ]),
+        ]),
     }),
     locale: 'en',
 });
