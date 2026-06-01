@@ -1,5 +1,5 @@
 import type { Lines, PluralLeaf } from '../types.ts';
-import { isPluralLeaf } from 'ilingo';
+import { isPluralLeaf } from './identify';
 
 export type LinesRecordParsed = {
     key: string,
