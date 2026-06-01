@@ -29,8 +29,8 @@ import {
     isBCP47LanguageCode,
     normalizeNamespaceBody,
 } from 'ilingo';
-import type { ConfigInput } from './types';
-import { buildConfig } from './utils';
+import type { FSStoreOptionsInput } from './types';
+import { normalizeOptions } from './utils';
 
 type ChokidarLike = {
     watch(paths: string | string[], options?: object): {
@@ -53,10 +53,10 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
     /** Active chokidar watcher (only when `watch: true`). Closed by `close()`. */
     protected watcher: ReturnType<ChokidarLike['watch']> | undefined;
 
-    constructor(input?: ConfigInput) {
+    constructor(input?: FSStoreOptionsInput) {
         super({ id: input?.id ?? Symbol('FSStore'), data: {} });
 
-        const options = buildConfig(input);
+        const options = normalizeOptions(input);
 
         this.loaded = {};
         this.directories = options.directory;
