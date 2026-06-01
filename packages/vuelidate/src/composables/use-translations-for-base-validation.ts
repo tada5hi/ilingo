@@ -9,6 +9,7 @@ import { computedAsync } from '@vueuse/core';
 import { injectIlingo, injectLocale } from '@ilingo/vue';
 import type { BaseValidation, ValidationRuleCollection } from '@vuelidate/core';
 import { computed } from 'vue';
+import { NAMESPACE } from '../constants';
 import type { BaseValidationTranslations } from '../types';
 import { isRuleResult } from '../utils';
 
@@ -44,7 +45,7 @@ export function useTranslationsForBaseValidation<
             const ruleResult = (result as Record<string, any>)[rule];
 
             const value = await instance.get({
-                namespace: 'vuelidate',
+                namespace: NAMESPACE,
                 key: rule,
                 data: ruleResult.$params,
                 locale: locale.value,

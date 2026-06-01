@@ -14,7 +14,6 @@ Ilingo is a lightweight library for translation and internationalization. The co
 - [Configuration](#configuration)
 - [Usage](#usage)
   - [Basic](#basic)
-  - [Singleton](#singleton)
   - [Parameters](#parameters)
   - [Locales](#locales)
   - [Lazy](#lazy)
@@ -164,7 +163,7 @@ await ilingo.get({
 
 ### Locales
 
-The default locale, which is used by the singleton instance, can be modified after initialization:
+The default locale can be modified after initialization:
 
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -194,8 +193,8 @@ await ilingo.get({
 // Ich bin 18 Jahre alt
 ```
 
-It also can be **temporarily** overwritten, by passing the locale as the third argument
-to one of the helper or supported singleton methods:
+It can also be **temporarily** overwritten per call, by passing a `locale` in the
+translation context:
 
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -534,7 +533,7 @@ await ilingo.get({
 
 Or call `ilingo.registerFormatter(name, fn)` after construction. Custom formatters receive `(value, options, locale)` — `options` is the parsed `{key=value, ...}` from inside the modifier parens.
 
-`Config.formatters` overrides win against the built-ins by name, so you can swap the default `number` formatter for a custom one if needed.
+`IlingoOptions.formatters` overrides win against the built-ins by name, so you can swap the default `number` formatter for a custom one if needed.
 
 ### Locale negotiation
 

@@ -6,4 +6,3 @@
  */
 
 export const LOCALE_DEFAULT = 'en';
-export const STORE_DEFAULT = Symbol.for('default');

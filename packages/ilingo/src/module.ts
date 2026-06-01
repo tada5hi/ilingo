@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { ConfigInput } from './config';
+import type { IlingoOptions } from './options';
 import { LOCALE_DEFAULT } from './constants';
 import type { IStore } from './store';
 import type {
@@ -67,7 +67,7 @@ export class Ilingo implements IIlingo {
 
     // ----------------------------------------------------
 
-    constructor(input: ConfigInput = {}) {
+    constructor(input: IlingoOptions = {}) {
         this.locale = input.locale || LOCALE_DEFAULT;
         this.fallback = input.fallback;
         this.onMissingKey = input.onMissingKey;
@@ -83,7 +83,10 @@ export class Ilingo implements IIlingo {
 
         this.stores = new Map<symbol, IStore>();
         if (input.store) {
-            this.registerStore(input.store);
+            const stores = Array.isArray(input.store) ? input.store : [input.store];
+            for (const store of stores) {
+                this.registerStore(store);
+            }
         }
     }
 
@@ -140,9 +143,10 @@ export class Ilingo implements IIlingo {
      * but the shared `formatters` registry means custom formatters
      * registered on either side are visible to both.
      *
-     * `overrides.store`, when provided, becomes the **first** store in
-     * the new instance (resolved before any inherited store). Other
-     * overrides replace the corresponding inherited config field.
+     * `overrides.store`, when provided, becomes the **first** store(s) in
+     * the new instance (resolved before any inherited store; an array is
+     * registered in order). Other overrides replace the corresponding
+     * inherited config field.
      *
      * `overrides.formatters`, when provided, is registered on the shared
      * registry — visible to both the parent and the child (consistent with
@@ -152,7 +156,7 @@ export class Ilingo implements IIlingo {
      * Designed for consumers that need a scoped variant of an existing
      * orchestrator — e.g. `@ilingo/vue`'s `useScopedCatalog`.
      */
-    clone(overrides: ConfigInput = {}): IIlingo {
+    clone(overrides: IlingoOptions = {}): IIlingo {
         const child = new Ilingo({
             store: overrides.store,
             locale: overrides.locale ?? this.locale,

@@ -5,7 +5,13 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { MemoryStore } from 'ilingo';
+import {
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineTranslations,
+} from 'ilingo';
 import { createApp } from 'vue';
 import App from './App.vue';
 import { install } from '../src';
@@ -13,21 +19,18 @@ import { install } from '../src';
 const app = createApp(App);
 install(app, {
     store: new MemoryStore({
-        data: {
-            // locale: de
-            de: {
-                // group: app
-                app: {
-                    key: 'Hallo mein Name ist {{name}}',
-                },
-            },
-            // locale: en
-            en: {
-                app: {
-                    key: 'Hello my name is {{name}}',
-                },
-            },
-        },
+        data: defineCatalog([
+            defineLocale('de', [
+                defineNamespace('app', [
+                    defineTranslations({ key: 'Hallo mein Name ist {{name}}' }),
+                ]),
+            ]),
+            defineLocale('en', [
+                defineNamespace('app', [
+                    defineTranslations({ key: 'Hello my name is {{name}}' }),
+                ]),
+            ]),
+        ]),
     }),
 });
 app.mount('#app');

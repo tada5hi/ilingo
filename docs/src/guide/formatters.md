@@ -79,7 +79,7 @@ The warning is deduplicated **per `Ilingo` instance** — different instances lo
 
 Register your own modifier names alongside the built-ins. Two surfaces, same effect:
 
-### `Config.formatters` at construction time
+### `IlingoOptions.formatters` at construction time
 
 ```typescript
 const ilingo = new Ilingo({

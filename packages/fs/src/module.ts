@@ -29,8 +29,8 @@ import {
     isBCP47LanguageCode,
     normalizeNamespaceBody,
 } from 'ilingo';
-import type { ConfigInput } from './types';
-import { buildConfig } from './utils';
+import type { FSStoreOptionsInput } from './types';
+import { normalizeOptions } from './utils';
 
 type ChokidarLike = {
     watch(paths: string | string[], options?: object): {
@@ -53,10 +53,10 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
     /** Active chokidar watcher (only when `watch: true`). Closed by `close()`. */
     protected watcher: ReturnType<ChokidarLike['watch']> | undefined;
 
-    constructor(input?: ConfigInput) {
+    constructor(input?: FSStoreOptionsInput) {
         super({ id: input?.id ?? Symbol('FSStore'), data: {} });
 
-        const options = buildConfig(input);
+        const options = normalizeOptions(input);
 
         this.loaded = {};
         this.directories = options.directory;
@@ -303,19 +303,19 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
     }
 
     protected addExtensionPattern(name: string) {
-        return `${name}.{js,mjs,cjs,ts,mts,mjs,json,conf}`;
+        return `${name}.{js,mjs,cjs,ts,mts,json,conf}`;
     }
 
     protected mergeFiles(files: unknown[]) {
-        const lineRecord: Translations = {};
+        const translations: Translations = {};
         for (const file of files) {
             // Each file is a translations node — `{ type: 'translations', data }` (JSON) or
             // `export default defineTranslations({ ... })` (TS/JS). Reduce it to the
             // internal `Translations` shape and merge. A non-translations file normalizes to
             // `{}` and emits a dev warning (see normalizeNamespaceBody).
-            this.merger(lineRecord, normalizeNamespaceBody(file as NamespaceBodyInput));
+            this.merger(translations, normalizeNamespaceBody(file as NamespaceBodyInput));
         }
 
-        return lineRecord;
+        return translations;
     }
 }

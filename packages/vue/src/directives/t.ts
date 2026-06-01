@@ -9,13 +9,7 @@ import type { IIlingo } from 'ilingo';
 import type { Directive, Ref } from 'vue';
 import { watchEffect } from 'vue';
 
-/**
- * Binding accepted by the `v-t` directive.
- *
- * - `string` — shorthand for `{ path }`. Parsed as `"namespace.key"`.
- * - `{ path, data?, locale?, count? }` — explicit context.
- * - `{ namespace, key, data?, locale?, count? }` — alternative explicit form.
- */
+/** Interpolation data passed through a `v-t` binding. */
 export type VTBindingDataMap = Record<string, string | number>;
 
 export type VTBindingPath = {
@@ -33,6 +27,13 @@ export type VTBindingGroupKey = {
     count?: number,
 };
 
+/**
+ * Binding accepted by the `v-t` directive.
+ *
+ * - `string` — shorthand for `{ path }`. Parsed as `"namespace.key"`.
+ * - `{ path, data?, locale?, count? }` — explicit context.
+ * - `{ namespace, key, data?, locale?, count? }` — alternative explicit form.
+ */
 export type VTBinding = string | VTBindingPath | VTBindingGroupKey;
 
 type Resolved = {

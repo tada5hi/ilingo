@@ -7,7 +7,7 @@
 
 export * from './catalog';
 export * from './catalog/normalize';
-export * from './config';
+export * from './options';
 export * from './module';
 export * from './store';
 export * from './utils';

@@ -38,7 +38,7 @@ The async API is intentional — it's what allows `LoaderStore` (lazy code-split
 
 `ilingo`'s production runtime depends only on [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob). Vue and Vuelidate are peer dependencies in `@ilingo/vue` / `@ilingo/vuelidate`, never bundled. The core ships as a single ESM bundle (`dist/index.mjs`); subpath exports let consumers split feature surfaces.
 
-A dedicated [`size-limit`](https://github.com/ai/size-limit) / `pkg-size` CI gate is planned (Track E of the [stability roadmap](https://github.com/tada5hi/ilingo/issues/917)); until that lands, the published `dist/` is the source of truth.
+A dedicated [`size-limit`](https://github.com/ai/size-limit) CI gate enforces a per-package byte budget: CI runs `npm run size` against the limits declared in `.size-limit.json` (brotli, gzipped) and fails the build on any regression.
 
 ## Re-running the suite
 

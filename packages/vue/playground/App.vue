@@ -21,7 +21,7 @@ export default defineComponent({
         }, 3000);
 
         const translation = useTranslation({
-            group: 'app',
+            namespace: 'app',
             key: 'key',
             data: {
                 name,

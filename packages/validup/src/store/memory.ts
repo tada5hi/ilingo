@@ -8,7 +8,7 @@
 import {
     type IMutableStore,
     MemoryStore,
-    type Namespaces,
+    type Translations,
     defineCatalog,
     defineLocale,
     defineNamespace,
@@ -71,7 +71,7 @@ export function createMemoryStore(): Store {
  * to dedupe as the validup catalog on `Ilingo.registerStore`.
  */
 export async function extendStore(store: IMutableStore) {
-    const translations : Namespaces = {
+    const translations : Record<string, Translations> = {
         en: useEnglishTranslation(),
         de: useGermanTranslation(),
         fr: useFrenchTranslation(),

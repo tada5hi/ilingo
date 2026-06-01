@@ -7,11 +7,9 @@
 
 import { normalize } from 'pathe';
 import process from 'node:process';
-import type { Config, ConfigInput } from './types';
+import type { FSStoreOptions, FSStoreOptionsInput } from './types';
 
-export function buildConfig(input?: ConfigInput): Config {
-    input = input || {};
-
+export function normalizeOptions(input: FSStoreOptionsInput = {}): FSStoreOptions {
     let directory: string[];
     if (input.directory) {
         directory = Array.isArray(input.directory) ?
@@ -29,8 +27,8 @@ export function buildConfig(input?: ConfigInput): Config {
     const watch = input.watch === true;
 
     return {
-        directory, 
-        writeDirectory, 
-        watch, 
+        directory,
+        writeDirectory,
+        watch,
     };
 }

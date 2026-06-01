@@ -5,7 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export type Config = {
+/** Resolved FSStore options after defaults are applied (see `normalizeOptions`). */
+export type FSStoreOptions = {
     directory: string[],
     writeDirectory: string,
     /**
@@ -20,7 +21,8 @@ export type Config = {
     watch: boolean,
 };
 
-export type ConfigInput = {
+/** Options accepted by the `FSStore` constructor. */
+export type FSStoreOptionsInput = {
     /**
      * Stable identity used as this store's key when registered on an
      * `Ilingo` instance (`Ilingo.registerStore` dedupes by `store.id`). Defaults

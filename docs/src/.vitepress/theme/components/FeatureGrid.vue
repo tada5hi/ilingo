@@ -24,7 +24,7 @@ const features: Feature[] = [
     {
         icon: '🔢',
         title: 'ICU-lite plurals',
-        detail: 'Intl.PluralRules-backed selection over CLDR categories. Explicit @plural marker keeps namespaces unambiguous.',
+        detail: 'Intl.PluralRules-backed selection over CLDR categories. Plural leaves are explicit definePlural() nodes — no marker-key collisions.',
     },
     {
         icon: '🎨',
@@ -32,9 +32,9 @@ const features: Feature[] = [
         detail: 'Inline {{value, number(...)}}, date, and list modifiers — all locale-aware, all memoised per instance.',
     },
     {
-        icon: '🔒',
-        title: 'Type-safe keys',
-        detail: 'defineCatalog() captures literal shapes; Ilingo<typeof catalog> refuses typos and requires count on plural keys.',
+        icon: '🧱',
+        title: 'Typed authoring',
+        detail: 'defineCatalog / defineLocale / defineNamespace build a typed descriptor tree; definePlural autocompletes CLDR categories and errors on a missing other.',
     },
 ];
 </script>

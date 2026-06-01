@@ -99,7 +99,7 @@ Template placeholders accept modifier syntax: `{{value, formatter}}` and `{{valu
 
 - Holds the built-in formatters `number`, `date`, `list` (backed by `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.ListFormat`).
 - Memoises `Intl.*Format` instances keyed by `(formatter, locale, JSON-encoded options)` so repeated renders don't reallocate.
-- Exposes `register(name, fn)` / `get(name)` publicly. Two ergonomic entry points sit on `Ilingo`: `registerFormatter(name, fn)` (delegates to the registry) and `Config.formatters` (constructor-time bulk registration). Names registered via either surface override the built-ins if they collide.
+- Exposes `register(name, fn)` / `get(name)` publicly. Two ergonomic entry points sit on `Ilingo`: `registerFormatter(name, fn)` (delegates to the registry) and `IlingoOptions.formatters` (constructor-time bulk registration). Names registered via either surface override the built-ins if they collide.
 
 The locale handed to a formatter is the **resolved** locale (the one that actually yielded the message), not the requested one. Unknown modifiers fall back to `String(value)` and emit a per-instance dev-mode one-shot warning via the same `isProductionEnv()` gate used by the missing-key handler.
 
@@ -208,14 +208,20 @@ async get(ctx: GetContext): Promise<string | undefined> {
     const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
 
     const hit = await this.lookup(chain, ctx);
-    if (!hit) return this.handleMissingKey(ctx, requestedLocale, chain);
+    return hit ?
+        this.render(hit.leaf, hit.locale, ctx) :
+        this.handleMissingKey(ctx, requestedLocale, chain);
+}
 
-    const message = this.selectPluralForm(hit.leaf, hit.locale, ctx.count);
+// The post-lookup half of get(): plural-form selection + count auto-merge
+// into data + {{var}} substitution against the resolved locale.
+protected render(leaf: Leaf, locale: string, ctx: GetContext): string {
+    const message = this.selectPluralForm(leaf, locale, ctx.count);
     const data: Data = { ...(ctx.data || {}) };
     if (typeof ctx.count === 'number' && typeof data.count === 'undefined') {
         data.count = ctx.count;
     }
-    return this.format(message, data);
+    return this.format(message, data, locale);
 }
 
 protected async lookup(chain, ctx) {
@@ -232,7 +238,7 @@ protected async lookup(chain, ctx) {
 
 ### Missing-key handler
 
-`Config.onMissingKey?: (ctx) => string | undefined`. Invoked when the chain × stores walk exhausts without a hit. Receives a `MissingKeyContext` carrying the *resolved* `locale` (never undefined) plus `resolvedLocale` = the chain terminator. Returning a string makes that string the result of `get()`; returning `undefined` keeps the result `undefined`.
+`IlingoOptions.onMissingKey?: (ctx) => string | undefined`. Invoked when the chain × stores walk exhausts without a hit. Receives a `MissingKeyContext` carrying the *resolved* `locale` (never undefined) plus `resolvedLocale` = the chain terminator. Returning a string makes that string the result of `get()`; returning `undefined` keeps the result `undefined`.
 
 If `onMissingKey` is not configured, the built-in default warns once per `(requestedLocale, namespace, key)` per instance, silenced when `process.env.NODE_ENV === 'production'`. The warn-once set is per-instance so multiple `Ilingo` instances don't dedupe each other's warnings.
 
@@ -246,7 +252,7 @@ If `onMissingKey` is not configured, the built-in default warns once per `(reque
 
 `useTranslation(ctx)` forwards `count` as `MaybeRef<number>` (unwrapped via `unref`) so plural selection is reactive to count changes the same way `data` is.
 
-`@ilingo/vuelidate` chains this: it calls `applyInstallInput`, then ensures its own `Store` (a `MemoryStore` pre-loaded with EN/DE/FR/ES validator translations) is registered if none is present yet.
+`@ilingo/vuelidate` chains this: it calls `applyInstallInput`, then registers its own catalog store via `instance.registerStore(createMemoryStore())` (a `MemoryStore` pre-loaded with EN/DE/FR/ES validator translations). The store is keyed by `STORE_ID = Symbol.for('@ilingo/vuelidate')`, so `registerStore` is idempotent — repeated installs (or a duplicate package copy) collide on the same key and stay a no-op rather than stacking.
 
 ### Slot-aware rendering — `<ITranslateT>` + `tokenize()`
 
@@ -315,7 +321,8 @@ packages/ilingo/src/
 
 packages/fs/src/module.ts            ← second IStore adapter (FSStore, persists set() as JSON)
 packages/vue/src/index.ts            ← framework integration (Vue plugin)
-packages/vuelidate/src/store.ts      ← preloaded MemoryStore for validator names
+packages/vuelidate/src/store/memory.ts ← preloaded MemoryStore (createMemoryStore) for validator names
+packages/vuelidate/src/store/loader.ts ← lazy per-locale LoaderStore (createLoaderStore)
 ```
 
 ## Configuration
@@ -324,9 +331,9 @@ There are no environment variables. All configuration is passed via constructor 
 
 | Object                    | Shape                                                                                                                                |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `new Ilingo(input)`       | `{ store?: IStore, locale?: string, fallback?: Fallback, onMissingKey?: MissingKeyHandler }`                                          |
-| `new MemoryStore(opts)`   | `{ data: CatalogInput }` — the descriptor tree (`defineCatalog(...)` / `LocaleNode[]` / a single `LocaleNode`); normalized to `Locales` in the constructor |
-| `new FSStore(input)`      | `{ directory?: string \| string[], writeDirectory?: string }`                                                                       |
+| `new Ilingo(input)`       | `IlingoOptions` — `{ store?: IStore \| IStore[], locale?: string, fallback?: Fallback, onMissingKey?: MissingKeyHandler, formatters?: Record<string, Formatter> }` |
+| `new MemoryStore(opts)`   | `MemoryStoreOptions` — `{ data: CatalogInput }`: the descriptor tree (`defineCatalog(...)` / `LocaleNode[]` / a single `LocaleNode`); normalized to `Locales` in the constructor |
+| `new FSStore(input)`      | `FSStoreOptionsInput` — `{ directory?: string \| string[], writeDirectory?: string, watch?: boolean, id?: string \| symbol }`        |
 | Vue `install(app, input)` | `Options { store, locale } \| Ilingo \| undefined`                                                                                  |
 
 `Fallback = string | string[] | (locale) => string[] | false`. Explicit-empty forms (`[]`, `false`, or a resolver returning `[]`) opt out of fallback entirely — the chain is just `[locale]` with no default-locale tail.

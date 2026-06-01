@@ -7,7 +7,7 @@
 
 import type { IStore } from './store';
 import type { Formatter, FormatterRegistry  } from './utils';
-import type { ConfigInput } from './config';
+import type { IlingoOptions } from './options';
 
 export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
@@ -76,9 +76,9 @@ export type NamespaceChild = NamespaceNode | TranslationsNode;
 
 /** A (possibly nested) namespace. Nesting extends the dotted namespace path. */
 export type NamespaceNode = {
-    type: 'namespace', 
-    name: string, 
-    data: NamespaceChild[] 
+    type: 'namespace',
+    name: string,
+    data: NamespaceChild[]
 };
 
 /**
@@ -88,9 +88,9 @@ export type NamespaceNode = {
  * provisional.
  */
 export type LocaleNode = {
-    type: 'locale', 
-    name: string, 
-    data: NamespaceChild[] 
+    type: 'locale',
+    name: string,
+    data: NamespaceChild[]
 };
 
 /** Root of a catalog tree. */
@@ -162,7 +162,7 @@ export interface IIlingo {
 
     registerFormatter(name: string, formatter: Formatter): void;
 
-    clone(overrides?: ConfigInput): IIlingo;
+    clone(overrides?: IlingoOptions): IIlingo;
 
     merge(instance: IIlingo): void;
 

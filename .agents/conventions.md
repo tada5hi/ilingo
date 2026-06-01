@@ -64,8 +64,7 @@ When creating new files, copy this header and use the **current year**.
 | Augmentable interfaces   | *(none today)* | The pattern: public declaration-merging targets stay `interface` (a `type` alias can't be augmented) and keep a descriptive **unprefixed** name. `@ilingo/validup`'s `ValidupCatalog` / `ValidupCatalogEntries` were the only instances; they were **removed** with type-safe keys (their sole purpose was feeding the now-deleted `Ilingo<Catalog>` generic). Re-apply this row's rule if a new augmentation target is introduced. |
 | Adapter classes          | `MemoryStore`, `FSStore`               | No `Adapter` suffix; descriptive concrete name                        |
 | Context types            | `StoreGetContext`, `GetContext`, `GetContextReactive` | Object passed to async methods — namespace + key + optional locale/data |
-| Config types             | `Config` + `ConfigInput`               | `packages/ilingo`: both names alias the same fully-optional shape (every field has a runtime default, so the split was misleading). `packages/fs`: `Config` is the resolved shape and `ConfigInput` is the un-normalized input (`directory: string \| string[]`) — keep the split when the input shape differs from the resolved shape. |
-| Options types            | `MemoryStoreOptions`, vue `Options`    | Constructor / install argument shapes                                 |
+| Options types            | `IlingoOptions`, `MemoryStoreOptions`, `FSStoreOptions` (+ `FSStoreOptionsInput`), vue `Options` | Constructor / install argument shapes — name them `<Class>Options`. When the un-normalized input shape differs from the resolved shape, split into `<Class>OptionsInput` (input) + `<Class>Options` (resolved), as in `@ilingo/fs`: `FSStoreOptionsInput` accepts `directory: string \| string[]`, normalized by `normalizeOptions` to `FSStoreOptions`'s `directory: string[]`. `packages/ilingo` needs no split — every `IlingoOptions` field has a runtime default, so the single fully-optional shape doubles as input and resolved. |
 | Data-shape records       | `Translations`, `Namespaces`, `Locales` | The **normalized** catalog shapes (post `normalizeCatalog`) — `Locales` = `Record<locale, Namespaces>`, `Namespaces` = `Record<namespace, Translations>`, `Translations` = nested `string` / `PluralNode` leaves. Bare plural nouns; the `…Record` suffix was dropped when the names were freed. Authoring uses the descriptor-tree node types (`CatalogNode`, `LocaleNode`, `NamespaceNode`, `TranslationsNode`, `PluralNode`) instead. |
 | File names               | `kebab-case.ts`                        | `use-translation.ts`, `has-own-property.ts`                            |
 
@@ -76,7 +75,7 @@ When creating new files, copy this header and use the **current year**.
 1. **A class implements or extends it** — the interface is a *port* (a contract a concrete class fulfils): `IStore` ← `MemoryStore`/`FSStore`, `IMutableStore` ← `MemoryStore`/`FSStore`, `IInvalidatingStore` ← `FSStore`/`LoaderStore`, `IIlingo` ← `Ilingo`.
 2. **It is a public declaration-merging target** — consumers reopen it via `declare module '…' { interface X { … } }`. A `type` alias **cannot** be augmented, so such a target *must* stay an `interface`. There are **none** in the codebase today: `@ilingo/validup`'s `ValidupCatalog` / `ValidupCatalogEntries` were the only ones and were removed with type-safe keys. Keep the rule available for any future augmentation target.
 
-Everything else is a `type`: option bags, context objects, config shapes, result shapes, data-shape records — e.g. `StoreGetContext`, `StoreSetContext`, `MemoryStoreOptions`, `Config`/`ConfigInput`, `TemplateContext`, `TranslateIssueOptions`, `IssueTranslation`, `UseScopedCatalogResult`, `Translations`/`Namespaces`/`Locales`. A lone object shape that no class implements and no consumer augments gains nothing from `interface` and reads more consistently as a `type`. Converting such an `interface` to a `type` is **not** a breaking change — the exported name is unchanged.
+Everything else is a `type`: option bags, context objects, config shapes, result shapes, data-shape records — e.g. `StoreGetContext`, `StoreSetContext`, `IlingoOptions`, `MemoryStoreOptions`, `FSStoreOptions`/`FSStoreOptionsInput`, `TemplateContext`, `TranslateIssueOptions`, `IssueTranslation`, `UseScopedCatalogResult`, `Translations`/`Namespaces`/`Locales`. A lone object shape that no class implements and no consumer augments gains nothing from `interface` and reads more consistently as a `type`. Converting such an `interface` to a `type` is **not** a breaking change — the exported name is unchanged.
 
 ### `I`-prefix scope
 
@@ -88,7 +87,7 @@ No lint rule can express "class-backed or augmentable", so this is a **manual re
 
 ## File Organization
 
-- Exported types live in `types.ts` colocated with the implementation (e.g. `src/store/types.ts`, `src/config/type.ts` — note the inconsistent singular/plural; mirror the surrounding directory rather than introducing a new convention).
+- Exported types live in `types.ts` colocated with the implementation (e.g. `src/store/types.ts`, `src/options/types.ts`); mirror the surrounding directory's naming rather than introducing a new convention.
 - Each directory has an `index.ts` barrel re-exporting from `types.ts` and the implementation files.
 - The package's `src/index.ts` re-exports the public API — anything not re-exported there is internal.
 - Static data (e.g. BCP-47 codes) lives in JSON next to the consumer (`packages/ilingo/src/utils/language/data.json`); tsdown inlines it at build time via `resolveJsonModule: true`.
@@ -187,6 +186,6 @@ Same ratchet rule as coverage thresholds: tighten budgets in the same PR that im
 ## Best Practices
 
 - Use ESM and modern TypeScript only.
-- Before adding new code, read the analogous file in a sibling package — patterns (Config + ConfigInput pair, `src/index.ts` barrel, `test/data/language/...` fixtures) repeat across packages and should stay aligned.
+- Before adding new code, read the analogous file in a sibling package — patterns (the `<Class>Options` / `<Class>OptionsInput` constructor-arg shapes, `src/index.ts` barrel, `test/data/language/...` fixtures) repeat across packages and should stay aligned.
 - Keep runtime dependencies minimal; prefer peer deps for framework integrations.
 - Maintain consistency with existing conventions; if you feel a pattern is wrong, propose the change separately rather than mixing it into an unrelated commit.

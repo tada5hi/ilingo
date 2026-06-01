@@ -35,7 +35,7 @@ unit/
 │                                   #   handler, per-instance warn isolation, serial intra-locale store walk
 ├── formatters-integration.spec.ts  # end-to-end Ilingo.get() with number/date/list modifiers,
 │                                   #   resolved-locale propagation, per-instance cache, dev-warn
-├── custom-formatters.spec.ts       # registerFormatter + Config.formatters; built-in override; clone shares
+├── custom-formatters.spec.ts       # registerFormatter + IlingoOptions.formatters; built-in override; clone shares
 ├── loader-store.spec.ts            # LoaderStore lazy load, dedupe, cache, miss cache, invalidate, events
 ├── catalog/
 │   └── normalize.spec.ts           # normalizeCatalog — tree→Locales, dotted-namespace nesting, key
@@ -69,6 +69,7 @@ The Vue package uses **happy-dom** for the DOM environment and **@vue/test-utils
 ```
 unit/
 ├── module.spec.ts              # FSStore.loadNamespace against test/data/language/ + fallback semantics
+├── dotted-namespace.spec.ts    # dotted namespace ↔ dotted filename (app.nav.json): load, key/namespace separation, persist round-trip
 ├── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
 │                               #   split read/write directories
 └── watch.spec.ts               # FSStore({ watch: true }) emits invalidate on file change;

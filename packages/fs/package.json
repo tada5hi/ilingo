@@ -66,7 +66,7 @@
         "chokidar": "^5.0.0"
     },
     "peerDependencies": {
-        "chokidar": "^4.0.0"
+        "chokidar": "^4.0.0 || ^5.0.0"
     },
     "peerDependenciesMeta": {
         "chokidar": {

@@ -138,10 +138,10 @@ For larger catalogs you serialise the slice the client needs (e.g. only the loca
 const ilingo = ilingoForRequest(req.headers, req.cookies);
 const locale = ilingo.getLocale();
 
-// Pull only the slice needed for hydration.
-const slice = {
-    [locale]: await loadFullLocaleFromCatalog(locale),
-};
+// Pull only the slice needed for hydration. The catalog is a descriptor
+// tree, so a single LocaleNode is itself a valid `CatalogInput` and
+// serialises straight to JSON.
+const slice = catalog.data.find((node) => node.name === locale);
 
 res.send(renderShell({
     html:   renderApp(ilingo),
@@ -153,7 +153,7 @@ res.send(renderShell({
 // client
 const { locale, slice } = JSON.parse(document.getElementById('__ilingo')!.textContent!);
 const ilingo = new Ilingo({
-    store:  new MemoryStore({ data: slice }),
+    store:  new MemoryStore({ data: slice }), // a LocaleNode is a valid CatalogInput
     locale,
 });
 ```
@@ -165,7 +165,7 @@ const ilingo = new Ilingo({
     locale,
     store: new MemoryStore({ data: slice }),
 });
-ilingo.stores.add(new LoaderStore({
+ilingo.registerStore(new LoaderStore({
     locales: ['en', 'de', 'pt-BR'],
     loader: (loc, namespace) => import(`./locales/${loc}/${namespace}.json`).then((m) => m.default),
 }));
