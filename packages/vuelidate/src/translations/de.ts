@@ -5,9 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { LinesRecord } from 'ilingo';
+import type { Lines } from 'ilingo';
 
-export function useGermanTranslation(): LinesRecord {
+export function useGermanTranslation(): Lines {
     return {
         alpha: 'Der Wert ist nicht alphabetisch',
         alphaNum: 'Der Wert muss alphanumerisch sein',

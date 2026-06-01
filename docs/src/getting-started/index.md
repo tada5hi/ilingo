@@ -15,7 +15,7 @@ Everything else — pluralization, fallback chains, missing-key handling, framew
 - **Pluggable.** A custom store is one class implementing three methods.
 - **Locale-first resolution.** A `pt-BR` request walks `pt-BR → pt → en` before giving up — and the closest locale wins regardless of which store holds it.
 - **Standards-aligned.** Plurals go through `Intl.PluralRules`. Formatters delegate to `Intl.NumberFormat`, `Intl.DateTimeFormat`, `Intl.ListFormat`.
-- **Type-safe when you want.** Drop in `defineCatalog()` and the compiler enforces every group, key, and `count`.
+- **Type-safe when you want.** Drop in `defineCatalog()` and the compiler enforces every namespace, key, and `count`.
 
 ## Where to go next
 

@@ -6,32 +6,40 @@
  */
 
 import { getPathValue, setPathValue } from 'pathtrace';
-import type { Leaf, LocalesRecord } from '../types';
+import type { Leaf, Locales } from '../types';
 import { isPluralLeaf } from '../utils/identify';
 import type {
-    IStore,
+    IMutableStore,
     MemoryStoreOptions,
     StoreGetContext,
     StoreSetContext,
 } from './types';
 
-export class MemoryStore implements IStore {
-    protected data: LocalesRecord;
+export class MemoryStore implements IMutableStore {
+    readonly id: string | symbol;
+
+    protected data: Locales;
 
     constructor(options: MemoryStoreOptions) {
+        this.id = options.id || Symbol('MemoryStore');
+
         this.data = options.data;
     }
 
     async get(context: StoreGetContext): Promise<Leaf | undefined> {
+        return this.getSync(context);
+    }
+
+    getSync(context: StoreGetContext): Leaf | undefined {
         if (
             !this.data[context.locale] ||
-            !this.data[context.locale][context.group]
+            !this.data[context.locale][context.namespace]
         ) {
             return undefined;
         }
 
         const output = getPathValue(
-            this.data[context.locale][context.group],
+            this.data[context.locale][context.namespace],
             context.key,
         );
 
@@ -50,27 +58,35 @@ export class MemoryStore implements IStore {
         return undefined;
     }
 
-    async set(context: StoreSetContext): Promise<void> {
-        this.initLines(context.group, context.locale);
+    setSync(context: StoreSetContext): void {
+        this.initLines(context.namespace, context.locale);
 
         setPathValue(
-            this.data[context.locale][context.group],
+            this.data[context.locale][context.namespace],
             context.key,
             context.value,
         );
     }
 
-    protected initLines(group: string, locale: string) {
+    async set(context: StoreSetContext): Promise<void> {
+        this.setSync(context);
+    }
+
+    protected initLines(namespace: string, locale: string) {
         if (typeof this.data[locale] === 'undefined') {
             this.data[locale] = {};
         }
 
-        if (typeof this.data[locale][group] === 'undefined') {
-            this.data[locale][group] = {};
+        if (typeof this.data[locale][namespace] === 'undefined') {
+            this.data[locale][namespace] = {};
         }
     }
 
-    async getLocales(): Promise<string[]> {
+    getLocalesSync(): string[] {
         return Object.keys(this.data);
+    }
+
+    async getLocales(): Promise<string[]> {
+        return this.getLocalesSync();
     }
 }

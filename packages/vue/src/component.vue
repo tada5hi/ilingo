@@ -19,19 +19,19 @@ export default defineComponent({
         const parseKey = (key: string) : [string, string] => {
             const index = key.indexOf('.');
             if (index === -1) {
-                throw new SyntaxError('The key with required group prefix could not be parsed.');
+                throw new SyntaxError('The key with required namespace prefix could not be parsed.');
             }
 
-            const group = key.substring(0, index);
-            const line = key.substring(group.length + 1);
+            const namespace = key.substring(0, index);
+            const line = key.substring(namespace.length + 1);
 
-            return [group, line];
+            return [namespace, line];
         };
 
-        const [group, key] = parseKey(props.path);
+        const [namespace, key] = parseKey(props.path);
 
         const text = useTranslation({
-            group,
+            namespace,
             key,
             data: props.data,
         });

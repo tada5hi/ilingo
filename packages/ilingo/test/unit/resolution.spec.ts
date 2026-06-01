@@ -53,20 +53,20 @@ describe('Ilingo — resolution path', () => {
 
         it('selects "one" for count === 1', async () => {
             expect(
-                await make().get({ group: 'cart', key: 'items', count: 1 }),
+                await make().get({ namespace: 'cart', key: 'items', count: 1 }),
             ).toEqual('1 item');
         });
 
         it('selects "other" for count === 0 in English', async () => {
             expect(
-                await make().get({ group: 'cart', key: 'items', count: 0 }),
+                await make().get({ namespace: 'cart', key: 'items', count: 0 }),
             ).toEqual('0 items');
         });
 
         it('selects "zero" in Welsh', async () => {
             expect(
                 await make().get({
-                    group: 'cart', key: 'items', count: 0, locale: 'cy',
+                    namespace: 'cart', key: 'items', count: 0, locale: 'cy',
                 }),
             ).toEqual('dim eitemau');
         });
@@ -78,14 +78,14 @@ describe('Ilingo — resolution path', () => {
                 }),
             });
             expect(
-                await ilingo.get({ group: 'cart', key: 'items', count: 1 }),
+                await ilingo.get({ namespace: 'cart', key: 'items', count: 1 }),
             ).toEqual('1 items');
         });
 
         it('returns the plain string when count is omitted on a plural leaf', async () => {
             // Documented behaviour: without count, default to `other`.
             expect(
-                await make().get({ group: 'cart', key: 'items' }),
+                await make().get({ namespace: 'cart', key: 'items' }),
             ).toEqual('{{count}} items');
         });
 
@@ -108,7 +108,7 @@ describe('Ilingo — resolution path', () => {
             });
             expect(
                 await ilingo.get({
-                    group: 'cart',
+                    namespace: 'cart',
                     key: 'items',
                     count: 3,
                     data: { total: 99 },
@@ -128,7 +128,7 @@ describe('Ilingo — resolution path', () => {
                 }),
                 locale: 'pt-BR',
             });
-            expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('olá pt');
+            expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('olá pt');
         });
 
         it('falls all the way to LOCALE_DEFAULT', async () => {
@@ -138,7 +138,7 @@ describe('Ilingo — resolution path', () => {
                 }),
                 locale: 'pt-BR',
             });
-            expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('hello');
+            expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('hello');
         });
 
         it('respects an explicit string fallback', async () => {
@@ -149,7 +149,7 @@ describe('Ilingo — resolution path', () => {
                 locale: 'pt-BR',
                 fallback: 'es',
             });
-            expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('hola');
+            expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('hola');
         });
 
         it('respects an explicit fallback array, in order', async () => {
@@ -163,7 +163,7 @@ describe('Ilingo — resolution path', () => {
                 locale: 'pt-BR',
                 fallback: ['es', 'fr'],
             });
-            expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('hola');
+            expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('hola');
         });
 
         it('respects a fallback resolver function', async () => {
@@ -174,7 +174,7 @@ describe('Ilingo — resolution path', () => {
                 locale: 'pt-BR',
                 fallback: (locale) => (locale.startsWith('pt') ? ['fr'] : []),
             });
-            expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('salut');
+            expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('salut');
         });
 
         it('getResolvedLocale reports which locale yielded the value', async () => {
@@ -187,10 +187,10 @@ describe('Ilingo — resolution path', () => {
                 locale: 'pt-BR',
             });
             expect(
-                await ilingo.getResolvedLocale({ group: 'app', key: 'hi' }),
+                await ilingo.getResolvedLocale({ namespace: 'app', key: 'hi' }),
             ).toEqual('pt');
             expect(
-                await ilingo.getResolvedLocale({ group: 'app', key: 'missing' }),
+                await ilingo.getResolvedLocale({ namespace: 'app', key: 'missing' }),
             ).toBeUndefined();
         });
 
@@ -201,21 +201,21 @@ describe('Ilingo — resolution path', () => {
                 }),
                 locale: 'pt-BR',
             });
-            ilingo.stores.add(new MemoryStore({
+            ilingo.registerStore(new MemoryStore({
                 data: { pt: { app: { hi: 'olá (store2)' } } },
             }));
-            expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('olá (store2)');
+            expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('olá (store2)');
         });
     });
 
     describe('#899 — missing-key handler', () => {
-        it('default handler warns once per (locale, group, key) and returns undefined', async () => {
+        it('default handler warns once per (locale, namespace, key) and returns undefined', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({ data: {} }),
             });
 
-            expect(await ilingo.get({ group: 'app', key: 'nope' })).toBeUndefined();
-            expect(await ilingo.get({ group: 'app', key: 'nope' })).toBeUndefined();
+            expect(await ilingo.get({ namespace: 'app', key: 'nope' })).toBeUndefined();
+            expect(await ilingo.get({ namespace: 'app', key: 'nope' })).toBeUndefined();
 
             expect(warn).toHaveBeenCalledTimes(1);
             expect(warn.mock.calls[0][0]).toContain('app.nope');
@@ -228,9 +228,9 @@ describe('Ilingo — resolution path', () => {
                 onMissingKey,
             });
 
-            expect(await ilingo.get({ group: 'app', key: 'nope' })).toEqual('FALLBACK');
+            expect(await ilingo.get({ namespace: 'app', key: 'nope' })).toEqual('FALLBACK');
             expect(onMissingKey).toHaveBeenCalledWith(
-                expect.objectContaining({ group: 'app', key: 'nope' }),
+                expect.objectContaining({ namespace: 'app', key: 'nope' }),
             );
         });
 
@@ -242,7 +242,7 @@ describe('Ilingo — resolution path', () => {
                 onMissingKey,
             });
 
-            await ilingo.get({ group: 'app', key: 'nope' });
+            await ilingo.get({ namespace: 'app', key: 'nope' });
 
             expect(onMissingKey).toHaveBeenCalledWith(
                 expect.objectContaining({ resolvedLocale: 'en' }),
@@ -255,7 +255,7 @@ describe('Ilingo — resolution path', () => {
                 store: new MemoryStore({ data: { en: { app: { hi: 'hello' } } } }),
                 onMissingKey,
             });
-            await ilingo.get({ group: 'app', key: 'hi' });
+            await ilingo.get({ namespace: 'app', key: 'hi' });
             expect(onMissingKey).not.toHaveBeenCalled();
         });
 
@@ -263,8 +263,8 @@ describe('Ilingo — resolution path', () => {
             const a = new Ilingo({ store: new MemoryStore({ data: {} }) });
             const b = new Ilingo({ store: new MemoryStore({ data: {} }) });
 
-            await a.get({ group: 'app', key: 'isolated' });
-            await b.get({ group: 'app', key: 'isolated' });
+            await a.get({ namespace: 'app', key: 'isolated' });
+            await b.get({ namespace: 'app', key: 'isolated' });
 
             // Two instances → two warnings for the same key. Without
             // per-instance state, `b` would silently dedupe `a`'s warning.
@@ -277,17 +277,17 @@ describe('Ilingo — resolution path', () => {
             const store = new MemoryStore({ data: {} });
             await store.set({
                 locale: 'en',
-                group: 'cart',
+                namespace: 'cart',
                 key: 'items',
                 value: { '@plural': { one: '{{count}} item', other: '{{count}} items' } },
             });
 
             const ilingo = new Ilingo({ store });
             expect(
-                await ilingo.get({ group: 'cart', key: 'items', count: 1 }),
+                await ilingo.get({ namespace: 'cart', key: 'items', count: 1 }),
             ).toEqual('1 item');
             expect(
-                await ilingo.get({ group: 'cart', key: 'items', count: 7 }),
+                await ilingo.get({ namespace: 'cart', key: 'items', count: 7 }),
             ).toEqual('7 items');
         });
     });
@@ -315,14 +315,14 @@ describe('Ilingo — resolution path', () => {
             });
 
             expect(
-                await ilingo.get({ group: 'cart', key: 'items', count: 1 }),
+                await ilingo.get({ namespace: 'cart', key: 'items', count: 1 }),
             ).toBeUndefined();
 
             // Inner keys are still reachable via dotted access — useful when
             // a namespace legitimately needs sibling keys named after CLDR
             // categories (e.g. an enum dropdown with an "other" option).
             expect(
-                await ilingo.get({ group: 'cart', key: 'items.one' }),
+                await ilingo.get({ namespace: 'cart', key: 'items.one' }),
             ).toEqual('{{count}} item');
         });
     });
@@ -346,9 +346,9 @@ describe('Ilingo — resolution path', () => {
                 }),
             });
 
-            expect(await ilingo.get({ group: 'cart', key: 'items', count: 1 }))
+            expect(await ilingo.get({ namespace: 'cart', key: 'items', count: 1 }))
                 .toEqual('1 item');
-            expect(await ilingo.get({ group: 'cart', key: 'items', count: 5 }))
+            expect(await ilingo.get({ namespace: 'cart', key: 'items', count: 5 }))
                 .toEqual('5 items');
         });
 
@@ -370,10 +370,10 @@ describe('Ilingo — resolution path', () => {
                 }),
             });
             expect(
-                await ilingo.get({ group: 'cart', key: 'items', count: 1 }),
+                await ilingo.get({ namespace: 'cart', key: 'items', count: 1 }),
             ).toEqual('1 item');
             expect(
-                await ilingo.get({ group: 'cart', key: 'items', count: 3 }),
+                await ilingo.get({ namespace: 'cart', key: 'items', count: 3 }),
             ).toEqual('3 items');
         });
 
@@ -395,7 +395,7 @@ describe('Ilingo — resolution path', () => {
                 }),
             });
             expect(
-                await ilingo.get({ group: 'form', key: 'kind.other.label' }),
+                await ilingo.get({ namespace: 'form', key: 'kind.other.label' }),
             ).toEqual('Other');
         });
     });
@@ -406,7 +406,11 @@ describe('Ilingo — resolution path', () => {
             id: number,
             hit?: string,
         ) => ({
-            async get(_ctx: { locale: string; group: string; key: string }) {
+            // Unique store identity per fake — Ilingo.registerStore keys the
+            // store Map by `store.id`, so without a distinct id every fake
+            // would collide on one key and overwrite the previous one.
+            id: Symbol(`recording-store-${id}`),
+            async get(_ctx: { locale: string; namespace: string; key: string }) {
                 entries.push({ id });
                 return hit;
             },
@@ -421,10 +425,10 @@ describe('Ilingo — resolution path', () => {
             // Memory hit should not trigger an HTTP request.
             const entries: { id: number }[] = [];
             const ilingo = new Ilingo({});
-            ilingo.stores.add(makeRecordingStore(entries, 1, 'from store 1'));
-            ilingo.stores.add(makeRecordingStore(entries, 2, 'from store 2'));
+            ilingo.registerStore(makeRecordingStore(entries, 1, 'from store 1'));
+            ilingo.registerStore(makeRecordingStore(entries, 2, 'from store 2'));
 
-            const result = await ilingo.get({ group: 'app', key: 'hi' });
+            const result = await ilingo.get({ namespace: 'app', key: 'hi' });
 
             expect(result).toEqual('from store 1');
             expect(entries.map((e) => e.id)).toEqual([1]);
@@ -433,11 +437,11 @@ describe('Ilingo — resolution path', () => {
         it('falls through to later stores when earlier ones miss', async () => {
             const entries: { id: number }[] = [];
             const ilingo = new Ilingo({});
-            ilingo.stores.add(makeRecordingStore(entries, 1));
-            ilingo.stores.add(makeRecordingStore(entries, 2));
-            ilingo.stores.add(makeRecordingStore(entries, 3, 'from store 3'));
+            ilingo.registerStore(makeRecordingStore(entries, 1));
+            ilingo.registerStore(makeRecordingStore(entries, 2));
+            ilingo.registerStore(makeRecordingStore(entries, 3, 'from store 3'));
 
-            const result = await ilingo.get({ group: 'app', key: 'hi' });
+            const result = await ilingo.get({ namespace: 'app', key: 'hi' });
 
             expect(result).toEqual('from store 3');
             expect(entries.map((e) => e.id)).toEqual([1, 2, 3]);
@@ -449,11 +453,11 @@ describe('Ilingo — resolution path', () => {
                     data: { en: { app: { hi: 'from store 1' } } },
                 }),
             });
-            ilingo.stores.add(new MemoryStore({
+            ilingo.registerStore(new MemoryStore({
                 data: { en: { app: { hi: 'from store 2' } } },
             }));
 
-            expect(await ilingo.get({ group: 'app', key: 'hi' })).toEqual('from store 1');
+            expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('from store 1');
         });
     });
 
@@ -469,7 +473,7 @@ describe('Ilingo — resolution path', () => {
 
             // pt-BR has no data; parent's `fallback: 'de'` should be inherited
             // so the lookup finds the German translation.
-            expect(await child.get({ group: 'app', key: 'hi', locale: 'pt-BR' }))
+            expect(await child.get({ namespace: 'app', key: 'hi', locale: 'pt-BR' }))
                 .toEqual('Hallo');
         });
 
@@ -490,7 +494,7 @@ describe('Ilingo — resolution path', () => {
             // default 'en' (not at 'de').
             const child = parent.clone({ fallback: undefined });
 
-            expect(await child.get({ group: 'app', key: 'hi', locale: 'pt-BR' }))
+            expect(await child.get({ namespace: 'app', key: 'hi', locale: 'pt-BR' }))
                 .toEqual('Hello');
         });
 

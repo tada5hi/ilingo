@@ -44,7 +44,7 @@ export function useTranslationsForBaseValidation<
             const ruleResult = (result as Record<string, any>)[rule];
 
             const value = await instance.get({
-                group: 'vuelidate',
+                namespace: 'vuelidate',
                 key: rule,
                 data: ruleResult.$params,
                 locale: locale.value,

@@ -13,6 +13,14 @@
             "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs"
         },
+        "./store/memory": {
+            "types": "./dist/store/memory.d.ts",
+            "import": "./dist/store/memory.mjs"
+        },
+        "./store/loader": {
+            "types": "./dist/store/loader.d.ts",
+            "import": "./dist/store/loader.mjs"
+        },
         "./core": {
             "types": "./core/index.d.ts",
             "import": "./core/index.mjs",

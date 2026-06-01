@@ -23,6 +23,7 @@ Ilingo is a lightweight library for translation and internationalization. The co
   - [Missing-key handler](#missing-key-handler)
   - [Formatters](#formatters)
   - [Type-safe keys](#type-safe-keys)
+  - [The `IIlingo` interface](#the-iilingo-interface)
   - [Slot placeholders & `tokenize()`](#slot-placeholders--tokenize)
   - [Custom formatters](#custom-formatters)
   - [Locale negotiation](#locale-negotiation)
@@ -66,7 +67,7 @@ const store = new MemoryStore({
     data: {
         // locale: de
         de: {
-            // group: app
+            // namespace: app
             app: {
                 key: 'Hallo mein Name ist {{name}}'
             }
@@ -86,7 +87,7 @@ const ilingo = new Ilingo({
 });
 ```
 
-To retrieve text from any of the language files, simply pass the filename/group and the access key
+To retrieve text from any of the language files, simply pass the filename/namespace and the access key
 as the first parameter, separated by a period (.).
 
 After that you can simply access the locale string, as described in the following:
@@ -99,13 +100,13 @@ const ilingo = new Ilingo({
 });
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'key'
 });
 // Hello my name is {{name}}
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'key',
     data: {
         name: 'Peter'
@@ -114,7 +115,7 @@ await ilingo.get({
 // Hello my name is Peter
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'key',
     data: {
         name: 'Peter'
@@ -144,7 +145,7 @@ const ilingo = new Ilingo({
 });
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'age',
     data: {
         age: 18
@@ -165,7 +166,7 @@ const ilingo = new Ilingo({
 });
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'age',
     data: {
         age: 18
@@ -176,7 +177,7 @@ await ilingo.get({
 ilingo.setLocale('de');
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'age',
     data: {
         age: 18
@@ -196,7 +197,7 @@ const ilingo = new Ilingo({
 });
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'age',
     data: {
         age: 18
@@ -205,7 +206,7 @@ await ilingo.get({
 // I am 18 yeas old
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'age',
     data: {
         age: 18
@@ -215,7 +216,7 @@ await ilingo.get({
 // J'ai 18 ans
 
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'age',
     data: {
         age: 18
@@ -250,7 +251,7 @@ const ilingo = new Ilingo({
 });
 
 await ilingo.get({
-    group: 'foo',
+    namespace: 'foo',
     key: 'bar',
     data: {
         param: 'x'
@@ -259,7 +260,7 @@ await ilingo.get({
 // baz x
 
 await ilingo.get({
-    group: 'foo',
+    namespace: 'foo',
     key: 'bar',
     data: {
         param: 'y'
@@ -317,8 +318,8 @@ const ilingo = new Ilingo<typeof catalog>({
     store: new MemoryStore({ data: catalog }),
 });
 
-await ilingo.get({ group: 'cart', key: 'items', count: 1 });  // "1 item"
-await ilingo.get({ group: 'cart', key: 'items', count: 5 });  // "5 items"
+await ilingo.get({ namespace: 'cart', key: 'items', count: 1 });  // "1 item"
+await ilingo.get({ namespace: 'cart', key: 'items', count: 5 });  // "5 items"
 ```
 
 `definePlural` is a thin identity helper — it returns `{ '@plural': leaf }` with the same runtime shape as the JSON form. The `const` generic preserves the literal types of each plural form (so `Ilingo<typeof catalog>` still sees them as plural keys requiring `count`). The TS/JS version gets CLDR-category autocomplete and a compile error if you misspell `other` or pass a non-CLDR key.
@@ -356,7 +357,7 @@ Inspect the resolution with:
 ilingo.getResolvedLocaleChain({ locale: 'pt-BR' });
 // ['pt-BR', 'pt', 'en']
 
-await ilingo.getResolvedLocale({ group: 'app', key: 'hi' });
+await ilingo.getResolvedLocale({ namespace: 'app', key: 'hi' });
 // 'pt'   — which locale actually yielded a value
 // undefined if no store had the key anywhere in the chain
 ```
@@ -367,9 +368,9 @@ Override the default dev-mode `console.warn` via `onMissingKey`. Return a string
 
 ```typescript
 const ilingo = new Ilingo({
-    onMissingKey: ({ group, key, resolvedLocale }) => {
-        track('i18n.miss', { group, key, locale: resolvedLocale });
-        return `[missing: ${group}.${key}]`;
+    onMissingKey: ({ namespace, key, resolvedLocale }) => {
+        track('i18n.miss', { namespace, key, locale: resolvedLocale });
+        return `[missing: ${namespace}.${key}]`;
     },
 });
 ```
@@ -393,9 +394,9 @@ const ilingo = new Ilingo({
     }),
 });
 
-await ilingo.get({ group: 'app', key: 'owe',     data: { amount: 99 } });           // "You owe €99.00"
-await ilingo.get({ group: 'app', key: 'signed',  data: { date: '2026-05-22T12:00:00Z' } }); // "Signed May 22, 2026"
-await ilingo.get({ group: 'app', key: 'invited', data: { people: ['Alice', 'Bob', 'Carol'] } });
+await ilingo.get({ namespace: 'app', key: 'owe',     data: { amount: 99 } });           // "You owe €99.00"
+await ilingo.get({ namespace: 'app', key: 'signed',  data: { date: '2026-05-22T12:00:00Z' } }); // "Signed May 22, 2026"
+await ilingo.get({ namespace: 'app', key: 'invited', data: { people: ['Alice', 'Bob', 'Carol'] } });
 // → "Alice, Bob, and Carol"
 ```
 
@@ -415,7 +416,7 @@ Unknown modifiers fall back to `String(value)` and emit a one-shot dev-mode warn
 
 ### Type-safe keys
 
-`Ilingo` is generic in the catalog shape. Wrap your catalog with `defineCatalog` to capture its narrowest literal types, pass it as the type parameter to `Ilingo`, and the compiler refuses typos, unknown groups, and plural-key calls that forget `count`.
+`Ilingo` is generic in the catalog shape. Wrap your catalog with `defineCatalog` to capture its narrowest literal types, pass it as the type parameter to `Ilingo`, and the compiler refuses typos, unknown namespaces, and plural-key calls that forget `count`.
 
 ```typescript
 import { Ilingo, MemoryStore, defineCatalog } from 'ilingo';
@@ -442,17 +443,17 @@ const ilingo = new Ilingo<typeof catalog>({
     store: new MemoryStore({ data: catalog }),
 });
 
-await ilingo.get({ group: 'app', key: 'greeting' });           // OK
-await ilingo.get({ group: 'app', key: 'nested.deep.leaf' });   // OK — dotted paths inferred
-await ilingo.get({ group: 'app', key: 'unknown' });            // ❌ type error
-await ilingo.get({ group: 'unknown', key: 'greeting' });       // ❌ type error
-await ilingo.get({ group: 'cart',  key: 'items' });            // ❌ type error — count is required
-await ilingo.get({ group: 'cart',  key: 'items', count: 1 });  // OK
+await ilingo.get({ namespace: 'app', key: 'greeting' });           // OK
+await ilingo.get({ namespace: 'app', key: 'nested.deep.leaf' });   // OK — dotted paths inferred
+await ilingo.get({ namespace: 'app', key: 'unknown' });            // ❌ type error
+await ilingo.get({ namespace: 'unknown', key: 'greeting' });       // ❌ type error
+await ilingo.get({ namespace: 'cart',  key: 'items' });            // ❌ type error — count is required
+await ilingo.get({ namespace: 'cart',  key: 'items', count: 1 });  // OK
 ```
 
 `defineCatalog<const T>(catalog)` uses TS 5+ const-generic inference so per-key literals (and `@plural`-wrapped plural leaves) aren't widened to `string`. The runtime function is a no-op identity — purely a type carrier.
 
-For one-file-per-locale layouts, reach for `defineLocale<const T extends GroupsRecord>(locale: T): T` — the per-locale companion. It preserves literal types through an `export default` boundary and validates that the body is a `GroupsRecord` (catching a stray top-level string that `as const` would let through). Combine with `defineCatalog` to merge per-locale files into a single typed catalog:
+For one-file-per-locale layouts, reach for `defineLocale<const T extends Namespaces>(locale: T): T` — the per-locale companion. It preserves literal types through an `export default` boundary and validates that the body is a `Namespaces` (catching a stray top-level string that `as const` would let through). Combine with `defineCatalog` to merge per-locale files into a single typed catalog:
 
 ```typescript
 // locales/en.ts
@@ -470,9 +471,37 @@ import de from './de';
 export const catalog = defineCatalog({ en, de });
 ```
 
+For **one-file-per-namespace** layouts, `defineNamespace<const T extends Lines>(namespace: T): T` is the per-namespace companion — same const-capture + shape validation (against `Lines`), for when each namespace lives in its own file:
+
+```typescript
+// locales/en/app.ts
+import { defineNamespace, definePlural } from 'ilingo';
+
+export default defineNamespace({
+    greeting: 'Hi {{name}}',
+    items: definePlural({ one: '1 item', other: '{{count}} items' }),
+});
+```
+
+`Lines` is recursive, so a namespace can nest arbitrarily (`{ nav: { home: 'Home' } }`) and you address it with a dotted key (`key: 'nav.home'`).
+
 Inference is structural, derived from the union of locales. Keep all locales aligned to the same shape and the inferred `Key<C, G>` is the natural set of leaf paths. Diverging locales widen the union but never break compilation.
 
-`new Ilingo()` (no generic) preserves today's loose typing — `group: string, key: string` are accepted. The generic is opt-in.
+`new Ilingo()` (no generic) preserves today's loose typing — `namespace: string, key: string` are accepted. The generic is opt-in.
+
+### The `IIlingo` interface
+
+`IIlingo<C>` is the public type contract of the orchestrator — every method on the concrete `Ilingo` class plus the `stores` map and `formatters` registry. Library code that accepts an orchestrator (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accepts and returns `IIlingo`, so consumers can swap in test doubles or decorating wrappers without depending on the concrete class.
+
+```typescript
+import type { IIlingo } from 'ilingo';
+
+function register(ilingo: IIlingo) {
+    ilingo.registerStore(myStore); // myStore.id = Symbol.for('@scope/pkg')
+}
+```
+
+`new Ilingo()` is still the way to construct an instance. Prefer `IIlingo` as the type position; reserve `Ilingo` (the class) for construction and `instanceof` checks.
 
 ### Slot placeholders & `tokenize()`
 
@@ -510,7 +539,7 @@ const ilingo = new Ilingo({
 });
 
 await ilingo.get({
-    group: 'app', key: 'shout',
+    namespace: 'app', key: 'shout',
     data: { name: 'peter' },
 });
 // "{{name, upper}}" → "PETER"
@@ -547,7 +576,22 @@ ilingo.setLocale(chosen);
 
 ## Store
 
-A store implements the `IStore` port — `get`, `set`, `getLocales`. This three-method surface is **frozen** for the stable release; optional capabilities (cache invalidation, file watching, …) layer as separate interfaces detected via type guards (see [Invalidation](#invalidation) below). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
+A store implements the read `IStore` port — `id`, `get`, `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract, and it is **frozen** for the stable release. **Writing** is an opt-in capability — `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Other capabilities (cache invalidation, file watching, …) layer the same way (see [Invalidation](#invalidation) below). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
+
+### Registering stores — `registerStore(store)`
+
+`Ilingo` holds its stores in a `public readonly stores: Map<symbol | string, IStore>`, keyed by each store's own `id` identity, queried serially in insertion order (first hit wins). Add stores with `registerStore`:
+
+```typescript
+const ilingo = new Ilingo({ store: appStore }); // constructor seeds the first store
+ilingo.registerStore(overrideStore);            // anonymous Symbol() id → always added
+ilingo.registerStore(libraryStore);             // libraryStore.id = Symbol.for('@me/lib') → idempotent
+```
+
+- **Anonymous `id`** (a fresh `Symbol()`, the `MemoryStore` default) — the store is always added, since each `Symbol()` is unique.
+- **Stable `id`** (a `Symbol.for('@scope/pkg')` set on the store) — idempotent: a no-op (keeping the existing store) if a store with that `id` is already registered, so re-registration — even from a duplicate package copy — never stacks duplicates. This is how `@ilingo/validup` and `@ilingo/vuelidate` register their catalogs: each ships a catalog store keyed by its exported `STORE_ID`, added with `ilingo.registerStore(createMemoryStore())`.
+
+Because a `namespace` is a **shared key-space** (the walk falls through store-by-store per *missing key*), registering an app store before a library's catalog lets the app add or override individual keys of that namespace while the library supplies the defaults. `Ilingo` implements the `IIlingo` interface — type against `IIlingo` when you want to accept any orchestrator implementation.
 
 ### Memory Store
 
@@ -556,39 +600,39 @@ other Store is specified manually.
 
 ### Loader Store
 
-For browser / SPA apps with code-split locale chunks, `LoaderStore` lazy-loads translation data via a user-supplied function and caches the result per `(locale, group)`:
+For browser / SPA apps with code-split locale chunks, `LoaderStore` lazy-loads translation data via a user-supplied function and caches the result per `(locale, namespace)`:
 
 ```typescript
 import { Ilingo, LoaderStore } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new LoaderStore({
-        loader: async (locale, group) => {
-            const m = await import(`./locales/${locale}/${group}.json`);
+        loader: async (locale, namespace) => {
+            const m = await import(`./locales/${locale}/${namespace}.json`);
             return m.default;
         },
         locales: ['en', 'de', 'fr'],   // optional — answers `getLocales()`
     }),
 });
 
-await ilingo.get({ group: 'cart', key: 'items', count: 3 });
+await ilingo.get({ namespace: 'cart', key: 'items', count: 3 });
 // First call loads `./locales/en/cart.json`; subsequent calls hit the cache.
 ```
 
-Concurrent `get()`s for the same `(locale, group)` share one loader invocation. Misses (loader returning `undefined`) are cached too, so the loader isn't re-called for keys it has no answer for.
+Concurrent `get()`s for the same `(locale, namespace)` share one loader invocation. Misses (loader returning `undefined`) are cached too, so the loader isn't re-called for keys it has no answer for.
 
 ### Invalidation
 
-Stores that cache lookups can implement `InvalidatingStore`:
+Stores that cache lookups can implement `IInvalidatingStore`:
 
 ```typescript
-export interface InvalidatingStore extends IStore {
-    invalidate(locale?: string, group?: string): void;
-    on(event: 'invalidate', listener: (locale?: string, group?: string) => void): () => void;
+export interface IInvalidatingStore extends IStore {
+    invalidate(locale?: string, namespace?: string): void;
+    on(event: 'invalidate', listener: (locale?: string, namespace?: string) => void): () => void;
 }
 ```
 
-Drop scoped cache entries with `invalidate(locale?, group?)` — `()` drops everything, `('en')` drops all groups for `en`, `('en', 'app')` drops just one group. Subscribe to invalidation events via `on('invalidate', cb)` to react to file changes or manual drops.
+Drop scoped cache entries with `invalidate(locale?, namespace?)` — `()` drops everything, `('en')` drops all namespaces for `en`, `('en', 'app')` drops just one namespace. Subscribe to invalidation events via `on('invalidate', cb)` to react to file changes or manual drops.
 
 Both `LoaderStore` and `FSStore` implement this interface. The Vue composable (`@ilingo/vue`) subscribes automatically — file changes under `FSStore({ watch: true })` trigger a re-render without a remount.
 
@@ -597,7 +641,7 @@ Detect via the `isInvalidatingStore(store)` type guard before subscribing.
 ### FS Store
 
 The [FSStore](../fs/README.md) is a Store which access
-the FileSystem for locating group files of different locales.
+the FileSystem for locating namespace files of different locales.
 
 
 ## License

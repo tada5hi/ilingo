@@ -4,7 +4,7 @@ Translation strings can contain `{{var}}` placeholders. Pass values via `data`:
 
 ```typescript
 await ilingo.get({
-    group: 'app',
+    namespace: 'app',
     key: 'age',
     data: { age: 18 },
 });
@@ -21,7 +21,7 @@ const store = new MemoryStore({
 });
 const ilingo = new Ilingo({ store });
 
-await ilingo.get({ group: 'app', key: 'hi' });
+await ilingo.get({ namespace: 'app', key: 'hi' });
 // "Hello, {{name}}!"
 ```
 
@@ -33,7 +33,7 @@ When `count` is passed to `get()`, it is automatically copied into `data` if not
 
 ```typescript
 await ilingo.get({
-    group: 'cart',
+    namespace: 'cart',
     key: 'items',
     count: 5,
 });
@@ -44,7 +44,7 @@ This means `{{count}}` works in plural forms without restating it. Explicitly se
 
 ## Nested keys
 
-Keys are dotted paths into the group's object:
+Keys are dotted paths into the namespace's object:
 
 ```typescript
 const store = new MemoryStore({
@@ -60,9 +60,9 @@ const store = new MemoryStore({
     },
 });
 
-await ilingo.get({ group: 'settings', key: 'profile.avatar' });
+await ilingo.get({ namespace: 'settings', key: 'profile.avatar' });
 // "Change avatar"
-await ilingo.get({ group: 'settings', key: 'profile.nested.deep' });
+await ilingo.get({ namespace: 'settings', key: 'profile.nested.deep' });
 // "Deep value"
 ```
 

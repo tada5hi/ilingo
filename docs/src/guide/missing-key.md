@@ -4,7 +4,7 @@ When the chain × stores walk exhausts without a hit, `Ilingo` invokes a **missi
 
 ## Default behaviour
 
-If no handler is configured, `Ilingo` warns to the console **once per `(requestedLocale, group, key)` per instance** and returns `undefined`. The warning is silenced when `process.env.NODE_ENV === 'production'`.
+If no handler is configured, `Ilingo` warns to the console **once per `(requestedLocale, namespace, key)` per instance** and returns `undefined`. The warning is silenced when `process.env.NODE_ENV === 'production'`.
 
 The dedupe set is per-instance — multiple `Ilingo` instances don't dedupe each other's warnings.
 
@@ -14,9 +14,9 @@ Override via `onMissingKey`:
 
 ```typescript
 const ilingo = new Ilingo({
-    onMissingKey: ({ group, key, locale, resolvedLocale }) => {
-        track('i18n.miss', { group, key, locale, resolvedLocale });
-        return `[missing: ${group}.${key}]`;
+    onMissingKey: ({ namespace, key, locale, resolvedLocale }) => {
+        track('i18n.miss', { namespace, key, locale, resolvedLocale });
+        return `[missing: ${namespace}.${key}]`;
     },
 });
 ```
@@ -29,7 +29,7 @@ The `onMissingKey` field is typed as `MissingKeyHandler = (ctx: MissingKeyContex
 
 | Field | Type | Notes |
 |---|---|---|
-| `group` | `string` | The group that was requested |
+| `namespace` | `string` | The namespace that was requested |
 | `key` | `string` | The dotted key path |
 | `locale` | `string` | The *resolved* requested locale. Always set by the runtime, even though the source `GetContext.locale` is optional |
 | `resolvedLocale` | `string \| undefined` | The chain terminator — the last locale that was tried. Optional in the type; populated whenever the chain was non-empty |
@@ -50,7 +50,7 @@ The handler is useful for:
 
 ```typescript
 new Ilingo({
-    onMissingKey: ({ group, key }) => `${group}.${key}`,
+    onMissingKey: ({ namespace, key }) => `${namespace}.${key}`,
 });
 ```
 
@@ -58,8 +58,8 @@ new Ilingo({
 
 ```typescript
 new Ilingo({
-    onMissingKey: ({ group, key, locale }) => {
-        sentry.captureMessage('i18n.miss', { extra: { group, key, locale } });
+    onMissingKey: ({ namespace, key, locale }) => {
+        sentry.captureMessage('i18n.miss', { extra: { namespace, key, locale } });
         return undefined;
     },
 });

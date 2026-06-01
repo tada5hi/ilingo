@@ -5,17 +5,17 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Leaf, LocalesRecord, PluralLeaf } from '../types';
+import type { Leaf, Locales, PluralLeaf } from '../types';
 
 export type StoreGetContext = {
     locale: string,
-    group: string,
+    namespace: string,
     key: string,
 };
 
 export type StoreSetContext = StoreGetContext & {
     /**
-     * Value to persist at the `(locale, group, key)` position. Plain
+     * Value to persist at the `(locale, namespace, key)` position. Plain
      * translations are strings; plural translations must use the
      * `{ "@plural": { ... } }` wrapper so they round-trip with `get()`
      * (which only recognises the wrapped form when reading back).
@@ -24,29 +24,35 @@ export type StoreSetContext = StoreGetContext & {
 };
 
 /**
- * Read/write port for translation backends. The surface is intentionally
- * minimal — `get`, `set`, `getLocales` — and is **frozen** for the stable
- * release: external adapters can rely on these three methods being the
- * complete required contract.
+ * **Read** port for translation backends — the contract `Ilingo` relies on.
+ * ilingo's job is to *read* a datasource: the orchestrator only ever calls
+ * `get` (and `getLocales`), never `set`. So the required surface is just
+ * `id` + `get` + `getLocales`, and it is **frozen** at those — external
+ * adapters can rely on this being the complete required contract.
  *
- * Extensions are layered as optional interfaces detected via type guards
- * (today: `InvalidatingStore` for caches that can be dropped). New
- * capabilities like `has`, `delete`, `getKeys`, or batch `getAll` will
- * follow the same opt-in pattern rather than expanding this interface —
- * each was considered for inclusion and deferred:
+ * Writing is an *optional* capability layered as a separate interface
+ * detected via a type guard — see {@link IMutableStore} / {@link isMutableStore}
+ * (only stores that hold mutable state, like `MemoryStore` / `FSStore`,
+ * implement it). This mirrors {@link IInvalidatingStore} for caches.
+ *
+ * Other capabilities (`has`, `delete`, `getKeys`, batch `getAll`) follow
+ * the same opt-in pattern rather than expanding this interface — each was
+ * considered for inclusion and deferred:
  *
  * - `has(ctx)` — `get(ctx)` already returns `undefined` for misses; a
  *   separate `has` doubles the round-trip count for network-backed stores
  *   without buying meaningful API ergonomics.
- * - `delete(ctx)` / `getKeys(group)` — no in-tree consumer; speculative.
- * - `getAll(locale, group)` — bulk loading is the job of `LoaderStore`,
- *   which pre-warms a whole group on first access.
+ * - `delete(ctx)` / `getKeys(namespace)` — no in-tree consumer; speculative.
+ * - `getAll(locale, namespace)` — bulk loading is the job of `LoaderStore`,
+ *   which pre-warms a whole namespace on first access.
  *
  * Re-evaluate each only when a concrete consumer surfaces.
  */
 export interface IStore {
+    readonly id: string | symbol;
+
     /**
-     * Resolve a `(locale, group, key)` to a leaf value.
+     * Resolve a `(locale, namespace, key)` to a leaf value.
      *
      * The returned value is `Leaf` — `string | PluralForms` — which is
      * the *post-unwrap* shape: stores that hold the catalog-side
@@ -58,13 +64,6 @@ export interface IStore {
     get(context: StoreGetContext): Promise<Leaf | undefined>;
 
     /**
-     * Persist a `(locale, group, key)` → leaf mapping. Implementations
-     * that are read-only may throw; callers writing through `Ilingo` do
-     * not invoke `set` themselves.
-     */
-    set(context: StoreSetContext): Promise<void>;
-
-    /**
      * Enumerate the locales the store can currently resolve. Used by
      * `Ilingo.getLocales()` to aggregate across every registered store
      * and by `negotiateLocale()` callers that want the supported list.
@@ -72,17 +71,49 @@ export interface IStore {
     getLocales(): Promise<string[]>;
 }
 
+/**
+ * Optional **write** capability for stores that hold mutable state. ilingo
+ * is read-first — the orchestrator never writes — so `set` is *not* part of
+ * the required {@link IStore} port; a read-only adapter (a remote/HTTP
+ * datasource, a {@link LoaderStore} you don't mutate) need not implement it.
+ *
+ * Implemented by `MemoryStore` (in-memory mutation) and `FSStore` (writes
+ * through to disk). `extendStore(...)` and any caller that seeds a store at
+ * runtime should type the argument as `IMutableStore`. Detect at runtime
+ * with {@link isMutableStore}.
+ *
+ * The port stays **async** so it can cover async backends uniformly. A
+ * store that *also* supports synchronous writes (e.g. `MemoryStore`) may
+ * expose a concrete `setSync(...)` for seeding data after construction
+ * without an `await` — that is store-specific, not part of this contract.
+ */
+export interface IMutableStore extends IStore {
+    /**
+     * Persist a `(locale, namespace, key)` → leaf mapping.
+     */
+    set(context: StoreSetContext): Promise<void>;
+}
+
+/**
+ * Type guard for {@link IMutableStore} — true when the store exposes a
+ * `set` method.
+ */
+export function isMutableStore(store: IStore): store is IMutableStore {
+    return typeof (store as Partial<IMutableStore>).set === 'function';
+}
+
 export type MemoryStoreOptions = {
-    data: LocalesRecord,
+    id?: string | symbol,
+    data: Locales,
 };
 
 /**
  * Listener for a store's `invalidate` event. Receives the scope of the
  * invalidation: a `locale` (drop entries for that locale), a
- * `(locale, group)` tuple (drop only that group), or `undefined` for both
+ * `(locale, namespace)` tuple (drop only that namespace), or `undefined` for both
  * (drop everything).
  */
-export type InvalidateListener = (locale?: string, group?: string) => void;
+export type InvalidateListener = (locale?: string, namespace?: string) => void;
 
 /**
  * Stores that cache lookups and can drop those caches expose this surface
@@ -92,18 +123,18 @@ export type InvalidateListener = (locale?: string, group?: string) => void;
  *
  * Optional — not every `IStore` caches. Detect with `isInvalidatingStore`.
  */
-export interface InvalidatingStore extends IStore {
+export interface IInvalidatingStore extends IStore {
     /**
      * Drop cached entries.
      *
      * - `invalidate()` — drop everything.
-     * - `invalidate(locale)` — drop all groups for `locale`.
-     * - `invalidate(locale, group)` — drop just one group.
+     * - `invalidate(locale)` — drop all namespaces for `locale`.
+     * - `invalidate(locale, namespace)` — drop just one namespace.
      *
      * After invalidation the next `get()` for the affected key re-runs the
      * underlying load (a fresh file read, a re-import, etc.).
      */
-    invalidate(locale?: string, group?: string): void;
+    invalidate(locale?: string, namespace?: string): void;
 
     /**
      * Subscribe to invalidation events. Listeners are fired *after* the
@@ -115,7 +146,7 @@ export interface InvalidatingStore extends IStore {
     on(event: 'invalidate', listener: InvalidateListener): () => void;
 }
 
-export function isInvalidatingStore(store: IStore): store is InvalidatingStore {
-    return typeof (store as Partial<InvalidatingStore>).invalidate === 'function' &&
-        typeof (store as Partial<InvalidatingStore>).on === 'function';
+export function isInvalidatingStore(store: IStore): store is IInvalidatingStore {
+    return typeof (store as Partial<IInvalidatingStore>).invalidate === 'function' &&
+        typeof (store as Partial<IInvalidatingStore>).on === 'function';
 }

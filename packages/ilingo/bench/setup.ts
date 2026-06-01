@@ -105,7 +105,7 @@ export function makeIlingo() {
  *
  * i18next groups its catalog under namespaces — we flatten our two
  * groups (`app`, `form`) into namespaces so its `t('app:greeting')`
- * call matches our `get({ group: 'app', key: 'greeting' })`. Plurals
+ * call matches our `get({ namespace: 'app', key: 'greeting' })`. Plurals
  * use i18next's native suffix convention (`items_one` / `items_other`)
  * because that's the equivalent contract on their side.
  */
@@ -142,7 +142,7 @@ export function makeI18next() {
  * shape: `cart.items.@plural.one` becomes `cart.items_one`, nested keys
  * stay dotted, plain strings pass through.
  */
-function flatten(group: Record<string, unknown>): Record<string, string> {
+function flatten(namespace: Record<string, unknown>): Record<string, string> {
     const out: Record<string, string> = {};
     const walk = (obj: Record<string, unknown>, prefix: string) => {
         for (const [k, v] of Object.entries(obj)) {
@@ -160,6 +160,6 @@ function flatten(group: Record<string, unknown>): Record<string, string> {
             }
         }
     };
-    walk(group, '');
+    walk(namespace, '');
     return out;
 }

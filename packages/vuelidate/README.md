@@ -31,6 +31,26 @@ install(app);
 app.mount('#app');
 ```
 
+`install(app)` registers the built-in EN / DE / FR / ES validator-message catalog (the `vuelidate` namespace) on the app's `Ilingo` instance, via the **eager** store. If you manage the instance yourself, register a catalog store directly — `Ilingo.registerStore` dedupes by the store's `STORE_ID` (`Symbol.for('@ilingo/vuelidate')`), so it's idempotent:
+
+```typescript
+import { Ilingo } from 'ilingo';
+import { createMemoryStore } from '@ilingo/vuelidate/store/memory';
+
+const ilingo = new Ilingo();
+ilingo.registerStore(createMemoryStore()); // eager — install(app) does the same
+```
+
+For per-locale code-splitting, use the lazy loader store instead (each locale is fetched on demand via dynamic `import()`):
+
+```typescript
+import { createLoaderStore } from '@ilingo/vuelidate/store/loader';
+
+ilingo.registerStore(createLoaderStore());
+```
+
+The `vuelidate` namespace is a shared key-space — register your own store **first** to override individual validator messages while this catalog supplies the defaults.
+
 ```vue
 
 <script setup>

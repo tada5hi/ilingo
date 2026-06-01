@@ -62,7 +62,7 @@ describe('utils/formatters — modifier parser', () => {
     it('rejects extra trailing parens and nested parens', () => {
         // Regression for PR review: `endsWith(')')` previously allowed these.
         expect(parseModifier('number(currency=EUR))')).toBeUndefined();
-        expect(parseModifier('number(group(nested))')).toBeUndefined();
+        expect(parseModifier('number(namespace(nested))')).toBeUndefined();
     });
 });
 

@@ -16,7 +16,7 @@ The core ships the `Ilingo` orchestrator, the `IStore` port, the `MemoryStore` a
 npm install @ilingo/fs
 ```
 
-Loads `<directory>/<locale>/<group>.{js,mjs,cjs,ts,mts,json,conf}` files lazily on first access. Use it when your translations live on disk instead of inline in code.
+Loads `<directory>/<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}` files lazily on first access. Use it when your translations live on disk instead of inline in code.
 
 ## Vue 3 plugin
 

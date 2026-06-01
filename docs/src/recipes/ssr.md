@@ -85,11 +85,11 @@ import { Ilingo, LoaderStore, negotiateLocale, parseAcceptLanguage } from 'iling
 
 const store = new LoaderStore({
     locales: ['en', 'de', 'pt-BR'],
-    loader: async (locale, group) => {
-        // group is your logical namespace; usually you ship one file per
-        // (locale, group) pair. For a single file per locale, fold the
-        // group into the path or ignore it.
-        const mod = await import(`../locales/${locale}/${group}.json`);
+    loader: async (locale, namespace) => {
+        // namespace is your logical namespace; usually you ship one file per
+        // (locale, namespace) pair. For a single file per locale, fold the
+        // namespace into the path or ignore it.
+        const mod = await import(`../locales/${locale}/${namespace}.json`);
         return mod.default;
     },
 });
@@ -131,7 +131,7 @@ const ilingo  = new Ilingo<typeof catalog>({
 
 #### Pattern B — server picks slices, client receives them
 
-For larger catalogs you serialise the slice the client needs (e.g. only the locale that was negotiated, or only the groups rendered into the initial page). The client builds an `Ilingo` over the slice:
+For larger catalogs you serialise the slice the client needs (e.g. only the locale that was negotiated, or only the namespaces rendered into the initial page). The client builds an `Ilingo` over the slice:
 
 ```typescript
 // server-side render
@@ -167,7 +167,7 @@ const ilingo = new Ilingo({
 });
 ilingo.stores.add(new LoaderStore({
     locales: ['en', 'de', 'pt-BR'],
-    loader: (loc, group) => import(`./locales/${loc}/${group}.json`).then((m) => m.default),
+    loader: (loc, namespace) => import(`./locales/${loc}/${namespace}.json`).then((m) => m.default),
 }));
 // MemoryStore answers first (already-hydrated locale); LoaderStore covers everything else.
 // The serial store walk (#917 Track B) means LoaderStore never fires for keys MemoryStore has.
@@ -249,7 +249,7 @@ declare namespace App {
 ```astro
 ---
 // src/pages/index.astro
-const greeting = await Astro.locals.ilingo.get({ group: 'app', key: 'greeting' });
+const greeting = await Astro.locals.ilingo.get({ namespace: 'app', key: 'greeting' });
 ---
 <h1>{greeting}</h1>
 ```

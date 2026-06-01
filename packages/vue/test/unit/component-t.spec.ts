@@ -105,18 +105,18 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         expect(wrapper.text()).toEqual('Please {cta} to continue.');
     });
 
-    it('rejects a path without a group prefix', () => {
+    it('rejects a path without a namespace prefix', () => {
         expect(() => mount(ITranslateT, {
             props: { path: 'no-dot' },
             global: {
                 plugins: [makeApp({ en: { app: {} } })],
             },
-        })).toThrow(/group\.key/);
+        })).toThrow(/namespace\.key/);
     });
 
     it.each([
-        ['.key'],     // empty group
-        ['group.'],   // empty key
+        ['.key'],     // empty namespace
+        ['namespace.'],   // empty key
         ['.'],        // both empty
     ])('rejects an empty segment in path: %s', (badPath) => {
         expect(() => mount(ITranslateT, {
@@ -124,7 +124,7 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
             global: {
                 plugins: [makeApp({ en: { app: {} } })],
             },
-        })).toThrow(/group\.key/);
+        })).toThrow(/namespace\.key/);
     });
 
     it('preserves the full original placeholder (incl. modifier) when data is missing', async () => {
@@ -145,7 +145,7 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         expect(wrapper.text()).toEqual('You owe {{amount, number(currency=EUR)}}');
     });
 
-    it('reacts to a dynamic `path` prop (no stale group/key)', async () => {
+    it('reacts to a dynamic `path` prop (no stale namespace/key)', async () => {
         // Regression: an earlier implementation parsed `props.path` once at
         // setup, so flipping the path after mount left the component stuck
         // on the original message.
