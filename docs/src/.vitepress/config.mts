@@ -34,7 +34,6 @@ export default defineConfig({
             { text: 'Integrations', link: '/integrations/', activeMatch: '/integrations/' },
             { text: 'Recipes', link: '/recipes/ssr', activeMatch: '/recipes/' },
             { text: 'Performance', link: '/performance', activeMatch: '/performance' },
-            { text: 'Migration', link: '/migration/from-5.0', activeMatch: '/migration/' },
         ],
         sidebar: {
             '/getting-started/': [{
@@ -85,12 +84,6 @@ export default defineConfig({
                 text: 'Performance',
                 items: [
                     { text: 'Benchmarks', link: '/performance' },
-                ],
-            }],
-            '/migration/': [{
-                text: 'Migration',
-                items: [
-                    { text: 'From 5.0', link: '/migration/from-5.0' },
                 ],
             }],
         },
