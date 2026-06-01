@@ -13,10 +13,6 @@
         "./packages/*",
         "./docs"
     ],
-    "overrides": {
-        "vue": "3.5.34",
-        "@vue/server-renderer": "3.5.34"
-    },
     "repository": {
         "type": "git",
         "url": "https://github.com/tada5hi/ilingo.git"

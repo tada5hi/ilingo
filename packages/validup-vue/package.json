@@ -56,10 +56,14 @@
         "@ilingo/validup": "^0.1.0",
         "@ilingo/vue": "^5.0.0",
         "@validup/vue": "^0.3.0",
+        "@vitejs/plugin-vue": "^6.0.3",
+        "@vue/test-utils": "^2.4.6",
         "@vueuse/core": "^14.1.0",
+        "happy-dom": "^20.9.0",
         "ilingo": "^5.0.0",
         "validup": "^0.4.0",
         "vite": "^7.3.1",
+        "vitest": "^4.1.5",
         "vue": "^3.5.35"
     },
     "peerDependencies": {
