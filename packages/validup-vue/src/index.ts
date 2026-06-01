@@ -48,5 +48,6 @@ export default { install } satisfies Plugin<[]>;
 
 // Vue-coupled surface.
 export * from './component';
+export * from './component-t';
 export * from './composables';
 export * from './types';

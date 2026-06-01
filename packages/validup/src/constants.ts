@@ -27,4 +27,8 @@ export const STORE_ID = Symbol.for('@ilingo/validup');
 
 export enum SlotName {
     DEFAULT = 'default',
+    /** Whole-form `<IValidup :composable>` channels (see issue #948). */
+    CROSS_CUTTING = 'cross-cutting',
+    GROUPS = 'groups',
+    FIELDS = 'fields',
 }

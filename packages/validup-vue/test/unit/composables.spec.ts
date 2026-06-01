@@ -6,20 +6,43 @@
  */
 
 import { Store } from '@ilingo/validup/store/memory';
-import { install as installIlingoVue } from '@ilingo/vue';
+import { install as installIlingoVue, provideLocale } from '@ilingo/vue';
 import { Ilingo } from 'ilingo';
-import { Container, IssueCode, defineIssueItem } from 'validup';
-import type { Validator } from 'validup';
+import { Container, IssueCode, defineIssueGroup, defineIssueItem } from 'validup';
+import type { IssueGroup, IssueItem, Validator } from 'validup';
+import type { Composable } from '@validup/vue';
 import { useValidup } from '@validup/vue';
 import { mount } from '@vue/test-utils';
-import { defineComponent, nextTick, reactive, ref } from 'vue';
+import { computed, defineComponent, nextTick, reactive, ref } from 'vue';
+import type { Ref } from 'vue';
 import { describe, expect, it } from 'vitest';
 import {
     install,
+    useFieldFeedback,
     useTranslationsForComposable,
     useTranslationsForField,
+    useTranslationsForGroupErrors,
     useTranslationsForIssues,
 } from '../../src';
+
+/**
+ * Minimal fake `Composable` exposing only the reactive error channels
+ * the bridge reads. Producing real `$groupErrors` would mean driving
+ * validup's full `oneOf` runtime; a fake that satisfies the read
+ * contract keeps these tests scoped to the translation wiring (the
+ * bridge), not validup itself.
+ */
+function fakeComposable(parts: {
+    errors?: IssueItem[];
+    crossCutting?: IssueItem[];
+    groups?: Ref<IssueGroup[]> | IssueGroup[];
+}): Composable {
+    return {
+        $errors: computed(() => parts.errors ?? []),
+        $crossCuttingErrors: computed(() => parts.crossCutting ?? []),
+        $groupErrors: computed(() => (Array.isArray(parts.groups) ? parts.groups : parts.groups?.value) ?? []),
+    } as unknown as Composable;
+}
 
 /**
  * Bundle the two-step install (`@ilingo/vue` then `@ilingo/validup-vue`)
@@ -143,5 +166,111 @@ describe('useTranslationsForField + useTranslationsForComposable', () => {
         // message as the fallback. Translation picks the catalog entry.
         expect(wrapper.find('.field').text()).toBe('The value is invalid');
         expect(wrapper.find('.form').text()).toBe('The value is invalid');
+    });
+});
+
+describe('useTranslationsForGroupErrors', () => {
+    it('translates each group by its own code and re-runs on locale flip', async () => {
+        const groups = ref<IssueGroup[]>([
+            defineIssueGroup({
+                code: IssueCode.ONE_OF_FAILED,
+                message: 'None of the branches succeeded',
+                path: [],
+                issues: [
+                    // A child leaf that must NOT be flattened into the output.
+                    defineIssueItem({
+                        path: ['email'],
+                        message: 'The value is invalid',
+                        code: IssueCode.VALUE_INVALID,
+                    }),
+                ],
+            }),
+        ]);
+        const $v = fakeComposable({ groups });
+
+        // Provide our own locale Ref so the test can flip it — the
+        // composables track the injected locale Ref, not ilingo.setLocale().
+        const localeRef = ref('en');
+        const ilingo = new Ilingo({ locale: 'en' });
+        const wrapper = mount(defineComponent({
+            setup: () => ({ groupTranslations: useTranslationsForGroupErrors($v) }),
+            template: '<div><span class="count">{{ groupTranslations.length }}</span><span class="msg">{{ groupTranslations.map((t) => t.message).join(",") }}</span></div>',
+        }), {
+            global: {
+                plugins: [{
+                    install(app: import('vue').App) {
+                        provideLocale(localeRef, app);
+                        installIlingoVue(app, ilingo);
+                        install(app);
+                    },
+                }],
+            },
+        });
+
+        await flush();
+        // One entry for the group — the child VALUE_INVALID leaf is not pulled in.
+        expect(wrapper.find('.count').text()).toBe('1');
+        expect(wrapper.find('.msg').text()).toBe('None of the alternatives was successful');
+
+        localeRef.value = 'de';
+        await flush();
+        expect(wrapper.find('.msg').text()).toBe('Keine der Alternativen war erfolgreich');
+    });
+});
+
+describe('useFieldFeedback', () => {
+    it('bundles severity + reshaped messages + the raw issues escape hatch', async () => {
+        const container = new Container<{ email: string }>();
+        container.mount('email', isString);
+
+        const formState = reactive({ email: 42 as unknown as string });
+
+        const ilingo = new Ilingo({ locale: 'en' });
+        const wrapper = mount(defineComponent({
+            setup() {
+                const $v = useValidup(container, formState);
+                const feedback = useFieldFeedback($v.fields.email);
+                $v.fields.email.$touch();
+                return { feedback };
+            },
+            template: '<div>'
+                + '<span class="severity">{{ feedback.severity }}</span>'
+                + '<span class="keys">{{ feedback.messages.map((m) => m.key).join(",") }}</span>'
+                + '<span class="values">{{ feedback.messages.map((m) => m.value).join(",") }}</span>'
+                + '<span class="issues">{{ feedback.issues.length }}</span>'
+                + '</div>',
+        }), {
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        await flush();
+        // A required field with a hard failure → 'error'.
+        expect(wrapper.find('.severity').text()).toBe('error');
+        // Messages reshaped to { key: issue.code, value: message }.
+        expect(wrapper.find('.keys').text()).toBe(IssueCode.VALUE_INVALID);
+        expect(wrapper.find('.values').text()).toBe('The value is invalid');
+        // Escape hatch carries the raw translation list.
+        expect(wrapper.find('.issues').text()).toBe('1');
+    });
+
+    it('reports undefined severity while the field is pristine', async () => {
+        const container = new Container<{ email: string }>();
+        container.mount('email', isString);
+        const formState = reactive({ email: 'ok' });
+
+        const ilingo = new Ilingo({ locale: 'en' });
+        const wrapper = mount(defineComponent({
+            setup() {
+                const $v = useValidup(container, formState, { lazy: true });
+                const feedback = useFieldFeedback($v.fields.email);
+                return { severity: feedback.severity };
+            },
+            template: '<div class="severity">{{ severity === undefined ? "none" : severity }}</div>',
+        }), {
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        await flush();
+        expect(wrapper.find('.severity').text()).toBe('none');
     });
 });

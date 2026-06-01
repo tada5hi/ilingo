@@ -84,9 +84,13 @@ Resolve a single `Issue` (item *or* group) to a localized string. Lookup order i
 
 ### `translateIssues(issues, ilingo, opts?)`
 
-Flatten an `Issue[]` to its leaf `IssueItem`s and translate each in parallel via `Promise.all`. Useful in SSR template loops, queue workers, log formatters — anywhere outside Vue.
+Flatten an `Issue[]` to its leaf `IssueItem`s and translate each in parallel via `Promise.all`. Useful in SSR template loops, queue workers, log formatters — anywhere outside Vue. Returns `IssueTranslation[]` (`{ issue, message }`).
 
-Options on both: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
+### `translateIssueGroups(groups, ilingo, opts?)`
+
+Translate an `IssueGroup[]` — each by its **own** `code` (e.g. `one_of_failed`) — **without** descending into the group's children. The group-level counterpart to `translateIssues`: where that flattens to per-field leaves, this keeps each group intact for whole-form / banner rendering ("none of the alternatives validated"). Returns `IssueGroupTranslation[]` (`{ issue, message }`, where `issue` is the `IssueGroup`).
+
+Options on all three: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
 
 ### Type-safe catalog composition
 
@@ -150,7 +154,7 @@ The `validup` namespace name is exported as `NAMESPACE` if you'd rather build th
 
 ## Going Vue
 
-For composables (`useTranslationsForIssues`, `useTranslationsForField`, `useTranslationsForComposable`), the `<IValidup>` renderless component, and the Vue plugin install hook, add [`@ilingo/validup-vue`](../validup-vue).
+For composables (`useTranslationsForIssues`, `useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForGroupErrors`, `useFieldFeedback`), the `<IValidup>` / `<IValidupT>` renderless components, and the Vue plugin install hook, add [`@ilingo/validup-vue`](../validup-vue).
 
 ## License
 

@@ -7,9 +7,10 @@
 
 import { isProductionEnv } from 'ilingo';
 import type { IIlingo } from 'ilingo';
-import type { Issue, IssueItem } from 'validup';
+import type { Issue, IssueGroup, IssueItem } from 'validup';
 import { flattenIssueItems } from 'validup';
 import { NAMESPACE } from '../constants';
+import type { IssueGroupTranslation } from '../types';
 
 /**
  * Coerce validup's `Record<string, unknown>` issue-data shape into
@@ -169,4 +170,33 @@ export async function translateIssues(
         flat.map((issue) => translateIssue(issue, ilingo, options)),
     );
     return flat.map((issue, i) => ({ issue, message: messages[i]! }));
+}
+
+/**
+ * Translate a list of `IssueGroup`s — each by its **own** `code` — to
+ * localized messages, **without** descending into the group's children.
+ *
+ * This is the group-level counterpart to {@link translateIssues}: where
+ * `translateIssues` flattens to leaf `IssueItem`s (per-field rendering),
+ * this keeps each group intact (whole-form / banner rendering). A group
+ * error such as `one_of_failed` means "none of the alternatives
+ * validated" — the consumer wants the group's message, not the messages
+ * of every branch that failed.
+ *
+ * Mirrors `translateIssues`' batching: all groups translate in parallel
+ * via `Promise.all`, and the store-level dedup on
+ * `(locale, namespace, key)` collapses repeated identical lookups.
+ *
+ * For a Vue-reactive flavor, use `useTranslationsForGroupErrors` from
+ * `@ilingo/validup-vue`.
+ */
+export async function translateIssueGroups(
+    groups: IssueGroup[],
+    ilingo: IIlingo,
+    options: TranslateIssueOptions = {},
+): Promise<IssueGroupTranslation[]> {
+    const messages = await Promise.all(
+        groups.map((group) => translateIssue(group, ilingo, options)),
+    );
+    return groups.map((issue, i) => ({ issue, message: messages[i]! }));
 }

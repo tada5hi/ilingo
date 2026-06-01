@@ -5,8 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { IssueTranslation } from '@ilingo/validup';
+import type { IssueGroupTranslation, IssueTranslation, KeyValue } from '@ilingo/validup';
 import type { Ref } from 'vue';
+import type { Severity } from '@validup/vue';
 
 /**
  * Reactive list of translated leaf issues. Produced by
@@ -19,3 +20,26 @@ import type { Ref } from 'vue';
  * shape is framework-agnostic and is exported from `@ilingo/validup`.
  */
 export type FieldTranslations = Ref<IssueTranslation[]>;
+
+/**
+ * Reactive list of translated **group** issues. Produced by
+ * `useTranslationsForGroupErrors`; rebuilds when the composable's
+ * `$groupErrors` change or when the injected locale flips.
+ *
+ * The group-level counterpart to {@link FieldTranslations} — see
+ * `IssueGroupTranslation` for why the two are distinct.
+ */
+export type GroupTranslations = Ref<IssueGroupTranslation[]>;
+
+/**
+ * Return shape of `useFieldFeedback` — a **`reactive`** bundle (so its
+ * keys auto-unwrap when `v-bind`'d onto a `<VCFormGroup>`-style host) of
+ * the field's `severity`, its reshaped `messages`
+ * (`validation-severity` / `validation-messages`), and the raw
+ * `issues` escape hatch.
+ */
+export type FieldFeedback = {
+    severity: Severity;
+    messages: KeyValue<string>[];
+    issues: IssueTranslation[];
+};
