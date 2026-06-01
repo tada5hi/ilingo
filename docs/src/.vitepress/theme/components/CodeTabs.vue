@@ -18,24 +18,27 @@ npm install @ilingo/vuelidate # Vuelidate validator messages`,
     },
     {
         label: 'Define',
-        code: `import { Ilingo, MemoryStore, defineCatalog } from 'ilingo';
+        code: `import {
+    Ilingo, MemoryStore,
+    defineCatalog, defineLocale, defineNamespace, defineTranslations, definePlural,
+} from 'ilingo';
 
-const catalog = defineCatalog({
-    en: {
-        cart: {
-            greeting: 'Welcome, {{name}}!',
-            items: {
-                '@plural': {
+const catalog = defineCatalog([
+    defineLocale('en', [
+        defineNamespace('cart', [
+            defineTranslations({
+                greeting: 'Welcome, {{name}}!',
+                items: definePlural({
                     one: '{{count}} item in your cart',
                     other: '{{count}} items in your cart',
-                },
-            },
-        },
-    },
-    de: { /* …same shape… */ },
-});
+                }),
+            }),
+        ]),
+    ]),
+    defineLocale('de', [ /* …same shape… */ ]),
+]);
 
-const ilingo = new Ilingo<typeof catalog>({
+const ilingo = new Ilingo({
     store: new MemoryStore({ data: catalog }),
     locale: 'en',
 });`,

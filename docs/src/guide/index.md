@@ -11,11 +11,12 @@ ilingo follows a small **port-and-adapter** design. Three pieces:
               │
               ▼
 ┌──────────────────────────────────┐
-│            IStore                │   ← port
-│  get(locale, namespace, key)         │
-│  set(...)                        │
+│            IStore                │   ← read port
+│  get(ctx)                        │
 │  getLocales()                    │
 └──────────────────────────────────┘
+   + set(ctx)        → opt-in IMutableStore
+   + invalidate(...) → opt-in IInvalidatingStore
               ▲
               │ implements
    ┌──────────┴──────────┐

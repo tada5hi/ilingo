@@ -208,14 +208,20 @@ async get(ctx: GetContext): Promise<string | undefined> {
     const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
 
     const hit = await this.lookup(chain, ctx);
-    if (!hit) return this.handleMissingKey(ctx, requestedLocale, chain);
+    return hit ?
+        this.render(hit.leaf, hit.locale, ctx) :
+        this.handleMissingKey(ctx, requestedLocale, chain);
+}
 
-    const message = this.selectPluralForm(hit.leaf, hit.locale, ctx.count);
+// The post-lookup half of get(): plural-form selection + count auto-merge
+// into data + {{var}} substitution against the resolved locale.
+protected render(leaf: Leaf, locale: string, ctx: GetContext): string {
+    const message = this.selectPluralForm(leaf, locale, ctx.count);
     const data: Data = { ...(ctx.data || {}) };
     if (typeof ctx.count === 'number' && typeof data.count === 'undefined') {
         data.count = ctx.count;
     }
-    return this.format(message, data);
+    return this.format(message, data, locale);
 }
 
 protected async lookup(chain, ctx) {
@@ -246,7 +252,7 @@ If `onMissingKey` is not configured, the built-in default warns once per `(reque
 
 `useTranslation(ctx)` forwards `count` as `MaybeRef<number>` (unwrapped via `unref`) so plural selection is reactive to count changes the same way `data` is.
 
-`@ilingo/vuelidate` chains this: it calls `applyInstallInput`, then ensures its own `Store` (a `MemoryStore` pre-loaded with EN/DE/FR/ES validator translations) is registered if none is present yet.
+`@ilingo/vuelidate` chains this: it calls `applyInstallInput`, then registers its own catalog store via `instance.registerStore(createMemoryStore())` (a `MemoryStore` pre-loaded with EN/DE/FR/ES validator translations). The store is keyed by `STORE_ID = Symbol.for('@ilingo/vuelidate')`, so `registerStore` is idempotent — repeated installs (or a duplicate package copy) collide on the same key and stay a no-op rather than stacking.
 
 ### Slot-aware rendering — `<ITranslateT>` + `tokenize()`
 
@@ -315,7 +321,8 @@ packages/ilingo/src/
 
 packages/fs/src/module.ts            ← second IStore adapter (FSStore, persists set() as JSON)
 packages/vue/src/index.ts            ← framework integration (Vue plugin)
-packages/vuelidate/src/store.ts      ← preloaded MemoryStore for validator names
+packages/vuelidate/src/store/memory.ts ← preloaded MemoryStore (createMemoryStore) for validator names
+packages/vuelidate/src/store/loader.ts ← lazy per-locale LoaderStore (createLoaderStore)
 ```
 
 ## Configuration

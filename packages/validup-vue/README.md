@@ -157,4 +157,4 @@ Per-issue element tag follows `<ITranslateT>`'s `tag` prop (default `span`; `tag
 
 ## License
 
-Apache-2.0 © Peter Placzek
+MIT © Peter Placzek

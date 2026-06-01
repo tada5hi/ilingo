@@ -1,58 +1,66 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useData } from 'vitepress';
-import { Ilingo, MemoryStore } from 'ilingo';
+import {
+    Ilingo,
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineTranslations,
+    definePlural,
+} from 'ilingo';
 
-const catalog = {
-    en: {
-        cart: {
-            greeting: 'Welcome, {{name}}!',
-            items: {
-                '@plural': {
+const catalog = defineCatalog([
+    defineLocale('en', [
+        defineNamespace('cart', [
+            defineTranslations({
+                greeting: 'Welcome, {{name}}!',
+                items: definePlural({
                     one: '{{count}} item in your cart',
                     other: '{{count}} items in your cart',
-                },
-            },
-            total: 'Total: {{amount, number(style=currency, currency=EUR)}}',
-        },
-    },
-    de: {
-        cart: {
-            greeting: 'Willkommen, {{name}}!',
-            items: {
-                '@plural': {
+                }),
+                total: 'Total: {{amount, number(style=currency, currency=EUR)}}',
+            }),
+        ]),
+    ]),
+    defineLocale('de', [
+        defineNamespace('cart', [
+            defineTranslations({
+                greeting: 'Willkommen, {{name}}!',
+                items: definePlural({
                     one: '{{count}} Artikel im Warenkorb',
                     other: '{{count}} Artikel im Warenkorb',
-                },
-            },
-            total: 'Gesamt: {{amount, number(style=currency, currency=EUR)}}',
-        },
-    },
-    fr: {
-        cart: {
-            greeting: 'Bienvenue, {{name}} !',
-            items: {
-                '@plural': {
+                }),
+                total: 'Gesamt: {{amount, number(style=currency, currency=EUR)}}',
+            }),
+        ]),
+    ]),
+    defineLocale('fr', [
+        defineNamespace('cart', [
+            defineTranslations({
+                greeting: 'Bienvenue, {{name}} !',
+                items: definePlural({
                     one: '{{count}} article dans votre panier',
                     other: '{{count}} articles dans votre panier',
-                },
-            },
-            total: 'Total : {{amount, number(style=currency, currency=EUR)}}',
-        },
-    },
-    'pt-BR': {
-        cart: {
-            greeting: 'Bem-vindo, {{name}}!',
-            items: {
-                '@plural': {
+                }),
+                total: 'Total : {{amount, number(style=currency, currency=EUR)}}',
+            }),
+        ]),
+    ]),
+    defineLocale('pt-BR', [
+        defineNamespace('cart', [
+            defineTranslations({
+                greeting: 'Bem-vindo, {{name}}!',
+                items: definePlural({
                     one: '{{count}} item no seu carrinho',
                     other: '{{count}} itens no seu carrinho',
-                },
-            },
-            total: 'Total: {{amount, number(style=currency, currency=EUR)}}',
-        },
-    },
-};
+                }),
+                total: 'Total: {{amount, number(style=currency, currency=EUR)}}',
+            }),
+        ]),
+    ]),
+]);
 
 const ilingo = new Ilingo({
     store: new MemoryStore({ data: catalog }),

@@ -14,7 +14,6 @@ Ilingo is a lightweight library for translation and internationalization. The co
 - [Configuration](#configuration)
 - [Usage](#usage)
   - [Basic](#basic)
-  - [Singleton](#singleton)
   - [Parameters](#parameters)
   - [Locales](#locales)
   - [Lazy](#lazy)
@@ -164,7 +163,7 @@ await ilingo.get({
 
 ### Locales
 
-The default locale, which is used by the singleton instance, can be modified after initialization:
+The default locale can be modified after initialization:
 
 ```typescript
 import { Ilingo } from 'ilingo';
@@ -194,8 +193,8 @@ await ilingo.get({
 // Ich bin 18 Jahre alt
 ```
 
-It also can be **temporarily** overwritten, by passing the locale as the third argument
-to one of the helper or supported singleton methods:
+It can also be **temporarily** overwritten per call, by passing a `locale` in the
+translation context:
 
 ```typescript
 import { Ilingo } from 'ilingo';

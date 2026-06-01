@@ -69,6 +69,7 @@ The Vue package uses **happy-dom** for the DOM environment and **@vue/test-utils
 ```
 unit/
 ├── module.spec.ts              # FSStore.loadNamespace against test/data/language/ + fallback semantics
+├── dotted-namespace.spec.ts    # dotted namespace ↔ dotted filename (app.nav.json): load, key/namespace separation, persist round-trip
 ├── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
 │                               #   split read/write directories
 └── watch.spec.ts               # FSStore({ watch: true }) emits invalidate on file change;
