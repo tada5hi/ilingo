@@ -31,6 +31,8 @@ Locale strings live in subdirectories — one per locale — with one file per n
         └── forum.json
 ```
 
+A **dotted namespace maps to a dotted filename**: a `defineNamespace('app.nav', …)` slice (namespace `app.nav`) is loaded from `<locale>/app.nav.json`. The filename — minus extension — *is* the namespace you pass to `get`.
+
 ## Supported file extensions
 
 `FSStore` resolves `<directory>/<locale>/<namespace>.<ext>` across the following extensions, in order:
@@ -41,19 +43,25 @@ Loading is provided by [`locter`](https://github.com/Tada5hi/locter) — first m
 
 ## File formats
 
+Each file holds a single namespace's **lines node** — a `{ "type": "lines", "data": { … } }` object. Plurals are plural nodes inside `data`.
+
 ### JSON
 
 ```json
 {
-    "greeting": "Hello, {{name}}!",
-    "nested": {
-        "deep": "Deep value"
-    },
-    "cart": {
-        "items": {
-            "@plural": {
-                "one": "{{count}} item",
-                "other": "{{count}} items"
+    "type": "lines",
+    "data": {
+        "greeting": "Hello, {{name}}!",
+        "nested": {
+            "deep": "Deep value"
+        },
+        "cart": {
+            "items": {
+                "type": "plural",
+                "data": {
+                    "one": "{{count}} item",
+                    "other": "{{count}} items"
+                }
             }
         }
     }
@@ -62,18 +70,24 @@ Loading is provided by [`locter`](https://github.com/Tada5hi/locter) — first m
 
 ### TypeScript / JavaScript (ESM)
 
+The default export is a lines node — build it with `defineLines` (and `definePlural` for plurals):
+
 ```typescript
-export default {
+import { defineLines } from 'ilingo';
+
+export default defineLines({
     greeting: 'Hello, {{name}}!',
-};
+});
 ```
 
 ### CommonJS
 
 ```javascript
-module.exports = {
+const { defineLines } = require('ilingo');
+
+module.exports = defineLines({
     greeting: 'Hello, {{name}}!',
-};
+});
 ```
 
 ## Multiple directories

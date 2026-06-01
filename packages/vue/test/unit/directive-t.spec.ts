@@ -11,12 +11,13 @@ import type { Ref } from 'vue';
 import { defineComponent } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import { injectLocale, install } from '../../src';
+import { toCatalog } from '../helpers/catalog';
 
 function plugin(messages: Record<string, unknown>, locale = 'en', options: { directives?: boolean } = {}) {
     return {
         install(app: import('vue').App) {
             install(app, {
-                store: new MemoryStore({ data: messages as never }),
+                store: new MemoryStore({ data: toCatalog(messages as never) }),
                 locale,
                 directives: options.directives,
             });
@@ -97,10 +98,10 @@ describe('v-t directive (#901)', () => {
         // had already changed and clobber `textContent` with the stale
         // translation.
         const store = new MemoryStore({
-            data: {
+            data: toCatalog({
                 en: { app: { hi: 'Hello' } },
                 de: { app: { hi: 'Hallo' } },
-            },
+            }),
         });
 
         // Wrap the store to make `get()` artificially slow for 'en' but fast

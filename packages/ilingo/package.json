@@ -32,7 +32,6 @@
         "lint": "eslint",
         "lint:fix": "npm run lint -- --fix",
         "test": "cross-env NODE_ENV=test vitest --config test/vitest.config.ts --run",
-        "test:types": "cross-env NODE_ENV=test vitest --config test/vitest.config.ts --run --typecheck --typecheck.only",
         "test:coverage": "cross-env NODE_ENV=test vitest --config test/vitest.config.ts --run --coverage",
         "bench": "cross-env NODE_ENV=production vitest bench --config bench/vitest.config.ts --run",
         "smoke": "node test/smoke.mjs"

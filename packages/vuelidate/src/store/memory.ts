@@ -9,6 +9,10 @@ import {
     type IMutableStore,
     MemoryStore,
     type Namespaces,
+    defineCatalog,
+    defineLines,
+    defineLocale,
+    defineNamespace,
     parseLinesRecord,
 } from 'ilingo';
 import { NAMESPACE, STORE_ID } from '../constants';
@@ -34,12 +38,12 @@ export class Store extends MemoryStore {
     constructor() {
         super({
             id: STORE_ID,
-            data: {
-                en: { vuelidate: useEnglishTranslation() },
-                de: { vuelidate: useGermanTranslation() },
-                fr: { vuelidate: useFrenchTranslation() },
-                es: { vuelidate: useSpanishTranslation() },
-            },
+            data: defineCatalog([
+                defineLocale('en', [defineNamespace(NAMESPACE, [defineLines(useEnglishTranslation())])]),
+                defineLocale('de', [defineNamespace(NAMESPACE, [defineLines(useGermanTranslation())])]),
+                defineLocale('fr', [defineNamespace(NAMESPACE, [defineLines(useFrenchTranslation())])]),
+                defineLocale('es', [defineNamespace(NAMESPACE, [defineLines(useSpanishTranslation())])]),
+            ]),
         });
     }
 }

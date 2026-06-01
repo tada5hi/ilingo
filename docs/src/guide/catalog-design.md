@@ -1,47 +1,88 @@
 # Catalog Design
 
-A **catalog** is the nested object you hand to `MemoryStore({ data })` (or persist to disk via `FSStore`). Its shape is small but every layer carries meaning — getting the shape right unlocks BCP-47 fallback, plural selection, and compile-time key inference.
+A **catalog** is the value you hand to `MemoryStore({ data })` (or persist to disk via `FSStore`). It is a **tree of tagged descriptor nodes** built with five helpers — `defineCatalog`, `defineLocale`, `defineNamespace`, `defineLines`, and `definePlural`. The tree shape is small but every layer carries meaning: getting it right unlocks BCP-47 fallback, plural selection, and per-file authoring.
 
 ```typescript
-const catalog = {
-    en: {                       // locale
-        app: {                  // namespace (logical namespace)
-            greeting: 'Hi {{name}}',
-            farewell: 'Bye',
-            cart: {
-                items: {
-                    '@plural': {
-                        one:   '{{count}} item',
-                        other: '{{count}} items',
-                    },
-                },
-            },
-        },
-    },
-    de: {
-        app: { /* same shape */ },
-    },
-};
+import {
+    Ilingo, MemoryStore,
+    defineCatalog, defineLocale, defineNamespace, defineLines, definePlural,
+} from 'ilingo';
+
+const catalog = defineCatalog([
+    defineLocale('en', [
+        defineNamespace('app', [
+            defineLines({ greeting: 'Hi {{name}}', nav: { home: 'Home' } }), // nav.home is a dotted KEY
+        ]),
+        defineNamespace('cart', [
+            defineLines({ items: definePlural({ one: '{{count}} item', other: '{{count}} items' }) }),
+        ]),
+    ]),
+]);
+
+const ilingo = new Ilingo({ store: new MemoryStore({ data: catalog }) });
+
+await ilingo.get({ namespace: 'app', key: 'greeting', data: { name: 'Peter' } });
+// "Hi Peter"
 ```
 
-The shape is `Record<locale, Record<namespace, nested-record-of-leaves>>`. Each leaf is either a `string` or a `{ "@plural": { ... } }` wrapper. Everything in between is just nested keys you can address with dotted paths.
+The five helpers map one-to-one onto the tree levels:
 
-## Layout choices
+| Helper | Produces | Children |
+|---|---|---|
+| `defineCatalog(locales)` | the **root** you pass to `MemoryStore({ data })` | an array of `defineLocale(...)` nodes |
+| `defineLocale(name, children)` | a locale (`'en'`, `'pt-BR'`, …) | `defineNamespace(...)` / `defineLines(...)` |
+| `defineNamespace(name, children)` | a namespace under a locale | nested `defineNamespace(...)` / `defineLines(...)` |
+| `defineLines(obj)` | a flat or key-nested map of translations | — (the leaves) |
+| `definePlural(forms)` | a plural leaf | — (CLDR-categorised strings) |
 
-The library is agnostic to how you split data across files — it only sees the merged shape once it reaches a store. Two common authoring patterns:
+## The two nesting hierarchies
+
+The tree has **two** independent ways to nest, and keeping them distinct is the key idea.
+
+### Nested `defineNamespace` extends the dotted NAMESPACE
+
+A `defineNamespace` inside another `defineNamespace` builds a dotted **namespace**:
+
+```typescript
+defineLocale('en', [
+    defineNamespace('app', [
+        defineNamespace('nav', [
+            defineLines({ home: 'Home' }),
+        ]),
+    ]),
+]);
+// → namespace 'app.nav', key 'home'
+await ilingo.get({ namespace: 'app.nav', key: 'home' });
+```
+
+### Nested objects inside `defineLines` extend the dotted KEY
+
+A plain nested object passed to `defineLines` builds a dotted **key** within the current namespace:
+
+```typescript
+defineNamespace('app', [
+    defineLines({ nav: { home: 'Home', settings: { title: 'Settings' } } }),
+]);
+// → namespace 'app', keys 'nav.home' and 'nav.settings.title'
+await ilingo.get({ namespace: 'app', key: 'nav.settings.title' });
+```
+
+Both produce a reachable string — they differ only in whether the dotted path lands on the `namespace` argument or the `key` argument. Pick the namespace level when the slice maps to a file or a logical area (it becomes the `namespace` you pass to `get`); pick key nesting for grouping related strings inside one namespace.
+
+## Per-file authoring
+
+The library is agnostic to how you split data across files — it only sees the tree once it reaches a store. The helpers compose, so each file exports one node and a barrel assembles them.
 
 ### One file per locale
 
-Every locale lives in a single file (`en.ts`, `de.ts`, `en.json`, …). All namespaces for that locale are children of the same root. For TS files, wrap the export in `defineLocale` so the per-key literal types survive the `export default` (otherwise TypeScript widens them — see [`defineLocale`](#definelocale-one-file-per-locale-authoring) below).
-
 ```typescript
 // locales/en.ts
-import { defineLocale, definePlural } from 'ilingo';
+import { defineLocale, defineNamespace, defineLines, definePlural } from 'ilingo';
 
-export default defineLocale({
-    app:  { greeting: 'Hi {{name}}' },
-    cart: { items: definePlural({ one: '1 item', other: '{{count}} items' }) },
-});
+export default defineLocale('en', [
+    defineNamespace('app',  [defineLines({ greeting: 'Hi {{name}}' })]),
+    defineNamespace('cart', [defineLines({ items: definePlural({ one: '1 item', other: '{{count}} items' }) })]),
+]);
 ```
 
 ```typescript
@@ -50,198 +91,90 @@ import { defineCatalog } from 'ilingo';
 import en from './en';
 import de from './de';
 
-export const catalog = defineCatalog({ en, de });
+export const catalog = defineCatalog([en, de]);
 ```
-
-JSON variant is the same shape minus the helper calls — see the `@plural` example under [Authoring plurals](#authoring-plurals-json-vs-tsjs).
 
 **Use it when:** locales are small (low hundreds of keys), translators work one locale at a time, you want git diffs to read top-to-bottom per language.
 
-### One file per `(locale, namespace)`
+### One file per namespace
 
-The pattern `FSStore` walks: `<directory>/<locale>/<namespace>.json`. Each file holds a single namespace for a single locale.
+`defineNamespace` exports a single namespace node — drop it into a `defineLocale` in a barrel:
 
+```typescript
+// locales/en/app.ts
+import { defineNamespace, defineLines, definePlural } from 'ilingo';
+
+export default defineNamespace('app', [
+    defineLines({
+        greeting: 'Hi {{name}}',
+        items: definePlural({ one: '1 item', other: '{{count}} items' }),
+    }),
+]);
 ```
-locales/
-    en/
-        app.json
-        cart.json
-    de/
-        app.json
-        cart.json
+
+```typescript
+// locales/en/index.ts
+import { defineLocale } from 'ilingo';
+import app from './app';
+import cart from './cart';
+
+export default defineLocale('en', [app, cart]);
 ```
 
 **Use it when:** the catalog is large, multiple translators work in parallel, or you want lazy loading where each namespace's file is fetched only when its first key is read (`FSStore` and `LoaderStore` both support this).
 
-## `defineCatalog` — keep literal types narrow
+## Authoring plurals: `definePlural`
 
-The catalog literal carries information the type system can use to infer legal `(namespace, key)` pairs and detect plural leaves. TypeScript will widen literal types (`'Hi'` → `string`) the moment the value lands in a typed variable, so reach for `defineCatalog` instead of `as const` sprinkling.
-
-```typescript
-import { Ilingo, MemoryStore, defineCatalog } from 'ilingo';
-
-const catalog = defineCatalog({
-    en: { app: { greeting: 'Hi' } },
-});
-
-const ilingo = new Ilingo<typeof catalog>({
-    store: new MemoryStore({ data: catalog }),
-});
-
-ilingo.get({ namespace: 'app', key: 'greeting' }); // OK
-ilingo.get({ namespace: 'app', key: 'unknown' });  // type error
-```
-
-`defineCatalog<const T>(catalog)` is a runtime identity function. The work it does is purely at compile time — its `const` generic preserves the per-key literal types so the inferred `Key<C, G>` is the natural set of leaf paths, not `string`.
-
-See [Type-Safe Keys](./type-safe-keys) for the inference rules and the `Ilingo<C>` API.
-
-## `defineLocale` — one-file-per-locale authoring
-
-When you split locales across files (`locales/en.ts`, `locales/de.ts`, …), each file declares the namespaces for a single locale. TypeScript widens the literal types at the `export default` boundary unless you tell it not to. `defineLocale` is the per-locale counterpart of `defineCatalog`: an identity function with a `const` generic that captures the narrow shape and validates against `Namespaces`.
+A plural leaf is built with `definePlural(forms)`, where `forms` is keyed by CLDR category. The `other` form is required; the rest (`zero`, `one`, `two`, `few`, `many`) are optional:
 
 ```typescript
-// locales/en.ts
-import { defineLocale, definePlural } from 'ilingo';
-
-export default defineLocale({
-    app:  { greeting: 'Hi {{name}}' },
-    cart: { items: definePlural({ one: '1 item', other: '{{count}} items' }) },
+defineLines({
+    items: definePlural({
+        one:   '{{count}} item',
+        other: '{{count}} items',
+    }),
 });
 ```
 
-`as const` would also preserve the types but does no shape validation — a stray top-level string would slip through silently and only fail at lookup. `defineLocale<const T extends Namespaces>(locale: T): T` catches that at the call site:
+`definePlural`'s argument type is `PluralForms`, so it gives you, **locally at the call site**:
 
-```typescript
-defineLocale({
-    app: 'oops',
-    //   ^^^^^^ type error: not a Namespaces entry
-});
-```
+- Autocomplete for CLDR categories (`zero | one | two | few | many | other`)
+- A compile error if you omit `other`
+- A compile error if you spell a non-CLDR category (e.g. `singular`)
 
-When you import the per-locale files into a combined catalog, the const generic flows through `defineCatalog`, so `Ilingo<typeof catalog>` still infers the full set of legal `(namespace, key)` pairs across every locale:
+It returns a plural node (`{ type: 'plural', data: forms }`) — the same runtime shape JSON files spell out by hand. See [Pluralization](./pluralization) for the selection rules and the JSON literal form.
 
-```typescript
-// locales/index.ts
-import { defineCatalog } from 'ilingo';
-import en from './en';
-import de from './de';
+::: tip No `@plural` marker
+`definePlural` **replaces** the old `@plural` JSON marker. A plain `{ one, other }` object inside `defineLines` is *not* a plural — it's a key-nested map (keys `one` and `other` become dotted keys). Only `definePlural(...)` (or the literal `{ "type": "plural", "data": { … } }` node in JSON) is interpreted as a plural.
+:::
 
-export const catalog = defineCatalog({ en, de });
-//                                    ^^^^^^^^^^
-// Key<typeof catalog, 'cart'> is 'items', not 'string',
-// because the literal types from each per-locale file are preserved.
-```
+## JSON files
 
-## `defineNamespace` — one-file-per-namespace authoring
-
-When you split *namespaces* into their own files (`locales/en/app.ts`, `locales/en/cart.ts`, …), `defineNamespace<const T extends Lines>(namespace: T): T` is the per-namespace counterpart — same const-capture and shape validation (against `Lines`):
-
-```typescript
-// locales/en/app.ts
-import { defineNamespace, definePlural } from 'ilingo';
-
-export default defineNamespace({
-    greeting: 'Hi {{name}}',
-    items: definePlural({ one: '1 item', other: '{{count}} items' }),
-});
-```
-
-`Lines` is recursive, so a namespace nests arbitrarily and you address a leaf with a dotted key:
-
-```typescript
-defineNamespace({ nav: { home: 'Home', settings: { title: 'Settings' } } });
-// ilingo.get({ namespace: 'app', key: 'nav.settings.title' })
-```
-
-Compose namespace files into a locale with `defineLocale`, then locales into the catalog with `defineCatalog` — the const generics flow through all three.
-
-## Authoring plurals: JSON vs TS/JS
-
-A plural leaf is the `{ "@plural": { ... } }` wrapper. JSON catalogs spell the wrapper as a string-keyed literal; TS/JS catalogs reach for the `definePlural` helper for autocomplete + a compile error on a missing `other`.
-
-### JSON files
+JSON can't call functions, so files spell out the node `type` literally — a lines node for ordinary strings, a plural node for plurals:
 
 ```json
 {
-    "cart": {
+    "type": "lines",
+    "data": {
+        "greeting": "Hi {{name}}",
+        "nav": { "home": "Home" },
         "items": {
-            "@plural": {
-                "one":   "{{count}} item",
-                "other": "{{count}} items"
-            }
+            "type": "plural",
+            "data": { "one": "{{count}} item", "other": "{{count}} items" }
         }
     }
 }
 ```
 
-JSON can't call functions, so the literal `@plural` key is the only option. The `other` form is mandatory at runtime; missing it is detected on lookup, not at load time.
+A JSON file is a single namespace's lines node — `FSStore` derives the namespace from the filename. See [Integrations → File System](/integrations/fs) for the on-disk layout and the dotted-namespace-to-dotted-filename rule.
 
-### TS / JS files
+## Why keys are not type-checked against the catalog
 
-```typescript
-import { defineCatalog, definePlural } from 'ilingo';
+Earlier releases tried to infer the legal `(namespace, key)` pairs from the catalog literal so the compiler would reject typos. That was removed: ilingo's store model is **open-world**. A real app composes several stores — an API-backed or `LoaderStore`-backed store holds keys that don't exist at build time, and an app routinely co-owns a library's namespace (see [Stores → `namespace` is a shared key-space](./stores#composing-many-sources-namespace-is-a-shared-key-space)). Inferring a closed key set from one catalog would falsely reject keys that another store legitimately answers.
 
-const catalog = defineCatalog({
-    en: {
-        cart: {
-            items: definePlural({
-                one:   '{{count}} item',
-                other: '{{count}} items',
-            }),
-        },
-    },
-});
-```
-
-`definePlural` returns `{ '@plural': forms }` — identical runtime shape to the JSON literal. The signature `<const T extends PluralForms>(forms: T)` gives you:
-
-- Autocomplete for CLDR categories (`zero | one | two | few | many | other`)
-- A compile error if you omit `other`
-- A compile error if you spell a non-CLDR category (e.g. `singular`)
-- Literal types preserved for downstream `Ilingo<typeof catalog>` inference
-
-When you mix JSON for one locale and TS for another in the same catalog, both wrap to the same runtime shape — `Intl.PluralRules` doesn't care which authoring path produced the leaf.
-
-For the runtime contract and CLDR-category fallback rules, see [Pluralization](./pluralization).
-
-## Bare `{ one, other }` is not a plural
-
-A `{ one: ..., other: ... }` object without the `@plural` wrapper is a regular nested namespace. The store walks past it, the keys `one` and `other` are reachable via dotted access:
-
-```typescript
-const catalog = defineCatalog({
-    en: {
-        form: {
-            kind: {
-                // Just a namespace — sibling keys named after CLDR categories
-                // are safe and addressable individually.
-                other: { label: 'Other' },
-                custom: { label: 'Custom' },
-            },
-        },
-    },
-});
-
-await ilingo.get({ namespace: 'form', key: 'kind.other.label' });   // "Other"
-await ilingo.get({ namespace: 'form', key: 'kind' });               // undefined (not a leaf)
-```
-
-This is the inverse design from libraries that auto-detect bare `{ one, other }` shapes — the explicit `@plural` discriminator means a UI catalog with an enum dropdown labelled "Other" never collides with the plural selector.
-
-## Catalog shape recap
-
-| At this position | The value can be |
-|---|---|
-| Top-level | A locale code (`'en'`, `'de'`, `'pt-BR'`, …) — BCP-47 |
-| Locale | A `Record<namespace, ...>` where each namespace is your logical namespace |
-| Namespace | A nested `Record<string, …>` — any depth |
-| Leaf | `string` (the translation) OR `{ "@plural": { other: string, zero?: string, ... } }` |
-
-Keys may be reached as dotted paths (`'cart.items'`, `'nested.deep.leaf'`). The `'@plural'` marker is the only special key name — every other key is treated as a regular namespace step.
+So `get()` takes a loose `string` key and returns `Promise<string | undefined>`. `definePlural` still gives local CLDR autocomplete on its own argument, but no helper drives catalog-wide key inference. `Ilingo` and `IIlingo` are **not** generic.
 
 ## See also
 
 - [Stores](./stores) — how `MemoryStore`, `FSStore`, and `LoaderStore` consume a catalog.
-- [Type-Safe Keys](./type-safe-keys) — the `Ilingo<C>` API and `Key<C, G>` inference.
 - [Pluralization](./pluralization) — selection rules and the runtime contract.

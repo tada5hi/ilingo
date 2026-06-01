@@ -7,12 +7,13 @@
 
 import { describe, it, expect } from "vitest";
 import {Ilingo, MemoryStore} from "../../src";
+import { toCatalog } from "../helpers/catalog";
 
 describe('src/module.ts', () => {
     it('should get/set directory + locale + namespaces', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: {
+                data: toCatalog({
                     ru: {
                         foo: {
                             line: 'bar-baz'
@@ -23,7 +24,7 @@ describe('src/module.ts', () => {
                             line: 'baz-boz'
                         }
                     }
-                }
+                })
             })
         });
 
@@ -37,7 +38,7 @@ describe('src/module.ts', () => {
     it('should get locales', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: {
+                data: toCatalog({
                     ru: {
                         foo: {
                             line: 'bar-baz'
@@ -48,7 +49,7 @@ describe('src/module.ts', () => {
                             line: 'baz-boz'
                         }
                     }
-                }
+                })
             })
         });
 
@@ -70,7 +71,7 @@ describe('src/module.ts', () => {
     it('should set/get locales record', async () => {
         const language = new Ilingo({
             store: new MemoryStore({
-                data: {
+                data: toCatalog({
                     en: {
                         namespace: {
                             foo: 'My name is {{name}}'
@@ -86,7 +87,7 @@ describe('src/module.ts', () => {
                             foo: 'Mon nom est {{name}}'
                         }
                     }
-                }
+                })
             })
         });
 
@@ -108,23 +109,23 @@ describe('src/module.ts', () => {
 
     it('should merge stores', async () => {
         const storeA = new MemoryStore({
-            data: {
+            data: toCatalog({
                 en: {
                     app: {
                         foo: 'bar'
                     }
                 }
-            }
+            })
         });
 
         const storeB = new MemoryStore({
-            data: {
+            data: toCatalog({
                 en: {
                     app: {
                         bar: 'boz'
                     }
                 }
-            }
+            })
         });
 
         const instanceA = new Ilingo({store: storeA});

@@ -22,7 +22,7 @@ ilingo wins on every scenario despite the async API surface (every `get()` is a 
 - Catalog: a synthetic ~30-key catalog spanning two namespaces, plain strings, nested namespaces, one plural leaf, one number-format leaf. See `packages/ilingo/bench/setup.ts`.
 - Hardware (the numbers above): Apple M4 Pro, macOS Darwin 24.6.0 arm64, Node v24.15.0. Your numbers will vary in absolute terms — the *ratio* between contenders is the durable part.
 - ilingo and i18next instances are constructed once outside the timed block; the bench measures only the per-call cost.
-- For a fair compare, the two libraries are configured to do the same work: same fallback chain (`pt-BR → pt → en` in the fallback scenario), same plural categories, same `Intl.NumberFormat({ currency: 'EUR' })` formatter. i18next's namespace concept maps onto our `namespace` argument; its plural-suffix convention (`items_one`, `items_other`) is rebuilt from our `@plural` shape at setup time.
+- For a fair compare, the two libraries are configured to do the same work: same fallback chain (`pt-BR → pt → en` in the fallback scenario), same plural categories, same `Intl.NumberFormat({ currency: 'EUR' })` formatter. i18next's namespace concept maps onto our `namespace` argument; its plural-suffix convention (`items_one`, `items_other`) is rebuilt from our `definePlural` shape at setup time.
 
 ## Why ilingo is fast
 

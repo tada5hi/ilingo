@@ -6,7 +6,7 @@
  */
 
 import { install as installIlingoVue } from '@ilingo/vue';
-import { Ilingo, MemoryStore } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLines, defineLocale, defineNamespace } from 'ilingo';
 import { IssueCode, defineIssueGroup, defineIssueItem } from 'validup';
 import type { IssueGroup, IssueItem } from 'validup';
 import type { Composable } from '@validup/vue';
@@ -186,7 +186,11 @@ describe('<IValidupT>', () => {
         const ilingo = new Ilingo({ locale: 'en' });
         // A catalog entry carrying a {slot} placeholder (single curly).
         ilingo.registerStore(new MemoryStore({
-            data: { en: { validup: { custom_link: 'Click {action} now' } } },
+            data: defineCatalog([
+                defineLocale('en', [
+                    defineNamespace('validup', [defineLines({ custom_link: 'Click {action} now' })]),
+                ]),
+            ]),
         }));
 
         const issue = defineIssueItem({

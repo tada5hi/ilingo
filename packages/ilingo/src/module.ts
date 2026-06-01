@@ -12,12 +12,8 @@ import type {
     Data,
     Fallback,
     GetContext,
-    GetParams,
     IIlingo,
-    Key,
     Leaf,
-    Locales,
-    LocalesNamespace,
     MissingKeyHandler,
 } from './types';
 import type { Formatter } from './utils';
@@ -28,7 +24,7 @@ import {
     template,
 } from './utils';
 
-export class Ilingo<C extends Locales = Locales> implements IIlingo<C> {
+export class Ilingo implements IIlingo {
     /**
      * Registered stores, keyed by a `symbol` identity. Insertion order is
      * preserved (it drives the serial intra-locale store walk — earlier
@@ -245,28 +241,22 @@ export class Ilingo<C extends Locales = Locales> implements IIlingo<C> {
      * Which locale in the chain actually yielded a value for the given
      * `(namespace, key)`, or `undefined` if the key is missing in every locale.
      */
-    async getResolvedLocale<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
-        ctx: GetParams<C, G, K>,
-    ): Promise<string | undefined> {
-        const internal = ctx as unknown as GetContext;
-        const chain = this.getResolvedLocaleChain(internal);
-        const hit = await this.lookup(chain, internal);
+    async getResolvedLocale(ctx: GetContext): Promise<string | undefined> {
+        const chain = this.getResolvedLocaleChain(ctx);
+        const hit = await this.lookup(chain, ctx);
         return hit?.locale;
     }
 
     // ----------------------------------------------------
 
-    async get<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
-        ctx: GetParams<C, G, K>,
-    ): Promise<string | undefined> {
-        const internal = ctx as unknown as GetContext;
-        const requestedLocale = internal.locale ?? this.getLocale();
+    async get(ctx: GetContext): Promise<string | undefined> {
+        const requestedLocale = ctx.locale ?? this.getLocale();
         const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
 
-        const hit = await this.lookup(chain, internal);
+        const hit = await this.lookup(chain, ctx);
         return hit ?
-            this.render(hit.leaf, hit.locale, internal) :
-            this.handleMissingKey(internal, requestedLocale, chain);
+            this.render(hit.leaf, hit.locale, ctx) :
+            this.handleMissingKey(ctx, requestedLocale, chain);
     }
 
     /**

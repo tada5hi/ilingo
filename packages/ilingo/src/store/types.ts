@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Leaf, Locales, PluralLeaf } from '../types';
+import type { CatalogInput, Leaf, PluralNode } from '../types';
 
 export type StoreGetContext = {
     locale: string,
@@ -16,11 +16,11 @@ export type StoreGetContext = {
 export type StoreSetContext = StoreGetContext & {
     /**
      * Value to persist at the `(locale, namespace, key)` position. Plain
-     * translations are strings; plural translations must use the
-     * `{ "@plural": { ... } }` wrapper so they round-trip with `get()`
-     * (which only recognises the wrapped form when reading back).
+     * translations are strings; plural translations use the tagged
+     * `{ type: 'plural', data }` node (build it with `definePlural()`) so
+     * they round-trip with `get()`, which unwraps that node when reading.
      */
-    value: string | PluralLeaf,
+    value: string | PluralNode,
 };
 
 /**
@@ -56,10 +56,9 @@ export interface IStore {
      *
      * The returned value is `Leaf` — `string | PluralForms` — which is
      * the *post-unwrap* shape: stores that hold the catalog-side
-     * `PluralLeaf` (`{ "@plural": ... }`) wrapper are expected to strip
-     * the marker before returning, matching `MemoryStore` and
-     * `LoaderStore`. Stores that don't support plurals can return just
-     * `string | undefined`.
+     * `PluralNode` (`{ type: 'plural', data }`) are expected to return its
+     * `data` before returning, matching `MemoryStore` and `LoaderStore`.
+     * Stores that don't support plurals can return just `string | undefined`.
      */
     get(context: StoreGetContext): Promise<Leaf | undefined>;
 
@@ -104,7 +103,7 @@ export function isMutableStore(store: IStore): store is IMutableStore {
 
 export type MemoryStoreOptions = {
     id?: string | symbol,
-    data: Locales,
+    data: CatalogInput,
 };
 
 /**

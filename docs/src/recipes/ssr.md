@@ -29,7 +29,7 @@ export function ilingoForRequest(headers: { 'accept-language'?: string }): Iling
     const requested = parseAcceptLanguage(headers['accept-language'] ?? '');
     const locale    = negotiateLocale(SUPPORTED, requested) ?? DEFAULT;
 
-    return new Ilingo<typeof catalog>({ store, locale });
+    return new Ilingo({ store, locale });
 }
 ```
 
@@ -46,7 +46,7 @@ export function ilingoForRequest(
     const requested = parseAcceptLanguage(headers['accept-language'] ?? '');
     const locale    = explicit ?? negotiateLocale(SUPPORTED, requested) ?? DEFAULT;
 
-    return new Ilingo<typeof catalog>({ store, locale });
+    return new Ilingo({ store, locale });
 }
 ```
 
@@ -123,7 +123,7 @@ import { Ilingo, MemoryStore } from 'ilingo';
 import { catalog } from './locales';
 
 const initial = JSON.parse(document.getElementById('__ilingo')!.textContent!);
-const ilingo  = new Ilingo<typeof catalog>({
+const ilingo  = new Ilingo({
     store: new MemoryStore({ data: catalog }),
     locale: initial.locale,
 });
@@ -198,7 +198,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         return { locale: 'en' }; // hydration overrides this from payload
     });
 
-    const ilingo = new Ilingo<typeof catalog>({
+    const ilingo = new Ilingo({
         store:  new MemoryStore({ data: catalog }),
         locale: initial.value.locale,
     });
@@ -231,7 +231,7 @@ export const onRequest = defineMiddleware((context, next) => {
     const wanted  = parseAcceptLanguage(header);
     const locale  = negotiateLocale(SUPPORTED, wanted) ?? 'en';
 
-    context.locals.ilingo = new Ilingo<typeof catalog>({ store, locale });
+    context.locals.ilingo = new Ilingo({ store, locale });
     return next();
 });
 ```

@@ -12,34 +12,30 @@ import type { ConfigInput } from './config';
 export type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
 /**
- * CLDR-categorized translation options that live inside a [[PluralLeaf]]
- * — the `{ other, zero?, one?, two?, few?, many? }` shape under the
- * `@plural` discriminator. `other` is required; every other category is
- * optional. Used by `Ilingo.selectPluralForm()` to pick a string for a
- * given `count` via `Intl.PluralRules`.
+ * CLDR-categorized translation options that live inside a [[PluralNode]]
+ * — the `{ other, zero?, one?, two?, few?, many? }` shape carried as the
+ * `data` of a `{ type: 'plural' }` node. `other` is required; every other
+ * category is optional. Used by `Ilingo.selectPluralForm()` to pick a
+ * string for a given `count` via `Intl.PluralRules`.
  */
 export type PluralForms = { other: string } &
     Partial<Record<Exclude<PluralCategory, 'other'>, string>>;
 
 /**
- * A plural leaf at a catalog key position — the `{ "@plural": ... }`
- * wrapper. The `@plural` discriminator disambiguates a plural form from
- * a regular namespace whose siblings happen to use CLDR-category key
- * names: without it, a `{ kind: { other: { ... } } }` record would be
- * ambiguous between "plural at `kind`" and "namespace containing a key
- * called `other`". With the discriminator, the second reading is the
- * only legal one.
- *
- * Bare `{ one, other }` objects are NOT plural leaves — they are walked
- * as ordinary nested namespaces.
+ * A plural leaf at a catalog key position — a tagged `{ type: 'plural' }`
+ * node carrying the CLDR-categorised [[PluralForms]]. The `type`
+ * discriminator disambiguates a plural from a regular nested lines object
+ * whose keys happen to be CLDR-category names. It is the only recognised
+ * plural form: build it with `definePlural()`, or (in JSON, which can't
+ * call functions) write the literal `{ "type": "plural", "data": { ... } }`.
  */
-export type PluralLeaf = { '@plural': PluralForms };
+export type PluralNode = { type: 'plural', data: PluralForms };
 
 /**
- * Value returned by `IStore.get` after the `@plural` wrapper has been
- * unwrapped — a plain string or the inner [[PluralForms]] shape the
- * orchestrator can index by CLDR category. Distinct from the catalog
- * shape `string | PluralLeaf`, where plural leaves are still wrapped.
+ * Value returned by `IStore.get` after the plural node has been unwrapped
+ * — a plain string or the inner [[PluralForms]] shape the orchestrator can
+ * index by CLDR category. Distinct from the catalog leaf shape
+ * `string | PluralNode`, where plurals are still wrapped in their node.
  */
 export type Leaf = string | PluralForms;
 
@@ -48,15 +44,69 @@ export type ValueOrNestedValue<T> = {
 };
 
 /**
- * Catalog shape — what a user passes to `MemoryStore({ data })`. At a
- * leaf position the value is `string | PluralLeaf` (a plain translation
- * or the `@plural` wrapper); nested namespaces nest the same shape.
+ * The leaf content of a namespace — the normalized internal shape a store
+ * holds after a catalog tree has been reduced. At a leaf position the
+ * value is `string | PluralNode`; a nested object extends the dotted
+ * **key** path (`{ nav: { home: 'Home' } }` → key `nav.home`).
  */
-export type Lines = ValueOrNestedValue<string | PluralLeaf>;
-// default: Record<namespace, Lines>
+export type Lines = ValueOrNestedValue<string | PluralNode>;
+// normalized internal shape: Record<namespace, Lines>
 export type Namespaces = Record<string, Lines>;
-// default: Record<locale, Namespaces>
+// normalized internal shape: Record<locale, Namespaces>
 export type Locales = Record<string, Namespaces>;
+
+// ─── Catalog descriptor tree ──────────────────────────────────────────────
+//
+// The authoring / ingestion format consumed by every store. Built with the
+// `define*` helpers (`catalog.ts`) and reduced to the internal `Locales`
+// shape by `normalizeCatalog` (`catalog/normalize.ts`).
+//
+// Two nesting hierarchies, chosen explicitly by the author:
+//   - a nested `NamespaceNode` extends the *namespace* as a dotted suffix
+//     (`app` ▸ `nav` → namespace `app.nav`);
+//   - a nested object inside a `LinesNode`'s `data` extends the *key*
+//     (`{ nav: { home } }` → key `nav.home`).
+// A plural is unambiguous either way because it is a tagged `PluralNode`.
+
+/** Terminal leaf-group: a flat or key-nested map of translations. */
+export type LinesNode = { type: 'lines', data: Lines };
+
+/** A named child of a locale / namespace — a sub-namespace or a lines group. */
+export type NamespaceChild = NamespaceNode | LinesNode;
+
+/** A (possibly nested) namespace. Nesting extends the dotted namespace path. */
+export type NamespaceNode = {
+    type: 'namespace', 
+    name: string, 
+    data: NamespaceChild[] 
+};
+
+/**
+ * One locale's content. A `LinesNode` placed directly here (no enclosing
+ * namespace) is structurally allowed and reserved for the future
+ * default-namespace feature — not wired up today.
+ */
+export type LocaleNode = {
+    type: 'locale', 
+    name: string, 
+    data: NamespaceChild[] 
+};
+
+/** Root of a catalog tree. */
+export type CatalogNode = { type: 'catalog', data: LocaleNode[] };
+
+/**
+ * Accepted input for `MemoryStore({ data })` / `normalizeCatalog`: a full
+ * catalog node, a bare array of locale nodes, or a single locale node.
+ */
+export type CatalogInput = CatalogNode | LocaleNode[] | LocaleNode;
+
+/**
+ * Body returned by a store that already knows its `(locale, namespace)` —
+ * a `LoaderStore` loader return value or an `@ilingo/fs` file. Reduced by
+ * `normalizeNamespaceBody`.
+ */
+export type NamespaceBodyInput = LinesNode;
 
 export type DotKey = `${string}.${string}`;
 
@@ -69,122 +119,6 @@ export type GetContext = {
     key: string,
     count?: number,
 };
-
-// ─── Generic catalog navigation ──────────────────────────────────────────────
-//
-// When `Ilingo` is parameterised with a concrete catalog shape, these helpers
-// expose the legal `(namespace, key)` pairs and detect plural-shaped leaves so the
-// compiler can refuse typos and require `count` where the leaf demands it.
-//
-// All of these collapse to `string` (namespace / key) and `false` (plural) when
-// `C` is the default `Locales`, so existing callers keep their unsafe
-// but-loose typing without surprise.
-
-/**
- * Pick any locale's namespace map from the catalog. All locales SHOULD share the
- * same shape; if they diverge, this is the union of all per-locale shapes,
- * which is the safest default for inference.
- */
-export type AnyLocalesNamespace<C extends Locales> = C[keyof C];
-
-/**
- * Top-level namespace names declared by the catalog.
- */
-export type LocalesNamespace<C extends Locales> = keyof AnyLocalesNamespace<C> & string;
-
-/**
- * Walk a dotted path through a typed object and return the leaf value.
- * Returns `never` if the path doesn't exist in the type.
- */
-export type LeafAt<T, K extends string> =    K extends `${infer Head}.${infer Tail}` ?
-    Head extends keyof T ?
-        LeafAt<T[Head], Tail> :
-        never :
-    K extends keyof T ?
-        T[K] :
-        never;
-
-/**
- * Enumerate all dotted leaf paths within a typed object. Stops descending
- * at `string` leaves and at `@plural`-wrapped plural leaves, so a key
- * like `cart.items` resolves to the plural leaf itself and not into its
- * inner `one` / `other`.
- *
- * Open shapes (those with a `string` index signature like the default
- * `Lines`) short-circuit to plain `string` — there are no concrete
- * keys to enumerate, so any string is acceptable.
- */
-export type DottedPaths<T> = string extends keyof T ? string :
-    T extends string ? never :
-        T extends PluralLeaf ? never :
-            T extends Record<string, unknown> ?
-                {
-                    [K in keyof T & string]:
-                    T[K] extends string | PluralLeaf ?
-                        K :
-                        T[K] extends Record<string, unknown> ?
-                            // Only emit dotted leaf paths — never the bare
-                            // intermediate namespace key (which would type-
-                            // check but always miss at runtime).
-                            `${K}.${DottedPaths<T[K]>}` :
-                            never;
-                }[keyof T & string] :
-                never;
-
-/**
- * Legal dotted keys within a specific namespace of the catalog.
- */
-export type Key<C extends Locales, G extends LocalesNamespace<C>> =    AnyLocalesNamespace<C>[G] extends infer T ?
-    DottedPaths<T> extends infer P ?
-        P extends string ? P : string :
-        string :
-    string;
-
-/**
- * `true` when the leaf at `(G, K)` is `@plural`-wrapped in *any* locale.
- * Used to make `count` required at the type level for plural keys.
- *
- * `LeafAt<...>` for diverging locales returns a union like
- * `string | PluralLeaf`. A naked `extends PluralLeaf` collapses that to
- * `false`, which would let `count` slip through as optional. The
- * `Extract<...>` form treats the key as plural when *any* branch of the
- * union is plural-shaped — the safer default, since the locale that's
- * plural-shaped would otherwise silently fall back to its `other` form
- * on every call.
- *
- * The `[X] extends [never]` wrapping disables the distributive-conditional
- * behaviour so `never` (no plural anywhere) is detected directly.
- */
-// Open shapes (default Locales) have a `string` index signature at
-// the namespace level; their leaf type union always includes `PluralLeaf`,
-// which would make every call site require `count`. Short-circuit to
-// false there — only concrete catalogs participate in plural inference.
-export type IsPluralKey<
-    C extends Locales,
-    G extends LocalesNamespace<C>,
-    K extends string,
-> = string extends keyof AnyLocalesNamespace<C>[G] ?
-    false :
-    [Extract<LeafAt<AnyLocalesNamespace<C>[G], K>, PluralLeaf>] extends [never] ?
-        false :
-        true;
-
-/**
- * The full `ctx` argument to `Ilingo.get()` when parameterised with a
- * catalog. Defaults to today's loose `GetContext` when `C` is `Locales`.
- *
- * If the leaf at `(G, K)` is plural, `count: number` is required; otherwise
- * `count` is optional.
- */
-export type GetParams<C extends Locales, G extends LocalesNamespace<C>, K extends Key<C, G> & string> =    & {
-    data?: Data,
-    locale?: string,
-    namespace: G,
-    key: K,
-} &
-    (IsPluralKey<C, G, K> extends true ?
-        { count: number } :
-        { count?: number });
 
 export type MissingKeyContext = GetContext & {
     /**
@@ -219,7 +153,7 @@ export type Fallback = string | string[] | FallbackResolver | false;
  * implementations (test doubles, decorators) without depending on the
  * concrete class.
  */
-export interface IIlingo<C extends Locales = Locales> {
+export interface IIlingo {
     readonly stores: Map<symbol | string, IStore>;
     formatters: FormatterRegistry;
 
@@ -241,13 +175,9 @@ export interface IIlingo<C extends Locales = Locales> {
 
     getResolvedLocaleChain(ctx: Pick<GetContext, 'locale'>): string[];
 
-    getResolvedLocale<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
-        ctx: GetParams<C, G, K>,
-    ): Promise<string | undefined>;
+    getResolvedLocale(ctx: GetContext): Promise<string | undefined>;
 
-    get<G extends LocalesNamespace<C>, K extends Key<C, G> & string>(
-        ctx: GetParams<C, G, K>,
-    ): Promise<string | undefined>;
+    get(ctx: GetContext): Promise<string | undefined>;
 
     format(input: string, data: Record<string, any>, locale?: string): string;
 }

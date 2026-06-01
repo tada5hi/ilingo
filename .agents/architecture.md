@@ -7,7 +7,7 @@ ilingo follows a small **port-and-adapter** design:
 - **Port**: `IStore` (`packages/ilingo/src/store/types.ts`) is the **read** contract — `id`, `get`, `getLocales` (ilingo reads a datasource; the orchestrator never writes). Writing is the opt-in `IMutableStore` (`set`); `MemoryStore` also exposes concrete sync `setSync` / `getSync` / `getLocalesSync` for in-memory seeding without `await` (not part of the async port).
 - **Adapters**: `MemoryStore` (default, in-memory; implements `IMutableStore`) and `FSStore` (lazy-loads files from disk, persists `set()` to JSON) implement the port.
 - **Orchestrator**: `Ilingo` (`packages/ilingo/src/module.ts`, implementing the `IIlingo` interface) holds a `Map<symbol, IStore>` plus per-instance state for the locale, fallback chain, missing-key handler, plural-rules cache, and warn-once memo. On each `get()` it walks a resolved locale chain in order; within each locale it queries stores **serially in insertion order** and stops at the first hit.
-- **Public contract**: `IIlingo<C>` is the orchestrator's interface — every method on `Ilingo` plus the `stores` map and `formatters` registry. Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accept and return `IIlingo` in type positions so consumers can swap test doubles or decorating wrappers without depending on the concrete class. Construction still goes through the `Ilingo` class; runtime discrimination uses structural duck-typing (`'stores' in input`) so non-concrete `IIlingo` implementations are still recognised by `@ilingo/vue`'s `applyInstallInput`.
+- **Public contract**: `IIlingo` is the orchestrator's interface — every method on `Ilingo` plus the `stores` map and `formatters` registry. Neither `Ilingo` nor `IIlingo` is generic in the catalog (`class Ilingo implements IIlingo`); `get`/`getResolvedLocale` take a loose `GetContext` and return `Promise<string | undefined>`. Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accept and return `IIlingo` in type positions so consumers can swap test doubles or decorating wrappers without depending on the concrete class. Construction still goes through the `Ilingo` class; runtime discrimination uses structural duck-typing (`'stores' in input`) so non-concrete `IIlingo` implementations are still recognised by `@ilingo/vue`'s `applyInstallInput`.
 
 Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`) wrap the orchestrator for a specific framework — Vue's `provide`/`inject` makes the `IIlingo` instance and locale `Ref` available to descendants of the app root.
 
@@ -39,13 +39,15 @@ Library adapters register their catalog under a `Symbol.for('@scope/pkg')` globa
 
 ### 4. Group/key/count model
 
-Translations are addressed by `(locale, namespace, key)` plus an optional `count` for pluralization. The `namespace` is a logical namespace — typically a filename when using `FSStore` (`packages/fs/src/module.ts` resolves `<directory>/<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}`). The `key` is a `pathtrace`-style dotted path within that namespace's nested object.
+Translations are addressed by `(locale, namespace, key)` plus an optional `count` for pluralization. The `namespace` is a logical, possibly **dotted** namespace — typically a filename when using `FSStore` (`packages/fs/src/module.ts` resolves `<directory>/<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}`, where a dotted namespace maps to a dotted filename, e.g. `app.nav.json`). The `key` is a `pathtrace`-style dotted path within that namespace's nested object.
 
-### 5. Plural leaves: `@plural` wrapper is the only recognised form
+The internal lookup shape every store resolves to is `Locales` = `Record<locale, Record<namespace, Lines>>`. Catalogs are *authored* as a descriptor tree (see §7) and **normalized** into this shape before lookup — `Locales`/`Namespaces`/`Lines`/`Leaf`/`PluralForms` are the normalized data-shape types, not the authoring surface.
 
-A catalog leaf is either a plain `string` or a `PluralLeaf` (`{ '@plural': { zero?, one?, two?, few?, many?, other } }`). The inner CLDR-categorised options shape is exported as `PluralForms`. The `@plural` marker is the only signal that an object should be interpreted as a plural — a bare `{ one, other }` object is treated as an ordinary nested namespace.
+### 5. Plural leaves: the `{ type: 'plural' }` node
 
-This was a stability-roadmap decision (#917 Track B): the original dual-form behaviour (also accepting bare `{ one, other }`) collided with sibling keys named after CLDR categories. Since pluralization had never shipped a stable release, the structural form was removed outright rather than going through a deprecate-then-remove cycle.
+A catalog leaf is either a plain `string` or a `PluralNode` (`{ type: 'plural', data: { zero?, one?, two?, few?, many?, other } }`, produced by `definePlural(forms)`). The inner CLDR-categorised `data` shape is exported as `PluralForms`. A `PluralNode` is the only signal that a value should be interpreted as a plural — a bare `{ one, other }` object inside a lines body is treated as an ordinary nested key path.
+
+The descriptor `{ type: 'plural' }` node **replaces** the previous `@plural` JSON marker outright — there is no `@plural` key and no `PluralLeaf` wrapper type anymore. The single tagged-node form keeps authoring (TS via `definePlural()`, JSON via the literal `{ "type": "plural", "data": { … } }`) and the normalized internal shape consistent, and avoids the earlier collision (#917 Track B) between a marker key and sibling keys named after CLDR categories. Since pluralization had never shipped a stable release, the marker form was removed rather than deprecated.
 
 The orchestrator selects a form using `Intl.PluralRules` keyed by the *resolved* locale (the one that actually matched). `Intl.PluralRules` instances are cached per locale on the `Ilingo` instance.
 
@@ -103,23 +105,51 @@ The locale handed to a formatter is the **resolved** locale (the one that actual
 
 `clone()` shares the formatter registry by reference — custom formatters registered on either side are visible to both. Callers that need isolation should build the child instance directly.
 
-### 7. Type-safe keys via a generic `Ilingo<Catalog>`
+### 7. Catalog descriptor tree + shared normalizer
 
-`Ilingo` is generic in the catalog: `class Ilingo<C extends Locales = Locales>`. When `C` is the default `Locales` (no generic supplied) the API stays as loose as before — `namespace: string`, `key: string`. When `C` is a concrete catalog, `Namespaces<C>` / `Key<C, G>` infer the legal pairs and `IsPluralKey<C, G, K>` makes `count` *required* at the type level for plural leaves.
+Catalogs are authored as a **tree of tagged descriptor nodes**, not a plain nested object. There is no closed-world key inference: type-safe keys via a generic `Ilingo<Catalog>` were **removed**. The rationale: a closed-world key type was a poor fit for ilingo's open-world store model — API- and loader-backed stores hold keys that don't exist at build time, so an exhaustive key union was never sound. It also only ever constrained *inputs* (the return type was always `string | undefined` regardless), so the high type-machinery maintenance cost bought little. `Ilingo` is no longer generic; `get(ctx: GetContext)` takes a loose context.
 
-Helpers in `packages/ilingo/src/types.ts`:
+#### Node grammar
 
-- `AnyNamespaces<C>` — pick any locale's namespace map (catalogs SHOULD share a shape across locales).
-- `Namespaces<C>` — union of top-level namespace names.
-- `LeafAt<T, K>` — walk a dotted key path through a typed object; `never` on miss.
-- `DottedPaths<T>` — enumerate all dotted leaf paths; short-circuits to `string` for open-shape inputs (so `Locales` reduces to a `string`-typed key, not `never`).
-- `Key<C, G>`, `IsPluralKey<C, G, K>`, `GetParams<C, G, K>`.
+The builders live in `packages/ilingo/src/catalog.ts` and produce tagged nodes:
 
-`defineCatalog<const T>(c)` (`packages/ilingo/src/catalog.ts`) is a runtime identity function with a `const` generic that captures the catalog literal without losing inference — saves callers from sprinkling `as const`.
+- `defineCatalog(locales: LocaleNode[])` → `{ type: 'catalog', data }` — the root.
+- `defineLocale(name, children)` → `{ type: 'locale', name, data }`.
+- `defineNamespace(name, children)` → `{ type: 'namespace', name, data }`.
+- `defineLines(obj)` → `{ type: 'lines', data }` — flat or key-nested translation strings/plurals.
+- `definePlural(forms)` → `{ type: 'plural', data }` — a plural leaf inside a lines body.
 
-`defineLocale<const T extends Namespaces>(locale)` is the per-locale counterpart, used when each locale lives in its own file (`locales/en.ts`). It preserves literal types through an `export default` and validates the shape against `Namespaces` so a stray top-level string is caught at compile time (where `as const` would let it through). Combines with `defineCatalog` — the per-locale const generics flow through `defineCatalog`'s own const generic, so the merged `Ilingo<typeof catalog>` still infers full key paths.
+```
+CatalogNode   = { type:'catalog',   data: LocaleNode[] }
+LocaleNode    = { type:'locale',    name, data: (NamespaceNode | LinesNode)[] }
+NamespaceNode = { type:'namespace', name, data: (NamespaceNode | LinesNode)[] }
+LinesNode     = { type:'lines',     data: Lines }        // Lines leaves: string | PluralNode | nested Lines
+PluralNode    = { type:'plural',    data: PluralForms }
+```
 
-`definePlural<const T>(plural)` is the TS/JS-friendly companion to the explicit `@plural` JSON marker. Returns `{ '@plural': leaf }` — same runtime shape as the JSON literal — with CLDR-category autocomplete and a compile error on missing-`other` / non-CLDR keys. Both forms produce identical runtime data: JSON files keep using the `"@plural"` literal (they can't call functions), TS/JS files use `definePlural()`.
+Two independent nesting hierarchies:
+
+- A nested **`NamespaceNode`** extends the dotted **namespace** (`app` ▸ `nav` → `'app.nav'`).
+- A nested object inside a **`LinesNode`** extends the dotted **key** (`{ nav: { home } }` → key `'nav.home'`).
+
+A `LinesNode` placed directly under a `LocaleNode` is structurally allowed and reserved for a future default-namespace feature (not wired up today).
+
+`definePlural` keeps **local** CLDR-category autocomplete and a compile error on missing-`other` / non-CLDR keys (its argument is typed `PluralForms`) — this validation is independent of any catalog-wide inference and survives the type-safe-keys removal.
+
+#### Shared normalizer
+
+`packages/ilingo/src/catalog/normalize.ts` is the single reducer that turns the authoring tree into the internal `Locales` lookup shape every store consumes. Exported from the barrel (`src/index.ts`):
+
+- `normalizeCatalog(input: CatalogInput): Locales` — folds the tree, flattening nested `NamespaceNode`s into dotted namespace keys and merging sibling nodes.
+- `normalizeNamespaceBody(body: NamespaceBodyInput): Lines` — reduces a single lines node into a `Lines` record.
+
+`CatalogInput = CatalogNode | LocaleNode[] | LocaleNode` (the root accepts a built `defineCatalog(...)` node, a bare array of locale nodes, or a single locale node). `NamespaceBodyInput = LinesNode`.
+
+Every store ingests the tree through this reducer:
+
+- `MemoryStore({ data })` takes a `CatalogInput` and runs `normalizeCatalog` in its constructor. The legacy plain `{ locale: { ns: {…} } }` object is **no longer accepted** as input.
+- `LoaderStore`'s loader returns a `NamespaceBodyInput` (a lines node); `normalizeNamespaceBody` reduces it per `(locale, namespace)`.
+- `@ilingo/fs` files are lines nodes — JSON `{ "type": "lines", "data": {…} }`, or `export default defineLines({…})`; `persist()` writes `{ type: 'lines', data }`. `FSStore.mergeFiles` uses `isLinesNode` + `normalizeNamespaceBody` (the old `isLineRecord` path is gone).
 
 ### 8. ESM-first, dependency-light, browser-safe
 
@@ -133,7 +163,7 @@ Port — `packages/ilingo/src/store/types.ts`:
 
 ```typescript
 export type StoreGetContext = { locale: string, namespace: string, key: string };
-export type StoreSetContext = StoreGetContext & { value: Leaf };
+export type StoreSetContext = StoreGetContext & { value: string | PluralNode };
 
 // ilingo is read-first: the orchestrator only ever calls get/getLocales.
 export interface IStore {
@@ -150,7 +180,7 @@ export interface IMutableStore extends IStore {
 export function isMutableStore(store: IStore): store is IMutableStore;
 ```
 
-Adapter — `packages/ilingo/src/store/memory.ts` (unwraps the `@plural` marker; bare `{ one, other }` objects are namespaces, not plurals):
+Adapter — `packages/ilingo/src/store/memory.ts`. The constructor normalizes the `CatalogInput` tree into `Locales`; `get` unwraps a `PluralNode` to its inner `data` (a bare `{ one, other }` object is a nested key path, not a plural):
 
 ```typescript
 async get(ctx: StoreGetContext): Promise<Leaf | undefined> {
@@ -158,7 +188,7 @@ async get(ctx: StoreGetContext): Promise<Leaf | undefined> {
     if (!namespace) return undefined;
     const out = getPathValue(namespace, ctx.key);
     if (typeof out === 'string') return out;
-    if (isPluralLeaf(out)) return out['@plural'];
+    if (isPluralNode(out)) return out.data;
     return undefined;
 }
 ```
@@ -168,7 +198,7 @@ Conventions:
 - New stores **implement `IStore`** rather than extending `MemoryStore` unless they want the in-memory cache (`FSStore` extends it, using the parent map as a load cache).
 - All methods are async, even when synchronous — keep that contract; `Ilingo.lookup` `await`s every store call.
 - A miss is `undefined`. Do not throw on miss; that breaks the fallback walk.
-- Returning `PluralForms` (the unwrapped inner shape) is allowed but optional — string-only stores remain valid. Custom stores that hold raw `PluralLeaf` (`{ "@plural": ... }`) values should unwrap before returning, matching `MemoryStore` / `LoaderStore`.
+- Returning `PluralForms` (the unwrapped inner shape) is allowed but optional — string-only stores remain valid. Custom stores that hold raw `PluralNode` (`{ type: 'plural', data: … }`) values should unwrap to `.data` before returning, matching `MemoryStore` / `LoaderStore`.
 
 ### Orchestrator Pattern (`Ilingo`)
 
@@ -272,11 +302,12 @@ Output:
 packages/ilingo/src/
 ├── module.ts                ← orchestrator (Ilingo class)
 ├── store/{types,memory}     ← port + default adapter
-├── catalog.ts               ← defineCatalog<const T>() + defineLocale<const T>() + definePlural<const T>() helpers
+├── catalog.ts               ← defineCatalog / defineLocale / defineNamespace / defineLines / definePlural node builders
+├── catalog/normalize.ts     ← normalizeCatalog(CatalogInput) → Locales; normalizeNamespaceBody(NamespaceBodyInput) → Lines (shared reducer)
 ├── utils/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
 │   ├── negotiate.ts         ← negotiateLocale, parseAcceptLanguage (request-side locale picking)
-│   ├── identify.ts          ← isPluralLeaf (wrapper guard), isPluralForms (inner-shape guard), isLineRecord, PLURAL_MARKER
+│   ├── identify.ts          ← isPluralNode + node guards isLinesNode/isNamespaceNode/isLocaleNode/isCatalogNode, isPluralForms (inner-shape guard)
 │   ├── formatters.ts        ← FormatterRegistry (with public register/get), parseFormatterOptions, parseModifier, Formatter type
 │   ├── template.ts          ← {{var}} + {{var, formatter(opts)}} substitution; tokenize() for slot-aware renderers
 │   └── language/            ← isBCP47LanguageCode + CLDR data
@@ -294,7 +325,7 @@ There are no environment variables. All configuration is passed via constructor 
 | Object                    | Shape                                                                                                                                |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | `new Ilingo(input)`       | `{ store?: IStore, locale?: string, fallback?: Fallback, onMissingKey?: MissingKeyHandler }`                                          |
-| `new MemoryStore(opts)`   | `{ data: Locales }`                                                                                                            |
+| `new MemoryStore(opts)`   | `{ data: CatalogInput }` — the descriptor tree (`defineCatalog(...)` / `LocaleNode[]` / a single `LocaleNode`); normalized to `Locales` in the constructor |
 | `new FSStore(input)`      | `{ directory?: string \| string[], writeDirectory?: string }`                                                                       |
 | Vue `install(app, input)` | `Options { store, locale } \| Ilingo \| undefined`                                                                                  |
 

@@ -11,34 +11,37 @@ npm install ilingo
 ## 2. Create an instance
 
 ```typescript
-import { Ilingo, MemoryStore } from 'ilingo';
+import {
+    Ilingo, MemoryStore,
+    defineCatalog, defineLocale, defineNamespace, defineLines, definePlural,
+} from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new MemoryStore({
-        data: {
-            en: {
-                cart: {
-                    greeting: 'Welcome, {{name}}!',
-                    items: {
-                        '@plural': {
+        data: defineCatalog([
+            defineLocale('en', [
+                defineNamespace('cart', [
+                    defineLines({
+                        greeting: 'Welcome, {{name}}!',
+                        items: definePlural({
                             one: '{{count}} item in your cart',
                             other: '{{count}} items in your cart',
-                        },
-                    },
-                },
-            },
-            de: {
-                cart: {
-                    greeting: 'Willkommen, {{name}}!',
-                    items: {
-                        '@plural': {
+                        }),
+                    }),
+                ]),
+            ]),
+            defineLocale('de', [
+                defineNamespace('cart', [
+                    defineLines({
+                        greeting: 'Willkommen, {{name}}!',
+                        items: definePlural({
                             one: '{{count}} Artikel im Warenkorb',
                             other: '{{count}} Artikel im Warenkorb',
-                        },
-                    },
-                },
-            },
-        },
+                        }),
+                    }),
+                ]),
+            ]),
+        ]),
     }),
     locale: 'en',
 });
@@ -70,12 +73,12 @@ await ilingo.get({
 // "Willkommen, Peter!"
 ```
 
-That's it. The same call works with a [file-system store](/integrations/fs), in a [Vue app](/integrations/vue), and against a [typed catalog](/guide/type-safe-keys) — the API does not change.
+That's it. The same call works with a [file-system store](/integrations/fs) and in a [Vue app](/integrations/vue) — the API does not change.
 
 ## Where to go next
 
+- **[Catalog Design](/guide/catalog-design)** — the descriptor tree and the five `define*` helpers.
 - **[Stores](/guide/stores)** — the `IStore` port and how to write your own.
 - **[Locales & Fallback](/guide/locales)** — how `pt-BR` finds `en` automatically.
-- **[Pluralization](/guide/pluralization)** — the `@plural` marker and `definePlural`.
+- **[Pluralization](/guide/pluralization)** — plural nodes via `definePlural`.
 - **[Formatters](/guide/formatters)** — `{{value, number(...)}}` and friends.
-- **[Type-Safe Keys](/guide/type-safe-keys)** — `defineCatalog()` + `Ilingo<typeof catalog>`.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022-2022.
+ * Copyright (c) 2026.
  * Author Peter Placzek (tada5hi)
  * For the full copyright and license information,
  * view the LICENSE file that was distributed with this source code.
@@ -7,32 +7,66 @@
 
 import { describe, it, expect } from "vitest";
 
-import { isLineRecord } from "../../../src";
+import {
+    isCatalogNode,
+    isLinesNode,
+    isLocaleNode,
+    isNamespaceNode,
+    isPluralForms,
+    isPluralNode,
+} from "../../../src";
 
 describe('src/utils/identify.ts', () => {
-    it('should identify the value correctly', () => {
-        let value : unknown = {
-            'busy': 'I am busy as hell :P'
-        };
+    describe('isPluralForms', () => {
+        it('accepts a CLDR-categorised options object with other', () => {
+            expect(isPluralForms({ one: '1', other: 'n' })).toBe(true);
+            expect(isPluralForms({ other: 'n' })).toBe(true);
+        });
 
-        expect(isLineRecord(value)).toBeTruthy();
-
-        value = {};
-
-        expect(isLineRecord(value)).toBeTruthy();
+        it('rejects a missing other, a non-CLDR key, or a non-string value', () => {
+            expect(isPluralForms({ one: '1' })).toBe(false);
+            expect(isPluralForms({ other: 'n', bogus: 'x' })).toBe(false);
+            expect(isPluralForms({ other: 1 })).toBe(false);
+            expect(isPluralForms({})).toBe(false);
+            expect(isPluralForms('nope')).toBe(false);
+        });
     });
 
-    it('should not identify the value correctly', () => {
-        let value : unknown = true;
+    describe('isPluralNode', () => {
+        it('accepts a { type: "plural", data } node', () => {
+            expect(isPluralNode({ type: 'plural', data: { other: 'n' } })).toBe(true);
+        });
 
-        expect(isLineRecord(value)).toBeFalsy();
+        it('rejects a wrong tag, missing data, or invalid forms', () => {
+            expect(isPluralNode({ type: 'lines', data: { other: 'n' } })).toBe(false);
+            expect(isPluralNode({ type: 'plural', data: { one: '1' } })).toBe(false);
+            expect(isPluralNode({ other: 'n' })).toBe(false);
+            expect(isPluralNode('nope')).toBe(false);
+        });
+    });
 
-        value = 1;
+    describe('node guards', () => {
+        it('isLinesNode', () => {
+            expect(isLinesNode({ type: 'lines', data: { hi: 'x' } })).toBe(true);
+            expect(isLinesNode({ type: 'lines', data: 'nope' })).toBe(false);
+            expect(isLinesNode({ type: 'namespace', name: 'a', data: [] })).toBe(false);
+        });
 
-        expect(isLineRecord(value)).toBeFalsy();
+        it('isNamespaceNode', () => {
+            expect(isNamespaceNode({ type: 'namespace', name: 'app', data: [] })).toBe(true);
+            expect(isNamespaceNode({ type: 'namespace', data: [] })).toBe(false);
+            expect(isNamespaceNode({ type: 'namespace', name: 'app', data: {} })).toBe(false);
+        });
 
-        value = 'abc';
+        it('isLocaleNode', () => {
+            expect(isLocaleNode({ type: 'locale', name: 'en', data: [] })).toBe(true);
+            expect(isLocaleNode({ type: 'locale', data: [] })).toBe(false);
+        });
 
-        expect(isLineRecord(value)).toBeFalsy();
-    })
+        it('isCatalogNode', () => {
+            expect(isCatalogNode({ type: 'catalog', data: [] })).toBe(true);
+            expect(isCatalogNode({ type: 'catalog', data: {} })).toBe(false);
+            expect(isCatalogNode({ type: 'locale', name: 'en', data: [] })).toBe(false);
+        });
+    });
 });

@@ -22,7 +22,7 @@ Ilingo is a lightweight library for translation and internationalization. The co
   - [Fallback locale chain](#fallback-locale-chain)
   - [Missing-key handler](#missing-key-handler)
   - [Formatters](#formatters)
-  - [Type-safe keys](#type-safe-keys)
+  - [Authoring catalogs](#authoring-catalogs)
   - [The `IIlingo` interface](#the-iilingo-interface)
   - [Slot placeholders & `tokenize()`](#slot-placeholders--tokenize)
   - [Custom formatters](#custom-formatters)
@@ -59,27 +59,35 @@ const ilingo = new Ilingo({
 })
 ```
 
-The **default** (memory-) store can be initialized with some default data.
+The **default** (memory-) store is initialized with a catalog built from the
+`defineCatalog` / `defineLocale` / `defineNamespace` / `defineLines` tree helpers.
 ```typescript
-import { Ilingo } from 'ilingo';
+import {
+    Ilingo,
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineLines,
+} from 'ilingo';
 
-const store = new MemoryStore({
-    data: {
-        // locale: de
-        de: {
-            // namespace: app
-            app: {
-                key: 'Hallo mein Name ist {{name}}'
-            }
-        },
-        // locale: en
-        en: {
-            app: {
-                key: 'Hello my name is {{name}}'
-            }
-        },
-    }
-});
+const catalog = defineCatalog([
+    // locale: de
+    defineLocale('de', [
+        // namespace: app
+        defineNamespace('app', [
+            defineLines({ key: 'Hallo mein Name ist {{name}}' }),
+        ]),
+    ]),
+    // locale: en
+    defineLocale('en', [
+        defineNamespace('app', [
+            defineLines({ key: 'Hello my name is {{name}}' }),
+        ]),
+    ]),
+]);
+
+const store = new MemoryStore({ data: catalog });
 
 const ilingo = new Ilingo({
     store,
@@ -130,17 +138,17 @@ As a template delimiter a mustache like `{{}}` interpolation is used.
 Data properties can be injected as a second argument, e.g.
 
 ```typescript
-import { Ilingo, MemoryStore } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new MemoryStore({
-        data: {
-            en: {
-                app: {
-                    age: 'I am {{age}} years old.'
-                }
-            }
-        }
+        data: defineCatalog([
+            defineLocale('en', [
+                defineNamespace('app', [
+                    defineLines({ age: 'I am {{age}} years old.' }),
+                ]),
+            ]),
+        ]),
     })
 });
 
@@ -231,22 +239,22 @@ await ilingo.get({
 Another option is to add translations on the fly and access them afterwards.
 
 ```typescript
-import { Ilingo, MemoryStore } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new MemoryStore({
-        data: {
-            en: {
-                foo: {
-                    bar: 'baz {{param}}'
-                }
-            },
-            de: {
-                foo: {
-                    bar: 'boz {{param}}'
-                }
-            }
-        }
+        data: defineCatalog([
+            defineLocale('en', [
+                defineNamespace('foo', [
+                    defineLines({ bar: 'baz {{param}}' }),
+                ]),
+            ]),
+            defineLocale('de', [
+                defineNamespace('foo', [
+                    defineLines({ bar: 'boz {{param}}' }),
+                ]),
+            ]),
+        ]),
     })
 });
 
@@ -272,17 +280,53 @@ await ilingo.get({
 
 ### Pluralization
 
-Plural leaves are CLDR objects keyed by category (`zero | one | two | few | many | other`); the matching form is selected via `Intl.PluralRules`. The `count` is automatically merged into `data` so `{{count}}` works without restating it.
+Plural forms are CLDR categories (`zero | one | two | few | many | other`, `other` required); the matching form is selected via `Intl.PluralRules`. The `count` is automatically merged into `data` so `{{count}}` works without restating it.
 
-Wrap plural forms in `{ "@plural": { ... } }` — the marker disambiguates them from regular namespaces that happen to use CLDR-category key names. A bare `{ one, other }` object without the wrapper is treated as a plain nested namespace.
+A plural leaf is a dedicated **plural node** — built with the `definePlural` helper in TS / JS, or written as a `{ "type": "plural", "data": { ... } }` literal in JSON. A plural node is the only thing interpreted as a plural; a plain object inside `defineLines` is always treated as a nested key.
 
-**JSON files** (loaded by `FSStore`) — use the literal `@plural` key:
+**TS / JS files** (inline `defineCatalog`, or loaded by `FSStore`) — use the `definePlural` helper:
+
+```typescript
+import {
+    Ilingo,
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineLines,
+    definePlural,
+} from 'ilingo';
+
+const catalog = defineCatalog([
+    defineLocale('en', [
+        defineNamespace('cart', [
+            defineLines({
+                items: definePlural({
+                    one: '{{count}} item',
+                    other: '{{count}} items',
+                }),
+            }),
+        ]),
+    ]),
+]);
+
+const ilingo = new Ilingo({
+    store: new MemoryStore({ data: catalog }),
+});
+
+await ilingo.get({ namespace: 'cart', key: 'items', count: 1 });  // "1 item"
+await ilingo.get({ namespace: 'cart', key: 'items', count: 5 });  // "5 items"
+```
+
+**JSON files** (loaded by `FSStore`) — use the literal `plural` node:
 
 ```json
 {
-    "cart": {
+    "type": "lines",
+    "data": {
         "items": {
-            "@plural": {
+            "type": "plural",
+            "data": {
                 "one": "{{count}} item",
                 "other": "{{count}} items"
             }
@@ -291,42 +335,11 @@ Wrap plural forms in `{ "@plural": { ... } }` — the marker disambiguates them 
 }
 ```
 
-**TS / JS files** (inline `defineCatalog`, or loaded by `FSStore`) — use the `definePlural` helper:
-
-```typescript
-import { Ilingo, MemoryStore, defineCatalog, definePlural } from 'ilingo';
-
-const catalog = defineCatalog({
-    en: {
-        cart: {
-            items: definePlural({
-                one: '{{count}} item',
-                other: '{{count}} items',
-            }),
-        },
-        form: {
-            kind: {
-                // Plain namespaces with CLDR-category-shaped keys are safe —
-                // without the `@plural` wrapper they are walked normally.
-                other: { label: 'Other' },
-            },
-        },
-    },
-});
-
-const ilingo = new Ilingo<typeof catalog>({
-    store: new MemoryStore({ data: catalog }),
-});
-
-await ilingo.get({ namespace: 'cart', key: 'items', count: 1 });  // "1 item"
-await ilingo.get({ namespace: 'cart', key: 'items', count: 5 });  // "5 items"
-```
-
-`definePlural` is a thin identity helper — it returns `{ '@plural': leaf }` with the same runtime shape as the JSON form. The `const` generic preserves the literal types of each plural form (so `Ilingo<typeof catalog>` still sees them as plural keys requiring `count`). The TS/JS version gets CLDR-category autocomplete and a compile error if you misspell `other` or pass a non-CLDR key.
+`definePlural` returns a plural node with the same runtime shape as the JSON `{ "type": "plural", "data": { ... } }` literal. The TS/JS version gives local CLDR-category autocomplete and a compile error if you misspell `other` or pass a non-CLDR key.
 
 If the selected category is absent from the leaf, `other` is used as a fallback.
 
-Plural leaves round-trip through `store.set()` — `StoreSetContext.value` accepts either a `string` or a `PluralLeaf` (the `{ "@plural": ... }` wrapper). The `FSStore.set` persistence writes them as JSON unchanged.
+Plural leaves round-trip through `store.set()` — `StoreSetContext.value` accepts either a `string` or a `PluralForms` value. The `FSStore.set` persistence writes them as JSON unchanged.
 
 ### Fallback locale chain
 
@@ -382,15 +395,17 @@ Template placeholders support modifiers backed by `Intl.NumberFormat`, `Intl.Dat
 ```typescript
 const ilingo = new Ilingo({
     store: new MemoryStore({
-        data: {
-            en: {
-                app: {
-                    owe: 'You owe {{amount, number(style=currency, currency=EUR)}}',
-                    signed: 'Signed {{date, date(dateStyle=medium, timeZone=UTC)}}',
-                    invited: '{{people, list(style=long, type=conjunction)}}',
-                },
-            },
-        },
+        data: defineCatalog([
+            defineLocale('en', [
+                defineNamespace('app', [
+                    defineLines({
+                        owe: 'You owe {{amount, number(style=currency, currency=EUR)}}',
+                        signed: 'Signed {{date, date(dateStyle=medium, timeZone=UTC)}}',
+                        invited: '{{people, list(style=long, type=conjunction)}}',
+                    }),
+                ]),
+            ]),
+        ]),
     }),
 });
 
@@ -414,84 +429,56 @@ Option-value coercion: `42` → `42` (number), `true` / `false` → boolean, any
 
 Unknown modifiers fall back to `String(value)` and emit a one-shot dev-mode warning (silenced in `process.env.NODE_ENV === 'production'`). Malformed modifier expressions (unbalanced parens, non-identifier names) are treated the same way — never throw.
 
-### Type-safe keys
+### Authoring catalogs
 
-`Ilingo` is generic in the catalog shape. Wrap your catalog with `defineCatalog` to capture its narrowest literal types, pass it as the type parameter to `Ilingo`, and the compiler refuses typos, unknown namespaces, and plural-key calls that forget `count`.
+A catalog is a **tree of tagged descriptor nodes** built with four helpers:
 
-```typescript
-import { Ilingo, MemoryStore, defineCatalog } from 'ilingo';
-
-const catalog = defineCatalog({
-    en: {
-        app: {
-            greeting: 'Hi {{name}}',
-            nested: { deep: { leaf: 'Deep value' } },
-        },
-        cart: {
-            items: {
-                '@plural': {
-                    one: '{{count}} item',
-                    other: '{{count}} items',
-                },
-            },
-        },
-    },
-    de: { /* …same shape… */ },
-});
-
-const ilingo = new Ilingo<typeof catalog>({
-    store: new MemoryStore({ data: catalog }),
-});
-
-await ilingo.get({ namespace: 'app', key: 'greeting' });           // OK
-await ilingo.get({ namespace: 'app', key: 'nested.deep.leaf' });   // OK — dotted paths inferred
-await ilingo.get({ namespace: 'app', key: 'unknown' });            // ❌ type error
-await ilingo.get({ namespace: 'unknown', key: 'greeting' });       // ❌ type error
-await ilingo.get({ namespace: 'cart',  key: 'items' });            // ❌ type error — count is required
-await ilingo.get({ namespace: 'cart',  key: 'items', count: 1 });  // OK
-```
-
-`defineCatalog<const T>(catalog)` uses TS 5+ const-generic inference so per-key literals (and `@plural`-wrapped plural leaves) aren't widened to `string`. The runtime function is a no-op identity — purely a type carrier.
-
-For one-file-per-locale layouts, reach for `defineLocale<const T extends Namespaces>(locale: T): T` — the per-locale companion. It preserves literal types through an `export default` boundary and validates that the body is a `Namespaces` (catching a stray top-level string that `as const` would let through). Combine with `defineCatalog` to merge per-locale files into a single typed catalog:
+- `defineCatalog(locales)` — the root; the value you pass to `new MemoryStore({ data })`. Its children are `defineLocale(...)` nodes.
+- `defineLocale(name, children)` — one locale (`'en'`, `'de'`, …). Its children are `defineNamespace(...)` (and/or `defineLines(...)`) nodes.
+- `defineNamespace(name, children)` — a namespace. Its children are nested `defineNamespace(...)` and/or `defineLines(...)` nodes.
+- `defineLines(obj)` — a flat or key-nested map of translation strings (and `definePlural(...)` leaves).
 
 ```typescript
-// locales/en.ts
-import { defineLocale, definePlural } from 'ilingo';
+import {
+    Ilingo,
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineLines,
+    definePlural,
+} from 'ilingo';
 
-export default defineLocale({
-    app:  { greeting: 'Hi {{name}}' },
-    cart: { items: definePlural({ one: '1 item', other: '{{count}} items' }) },
-});
+const catalog = defineCatalog([
+    defineLocale('en', [
+        defineNamespace('app', [
+            defineLines({ greeting: 'Hi {{name}}', nav: { home: 'Home' } }), // nav.home is a dotted KEY
+        ]),
+        defineNamespace('cart', [
+            defineLines({ items: definePlural({ one: '{{count}} item', other: '{{count}} items' }) }),
+        ]),
+    ]),
+]);
 
-// locales/index.ts
-import { defineCatalog } from 'ilingo';
-import en from './en';
-import de from './de';
-export const catalog = defineCatalog({ en, de });
+const ilingo = new Ilingo({ store: new MemoryStore({ data: catalog }) });
+
+await ilingo.get({ namespace: 'app', key: 'greeting', data: { name: 'Peter' } }); // "Hi Peter"
+await ilingo.get({ namespace: 'app', key: 'nav.home' });                          // "Home"
+await ilingo.get({ namespace: 'cart', key: 'items', count: 5 });                  // "5 items"
 ```
 
-For **one-file-per-namespace** layouts, `defineNamespace<const T extends Lines>(namespace: T): T` is the per-namespace companion — same const-capture + shape validation (against `Lines`), for when each namespace lives in its own file:
+There are **two independent nesting hierarchies**:
 
-```typescript
-// locales/en/app.ts
-import { defineNamespace, definePlural } from 'ilingo';
+- **Nested `defineNamespace`** builds a dotted **namespace**. `defineNamespace('app', [defineNamespace('nav', …)])` exposes the inner namespace as `'app.nav'`.
+- **A nested object inside `defineLines`** builds a dotted **key**. `defineLines({ nav: { home: 'Home' } })` exposes the leaf as key `'nav.home'`.
 
-export default defineNamespace({
-    greeting: 'Hi {{name}}',
-    items: definePlural({ one: '1 item', other: '{{count}} items' }),
-});
-```
+`get()` keys are loose `string`s and `get()` returns `Promise<string | undefined>`. The store model is open-world — API- and loader-backed stores hold keys that aren't known at build time — so there is **no** catalog-driven key inference. `definePlural` still gives you local CLDR-category autocomplete and a compile error on a missing `other` (or a non-CLDR key), but it does not drive `get()`'s key types.
 
-`Lines` is recursive, so a namespace can nest arbitrarily (`{ nav: { home: 'Home' } }`) and you address it with a dotted key (`key: 'nav.home'`).
-
-Inference is structural, derived from the union of locales. Keep all locales aligned to the same shape and the inferred `Key<C, G>` is the natural set of leaf paths. Diverging locales widen the union but never break compilation.
-
-`new Ilingo()` (no generic) preserves today's loose typing — `namespace: string, key: string` are accepted. The generic is opt-in.
+`defineCatalog` and friends are runtime functions that normalize the tree into the internal `Locales` shape (`normalizeCatalog` / `normalizeNamespaceBody` are exported for advanced use). Node types (`CatalogNode`, `LocaleNode`, `NamespaceNode`, `LinesNode`, `PluralNode`, `NamespaceChild`, `CatalogInput`, `NamespaceBodyInput`) and guards (`isCatalogNode`, `isLocaleNode`, `isNamespaceNode`, `isLinesNode`, `isPluralNode`) are exported too.
 
 ### The `IIlingo` interface
 
-`IIlingo<C>` is the public type contract of the orchestrator — every method on the concrete `Ilingo` class plus the `stores` map and `formatters` registry. Library code that accepts an orchestrator (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accepts and returns `IIlingo`, so consumers can swap in test doubles or decorating wrappers without depending on the concrete class.
+`IIlingo` is the public type contract of the orchestrator — every method on the concrete `Ilingo` class plus the `stores` map and `formatters` registry. Library code that accepts an orchestrator (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accepts and returns `IIlingo`, so consumers can swap in test doubles or decorating wrappers without depending on the concrete class.
 
 ```typescript
 import type { IIlingo } from 'ilingo';
@@ -608,6 +595,8 @@ import { Ilingo, LoaderStore } from 'ilingo';
 const ilingo = new Ilingo({
     store: new LoaderStore({
         loader: async (locale, namespace) => {
+            // The module default is a lines node (`{ "type": "lines", "data": { ... } }`,
+            // or `export default defineLines({ ... })` for TS/JS chunks).
             const m = await import(`./locales/${locale}/${namespace}.json`);
             return m.default;
         },

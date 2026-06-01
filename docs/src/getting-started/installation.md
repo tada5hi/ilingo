@@ -54,4 +54,3 @@ The Vue 3 layer for `@ilingo/validup`: composables, the `<IValidup>` / `<IValidu
 
 - **Node.js 22+** for development. The published bundles run anywhere ES2022 + `Intl.PluralRules` / `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.ListFormat` are available — which is every modern browser and every supported Node version.
 - **ESM only.** Every package declares `"type": "module"`. CommonJS consumers can use dynamic `import()`.
-- **TypeScript 5+** if you want `defineCatalog()`'s const-generic inference.

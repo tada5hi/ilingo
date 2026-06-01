@@ -23,7 +23,12 @@ import type {
     StoreGetContext,
     StoreSetContext,
 } from 'ilingo';
-import { MemoryStore, isBCP47LanguageCode, isLineRecord } from 'ilingo';
+import {
+    MemoryStore,
+    isBCP47LanguageCode,
+    isLinesNode,
+    normalizeNamespaceBody,
+} from 'ilingo';
 import type { ConfigInput } from './types';
 import { buildConfig } from './utils';
 
@@ -204,6 +209,9 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
      * `.ts` / `.js` / `.cjs` file the original is left untouched and the new
      * `.json` sits alongside it; on next load both are merged by smob and the
      * new JSON keys win because the loader applies later sources on top.
+     *
+     * The file is written as a lines node (`{ type: 'lines', data }`) so it
+     * round-trips through `loadNamespace`, which expects that shape.
      */
     protected async persist(locale: string, namespace: string): Promise<void> {
         const targetDir = path.join(this.writeDirectory, locale);
@@ -211,7 +219,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
         const tmpFile = `${targetFile}.${process.pid}.tmp`;
 
         const record = (this.data[locale] && this.data[locale][namespace]) || {};
-        const content = `${JSON.stringify(record, null, 4)}\n`;
+        const content = `${JSON.stringify({ type: 'lines', data: record }, null, 4)}\n`;
 
         await mkdir(targetDir, { recursive: true });
         await writeFile(tmpFile, content, 'utf8');
@@ -301,8 +309,11 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
     protected mergeFiles(files: unknown[]) {
         const lineRecord: Lines = {};
         for (const file of files) {
-            if (isLineRecord(file)) {
-                this.merger(lineRecord, file);
+            // Each file is a lines node — `{ type: 'lines', data }` (JSON) or
+            // `export default defineLines({ ... })` (TS/JS). Reduce it to the
+            // internal `Lines` shape and merge.
+            if (isLinesNode(file)) {
+                this.merger(lineRecord, normalizeNamespaceBody(file));
             }
         }
 

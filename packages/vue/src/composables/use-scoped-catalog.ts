@@ -6,7 +6,7 @@
  */
 
 import { computedAsync } from '@vueuse/core';
-import type { IIlingo, Locales } from 'ilingo';
+import type { CatalogInput, IIlingo } from 'ilingo';
 import { MemoryStore } from 'ilingo';
 import type { Ref } from 'vue';
 import { unref } from 'vue';
@@ -47,7 +47,11 @@ export type UseScopedCatalogResult = {
  * @example
  *     // Same-component shorthand:
  *     const { t } = useScopedCatalog({
- *         messages: { en: { modal: { greeting: 'Scoped hello' } } },
+ *         messages: defineCatalog([
+ *             defineLocale('en', [
+ *                 defineNamespace('modal', [defineLines({ greeting: 'Scoped hello' })]),
+ *             ]),
+ *         ]),
  *     });
  *     const greeting = t({ namespace: 'modal', key: 'greeting' });
  *
@@ -56,7 +60,7 @@ export type UseScopedCatalogResult = {
  *         <ChildThatCallsUseTranslation />
  *     </ScopedRoot>
  */
-export function useScopedCatalog(options: { messages: Locales }): UseScopedCatalogResult {
+export function useScopedCatalog(options: { messages: CatalogInput }): UseScopedCatalogResult {
     const parent = injectIlingo();
     const locale = injectLocale();
 

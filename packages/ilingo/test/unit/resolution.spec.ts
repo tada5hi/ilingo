@@ -6,7 +6,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Ilingo, MemoryStore } from '../../src';
+import { Ilingo, MemoryStore, defineCatalog, defineLines, defineLocale, defineNamespace, definePlural } from '../../src';
+import { toCatalog } from '../helpers/catalog';
 
 describe('Ilingo — resolution path', () => {
     let warn: ReturnType<typeof vi.spyOn>;
@@ -22,7 +23,7 @@ describe('Ilingo — resolution path', () => {
     describe('#895 — pluralization', () => {
         const make = () => new Ilingo({
             store: new MemoryStore({
-                data: {
+                data: toCatalog({
                     en: {
                         cart: {
                             items: {
@@ -47,7 +48,7 @@ describe('Ilingo — resolution path', () => {
                             },
                         },
                     },
-                },
+                }),
             }),
         });
 
@@ -74,7 +75,7 @@ describe('Ilingo — resolution path', () => {
         it('falls back to "other" if the selected category is absent', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: { en: { cart: { items: { '@plural': { other: '{{count}} items' } } } } },
+                    data: toCatalog({ en: { cart: { items: { '@plural': { other: '{{count}} items' } } } } }),
                 }),
             });
             expect(
@@ -92,7 +93,7 @@ describe('Ilingo — resolution path', () => {
         it('count merges into data without overriding an explicit value', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: {
+                    data: toCatalog({
                         en: {
                             cart: {
                                 items: {
@@ -103,7 +104,7 @@ describe('Ilingo — resolution path', () => {
                                 },
                             },
                         },
-                    },
+                    }),
                 }),
             });
             expect(
@@ -121,10 +122,10 @@ describe('Ilingo — resolution path', () => {
         it('derives BCP-47 parents by default', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: {
+                    data: toCatalog({
                         pt: { app: { hi: 'olá pt' } },
                         'pt-BR': { app: {} },
-                    },
+                    }),
                 }),
                 locale: 'pt-BR',
             });
@@ -134,7 +135,7 @@ describe('Ilingo — resolution path', () => {
         it('falls all the way to LOCALE_DEFAULT', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: { en: { app: { hi: 'hello' } } },
+                    data: toCatalog({ en: { app: { hi: 'hello' } } }),
                 }),
                 locale: 'pt-BR',
             });
@@ -144,7 +145,7 @@ describe('Ilingo — resolution path', () => {
         it('respects an explicit string fallback', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: { es: { app: { hi: 'hola' } } },
+                    data: toCatalog({ es: { app: { hi: 'hola' } } }),
                 }),
                 locale: 'pt-BR',
                 fallback: 'es',
@@ -155,10 +156,10 @@ describe('Ilingo — resolution path', () => {
         it('respects an explicit fallback array, in order', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: {
+                    data: toCatalog({
                         fr: { app: { hi: 'salut' } },
                         es: { app: { hi: 'hola' } },
-                    },
+                    }),
                 }),
                 locale: 'pt-BR',
                 fallback: ['es', 'fr'],
@@ -169,7 +170,7 @@ describe('Ilingo — resolution path', () => {
         it('respects a fallback resolver function', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: { fr: { app: { hi: 'salut' } } },
+                    data: toCatalog({ fr: { app: { hi: 'salut' } } }),
                 }),
                 locale: 'pt-BR',
                 fallback: (locale) => (locale.startsWith('pt') ? ['fr'] : []),
@@ -180,9 +181,9 @@ describe('Ilingo — resolution path', () => {
         it('getResolvedLocale reports which locale yielded the value', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: {
+                    data: toCatalog({
                         pt: { app: { hi: 'olá pt' } },
-                    },
+                    }),
                 }),
                 locale: 'pt-BR',
             });
@@ -197,12 +198,12 @@ describe('Ilingo — resolution path', () => {
         it('locale-closeness beats store priority', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: { en: { app: { hi: 'hello (store1)' } } },
+                    data: toCatalog({ en: { app: { hi: 'hello (store1)' } } }),
                 }),
                 locale: 'pt-BR',
             });
             ilingo.registerStore(new MemoryStore({
-                data: { pt: { app: { hi: 'olá (store2)' } } },
+                data: toCatalog({ pt: { app: { hi: 'olá (store2)' } } }),
             }));
             expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('olá (store2)');
         });
@@ -211,7 +212,7 @@ describe('Ilingo — resolution path', () => {
     describe('#899 — missing-key handler', () => {
         it('default handler warns once per (locale, namespace, key) and returns undefined', async () => {
             const ilingo = new Ilingo({
-                store: new MemoryStore({ data: {} }),
+                store: new MemoryStore({ data: defineCatalog([]) }),
             });
 
             expect(await ilingo.get({ namespace: 'app', key: 'nope' })).toBeUndefined();
@@ -224,7 +225,7 @@ describe('Ilingo — resolution path', () => {
         it('custom handler may return a string, which becomes the result', async () => {
             const onMissingKey = vi.fn(() => 'FALLBACK');
             const ilingo = new Ilingo({
-                store: new MemoryStore({ data: {} }),
+                store: new MemoryStore({ data: defineCatalog([]) }),
                 onMissingKey,
             });
 
@@ -237,7 +238,7 @@ describe('Ilingo — resolution path', () => {
         it('handler receives resolvedLocale = last locale in the chain', async () => {
             const onMissingKey = vi.fn(() => undefined);
             const ilingo = new Ilingo({
-                store: new MemoryStore({ data: {} }),
+                store: new MemoryStore({ data: defineCatalog([]) }),
                 locale: 'pt-BR',
                 onMissingKey,
             });
@@ -252,7 +253,7 @@ describe('Ilingo — resolution path', () => {
         it('handler is not called when a hit is found', async () => {
             const onMissingKey = vi.fn();
             const ilingo = new Ilingo({
-                store: new MemoryStore({ data: { en: { app: { hi: 'hello' } } } }),
+                store: new MemoryStore({ data: toCatalog({ en: { app: { hi: 'hello' } } }) }),
                 onMissingKey,
             });
             await ilingo.get({ namespace: 'app', key: 'hi' });
@@ -260,8 +261,8 @@ describe('Ilingo — resolution path', () => {
         });
 
         it('warn-once state is per-instance, not shared across Ilingo instances', async () => {
-            const a = new Ilingo({ store: new MemoryStore({ data: {} }) });
-            const b = new Ilingo({ store: new MemoryStore({ data: {} }) });
+            const a = new Ilingo({ store: new MemoryStore({ data: defineCatalog([]) }) });
+            const b = new Ilingo({ store: new MemoryStore({ data: defineCatalog([]) }) });
 
             await a.get({ namespace: 'app', key: 'isolated' });
             await b.get({ namespace: 'app', key: 'isolated' });
@@ -272,14 +273,14 @@ describe('Ilingo — resolution path', () => {
         });
     });
 
-    describe('plural-leaf write side (#912 review)', () => {
-        it('MemoryStore.set + get round-trips a plural leaf', async () => {
-            const store = new MemoryStore({ data: {} });
+    describe('plural write side (#912 review)', () => {
+        it('MemoryStore.set + get round-trips a plural node', async () => {
+            const store = new MemoryStore({ data: defineCatalog([]) });
             await store.set({
                 locale: 'en',
                 namespace: 'cart',
                 key: 'items',
-                value: { '@plural': { one: '{{count}} item', other: '{{count}} items' } },
+                value: definePlural({ one: '{{count}} item', other: '{{count}} items' }),
             });
 
             const ilingo = new Ilingo({ store });
@@ -292,16 +293,16 @@ describe('Ilingo — resolution path', () => {
         });
     });
 
-    describe('bare structural plural shape — not recognised as plural', () => {
-        it('treats { one, other } as a regular nested namespace', async () => {
-            // Without the @plural wrapper, the object is just a record with
-            // keys named "one" / "other". `ilingo.get` returns undefined for
-            // the bare key (no string leaf there) — and the missing-key
-            // warning fires because the orchestrator's lookup walked past
-            // a non-leaf.
+    describe('bare nested object — not recognised as plural', () => {
+        it('treats { one, other } as a regular nested key group', async () => {
+            // Without a `{ type: 'plural' }` node, the object is just a key
+            // group whose keys are named "one" / "other". `ilingo.get`
+            // returns undefined for the bare key (no string leaf there) — and
+            // the missing-key warning fires because the lookup walked past a
+            // non-leaf.
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: {
+                    data: toCatalog({
                         en: {
                             cart: {
                                 items: {
@@ -310,7 +311,7 @@ describe('Ilingo — resolution path', () => {
                                 },
                             },
                         },
-                    },
+                    }),
                 }),
             });
 
@@ -327,22 +328,22 @@ describe('Ilingo — resolution path', () => {
         });
     });
 
-    describe('explicit @plural marker', () => {
-        it('definePlural() produces the same runtime shape as the @plural literal', async () => {
-            const { definePlural } = await import('../../src');
-
+    describe('plural node', () => {
+        it('definePlural() produces a recognised plural leaf', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: {
-                        en: {
-                            cart: {
-                                items: definePlural({
-                                    one: '{{count}} item',
-                                    other: '{{count}} items',
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('cart', [
+                                defineLines({
+                                    items: definePlural({
+                                        one: '{{count}} item',
+                                        other: '{{count}} items',
+                                    }),
                                 }),
-                            },
-                        },
-                    },
+                            ]),
+                        ]),
+                    ]),
                 }),
             });
 
@@ -352,21 +353,24 @@ describe('Ilingo — resolution path', () => {
                 .toEqual('5 items');
         });
 
-        it('recognises { "@plural": { ... } } as a plural leaf', async () => {
+        it('recognises a literal { type: "plural", data } node (the JSON form)', async () => {
+            // JSON files can't call definePlural(), so they author the node
+            // literally. The store recognises it the same way.
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: {
+                    data: toCatalog({
                         en: {
                             cart: {
                                 items: {
-                                    '@plural': {
+                                    type: 'plural',
+                                    data: {
                                         one: '{{count}} item',
                                         other: '{{count}} items',
                                     },
-                                },
+                                } as never,
                             },
                         },
-                    },
+                    }),
                 }),
             });
             expect(
@@ -378,12 +382,12 @@ describe('Ilingo — resolution path', () => {
         });
 
         it('namespace whose only key happens to be "other" is walked normally', async () => {
-            // The `@plural` marker is the only plural signal, so a sibling
-            // key called `other` (or `one`, etc.) is just a regular nested
-            // namespace and is reachable via dotted access.
+            // A plural is a tagged node, so a sibling key called `other`
+            // (or `one`, etc.) is just a regular nested key group and is
+            // reachable via dotted access.
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: {
+                    data: toCatalog({
                         en: {
                             form: {
                                 kind: {
@@ -391,7 +395,7 @@ describe('Ilingo — resolution path', () => {
                                 },
                             },
                         },
-                    },
+                    }),
                 }),
             });
             expect(
@@ -450,11 +454,11 @@ describe('Ilingo — resolution path', () => {
         it('preserves store insertion order on a tie within a locale', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: { en: { app: { hi: 'from store 1' } } },
+                    data: toCatalog({ en: { app: { hi: 'from store 1' } } }),
                 }),
             });
             ilingo.registerStore(new MemoryStore({
-                data: { en: { app: { hi: 'from store 2' } } },
+                data: toCatalog({ en: { app: { hi: 'from store 2' } } }),
             }));
 
             expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('from store 1');
@@ -464,7 +468,7 @@ describe('Ilingo — resolution path', () => {
     describe('Ilingo.clone() — config override semantics', () => {
         it('inherits parent config when overrides are omitted', async () => {
             const parent = new Ilingo({
-                store: new MemoryStore({ data: { de: { app: { hi: 'Hallo' } } } }),
+                store: new MemoryStore({ data: toCatalog({ de: { app: { hi: 'Hallo' } } }) }),
                 locale: 'de',
                 fallback: 'de',
             });
@@ -480,10 +484,10 @@ describe('Ilingo — resolution path', () => {
         it('overrides.fallback === undefined clears the inherited fallback', async () => {
             const parent = new Ilingo({
                 store: new MemoryStore({
-                    data: {
+                    data: toCatalog({
                         de: { app: { hi: 'Hallo' } },
                         en: { app: { hi: 'Hello' } },
-                    },
+                    }),
                 }),
                 locale: 'en',
                 fallback: 'de',
@@ -504,7 +508,7 @@ describe('Ilingo — resolution path', () => {
             // behaviour. Fixed to use `in`-check like `fallback`.
             const parentHandler = vi.fn(() => 'PARENT');
             const parent = new Ilingo({
-                store: new MemoryStore({ data: {} }),
+                store: new MemoryStore({ data: defineCatalog([]) }),
                 onMissingKey: parentHandler,
             });
 

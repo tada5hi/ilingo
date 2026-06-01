@@ -1,0 +1,63 @@
+/*
+ * Copyright (c) 2026.
+ * Author Peter Placzek (tada5hi)
+ * For the full copyright and license information,
+ * view the LICENSE file that was distributed with this source code.
+ */
+
+import {
+    defineCatalog,
+    defineLines,
+    defineLocale,
+    defineNamespace,
+    definePlural,
+} from '../../src';
+import type { CatalogNode, Lines, PluralForms, PluralNode } from '../../src';
+
+type PluralMarker = { '@plural': PluralForms };
+type PlainValue = string | PluralMarker | PluralNode | PlainLines;
+type PlainLines = { [key: string]: PlainValue };
+type PlainCatalog = { [locale: string]: { [namespace: string]: PlainLines } };
+
+function isPluralMarker(value: object): value is PluralMarker {
+    return '@plural' in value;
+}
+
+function isPluralNodeValue(value: object): value is PluralNode {
+    return (value as { type?: unknown }).type === 'plural';
+}
+
+function toLines(plain: PlainLines): Lines {
+    const out: Lines = {};
+    for (const [key, value] of Object.entries(plain)) {
+        if (typeof value === 'string') {
+            out[key] = value;
+        } else if (isPluralNodeValue(value)) {
+            out[key] = value;
+        } else if (isPluralMarker(value)) {
+            out[key] = definePlural(value['@plural']);
+        } else {
+            out[key] = toLines(value);
+        }
+    }
+    return out;
+}
+
+/**
+ * Build a catalog tree from the legacy `{ locale: { namespace: lines } }`
+ * shape — keeps contract tests concise while exercising the real
+ * `normalizeCatalog`. A `{ '@plural': {...} }` marker in the legacy data is
+ * converted to a plural node; a literal `{ type: 'plural', data }` is passed
+ * through unchanged.
+ */
+export function toCatalog(plain: PlainCatalog): CatalogNode {
+    return defineCatalog(
+        Object.entries(plain).map(([locale, namespaces]) => defineLocale(
+            locale,
+            Object.entries(namespaces).map(([namespace, lines]) => defineNamespace(
+                namespace,
+                [defineLines(toLines(lines))],
+            )),
+        )),
+    );
+}

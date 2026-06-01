@@ -15,15 +15,17 @@ Template placeholders accept inline modifiers powered by `Intl.NumberFormat`, `I
 ```typescript
 const ilingo = new Ilingo({
     store: new MemoryStore({
-        data: {
-            en: {
-                app: {
-                    owe: 'You owe {{amount, number(style=currency, currency=EUR)}}',
-                    signed: 'Signed {{date, date(dateStyle=medium, timeZone=UTC)}}',
-                    invited: '{{people, list(style=long, type=conjunction)}}',
-                },
-            },
-        },
+        data: defineCatalog([
+            defineLocale('en', [
+                defineNamespace('app', [
+                    defineLines({
+                        owe: 'You owe {{amount, number(style=currency, currency=EUR)}}',
+                        signed: 'Signed {{date, date(dateStyle=medium, timeZone=UTC)}}',
+                        invited: '{{people, list(style=long, type=conjunction)}}',
+                    }),
+                ]),
+            ]),
+        ]),
     }),
 });
 

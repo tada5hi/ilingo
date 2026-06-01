@@ -6,12 +6,13 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { Ilingo, LoaderStore, isInvalidatingStore } from '../../src';
+import { Ilingo, LoaderStore, defineLines, definePlural, isInvalidatingStore } from '../../src';
+import type { LinesNode } from '../../src';
 
 describe('LoaderStore (#903)', () => {
     it('lazy-loads a (locale, namespace) on first get, then caches', async () => {
         const loader = vi.fn(async (locale: string, namespace: string) => {
-            if (locale === 'en' && namespace === 'app') return { greeting: 'Hello' };
+            if (locale === 'en' && namespace === 'app') return defineLines({ greeting: 'Hello' });
             return undefined;
         });
 
@@ -42,8 +43,8 @@ describe('LoaderStore (#903)', () => {
     });
 
     it('de-duplicates concurrent loads for the same (locale, namespace)', async () => {
-        let resolveLoader: (v: { hi: string } | undefined) => void = () => {};
-        const loader = vi.fn(() => new Promise<{ hi: string } | undefined>((r) => {
+        let resolveLoader: (v: LinesNode | undefined) => void = () => {};
+        const loader = vi.fn(() => new Promise<LinesNode | undefined>((r) => {
             resolveLoader = r;
         }));
 
@@ -55,7 +56,7 @@ describe('LoaderStore (#903)', () => {
         const p2 = ilingo.get({ namespace: 'app', key: 'hi' });
         const p3 = ilingo.get({ namespace: 'app', key: 'hi' });
 
-        resolveLoader({ hi: 'Hello' });
+        resolveLoader(defineLines({ hi: 'Hello' }));
 
         expect(await p1).toEqual('Hello');
         expect(await p2).toEqual('Hello');
@@ -67,7 +68,7 @@ describe('LoaderStore (#903)', () => {
 
     it('invalidate() drops the cache and re-runs the loader on next get', async () => {
         let count = 0;
-        const loader = vi.fn(async () => ({ greeting: `Hello ${++count}` }));
+        const loader = vi.fn(async () => defineLines({ greeting: `Hello ${++count}` }));
 
         const store = new LoaderStore({ loader });
         const ilingo = new Ilingo({ store });
@@ -93,7 +94,7 @@ describe('LoaderStore (#903)', () => {
     });
 
     it('on("invalidate") fires with the invalidation scope', async () => {
-        const store = new LoaderStore({ loader: async () => ({}) });
+        const store = new LoaderStore({ loader: async () => defineLines({}) });
         const events: Array<[string | undefined, string | undefined]> = [];
         const stop = store.on('invalidate', (locale, namespace) => {
             events.push([locale, namespace]);
@@ -114,16 +115,14 @@ describe('LoaderStore (#903)', () => {
     });
 
     it('is an IInvalidatingStore (type guard)', () => {
-        const store = new LoaderStore({ loader: async () => ({}) });
+        const store = new LoaderStore({ loader: async () => defineLines({}) });
         expect(isInvalidatingStore(store)).toBe(true);
     });
 
     it('returns plural leaves untouched', async () => {
         const store = new LoaderStore({
-            loader: async () => ({
-                items: {
-                    '@plural': { one: '1 item', other: '{{count}} items' },
-                },
+            loader: async () => defineLines({
+                items: definePlural({ one: '1 item', other: '{{count}} items' }),
             }),
         });
         const ilingo = new Ilingo({ store });
@@ -136,7 +135,7 @@ describe('LoaderStore (#903)', () => {
 
     it('getLocales() returns the declared list when provided', async () => {
         const store = new LoaderStore({
-            loader: async () => ({}),
+            loader: async () => defineLines({}),
             locales: ['en', 'de', 'fr'],
         });
         expect(await store.getLocales()).toEqual(['en', 'de', 'fr']);
@@ -144,7 +143,7 @@ describe('LoaderStore (#903)', () => {
 
     it('getLocales() falls back to seen-so-far when not declared', async () => {
         const store = new LoaderStore({
-            loader: async () => ({ hi: 'Hello' }),
+            loader: async () => defineLines({ hi: 'Hello' }),
         });
 
         // No loads yet → empty.
@@ -157,7 +156,7 @@ describe('LoaderStore (#903)', () => {
     });
 
     it('set() persists in cache and survives subsequent get()s without re-loading', async () => {
-        const loader = vi.fn(async () => ({}));
+        const loader = vi.fn(async () => defineLines({}));
         const store = new LoaderStore({ loader });
 
         await store.set({ locale: 'en', namespace: 'app', key: 'hi', value: 'Hello' });
@@ -171,14 +170,14 @@ describe('LoaderStore (#903)', () => {
         // Regression: previously the loader's .then() unconditionally wrote
         // the resolved record into the cache. An invalidate fired between
         // load start and resolve would be silently overwritten.
-        let resolveFirst: (v: { hi: string }) => void = () => {};
+        let resolveFirst: (v: LinesNode) => void = () => {};
         let firstCall = true;
         const loader = vi.fn(() => {
             if (firstCall) {
                 firstCall = false;
-                return new Promise<{ hi: string }>((r) => { resolveFirst = r; });
+                return new Promise<LinesNode>((r) => { resolveFirst = r; });
             }
-            return { hi: 'Fresh' };
+            return defineLines({ hi: 'Fresh' });
         });
 
         const store = new LoaderStore({ loader });
@@ -189,7 +188,7 @@ describe('LoaderStore (#903)', () => {
         // Invalidate while it's in flight.
         store.invalidate('en', 'app');
         // Now resolve the slow load — its result must NOT land in the cache.
-        resolveFirst({ hi: 'Stale' });
+        resolveFirst(defineLines({ hi: 'Stale' }));
         await p1;
 
         // Fresh get must re-run the loader (the stale result was dropped).
@@ -201,7 +200,7 @@ describe('LoaderStore (#903)', () => {
         // Regression: set() mutated the cache without notifying subscribers,
         // so a Vue composable hooked into the store would not re-render
         // when a translation was set at runtime.
-        const store = new LoaderStore({ loader: async () => ({}) });
+        const store = new LoaderStore({ loader: async () => defineLines({}) });
         const events: Array<[string | undefined, string | undefined]> = [];
         store.on('invalidate', (locale, namespace) => {
             events.push([locale, namespace]);
@@ -219,7 +218,7 @@ describe('LoaderStore (#903)', () => {
         const store = new LoaderStore({
             loader: async (locale, namespace) => {
                 loaded.push(`${locale}/${namespace}`);
-                return { hi: `from ${namespace}` };
+                return defineLines({ hi: `from ${namespace}` });
             },
         });
 

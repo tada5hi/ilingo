@@ -1,9 +1,9 @@
-import type { Lines, PluralLeaf } from '../types.ts';
-import { isPluralLeaf } from './identify';
+import type { Lines, PluralNode } from '../types';
+import { isPluralNode } from './identify';
 
 export type LinesRecordParsed = {
     key: string,
-    value: string | PluralLeaf
+    value: string | PluralNode
 };
 export function parseLinesRecord(record: Lines, parent?: string): LinesRecordParsed[] {
     const output : LinesRecordParsed[] = [];
@@ -14,7 +14,7 @@ export function parseLinesRecord(record: Lines, parent?: string): LinesRecordPar
             `${parent}.${  key}` :
             key;
 
-        if (typeof value === 'string' || isPluralLeaf(value)) {
+        if (typeof value === 'string' || isPluralNode(value)) {
             output.push({
                 value,
                 key: nextKey,

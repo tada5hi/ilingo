@@ -53,26 +53,43 @@ You should name the file according to the type of content it holds (e.g. app, fo
 For example, let’s say you want to create a file containing error messages.
 You might simply name it: `error.{ts,js,json}`.
 
-Each file should return an object containing an access key and a locale string.
+Each file should return a **lines node** — a `defineLines(...)` value for script files, or a `{ "type": "lines", "data": { ... } }` literal for JSON files.
 
-**`app.{ts,js,json}`**
-```typescript
-module.exports = {
-    'key': 'The locale string to be shown.'
-}
-```
-
-The object can also be (deeply) nested ⚡.
-
-**`app.{ts,js,json}`**
-```typescript
-module.exports = {
-    'nested': {
-        'key': 'The locale string to be shown.'
+**`app.json`**
+```json
+{
+    "type": "lines",
+    "data": {
+        "key": "The locale string to be shown."
     }
 }
 ```
-It is also possible to use `export default {...}` instead of `module.exports = {...}` for script files.
+
+**`app.{ts,js}`**
+```typescript
+import { defineLines } from 'ilingo';
+
+export default defineLines({
+    key: 'The locale string to be shown.',
+});
+```
+
+The `data` object can also be (deeply) nested ⚡ — a nested object extends the dotted **key** (`{ nested: { key } }` → key `'nested.key'`):
+
+**`app.{ts,js}`**
+```typescript
+import { defineLines } from 'ilingo';
+
+export default defineLines({
+    nested: {
+        key: 'The locale string to be shown.',
+    },
+});
+```
+
+### Dotted namespaces
+
+A dotted **namespace** maps to a dotted **filename**: namespace `app.nav` is read from `<locale>/app.nav.{ts,js,json,conf}` (not `<locale>/app/nav.…`).
 
 ### Persistence
 
