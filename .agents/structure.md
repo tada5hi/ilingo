@@ -186,7 +186,7 @@ docs/
     │       └── components/
     │           ├── Hero.vue                  # live translation playground (locale + count + name + amount)
     │           ├── FeatureGrid.vue           # 6-card feature grid
-    │           ├── IntegrationShowcase.vue   # 3 cards: @ilingo/fs, @ilingo/vue, @ilingo/vuelidate
+    │           ├── IntegrationShowcase.vue   # 5 cards: @ilingo/fs, @ilingo/vue, @ilingo/vuelidate, @ilingo/validup, @ilingo/validup-vue
     │           ├── CodeTabs.vue              # Install / Define / Translate tabs w/ copy button
     │           └── VueSpotlight.vue          # 2-col spotlight for @ilingo/vue
     ├── getting-started/
@@ -207,7 +207,9 @@ docs/
     │   ├── index.md
     │   ├── fs.md
     │   ├── vue.md
-    │   └── vuelidate.md
+    │   ├── vuelidate.md
+    │   ├── validup.md         # @ilingo/validup (framework-agnostic core)
+    │   └── validup-vue.md     # @ilingo/validup-vue (Vue layer)
     └── recipes/
         └── ssr.md            # per-request Ilingo, hydration, Nuxt + Astro slots
 ```

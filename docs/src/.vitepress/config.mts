@@ -72,6 +72,8 @@ export default defineConfig({
                     { text: 'File System', link: '/integrations/fs' },
                     { text: 'Vue', link: '/integrations/vue' },
                     { text: 'Vuelidate', link: '/integrations/vuelidate' },
+                    { text: 'Validup', link: '/integrations/validup' },
+                    { text: 'Validup (Vue)', link: '/integrations/validup-vue' },
                 ],
             }],
             '/recipes/': [{

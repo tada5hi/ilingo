@@ -1,6 +1,6 @@
 # Integrations
 
-ilingo ships three first-party adapters. Same core orchestrator, framework-specific wrappers.
+ilingo ships first-party adapters for the file system, Vue, and two validation ecosystems. Same core orchestrator, framework-specific wrappers.
 
 ## [@ilingo/fs](./fs) — File system
 
@@ -36,4 +36,31 @@ Drop-in validator translations for [Vuelidate](https://vuelidate.js.org). Ships 
 import { install } from '@ilingo/vuelidate';
 
 install(app);
+```
+
+## [@ilingo/validup](./validup) — Validup validator messages
+
+Framework-agnostic bridge from [validup](https://www.npmjs.com/package/validup) `Issue`s to ilingo. Built-in EN / DE / FR / ES catalogs and pure `translateIssue` / `translateIssues` / `translateIssueGroups` helpers — no Vue, embeddable in Node SSR, edge, and workers.
+
+```typescript
+import { Ilingo } from 'ilingo';
+import { translateIssue } from '@ilingo/validup';
+import { createMemoryStore } from '@ilingo/validup/store/memory';
+
+const ilingo = new Ilingo();
+ilingo.registerStore(createMemoryStore());
+
+const message = await translateIssue(issue, ilingo);
+```
+
+## [@ilingo/validup-vue](./validup-vue) — Validup in Vue
+
+The Vue 3 layer for `@ilingo/validup`: an install hook, five composables (per-field, group, and `useFieldFeedback`), and the renderless `<IValidup>` / `<IValidupT>` components.
+
+```typescript
+import { install as installIlingo } from '@ilingo/vue';
+import { install as installIlingoValidup } from '@ilingo/validup-vue';
+
+installIlingo(app, { locale: 'en' });
+installIlingoValidup(app);
 ```
