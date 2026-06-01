@@ -215,7 +215,6 @@ docs/
     │   ├── templates.md
     │   ├── pluralization.md
     │   ├── formatters.md
-    │   ├── type-safe-keys.md
     │   └── missing-key.md
     ├── integrations/
     │   ├── index.md

@@ -56,4 +56,4 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 5 }); // 'other'
 
 ## Round-tripping
 
-Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts a `string` or a plural leaf (`PluralForms`). `FSStore.set` persists them as a JSON plural node unchanged.
+Plural leaves go through `store.set()` cleanly — `StoreSetContext.value` accepts a `string` or a plural **node** (`definePlural(...)` / `{ type: 'plural', data }`), not the unwrapped `PluralForms`, so the store recognises and unwraps it on read. `FSStore.set` persists it as JSON unchanged.
