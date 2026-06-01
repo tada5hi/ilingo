@@ -170,6 +170,18 @@ describe('<IValidupT>', () => {
         expect(wrapper.text()).toBe('The value is invalid');
     });
 
+    it('honours the locale prop on the text path (no slots), same as the slot path', async () => {
+        const ilingo = new Ilingo({ locale: 'en' });
+        const wrapper = mount(IValidupT, {
+            props: { issues: [leafIssue], locale: 'de' },
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        await flush();
+        // The `locale="de"` prop wins over the injected 'en' locale.
+        expect(wrapper.text()).toBe('Der Wert ist ungültig');
+    });
+
     it('renders each issue through <ITranslateT>, forwarding named slots with { issue, code } scope', async () => {
         const ilingo = new Ilingo({ locale: 'en' });
         // A catalog entry carrying a {slot} placeholder (single curly).

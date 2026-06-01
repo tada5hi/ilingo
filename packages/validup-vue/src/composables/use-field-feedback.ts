@@ -54,10 +54,12 @@ export function useFieldFeedback<V = unknown>(
     })));
 
     // A `reactive` bundle (not a bag of refs) so `v-bind="useFieldFeedback(…)"`
-    // spreads unwrapped, reactive values onto the host component.
+    // spreads unwrapped, reactive values onto the host component. `reactive`'s
+    // `UnwrapNestedRefs` collapses the computed/refs to `FieldFeedback`'s
+    // plain shape, so no cast is needed.
     return reactive({
-        severity, 
-        messages, 
-        issues, 
-    }) as FieldFeedback;
+        severity,
+        messages,
+        issues,
+    });
 }

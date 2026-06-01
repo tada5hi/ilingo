@@ -68,8 +68,10 @@ const IValidupT = defineComponent({
     setup(props, { slots }) {
         const issues = toRef(props, 'issues');
         // Used only on the no-slots text path; cheap to keep wired (Vue
-        // setup runs once) so the render fn can branch per-render.
-        const textTranslations = useTranslationsForIssues(issues);
+        // setup runs once) so the render fn can branch per-render. Threads
+        // `props.locale` so the text path honours the prop exactly like the
+        // slot path (which forwards `locale` to <ITranslateT>).
+        const textTranslations = useTranslationsForIssues(issues, toRef(props, 'locale'));
 
         return () => {
             const slotNames = Object.keys(slots);
