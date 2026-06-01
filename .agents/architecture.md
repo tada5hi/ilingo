@@ -99,7 +99,7 @@ Template placeholders accept modifier syntax: `{{value, formatter}}` and `{{valu
 
 - Holds the built-in formatters `number`, `date`, `list` (backed by `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.ListFormat`).
 - Memoises `Intl.*Format` instances keyed by `(formatter, locale, JSON-encoded options)` so repeated renders don't reallocate.
-- Exposes `register(name, fn)` / `get(name)` publicly. Two ergonomic entry points sit on `Ilingo`: `registerFormatter(name, fn)` (delegates to the registry) and `Config.formatters` (constructor-time bulk registration). Names registered via either surface override the built-ins if they collide.
+- Exposes `register(name, fn)` / `get(name)` publicly. Two ergonomic entry points sit on `Ilingo`: `registerFormatter(name, fn)` (delegates to the registry) and `IlingoOptions.formatters` (constructor-time bulk registration). Names registered via either surface override the built-ins if they collide.
 
 The locale handed to a formatter is the **resolved** locale (the one that actually yielded the message), not the requested one. Unknown modifiers fall back to `String(value)` and emit a per-instance dev-mode one-shot warning via the same `isProductionEnv()` gate used by the missing-key handler.
 
@@ -238,7 +238,7 @@ protected async lookup(chain, ctx) {
 
 ### Missing-key handler
 
-`Config.onMissingKey?: (ctx) => string | undefined`. Invoked when the chain × stores walk exhausts without a hit. Receives a `MissingKeyContext` carrying the *resolved* `locale` (never undefined) plus `resolvedLocale` = the chain terminator. Returning a string makes that string the result of `get()`; returning `undefined` keeps the result `undefined`.
+`IlingoOptions.onMissingKey?: (ctx) => string | undefined`. Invoked when the chain × stores walk exhausts without a hit. Receives a `MissingKeyContext` carrying the *resolved* `locale` (never undefined) plus `resolvedLocale` = the chain terminator. Returning a string makes that string the result of `get()`; returning `undefined` keeps the result `undefined`.
 
 If `onMissingKey` is not configured, the built-in default warns once per `(requestedLocale, namespace, key)` per instance, silenced when `process.env.NODE_ENV === 'production'`. The warn-once set is per-instance so multiple `Ilingo` instances don't dedupe each other's warnings.
 
@@ -331,9 +331,9 @@ There are no environment variables. All configuration is passed via constructor 
 
 | Object                    | Shape                                                                                                                                |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `new Ilingo(input)`       | `{ store?: IStore, locale?: string, fallback?: Fallback, onMissingKey?: MissingKeyHandler }`                                          |
-| `new MemoryStore(opts)`   | `{ data: CatalogInput }` — the descriptor tree (`defineCatalog(...)` / `LocaleNode[]` / a single `LocaleNode`); normalized to `Locales` in the constructor |
-| `new FSStore(input)`      | `{ directory?: string \| string[], writeDirectory?: string }`                                                                       |
+| `new Ilingo(input)`       | `IlingoOptions` — `{ store?: IStore \| IStore[], locale?: string, fallback?: Fallback, onMissingKey?: MissingKeyHandler, formatters?: Record<string, Formatter> }` |
+| `new MemoryStore(opts)`   | `MemoryStoreOptions` — `{ data: CatalogInput }`: the descriptor tree (`defineCatalog(...)` / `LocaleNode[]` / a single `LocaleNode`); normalized to `Locales` in the constructor |
+| `new FSStore(input)`      | `FSStoreOptionsInput` — `{ directory?: string \| string[], writeDirectory?: string, watch?: boolean, id?: string \| symbol }`        |
 | Vue `install(app, input)` | `Options { store, locale } \| Ilingo \| undefined`                                                                                  |
 
 `Fallback = string | string[] | (locale) => string[] | false`. Explicit-empty forms (`[]`, `false`, or a resolver returning `[]`) opt out of fallback entirely — the chain is just `[locale]` with no default-locale tail.

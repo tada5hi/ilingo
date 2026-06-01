@@ -60,9 +60,9 @@ src/
 │                             #   normalizeNamespaceBody(NamespaceBodyInput) → Translations
 │                             #   (shared reducer every store uses; exported from the barrel)
 ├── constants.ts              # LOCALE_DEFAULT = 'en'
-├── config/
+├── options/
 │   ├── index.ts
-│   └── type.ts               # Config { store?, locale?, fallback?, onMissingKey?, formatters? } — all fields optional (defaults applied at runtime); ConfigInput = back-compat alias
+│   └── types.ts              # IlingoOptions { store?: IStore | IStore[], locale?, fallback?, onMissingKey?, formatters? } — all fields optional (defaults applied at runtime)
 ├── store/
 │   ├── index.ts              # barrel
 │   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext (value: string | PluralNode),
@@ -88,7 +88,7 @@ test/
     ├── module.spec.ts                # legacy core behaviour
     ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, serial store walk, clone()
     ├── formatters-integration.spec.ts # Ilingo.get() with number/date/list modifiers, cache + dev-warn
-    ├── custom-formatters.spec.ts     # registerFormatter + Config.formatters constructor sugar
+    ├── custom-formatters.spec.ts     # registerFormatter + IlingoOptions.formatters constructor sugar
     ├── loader-store.spec.ts          # LoaderStore lazy load, cache, miss cache, dedupe, invalidate, events
     ├── catalog/
     │   └── normalize.spec.ts         # normalizeCatalog (tree→Locales, dotted-namespace nesting, key nesting,
@@ -115,8 +115,8 @@ src/
 ├── index.ts                  # barrel
 ├── module.ts                 # FSStore extends MemoryStore — directory[], writeDirectory,
 │                             #   lazy loadNamespace(), atomic persist() (write-tmp + rename)
-├── types.ts                  # ConfigInput, Config (now includes writeDirectory)
-└── utils.ts                  # buildConfig (normalize directory[] + writeDirectory)
+├── types.ts                  # FSStoreOptionsInput (input) + FSStoreOptions (resolved, includes writeDirectory + watch)
+└── utils.ts                  # normalizeOptions (normalize directory[] + writeDirectory)
 test/
 ├── unit/
 │   ├── module.spec.ts        # loads test/data/language/<locale>/<namespace>.* via FSStore

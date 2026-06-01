@@ -35,7 +35,7 @@ unit/
 │                                   #   handler, per-instance warn isolation, serial intra-locale store walk
 ├── formatters-integration.spec.ts  # end-to-end Ilingo.get() with number/date/list modifiers,
 │                                   #   resolved-locale propagation, per-instance cache, dev-warn
-├── custom-formatters.spec.ts       # registerFormatter + Config.formatters; built-in override; clone shares
+├── custom-formatters.spec.ts       # registerFormatter + IlingoOptions.formatters; built-in override; clone shares
 ├── loader-store.spec.ts            # LoaderStore lazy load, dedupe, cache, miss cache, invalidate, events
 ├── catalog/
 │   └── normalize.spec.ts           # normalizeCatalog — tree→Locales, dotted-namespace nesting, key

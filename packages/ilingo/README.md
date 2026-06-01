@@ -533,7 +533,7 @@ await ilingo.get({
 
 Or call `ilingo.registerFormatter(name, fn)` after construction. Custom formatters receive `(value, options, locale)` — `options` is the parsed `{key=value, ...}` from inside the modifier parens.
 
-`Config.formatters` overrides win against the built-ins by name, so you can swap the default `number` formatter for a custom one if needed.
+`IlingoOptions.formatters` overrides win against the built-ins by name, so you can swap the default `number` formatter for a custom one if needed.
 
 ### Locale negotiation
 

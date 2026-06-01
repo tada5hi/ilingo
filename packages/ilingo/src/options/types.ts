@@ -3,24 +3,26 @@ import type { Fallback, MissingKeyHandler } from '../types';
 import type { Formatter } from '../utils/formatters';
 
 /**
- * Configuration accepted by the `Ilingo` constructor and `Ilingo.clone()`.
+ * Options accepted by the `Ilingo` constructor and `Ilingo.clone()`.
  *
  * Every field is optional: the constructor applies a runtime default for
  * each absent entry, so `new Ilingo()` (no argument) yields a usable
- * instance. Consumers that prefer the "input vs resolved" naming should
- * use [[ConfigInput]] (a back-compat alias of this type).
+ * instance.
  *
  * Adding a new field is non-breaking only when it is optional **and** has
  * a default that preserves existing behaviour — keep this contract before
  * touching this file.
  */
-export type Config = {
+export type IlingoOptions = {
     /**
-     * Initial store added to the instance's `stores` set. Additional stores
-     * can be added later via `Ilingo.merge()`. When omitted, the instance
+     * Store(s) added to the instance's `stores` set at construction time —
+     * a single store or an array. An array is registered in order, so an
+     * earlier store is consulted first and wins per key (same precedence as
+     * calling `Ilingo.registerStore()` for each in turn). More can be added
+     * later via `registerStore()` / `merge()`. When omitted, the instance
      * resolves every key through `onMissingKey` (or the default warn-once).
      */
-    store?: IStore,
+    store?: IStore | IStore[],
 
     /**
      * Active locale used when `get()` is called without an explicit `locale`.
@@ -61,14 +63,3 @@ export type Config = {
      */
     formatters?: Record<string, Formatter>,
 };
-
-/**
- * Back-compat alias of [[Config]]. Historically `ConfigInput` was the
- * `Partial<Config>` "what you pass" shape paired with a fully-required
- * resolved `Config`; the two have now converged because every `Config`
- * field is optional at the type level.
- *
- * Kept as a named export so existing imports — and the sibling pattern in
- * `@ilingo/fs`, where the split *is* still meaningful — continue to work.
- */
-export type ConfigInput = Config;
