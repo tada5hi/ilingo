@@ -154,4 +154,4 @@ For composables (`useTranslationsForIssues`, `useTranslationsForField`, `useTran
 
 ## License
 
-Apache-2.0 © Peter Placzek
+MIT © Peter Placzek

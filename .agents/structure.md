@@ -43,7 +43,7 @@ Nx (`nx.json`) is configured so `build` depends on `^build`, which means workspa
 ```
 src/
 ├── index.ts                  # barrel: re-exports config, module, store, utils, types
-├── module.ts                 # IIlingo interface + Ilingo class — Map<symbol,IStore> + register(store,id?),
+├── module.ts                 # IIlingo interface + Ilingo class — Map<symbol|string,IStore> + registerStore(store),
 │                             #   locale + fallback chain, plural rules cache,
 │                             #   per-instance warn-once memo, get / getResolvedLocale[Chain] / merge / format
 ├── types.ts                  # Lines / Namespaces / Locales (catalog data shapes), Leaf, PluralForms,

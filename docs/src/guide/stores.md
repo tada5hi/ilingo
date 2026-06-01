@@ -3,10 +3,10 @@
 A **store** is anything that can return a translation leaf for a given `(locale, namespace, key)`. ilingo is **read-first** — its job is to *read* a datasource — so the `IStore` port is the read contract: `id`, `get`, `getLocales`.
 
 ```typescript
-import type { Leaf } from 'ilingo';
+import type { Leaf, PluralLeaf } from 'ilingo';
 
 export type StoreGetContext = { locale: string, namespace: string, key: string };
-export type StoreSetContext = StoreGetContext & { value: Leaf };
+export type StoreSetContext = StoreGetContext & { value: string | PluralLeaf };
 
 export interface IStore {
     readonly id: string | symbol;
@@ -127,7 +127,7 @@ await ilingo.get({ namespace: 'app', key: 'hi' });
 
 ## Multiple stores
 
-An `Ilingo` instance exposes `public readonly stores: Map<symbol, IStore>` — the **symbol key is the store's identity**, and the Map's insertion order is the query order. Register as many as you want via `register(store, id?)`; they are queried **serially in insertion order** within each locale, stopping at the first hit:
+An `Ilingo` instance exposes `public readonly stores: Map<symbol | string, IStore>` — **each store's own `id` is its key**, and the Map's insertion order is the query order. Register as many as you want via `registerStore(store)`; they are queried **serially in insertion order** within each locale, stopping at the first hit:
 
 ```typescript
 const ilingo = new Ilingo({
@@ -135,15 +135,15 @@ const ilingo = new Ilingo({
 });
 
 // add more after construction — checked only when the earlier store misses
-ilingo.register(new FSStore({ directory: './locales/overrides' }));
+ilingo.registerStore(new FSStore({ directory: './locales/overrides' }));
 ```
 
-`register(store, id?)`:
+`registerStore(store)` keys the store by its own `id` (`string | symbol`):
 
-- **Without `id`** — mints a fresh `Symbol()`, so the store is always added. Returns the minted symbol (keep it if you want to dedupe or replace later).
-- **With `id`** — idempotent. If a store is already registered under `id`, the call is a no-op and the existing store is kept. Library adapters pass a `Symbol.for('@scope/pkg')` so registering twice (or across a duplicate package copy) never stacks duplicates. Returns `id`.
+- **Anonymous `id`** (a fresh `Symbol()`, the `MemoryStore` default) — always added, since each `Symbol()` is unique.
+- **Stable `id`** (`Symbol.for('@scope/pkg')` set on the store) — idempotent. If a store with that `id` is already registered, the call is a no-op and the existing store is kept, so registering twice (or across a duplicate package copy) never stacks duplicates.
 
-The constructor's `store` option is just `register(store)` under the hood (anonymous key). The serial walk is the reason "local first, remote fallback" compositions work as written: a network-backed store registered after a Memory store is only consulted when the Memory store has nothing for `(locale, namespace, key)` — the orchestrator does not pre-fan-out across stores. Locale-first composition still applies: a closer locale always beats a farther one regardless of which store would have answered.
+The constructor's `store` option is just `registerStore(store)` under the hood. The serial walk is the reason "local first, remote fallback" compositions work as written: a network-backed store registered after a Memory store is only consulted when the Memory store has nothing for `(locale, namespace, key)` — the orchestrator does not pre-fan-out across stores. Locale-first composition still applies: a closer locale always beats a farther one regardless of which store would have answered.
 
 ## Composing many sources — `namespace` is a shared key-space
 
@@ -155,15 +155,15 @@ A real app pulls translations from several sources: the app's own catalog, plus 
 ```typescript
 import { Ilingo } from 'ilingo';
 import { FSStore } from '@ilingo/fs';
-import { register as registerValidup } from '@ilingo/validup';
+import { createMemoryStore } from '@ilingo/validup/store/memory';
 
 const ilingo = new Ilingo({ fallback: ['en'] });
 
 // app catalog FIRST → its keys win per (locale, namespace, key)
-ilingo.register(new FSStore({ directory: './locales' }));
+ilingo.registerStore(new FSStore({ directory: './locales' }));
 
 // library catalog appended → fills the built-in defaults the app store misses
-registerValidup(ilingo);
+ilingo.registerStore(createMemoryStore());
 ```
 
 Now a lookup for `(en, validup, value_invalid)` falls through the app store (no such key) to the validup catalog, while `(en, validup, my_custom_code)` — a code the app defined under the `validup` namespace, e.g. via a `./locales/en/validup.json` file (`FSStore` derives the namespace from the filename) — is answered by the app store. Overriding a single built-in message works the same way: define `(en, validup, value_invalid)` in the app store and it wins, with every other code still served by the library.

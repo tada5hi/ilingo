@@ -497,7 +497,7 @@ Inference is structural, derived from the union of locales. Keep all locales ali
 import type { IIlingo } from 'ilingo';
 
 function register(ilingo: IIlingo) {
-    ilingo.register(myStore, Symbol.for('@scope/pkg'));
+    ilingo.registerStore(myStore); // myStore.id = Symbol.for('@scope/pkg')
 }
 ```
 
@@ -578,18 +578,18 @@ ilingo.setLocale(chosen);
 
 A store implements the read `IStore` port — `id`, `get`, `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract, and it is **frozen** for the stable release. **Writing** is an opt-in capability — `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Other capabilities (cache invalidation, file watching, …) layer the same way (see [Invalidation](#invalidation) below). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
 
-### Registering stores — `register(store, id?)`
+### Registering stores — `registerStore(store)`
 
-`Ilingo` holds its stores in a `public readonly stores: Map<symbol, IStore>`, keyed by a `symbol` identity, queried serially in insertion order (first hit wins). Add stores with `register`:
+`Ilingo` holds its stores in a `public readonly stores: Map<symbol | string, IStore>`, keyed by each store's own `id` identity, queried serially in insertion order (first hit wins). Add stores with `registerStore`:
 
 ```typescript
-const ilingo = new Ilingo({ store: appStore });        // constructor seeds the first store
-const key = ilingo.register(overrideStore);            // anonymous Symbol() → always added; returns the key
-ilingo.register(libraryStore, Symbol.for('@me/lib'));  // keyed → idempotent (no-op if that key exists)
+const ilingo = new Ilingo({ store: appStore }); // constructor seeds the first store
+ilingo.registerStore(overrideStore);            // anonymous Symbol() id → always added
+ilingo.registerStore(libraryStore);             // libraryStore.id = Symbol.for('@me/lib') → idempotent
 ```
 
-- **Without `id`** — mints a fresh `Symbol()`, so the store is always added; the returned symbol lets you dedupe or replace later.
-- **With `id`** — idempotent: a no-op (keeping the existing store) if a store is already registered under that key. Library adapters pass a `Symbol.for('@scope/pkg')` so re-registration — even from a duplicate package copy — never stacks duplicates. This is how `@ilingo/validup` and `@ilingo/vuelidate` register their catalogs (each exports a `register(ilingo)` helper + `STORE_ID`).
+- **Anonymous `id`** (a fresh `Symbol()`, the `MemoryStore` default) — the store is always added, since each `Symbol()` is unique.
+- **Stable `id`** (a `Symbol.for('@scope/pkg')` set on the store) — idempotent: a no-op (keeping the existing store) if a store with that `id` is already registered, so re-registration — even from a duplicate package copy — never stacks duplicates. This is how `@ilingo/validup` and `@ilingo/vuelidate` register their catalogs: each ships a catalog store keyed by its exported `STORE_ID`, added with `ilingo.registerStore(createMemoryStore())`.
 
 Because a `namespace` is a **shared key-space** (the walk falls through store-by-store per *missing key*), registering an app store before a library's catalog lets the app add or override individual keys of that namespace while the library supplies the defaults. `Ilingo` implements the `IIlingo` interface — type against `IIlingo` when you want to accept any orchestrator implementation.
 

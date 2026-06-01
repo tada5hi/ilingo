@@ -25,7 +25,7 @@ Trade-off accepted: when every registered store *would* have hit, total latency 
 
 ### 3. Multi-store, symbol-keyed deduping
 
-`Ilingo` holds a `Map<symbol, IStore>` — the symbol key is the store's **identity**, and the Map's insertion order is the query order. `register(store, id?)` is the registration primitive: with an `id` it is idempotent (a no-op if that key is already present, keeping the existing store); without one it mints a fresh `Symbol('ilingo.store')` and always adds. The constructor's `store` option routes through `register`.
+`Ilingo` holds a `Map<symbol | string, IStore>` — the store's own `id` is the key (its **identity**), and the Map's insertion order is the query order. `registerStore(store)` is the registration primitive, keyed by `store.id`: it is idempotent — a no-op (keeping the existing store) if a store with that `id` is already present. A store carries its own `id` (`MemoryStore` defaults to a fresh `Symbol(...)`; library catalogs use `Symbol.for('@scope/pkg')`), so anonymous stores always add while library catalogs dedupe. The constructor's `store` option routes through `registerStore`.
 
 Library adapters register their catalog under a `Symbol.for('@scope/pkg')` global-registry symbol (`@ilingo/validup` → `Symbol.for('@ilingo/validup')`, `@ilingo/vuelidate` → `Symbol.for('@ilingo/vuelidate')`, each exported as `STORE_ID`). Because `Symbol.for` is identity-stable across module instances, re-registration — even from a duplicate package copy (pnpm / peer-dep mismatch) — collides on the same key and stays a no-op. This replaced an earlier `instanceof Store` scan, which double-registered across duplicate copies and couldn't dedupe app-seeded stores.
 
@@ -35,7 +35,7 @@ Library adapters register their catalog under a `Symbol.for('@scope/pkg')` globa
 
 ### 3a. `IIlingo` contract
 
-`module.ts` exports an `IIlingo` interface that `Ilingo` implements. Higher-layer packages type against `IIlingo` (the Vue provide/inject layer — `provideIlingo`/`injectIlingo`/`injectIlingoSafe` — and the library `register(ilingo: IIlingo)` helpers) so consumers can swap in alternative implementations without depending on the concrete class. The concrete `Ilingo` is still imported where an instance must be *constructed* (`new Ilingo()` in `applyInstallInput`); the `instanceof Ilingo` branch there was replaced with an `isIlingo(input)` guard (`'stores' in input`) so a non-concrete `IIlingo` is recognised.
+`module.ts` exports an `IIlingo` interface that `Ilingo` implements. Higher-layer packages type against `IIlingo` (the Vue provide/inject layer — `provideIlingo`/`injectIlingo`/`injectIlingoSafe` — and the library helpers that accept an `IIlingo`, e.g. `translateIssue(issue, ilingo)`) so consumers can swap in alternative implementations without depending on the concrete class. The concrete `Ilingo` is still imported where an instance must be *constructed* (`new Ilingo()` in `applyInstallInput`); the `instanceof Ilingo` branch there was replaced with an `isIlingo(input)` guard (`'stores' in input`) so a non-concrete `IIlingo` is recognised.
 
 ### 4. Group/key/count model
 

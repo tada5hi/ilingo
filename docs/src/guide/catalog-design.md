@@ -235,7 +235,7 @@ This is the inverse design from libraries that auto-detect bare `{ one, other }`
 |---|---|
 | Top-level | A locale code (`'en'`, `'de'`, `'pt-BR'`, …) — BCP-47 |
 | Locale | A `Record<namespace, ...>` where each namespace is your logical namespace |
-| Group | A nested `Record<string, …>` — any depth |
+| Namespace | A nested `Record<string, …>` — any depth |
 | Leaf | `string` (the translation) OR `{ "@plural": { other: string, zero?: string, ... } }` |
 
 Keys may be reached as dotted paths (`'cart.items'`, `'nested.deep.leaf'`). The `'@plural'` marker is the only special key name — every other key is treated as a regular namespace step.

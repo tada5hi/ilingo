@@ -68,7 +68,7 @@ In practice: write your English catalog first, copy it for each new locale, then
 import type { IIlingo } from 'ilingo';
 
 function register(ilingo: IIlingo) {
-    ilingo.register(myStore, Symbol.for('@scope/pkg'));
+    ilingo.registerStore(myStore); // myStore.id = Symbol.for('@scope/pkg')
 }
 ```
 

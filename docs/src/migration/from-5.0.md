@@ -108,7 +108,7 @@ When every registered store would have hit, total latency is now `sum(per-store)
 
 ### `Ilingo.stores` is a `Map`, not a `Set`
 
-The store collection changed from `Set<IStore>` to `Map<symbol, IStore>` — the symbol key is the store's identity (it drives `merge`/`clone` deduping), insertion order is still the query order. A new `register(store, id?)` method is the way to add stores.
+The store collection changed from `Set<IStore>` to `Map<symbol | string, IStore>` — the store's own `id` is the key (it drives `merge`/`clone` deduping), insertion order is still the query order. A new `registerStore(store)` method is the way to add stores.
 
 **Before:**
 
@@ -120,12 +120,12 @@ for (const store of ilingo.stores) { /* ... */ }
 **After:**
 
 ```typescript
-ilingo.register(myStore);                       // anonymous Symbol() key
-ilingo.register(myStore, Symbol.for('@me/x'));  // keyed → idempotent
+ilingo.registerStore(myStore);    // keyed by myStore.id (anonymous Symbol() default → always added)
+ilingo.registerStore(keyedStore); // keyedStore.id = Symbol.for('@me/x') → idempotent
 for (const store of ilingo.stores.values()) { /* ... */ }
 ```
 
-**Action required:** replace `ilingo.stores.add(...)` with `ilingo.register(...)`, and any iteration over `ilingo.stores` with `ilingo.stores.values()` (iterating the Map directly now yields `[symbol, store]` entries). `merge()` now dedupes by symbol key instead of reference identity — library catalogs keyed by `Symbol.for(...)` no longer stack across a merge.
+**Action required:** replace `ilingo.stores.add(...)` with `ilingo.registerStore(...)`, and any iteration over `ilingo.stores` with `ilingo.stores.values()` (iterating the Map directly now yields `[symbol, store]` entries). `merge()` now dedupes by symbol key instead of reference identity — library catalogs keyed by `Symbol.for(...)` no longer stack across a merge.
 
 Also new: `Ilingo` now implements an exported `IIlingo` interface — accept `IIlingo` in type positions when you want to allow swapped-in implementations. See [Stores: Multiple stores](../guide/stores#multiple-stores).
 
