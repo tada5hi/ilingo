@@ -20,13 +20,13 @@ import type {
     InvalidateListener,
     Leaf,
     Lines,
+    NamespaceBodyInput,
     StoreGetContext,
     StoreSetContext,
 } from 'ilingo';
 import {
     MemoryStore,
     isBCP47LanguageCode,
-    isLinesNode,
     normalizeNamespaceBody,
 } from 'ilingo';
 import type { ConfigInput } from './types';
@@ -311,10 +311,9 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
         for (const file of files) {
             // Each file is a lines node — `{ type: 'lines', data }` (JSON) or
             // `export default defineLines({ ... })` (TS/JS). Reduce it to the
-            // internal `Lines` shape and merge.
-            if (isLinesNode(file)) {
-                this.merger(lineRecord, normalizeNamespaceBody(file));
-            }
+            // internal `Lines` shape and merge. A non-lines file normalizes to
+            // `{}` and emits a dev warning (see normalizeNamespaceBody).
+            this.merger(lineRecord, normalizeNamespaceBody(file as NamespaceBodyInput));
         }
 
         return lineRecord;

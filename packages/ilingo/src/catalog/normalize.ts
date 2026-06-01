@@ -20,6 +20,7 @@ import {
     isNamespaceNode,
     isPluralNode,
 } from '../utils/identify';
+import { isProductionEnv } from '../utils/env';
 
 /**
  * Namespace key for lines placed directly under a locale (no enclosing
@@ -27,6 +28,33 @@ import {
  * the normalizer already routes such lines here so the seam exists.
  */
 const DEFAULT_NAMESPACE = '';
+
+/**
+ * Dev-only, one-shot diagnostics keyed by call-site. The normalizer accepts
+ * only descriptor nodes; a non-node value is the tell-tale of a catalog that
+ * hasn't been migrated to the tree format (a loader/file that forgot the
+ * `defineLines(...)` wrapper, or a plain locale object passed where a tree is
+ * expected). Without this it degrades silently to "every key missing".
+ */
+const warnedNodeShapes = new Set<string>();
+
+function warnUnexpectedNode(context: string, received: unknown): void {
+    /* istanbul ignore next */
+    if (isProductionEnv()) {
+        return;
+    }
+    if (warnedNodeShapes.has(context)) {
+        return;
+    }
+    warnedNodeShapes.add(context);
+    const kind = received === null ? 'null' : typeof received;
+    // eslint-disable-next-line no-console
+    console.warn(
+        `[ilingo] ${context}: expected a catalog descriptor node but received ${kind}. ` +
+        'Catalog input is tree-only — build it with defineCatalog / defineLocale / ' +
+        'defineNamespace / defineLines (see the catalog-design guide).',
+    );
+}
 
 /**
  * Deep-merge `source` lines into `target`. Strings and plural nodes are
@@ -66,6 +94,8 @@ function namespaceInto(
         } else if (isNamespaceNode(child)) {
             const nested = fullName ? `${fullName}.${child.name}` : child.name;
             namespaceInto(namespaces, nested, child.data);
+        } else {
+            warnUnexpectedNode('namespace child', child);
         }
     }
 }
@@ -92,6 +122,7 @@ export function normalizeCatalog(input: CatalogInput): Locales {
     const result: Locales = {};
     for (const locale of toLocaleNodes(input)) {
         if (!isLocaleNode(locale)) {
+            warnUnexpectedNode('catalog locale', locale);
             continue;
         }
         const namespaces = result[locale.name] || (result[locale.name] = {});
@@ -103,6 +134,8 @@ export function normalizeCatalog(input: CatalogInput): Locales {
                     namespaces[DEFAULT_NAMESPACE] || {},
                     child.data,
                 );
+            } else {
+                warnUnexpectedNode('locale child', child);
             }
         }
     }
@@ -118,5 +151,6 @@ export function normalizeNamespaceBody(body: NamespaceBodyInput): Lines {
     if (isLinesNode(body)) {
         return mergeLines({}, body.data);
     }
+    warnUnexpectedNode('namespace body', body);
     return {};
 }

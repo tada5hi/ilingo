@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     defineCatalog,
     defineLines,
@@ -15,6 +15,35 @@ import {
     normalizeCatalog,
     normalizeNamespaceBody,
 } from '../../../src';
+
+// Runs first: the mis-shape warning dedupes per call-site at module scope,
+// so these assertions must observe the warning before any later test in this
+// file consumes the dedupe.
+describe('normalize — dev warning on mis-shaped input', () => {
+    let warn: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+        warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        warn.mockRestore();
+    });
+
+    it('warns and returns {} for a non-lines namespace body', () => {
+        // @ts-expect-error — exercising the runtime guard with a plain object
+        expect(normalizeNamespaceBody({ submit: 'Submit' })).toEqual({});
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn.mock.calls[0][0]).toContain('namespace body');
+    });
+
+    it('warns and skips a non-locale node in a catalog', () => {
+        // @ts-expect-error — a plain locale object is no longer valid input
+        expect(normalizeCatalog([{ en: { app: { hi: 'Hi' } } }])).toEqual({});
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn.mock.calls[0][0]).toContain('catalog locale');
+    });
+});
 
 describe('normalizeCatalog', () => {
     it('reduces a catalog node to the internal Locales shape', () => {
