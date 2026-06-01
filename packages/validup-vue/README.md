@@ -147,7 +147,9 @@ Slot-aware sibling of `<IValidup>`, built on `@ilingo/vue`'s `<ITranslateT>`. Le
 - **No placeholder slots → text path.** Behaves exactly like `<IValidup :issues>` (text via `useTranslationsForIssues`, preserving the `issue.message` fallback for un-cataloged codes); none of the `<ITranslateT>` cost.
 - **Placeholder slots → component path.** Each issue renders through `<ITranslateT path="validup.<code>" :data="issue.data">`; named slots are forwarded as the `{slot}` fillers, each receiving an `IssueSlotProps` `{ issue, code }` scope so the same slot name can render different content per issue. A code-less issue falls back to its raw `message`.
 
-Per-issue element tag follows `<ITranslateT>`'s `tag` prop (default `span`; `tag=""` → fragment). Forward-compat: useful once messages carry placeholders — the built-in catalog messages are all plain text today.
+Per-issue element tag follows `<ITranslateT>`'s `tag` prop (default `span`; `tag=""` → fragment). The `locale` prop is honoured on both paths. Forward-compat: useful once messages carry placeholders — the built-in catalog messages are all plain text today.
+
+> **Note on the component path:** because it renders through `<ITranslateT>`, an *un-cataloged* `code` resolves to the literal `"validup.<code>"` (not `issue.message`) — `<ITranslateT>` has no `issue.message` fallback. This is the intended usage boundary: you reach for slot mode precisely for messages that *do* have a catalog entry with placeholders. The text path keeps the `issue.message` fallback. Groups are also not flattened on the component path — pass leaf `$errors`, not raw `$issues`.
 
 ### `FieldTranslations` / `GroupTranslations` / `FieldFeedback`
 
