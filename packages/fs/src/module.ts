@@ -303,19 +303,19 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
     }
 
     protected addExtensionPattern(name: string) {
-        return `${name}.{js,mjs,cjs,ts,mts,mjs,json,conf}`;
+        return `${name}.{js,mjs,cjs,ts,mts,json,conf}`;
     }
 
     protected mergeFiles(files: unknown[]) {
-        const lineRecord: Translations = {};
+        const translations: Translations = {};
         for (const file of files) {
             // Each file is a translations node — `{ type: 'translations', data }` (JSON) or
             // `export default defineTranslations({ ... })` (TS/JS). Reduce it to the
             // internal `Translations` shape and merge. A non-translations file normalizes to
             // `{}` and emits a dev warning (see normalizeNamespaceBody).
-            this.merger(lineRecord, normalizeNamespaceBody(file as NamespaceBodyInput));
+            this.merger(translations, normalizeNamespaceBody(file as NamespaceBodyInput));
         }
 
-        return lineRecord;
+        return translations;
     }
 }

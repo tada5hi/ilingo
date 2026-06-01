@@ -8,10 +8,11 @@
 import { defineConfig } from 'tsdown';
 
 /**
- * Vue surface for `@ilingo/validup`: the install plugin, the three
- * composables, the renderless component, and the `FieldTranslations`
- * Ref-shaped alias. All `@ilingo/validup` core symbols stay external —
- * consumers always have it installed alongside this package.
+ * Vue surface for `@ilingo/validup`: the install plugin, the five
+ * composables, the `<IValidup>` / `<IValidupT>` components, and the
+ * `FieldTranslations` / `GroupTranslations` / `FieldFeedback` Ref-shaped
+ * aliases. All `@ilingo/validup` core symbols stay external — consumers
+ * always have it installed alongside this package.
  *
  * `dts: false` + a separate `vue-tsc` pass because tsdown's `oxc` dts
  * pipeline doesn't understand `.vue` SFCs (this package has none, but

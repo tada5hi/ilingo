@@ -7,9 +7,10 @@
 
 /**
  * A formatter receives the raw `data` value, parsed options from the
- * placeholder, and the resolved locale. Return value is the substituted
- * string. Internal contract — Phase 6 (#906) will expose this for user
- * registration.
+ * placeholder, and the resolved locale, and returns the substituted string.
+ * Register one via `Ilingo.registerFormatter(name, fn)` or the
+ * `Config.formatters` constructor option; the built-ins are `number`,
+ * `date`, and `list`.
  */
 export type Formatter = (
     value: unknown,
