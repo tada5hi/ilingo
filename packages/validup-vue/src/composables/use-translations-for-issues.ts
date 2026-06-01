@@ -26,6 +26,11 @@ import type { FieldTranslations } from '../types';
  * `@ilingo/vue` plugin — call `install(app, …)` from this package (or
  * `@ilingo/vue` directly) before reaching for this composable.
  *
+ * `localeOverride` pins the lookup to a specific locale instead of the
+ * injected one — pass a `MaybeRefOrGetter` so a reactive source (e.g. a
+ * component's `locale` prop) still re-runs on change. A nullish value
+ * (the default) falls back to the injected locale.
+ *
  * **Flicker-free locale switching:** on a re-run (locale flip, new
  * issues) the previously-resolved translations stay visible until the
  * next batch resolves. Without this, every async re-evaluation would
@@ -36,6 +41,7 @@ import type { FieldTranslations } from '../types';
  */
 export function useTranslationsForIssues(
     issues: MaybeRefOrGetter<Issue[]>,
+    localeOverride?: MaybeRefOrGetter<string | undefined>,
 ): FieldTranslations {
     const instance = injectIlingo();
     const locale = injectLocale();
@@ -53,7 +59,10 @@ export function useTranslationsForIssues(
             lastResolved.value = [];
             return [];
         }
-        const next = await translateIssues(source, instance, { locale: locale.value }) as IssueTranslation[];
+        // Read both deps unconditionally so the computed re-runs on either
+        // an override change or an injected-locale flip.
+        const effectiveLocale = toValue(localeOverride) ?? locale.value;
+        const next = await translateIssues(source, instance, { locale: effectiveLocale }) as IssueTranslation[];
         lastResolved.value = next;
         return next;
     }, lastResolved.value);

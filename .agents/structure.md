@@ -11,7 +11,7 @@ This is an npm-workspaces monorepo. Workspaces under `packages/` are publishable
 | [`@ilingo/vue`](../packages/vue)                       | 5.x     | Vue 3 plugin: `install()`, `provide/inject` for the `Ilingo` instance and reactive locale, `<ITranslate>` component, `useTranslation` composable |
 | [`@ilingo/vuelidate`](../packages/vuelidate)           | 6.x     | Vuelidate-message adapter on top of `@ilingo/vue` — ships built-in EN/DE/FR/ES translations for validator names |
 | [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Framework-agnostic core for the validup ecosystem. **Data-free `.` entry**: `translateIssue` / `translateIssues` helpers, `NAMESPACE` / `STORE_ID` constants, augmentable `ValidupCatalog` interface for type-safe `Ilingo<Catalog>`. Catalog stores live on subpaths — `./store/memory` (`createMemoryStore()`, eager, all locales) and `./store/loader` (`createLoaderStore()`, lazy per-locale `import()` chunks), each keyed by `STORE_ID`; register with `ilingo.registerStore(...)`. **No Vue deps** — embeddable in Node SSR, edge, workers. Peer-deps `ilingo`, `validup`. |
-| [`@ilingo/validup-vue`](../packages/validup-vue)       | 0.1.x   | Vue 3 plugin for `@ilingo/validup`. The `install` hook, three composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`), the `<IValidup>` renderless component, and the `FieldTranslations` `Ref` alias. Mirrors the `validup` → `@validup/vue` split. Peer-deps `@ilingo/validup`, `@ilingo/vue`, `vue`, `@vueuse/core`, `validup`, `@validup/vue`. |
+| [`@ilingo/validup-vue`](../packages/validup-vue)       | 0.1.x   | Vue 3 plugin for `@ilingo/validup`. The `install` hook, five composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`, `useTranslationsForGroupErrors`, `useFieldFeedback`), the `<IValidup>` renderless component (leaf `:issues` mode + whole-form `:composable` mode with `#cross-cutting`/`#groups`/`#fields` slots), the slot-aware `<IValidupT>` (component-aware interpolation via `<ITranslateT>`), and the `FieldTranslations` / `GroupTranslations` / `FieldFeedback` aliases. Mirrors the `validup` → `@validup/vue` split. Peer-deps `@ilingo/validup`, `@ilingo/vue`, `ilingo`, `vue`, `@vueuse/core`, `validup`, `@validup/vue`. |
 | [`@ilingo/docs`](../docs)                              | private | VitePress 1.x marketing + reference site. Deploys to GitHub Pages via `.github/workflows/docs.yml`. Never published to npm. |
 
 ## Package Dependency Layers
@@ -186,7 +186,7 @@ docs/
     │       └── components/
     │           ├── Hero.vue                  # live translation playground (locale + count + name + amount)
     │           ├── FeatureGrid.vue           # 6-card feature grid
-    │           ├── IntegrationShowcase.vue   # 3 cards: @ilingo/fs, @ilingo/vue, @ilingo/vuelidate
+    │           ├── IntegrationShowcase.vue   # 5 cards: @ilingo/fs, @ilingo/vue, @ilingo/vuelidate, @ilingo/validup, @ilingo/validup-vue
     │           ├── CodeTabs.vue              # Install / Define / Translate tabs w/ copy button
     │           └── VueSpotlight.vue          # 2-col spotlight for @ilingo/vue
     ├── getting-started/
@@ -207,7 +207,9 @@ docs/
     │   ├── index.md
     │   ├── fs.md
     │   ├── vue.md
-    │   └── vuelidate.md
+    │   ├── vuelidate.md
+    │   ├── validup.md         # @ilingo/validup (framework-agnostic core)
+    │   └── validup-vue.md     # @ilingo/validup-vue (Vue layer)
     └── recipes/
         └── ssr.md            # per-request Ilingo, hydration, Nuxt + Astro slots
 ```

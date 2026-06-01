@@ -8,7 +8,7 @@
 import { Ilingo } from 'ilingo';
 import { IssueCode, ValidupError, defineIssueGroup, defineIssueItem } from 'validup';
 import { describe, expect, it } from 'vitest';
-import { translateIssue, translateIssues } from '../../src';
+import { translateIssue, translateIssueGroups, translateIssues } from '../../src';
 import { Store } from '../../src/store/memory';
 
 function setupIlingo(locale = 'en'): Ilingo {
@@ -172,6 +172,49 @@ describe('translateIssues', () => {
     it('returns an empty list for an empty input', async () => {
         const ilingo = setupIlingo('en');
         const out = await translateIssues([], ilingo);
+        expect(out).toEqual([]);
+    });
+});
+
+describe('translateIssueGroups', () => {
+    it('translates each group by its own code, without descending into children', async () => {
+        const ilingo = setupIlingo('en');
+        const group = defineIssueGroup({
+            code: IssueCode.ONE_OF_FAILED,
+            message: 'None of the branches succeeded',
+            path: [],
+            issues: [
+                defineIssueItem({
+                    path: ['email'],
+                    message: 'The value is invalid',
+                    code: IssueCode.VALUE_INVALID,
+                }),
+            ],
+        });
+
+        const out = await translateIssueGroups([group], ilingo);
+        // One entry for the group — the child leaf is NOT flattened in.
+        expect(out).toHaveLength(1);
+        expect(out[0]?.message).toBe('None of the alternatives was successful');
+        expect(out[0]?.issue).toBe(group);
+    });
+
+    it('respects the injected locale', async () => {
+        const ilingo = setupIlingo('de');
+        const group = defineIssueGroup({
+            code: IssueCode.ONE_OF_FAILED,
+            message: 'None of the branches succeeded',
+            path: [],
+            issues: [],
+        });
+
+        const out = await translateIssueGroups([group], ilingo);
+        expect(out[0]?.message).toBe('Keine der Alternativen war erfolgreich');
+    });
+
+    it('returns an empty list for an empty input', async () => {
+        const ilingo = setupIlingo('en');
+        const out = await translateIssueGroups([], ilingo);
         expect(out).toEqual([]);
     });
 });

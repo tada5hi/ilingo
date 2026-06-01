@@ -5,6 +5,8 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
+export * from './use-field-feedback';
 export * from './use-translations-for-composable';
 export * from './use-translations-for-field';
+export * from './use-translations-for-group-errors';
 export * from './use-translations-for-issues';

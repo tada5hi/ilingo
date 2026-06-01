@@ -1,6 +1,6 @@
 # Installation
 
-ilingo is published as four packages. Install only what you need.
+ilingo is published as six packages. Install only what you need.
 
 ## Core
 
@@ -33,6 +33,22 @@ npm install @ilingo/vuelidate
 ```
 
 Ships translations for the built-in Vuelidate validators in EN / DE / FR / ES. Builds on `@ilingo/vue`.
+
+## Validup adapter
+
+```bash
+npm install @ilingo/validup
+```
+
+Framework-agnostic bridge from [validup](https://www.npmjs.com/package/validup) `Issue`s to ilingo — built-in EN / DE / FR / ES catalogs and `translateIssue` / `translateIssues` / `translateIssueGroups` helpers. No Vue; runs in Node SSR, edge, and workers. Declares `ilingo` and `validup` as peer dependencies.
+
+## Validup Vue plugin
+
+```bash
+npm install @ilingo/validup-vue
+```
+
+The Vue 3 layer for `@ilingo/validup`: composables, the `<IValidup>` / `<IValidupT>` components, and the install hook. Builds on `@ilingo/vue`; declares `@validup/vue` among its peers.
 
 ## Requirements
 

@@ -1,6 +1,6 @@
 # @ilingo/validup-vue
 
-Vue 3 plugin for [`@ilingo/validup`](../validup) — the install hook, three composables, the `<IValidup>` renderless component, and the `FieldTranslations` `Ref` alias.
+Vue 3 plugin for [`@ilingo/validup`](../validup) — the install hook, five composables, the `<IValidup>` / `<IValidupT>` renderless components, and the `FieldTranslations` / `GroupTranslations` / `FieldFeedback` aliases.
 
 Sibling of [`@ilingo/vue`](../vue) and [`@ilingo/vuelidate`](../vuelidate); mirrors the `validup` → `@validup/vue` package split so the framework-agnostic validation-message surface (`@ilingo/validup`) stays free of Vue.
 
@@ -66,15 +66,42 @@ Looks up the `Ilingo` instance previously installed by `@ilingo/vue` and registe
 | `useTranslationsForIssues(issues)` | `MaybeRefOrGetter<Issue[]>` → reactive `Ref<IssueTranslation[]>`. Flattens to leaves and translates each. |
 | `useTranslationsForField(fieldState)` | `MaybeRef<FieldState>` from `@validup/vue` → reactive translations of the field's dirty-gated `$errors`. |
 | `useTranslationsForComposable($v)` | `MaybeRef<Composable<T>>` from `@validup/vue` → reactive translations of every field's `$errors`. |
+| `useTranslationsForGroupErrors($v)` | `MaybeRef<Composable<T>>` → reactive `Ref<IssueGroupTranslation[]>`. Translates `$groupErrors` by each group's own `code` **without** descending into children — for whole-form / banner rendering, not per-field. |
+| `useFieldFeedback(fieldState)` | `MaybeRef<FieldState>` → a **`reactive`** `{ severity, messages, issues }` bundle for one `v-bind` onto a form-group host. |
 
-All three re-run when the injected locale flips. The injected `Ilingo` instance and locale `Ref` come from `@ilingo/vue` — call its `install()` first, then this package's `install(app)` to register the default catalog.
+All re-run when the injected locale flips. The injected `Ilingo` instance and locale `Ref` come from `@ilingo/vue` — call its `install()` first, then this package's `install(app)` to register the default catalog.
 
-`useTranslationsForIssues` preserves the previously-resolved translations during async re-evaluation, so a locale switch on a form with visible errors doesn't blank the UI for a tick before the new translations paint.
+`useTranslationsForIssues` and `useTranslationsForGroupErrors` preserve the previously-resolved translations during async re-evaluation, so a locale switch on a form with visible errors doesn't blank the UI for a tick before the new translations paint.
+
+#### `useFieldFeedback`
+
+Collapses the three reactive shims a per-field feedback block usually needs (severity, translated messages, reshape) into one `v-bind`:
+
+```vue
+<script setup lang="ts">
+import { useFieldFeedback } from '@ilingo/validup-vue';
+const feedback = useFieldFeedback($v.fields.email);
+</script>
+
+<template>
+    <VCFormGroup v-bind="feedback">
+        <VCFormInput v-model="$v.fields.email.$model" />
+    </VCFormGroup>
+</template>
+```
+
+`feedback` is a `reactive` bundle so its keys auto-unwrap when spread:
+
+- `severity` — `getSeverity(field)` from `@validup/vue` (`undefined` while pristine), maps onto `validation-severity`.
+- `messages` — `{ key: issue.code ?? 'validation', value: message }[]`, maps onto `validation-messages`.
+- `issues` — the raw `IssueTranslation[]` escape hatch for consumers that want richer rendering.
 
 ### Component
 
+#### Leaf mode — `:issues`
+
 ```vue
-<IValidup :issues="$v.fields.email.$issues.value">
+<IValidup :issues="$v.fields.email.$errors.value">
     <template #default="{ translations }">
         <li v-for="t in translations" :key="t.issue.code">
             {{ t.message }}
@@ -85,9 +112,48 @@ All three re-run when the injected locale flips. The injected `Ilingo` instance 
 
 Without a default slot, renders one text node per translation. With a slot, the consumer receives the `IssueTranslation[]` and renders whatever structure makes sense.
 
-### `FieldTranslations`
+#### Composable mode — `:composable`
 
-`Ref<IssueTranslation[]>` — the reactive shape returned by every composable above. Re-exported so consumers can type props without reaching into Vue's `Ref` directly.
+Pass the whole `@validup/vue` `Composable<T>` to render all three error channels it exposes, each via its own named slot:
+
+```vue
+<IValidup :composable="$v">
+    <template #cross-cutting="{ translations }">
+        <!-- path-less $crossCuttingErrors (CSRF, rate-limit, schema-level) -->
+    </template>
+    <template #groups="{ translations }">
+        <!-- $groupErrors, e.g. ONE_OF_FAILED — translated by group code -->
+    </template>
+    <template #fields="{ translations }">
+        <li v-for="t in translations" :key="t.issue.path.join('.')">{{ t.message }}</li>
+    </template>
+</IValidup>
+```
+
+Each stream renders via its slot when provided, else falls back to plain text — so with no slots the component renders all three in order (cross-cutting, groups, fields). `:composable` wins when both props are passed; `:issues` is the leaf shortcut. The `#groups` slot carries `GroupSlotProps` (`{ translations: IssueGroupTranslation[] }`); the others carry `SlotProps`.
+
+#### `<IValidupT>` — component-aware interpolation
+
+Slot-aware sibling of `<IValidup>`, built on `@ilingo/vue`'s `<ITranslateT>`. Lets a validation message carry Vue components inline (`<router-link>`, sign-in `<button>`, help popover) via `{slot}` placeholders in the message.
+
+```vue
+<IValidupT :issues="$v.fields.password.$errors.value">
+    <template #passwordField="{ issue, code }">
+        <router-link :to="`#${issue.data.other}`">{{ issue.data.other }}</router-link>
+    </template>
+</IValidupT>
+```
+
+- **No placeholder slots → text path.** Behaves exactly like `<IValidup :issues>` (text via `useTranslationsForIssues`, preserving the `issue.message` fallback for un-cataloged codes); none of the `<ITranslateT>` cost.
+- **Placeholder slots → component path.** Each issue renders through `<ITranslateT path="validup.<code>" :data="issue.data">`; named slots are forwarded as the `{slot}` fillers, each receiving an `IssueSlotProps` `{ issue, code }` scope so the same slot name can render different content per issue. A code-less issue falls back to its raw `message`.
+
+Per-issue element tag follows `<ITranslateT>`'s `tag` prop (default `span`; `tag=""` → fragment). The `locale` prop is honoured on both paths. Forward-compat: useful once messages carry placeholders — the built-in catalog messages are all plain text today.
+
+> **Note on the component path:** because it renders through `<ITranslateT>`, an *un-cataloged* `code` resolves to the literal `"validup.<code>"` (not `issue.message`) — `<ITranslateT>` has no `issue.message` fallback. This is the intended usage boundary: you reach for slot mode precisely for messages that *do* have a catalog entry with placeholders. The text path keeps the `issue.message` fallback. Groups are also not flattened on the component path — pass leaf `$errors`, not raw `$issues`.
+
+### `FieldTranslations` / `GroupTranslations` / `FieldFeedback`
+
+`FieldTranslations` is `Ref<IssueTranslation[]>` (leaf composables); `GroupTranslations` is `Ref<IssueGroupTranslation[]>` (`useTranslationsForGroupErrors`); `FieldFeedback` is the `reactive` `{ severity, messages, issues }` shape (`useFieldFeedback`). Re-exported so consumers can type props without reaching into Vue's `Ref` directly.
 
 ## License
 

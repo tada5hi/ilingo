@@ -41,6 +41,28 @@ const cards: IntegrationCard[] = [
             'Severity-aware error rendering',
         ],
     },
+    {
+        name: '@ilingo/validup',
+        accent: '#ec4899',
+        href: '/integrations/validup',
+        summary: 'Framework-agnostic bridge from validup Issues to ilingo.',
+        bullets: [
+            'Built-in EN / DE / FR / ES validator catalogs',
+            'translateIssue / translateIssues / translateIssueGroups',
+            'No Vue — runs in Node SSR, edge, workers',
+        ],
+    },
+    {
+        name: '@ilingo/validup-vue',
+        accent: '#8b5cf6',
+        href: '/integrations/validup-vue',
+        summary: 'The Vue 3 layer for @ilingo/validup.',
+        bullets: [
+            'Per-field, group & cross-cutting error composables',
+            'useFieldFeedback — severity + messages in one v-bind',
+            '<IValidup> / <IValidupT> renderless components',
+        ],
+    },
 ];
 </script>
 
@@ -49,7 +71,7 @@ const cards: IntegrationCard[] = [
         <div class="il-showcase-inner">
             <header class="il-showcase-header">
                 <h2>Pick your integration</h2>
-                <p>Same core, three flavours. Mix and match — they all wrap the same Ilingo orchestrator.</p>
+                <p>Same core, a wrapper for every target. Mix and match — they all wrap the same Ilingo orchestrator.</p>
             </header>
             <div class="il-showcase-grid">
                 <a
