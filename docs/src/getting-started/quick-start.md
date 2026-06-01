@@ -13,7 +13,7 @@ npm install ilingo
 ```typescript
 import {
     Ilingo, MemoryStore,
-    defineCatalog, defineLocale, defineNamespace, defineLines, definePlural,
+    defineCatalog, defineLocale, defineNamespace, defineTranslations, definePlural,
 } from 'ilingo';
 
 const ilingo = new Ilingo({
@@ -21,7 +21,7 @@ const ilingo = new Ilingo({
         data: defineCatalog([
             defineLocale('en', [
                 defineNamespace('cart', [
-                    defineLines({
+                    defineTranslations({
                         greeting: 'Welcome, {{name}}!',
                         items: definePlural({
                             one: '{{count}} item in your cart',
@@ -32,7 +32,7 @@ const ilingo = new Ilingo({
             ]),
             defineLocale('de', [
                 defineNamespace('cart', [
-                    defineLines({
+                    defineTranslations({
                         greeting: 'Willkommen, {{name}}!',
                         items: definePlural({
                             one: '{{count}} Artikel im Warenkorb',

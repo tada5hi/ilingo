@@ -7,12 +7,12 @@
 
 import {
     defineCatalog,
-    defineLines,
+    defineTranslations,
     defineLocale,
     defineNamespace,
     definePlural,
 } from '../../src';
-import type { CatalogNode, Lines, PluralForms, PluralNode } from '../../src';
+import type { CatalogNode, Translations, PluralForms, PluralNode } from '../../src';
 
 type PluralMarker = { '@plural': PluralForms };
 type PlainValue = string | PluralMarker | PluralNode | PlainLines;
@@ -27,8 +27,8 @@ function isPluralNodeValue(value: object): value is PluralNode {
     return (value as { type?: unknown }).type === 'plural';
 }
 
-function toLines(plain: PlainLines): Lines {
-    const out: Lines = {};
+function toLines(plain: PlainLines): Translations {
+    const out: Translations = {};
     for (const [key, value] of Object.entries(plain)) {
         if (typeof value === 'string') {
             out[key] = value;
@@ -44,7 +44,7 @@ function toLines(plain: PlainLines): Lines {
 }
 
 /**
- * Build a catalog tree from the legacy `{ locale: { namespace: lines } }`
+ * Build a catalog tree from the legacy `{ locale: { namespace: translations } }`
  * shape — keeps contract tests concise while exercising the real
  * `normalizeCatalog`. A `{ '@plural': {...} }` marker in the legacy data is
  * converted to a plural node; a literal `{ type: 'plural', data }` is passed
@@ -54,9 +54,9 @@ export function toCatalog(plain: PlainCatalog): CatalogNode {
     return defineCatalog(
         Object.entries(plain).map(([locale, namespaces]) => defineLocale(
             locale,
-            Object.entries(namespaces).map(([namespace, lines]) => defineNamespace(
+            Object.entries(namespaces).map(([namespace, translations]) => defineNamespace(
                 namespace,
-                [defineLines(toLines(lines))],
+                [defineTranslations(toLines(translations))],
             )),
         )),
     );

@@ -21,12 +21,12 @@ describe('FSStore — dotted namespaces (dotted filenames)', () => {
         // A nested/hierarchical namespace `app.nav` maps to a dotted filename.
         await writeFile(
             path.join(tmpDir, 'en', 'app.nav.json'),
-            JSON.stringify({ type: 'lines', data: { home: 'Home', back: 'Back' } }),
+            JSON.stringify({ type: 'translations', data: { home: 'Home', back: 'Back' } }),
         );
         // A flat namespace alongside it, with a key-nested group.
         await writeFile(
             path.join(tmpDir, 'en', 'app.json'),
-            JSON.stringify({ type: 'lines', data: { greeting: 'Hi', menu: { open: 'Open' } } }),
+            JSON.stringify({ type: 'translations', data: { greeting: 'Hi', menu: { open: 'Open' } } }),
         );
     });
 
@@ -64,7 +64,7 @@ describe('FSStore — dotted namespaces (dotted filenames)', () => {
         const written = JSON.parse(
             await readFile(path.join(tmpDir, 'en', 'app.footer.json'), 'utf8'),
         );
-        expect(written).toEqual({ type: 'lines', data: { copyright: '© 2026' } });
+        expect(written).toEqual({ type: 'translations', data: { copyright: '© 2026' } });
 
         const reader = new Ilingo({ store: new FSStore({ directory: tmpDir }) });
         expect(await reader.get({ namespace: 'app.footer', key: 'copyright', locale: 'en' }))

@@ -7,13 +7,13 @@
 
 import type {
     CatalogNode,
-    Lines,
-    LinesNode,
     LocaleNode,
     NamespaceChild,
     NamespaceNode,
     PluralForms,
     PluralNode,
+    Translations,
+    TranslationsNode,
 } from './types';
 
 /**
@@ -22,25 +22,25 @@ import type {
  * object extends the dotted *key* path (`{ nav: { home } }` → `nav.home`).
  *
  * @example
- *     defineLines({
+ *     defineTranslations({
  *         greeting: 'Hi {{name}}',
  *         nav: { home: 'Home', settings: 'Settings' }, // → nav.home, nav.settings
  *     });
  */
-export function defineLines(data: Lines): LinesNode {
-    return { type: 'lines', data };
+export function defineTranslations(data: Translations): TranslationsNode {
+    return { type: 'translations', data };
 }
 
 /**
- * A namespace. Its children are sub-namespaces and/or lines groups — a
+ * A namespace. Its children are sub-namespaces and/or translations groups — a
  * nested `defineNamespace` extends the dotted *namespace* path
- * (`app` ▸ `nav` → namespace `app.nav`), while lines inside it populate the
+ * (`app` ▸ `nav` → namespace `app.nav`), while translations inside it populate the
  * namespace's keys.
  *
  * @example
  *     defineNamespace('app', [
- *         defineLines({ greeting: 'Hi {{name}}' }),
- *         defineNamespace('nav', [ defineLines({ home: 'Home' }) ]), // → app.nav
+ *         defineTranslations({ greeting: 'Hi {{name}}' }),
+ *         defineNamespace('nav', [ defineTranslations({ home: 'Home' }) ]), // → app.nav
  *     ]);
  */
 export function defineNamespace(name: string, data: NamespaceChild[]): NamespaceNode {
@@ -53,17 +53,17 @@ export function defineNamespace(name: string, data: NamespaceChild[]): Namespace
 
 /**
  * One locale's content — a list of namespaces (and, reserved for the future
- * default-namespace feature, bare lines groups). Compose locales into a
+ * default-namespace feature, bare translations groups). Compose locales into a
  * catalog with `defineCatalog`.
  *
  * @example
  *     // locales/en.ts
- *     import { defineLocale, defineNamespace, defineLines, definePlural } from 'ilingo';
+ *     import { defineLocale, defineNamespace, defineTranslations, definePlural } from 'ilingo';
  *
  *     export default defineLocale('en', [
- *         defineNamespace('app', [ defineLines({ greeting: 'Hi {{name}}' }) ]),
+ *         defineNamespace('app', [ defineTranslations({ greeting: 'Hi {{name}}' }) ]),
  *         defineNamespace('cart', [
- *             defineLines({ items: definePlural({ one: '1 item', other: '{{count}} items' }) }),
+ *             defineTranslations({ items: definePlural({ one: '1 item', other: '{{count}} items' }) }),
  *         ]),
  *     ]);
  */
@@ -103,7 +103,7 @@ export function defineCatalog(data: LocaleNode[]): CatalogNode {
  * `{ "type": "plural", "data": { "one": "...", "other": "..." } }` instead.
  *
  * @example
- *     defineLines({
+ *     defineTranslations({
  *         items: definePlural({ one: '{{count}} item', other: '{{count}} items' }),
  *     });
  */

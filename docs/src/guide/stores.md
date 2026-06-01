@@ -38,12 +38,12 @@ The `IStore` **read** port is **frozen** at `id` / `get` / `getLocales` for the 
 The default. Holds the catalog tree built with the `define*` helpers (see [Catalog Design](./catalog-design)):
 
 ```typescript
-import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 
 const store = new MemoryStore({
     data: defineCatalog([
-        defineLocale('en', [defineNamespace('app', [defineLines({ hi: 'Hello, {{name}}!' })])]),
-        defineLocale('de', [defineNamespace('app', [defineLines({ hi: 'Hallo, {{name}}!' })])]),
+        defineLocale('en', [defineNamespace('app', [defineTranslations({ hi: 'Hello, {{name}}!' })])]),
+        defineLocale('de', [defineNamespace('app', [defineTranslations({ hi: 'Hallo, {{name}}!' })])]),
     ]),
 });
 
@@ -71,8 +71,8 @@ import { Ilingo, LoaderStore } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new LoaderStore({
-        // the module's default export is a lines node (e.g. defineLines({ ... })
-        // or a JSON `{ "type": "lines", "data": { … } }`)
+        // the module's default export is a translations node (e.g. defineTranslations({ ... })
+        // or a JSON `{ "type": "translations", "data": { … } }`)
         loader: async (locale, namespace) => {
             const m = await import(`./locales/${locale}/${namespace}.json`);
             return m.default;

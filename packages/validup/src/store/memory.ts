@@ -10,10 +10,10 @@ import {
     MemoryStore,
     type Namespaces,
     defineCatalog,
-    defineLines,
     defineLocale,
     defineNamespace,
-    parseLinesRecord,
+    defineTranslations,
+    parseTranslationsRecord,
 } from 'ilingo';
 import { NAMESPACE, STORE_ID } from '../constants';
 import {
@@ -38,10 +38,10 @@ export class Store extends MemoryStore {
         super({
             id: STORE_ID,
             data: defineCatalog([
-                defineLocale('en', [defineNamespace(NAMESPACE, [defineLines(useEnglishTranslation())])]),
-                defineLocale('de', [defineNamespace(NAMESPACE, [defineLines(useGermanTranslation())])]),
-                defineLocale('fr', [defineNamespace(NAMESPACE, [defineLines(useFrenchTranslation())])]),
-                defineLocale('es', [defineNamespace(NAMESPACE, [defineLines(useSpanishTranslation())])]),
+                defineLocale('en', [defineNamespace(NAMESPACE, [defineTranslations(useEnglishTranslation())])]),
+                defineLocale('de', [defineNamespace(NAMESPACE, [defineTranslations(useGermanTranslation())])]),
+                defineLocale('fr', [defineNamespace(NAMESPACE, [defineTranslations(useFrenchTranslation())])]),
+                defineLocale('es', [defineNamespace(NAMESPACE, [defineTranslations(useSpanishTranslation())])]),
             ]),
         });
     }
@@ -83,7 +83,7 @@ export async function extendStore(store: IMutableStore) {
     const locales = Object.keys(translations);
     for (const locale of locales) {
         const records = translations[locale];
-        const pairs = parseLinesRecord(records);
+        const pairs = parseTranslationsRecord(records);
         for (const pair of pairs) {
             promises.push(
                 store.set({

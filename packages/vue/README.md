@@ -24,7 +24,7 @@ npm install @ilingo/vue --save
 
 ```typescript
 import { install } from '@ilingo/vue';
-import { MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
+import { MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 import { createApp } from 'vue';
 
 const store = new MemoryStore({
@@ -33,13 +33,13 @@ const store = new MemoryStore({
         defineLocale('de', [
             // namespace: app
             defineNamespace('app', [
-                defineLines({ key: 'Hallo mein Name ist {{name}}' }),
+                defineTranslations({ key: 'Hallo mein Name ist {{name}}' }),
             ]),
         ]),
         // locale: en
         defineLocale('en', [
             defineNamespace('app', [
-                defineLines({ key: 'Hello my name is {{name}}' }),
+                defineTranslations({ key: 'Hello my name is {{name}}' }),
             ]),
         ]),
     ]),
@@ -128,7 +128,7 @@ Some components (modals, embedded widgets, marketing sections) carry their own s
 ```vue
 <script setup>
 import { useScopedCatalog, useTranslation } from '@ilingo/vue';
-import { defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
+import { defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 
 // Returns { instance, t } — use `t` inside the same component because
 // Vue's provide/inject can't reach the current setup's own provides.
@@ -136,7 +136,7 @@ const { t } = useScopedCatalog({
     messages: defineCatalog([
         defineLocale('en', [
             defineNamespace('modal', [
-                defineLines({ greeting: 'Welcome to the modal!' }),
+                defineTranslations({ greeting: 'Welcome to the modal!' }),
             ]),
         ]),
     ]),

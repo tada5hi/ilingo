@@ -10,7 +10,7 @@ This is an npm-workspaces monorepo. Workspaces under `packages/` are publishable
 | [`@ilingo/fs`](../packages/fs)                         | 5.x     | File-system store adapter — extends `MemoryStore`, lazy-loads `<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}` |
 | [`@ilingo/vue`](../packages/vue)                       | 5.x     | Vue 3 plugin: `install()`, `provide/inject` for the `Ilingo` instance and reactive locale, `<ITranslate>` component, `useTranslation` composable |
 | [`@ilingo/vuelidate`](../packages/vuelidate)           | 6.x     | Vuelidate-message adapter on top of `@ilingo/vue` — ships built-in EN/DE/FR/ES translations for validator names |
-| [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Framework-agnostic core for the validup ecosystem. **Data-free `.` entry**: `translateIssue` / `translateIssues` helpers, `NAMESPACE` / `STORE_ID` constants. Catalog stores live on subpaths — `./store/memory` (`createMemoryStore()`, eager, all locales — builds its catalog via `defineCatalog([...])`) and `./store/loader` (`createLoaderStore()`, lazy per-locale `import()` chunks returning `defineLines(...)`), each keyed by `STORE_ID`; register with `ilingo.registerStore(...)`. **No Vue deps** — embeddable in Node SSR, edge, workers. Peer-deps `ilingo`, `validup`. |
+| [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Framework-agnostic core for the validup ecosystem. **Data-free `.` entry**: `translateIssue` / `translateIssues` helpers, `NAMESPACE` / `STORE_ID` constants. Catalog stores live on subpaths — `./store/memory` (`createMemoryStore()`, eager, all locales — builds its catalog via `defineCatalog([...])`) and `./store/loader` (`createLoaderStore()`, lazy per-locale `import()` chunks returning `defineTranslations(...)`), each keyed by `STORE_ID`; register with `ilingo.registerStore(...)`. **No Vue deps** — embeddable in Node SSR, edge, workers. Peer-deps `ilingo`, `validup`. |
 | [`@ilingo/validup-vue`](../packages/validup-vue)       | 0.1.x   | Vue 3 plugin for `@ilingo/validup`. The `install` hook, five composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`, `useTranslationsForGroupErrors`, `useFieldFeedback`), the `<IValidup>` renderless component (leaf `:issues` mode + whole-form `:composable` mode with `#cross-cutting`/`#groups`/`#fields` slots), the slot-aware `<IValidupT>` (component-aware interpolation via `<ITranslateT>`), and the `FieldTranslations` / `GroupTranslations` / `FieldFeedback` aliases. Mirrors the `validup` → `@validup/vue` split. Peer-deps `@ilingo/validup`, `@ilingo/vue`, `ilingo`, `vue`, `@vueuse/core`, `validup`, `@validup/vue`. |
 | [`@ilingo/docs`](../docs)                              | private | VitePress 1.x marketing + reference site. Deploys to GitHub Pages via `.github/workflows/docs.yml`. Never published to npm. |
 
@@ -46,18 +46,18 @@ src/
 ├── module.ts                 # IIlingo interface + Ilingo class — Map<symbol|string,IStore> + registerStore(store),
 │                             #   locale + fallback chain, plural rules cache,
 │                             #   per-instance warn-once memo, get / getResolvedLocale[Chain] / merge / format
-├── types.ts                  # normalized data shapes: Lines / Namespaces / Locales, Leaf, PluralForms;
-│                             #   descriptor-tree node types: PluralNode, LinesNode, NamespaceNode,
+├── types.ts                  # normalized data shapes: Translations / Namespaces / Locales, Leaf, PluralForms;
+│                             #   descriptor-tree node types: PluralNode, TranslationsNode, NamespaceNode,
 │                             #   NamespaceChild, LocaleNode, CatalogNode, CatalogInput, NamespaceBodyInput;
 │                             #   GetContext (with count), MissingKeyContext, MissingKeyHandler,
 │                             #   Fallback, FallbackResolver, Data, IIlingo (no generics — type-safe-key
 │                             #   inference helpers Key/LeafAt/DottedPaths/IsPluralKey/GetParams/
 │                             #   LocalesNamespace/AnyLocalesNamespace + PluralLeaf were removed)
 ├── catalog.ts                # node builders: defineCatalog([locales]) / defineLocale(name, children) /
-│                             #   defineNamespace(name, children) / defineLines(obj) / definePlural(forms)
+│                             #   defineNamespace(name, children) / defineTranslations(obj) / definePlural(forms)
 ├── catalog/
 │   └── normalize.ts          # normalizeCatalog(CatalogInput) → Locales;
-│                             #   normalizeNamespaceBody(NamespaceBodyInput) → Lines
+│                             #   normalizeNamespaceBody(NamespaceBodyInput) → Translations
 │                             #   (shared reducer every store uses; exported from the barrel)
 ├── constants.ts              # LOCALE_DEFAULT = 'en'
 ├── config/
@@ -73,7 +73,7 @@ src/
     ├── index.ts
     ├── locale.ts             # bcp47Parents, resolveLocaleChain
     ├── negotiate.ts          # negotiateLocale, parseAcceptLanguage (BCP-47 best-match)
-    ├── identify.ts           # isPluralNode + node guards isLinesNode/isNamespaceNode/isLocaleNode/isCatalogNode, isPluralForms (inner-shape guard)
+    ├── identify.ts           # isPluralNode + node guards isTranslationsNode/isNamespaceNode/isLocaleNode/isCatalogNode, isPluralForms (inner-shape guard)
     ├── formatters.ts         # FormatterRegistry (with public register/get), parseFormatterOptions, parseModifier, Formatter type
     ├── template.ts           # {{var}} + {{var, formatter(opts)}} interpolation + tokenize() for slot-aware renderers (Vue)
     └── language/
@@ -82,7 +82,7 @@ src/
         └── data.json         # BCP-47 language code table
 test/
 ├── helpers/
-│   └── catalog.ts                    # converts the legacy {locale:{ns:lines}} shape to a descriptor tree (keeps contract tests concise)
+│   └── catalog.ts                    # converts the legacy {locale:{ns:translations}} shape to a descriptor tree (keeps contract tests concise)
 └── unit/
     ├── module.spec.ts                # legacy core behaviour
     ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, serial store walk, clone()
@@ -121,7 +121,7 @@ test/
 │   ├── module.spec.ts        # loads test/data/language/<locale>/<namespace>.* via FSStore
 │   ├── persist.spec.ts       # set() round-trip, sibling preservation, split read/write dirs
 │   └── watch.spec.ts         # watch: true emits invalidate on file change, close() teardown
-└── data/language/{en,de,fr}/form.{cjs,ts,json}   # lines nodes — JSON `{ "type":"lines", "data":{…} }` / `export default defineLines({…})`
+└── data/language/{en,de,fr}/form.{cjs,ts,json}   # translations nodes — JSON `{ "type":"translations", "data":{…} }` / `export default defineTranslations({…})`
 ```
 
 ### `packages/vue/` — Vue 3 plugin
@@ -145,7 +145,7 @@ src/
     └── utils.ts              # extractReactiveData
 test/                         # happy-dom + @vue/test-utils via vitest
 ├── helpers/
-│   └── catalog.ts            # mirror of the core helper — {locale:{ns:lines}} → descriptor tree
+│   └── catalog.ts            # mirror of the core helper — {locale:{ns:translations}} → descriptor tree
 └── unit/
     ├── component-t.spec.ts   # <ITranslateT> rendering (slots, vars, fragments, error paths)
     ├── directive-t.spec.ts   # v-t directive (string/object bindings, reactive locale, opt-out)

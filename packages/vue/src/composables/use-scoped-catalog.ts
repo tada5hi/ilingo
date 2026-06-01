@@ -49,7 +49,7 @@ export type UseScopedCatalogResult = {
  *     const { t } = useScopedCatalog({
  *         messages: defineCatalog([
  *             defineLocale('en', [
- *                 defineNamespace('modal', [defineLines({ greeting: 'Scoped hello' })]),
+ *                 defineNamespace('modal', [defineTranslations({ greeting: 'Scoped hello' })]),
  *             ]),
  *         ]),
  *     });

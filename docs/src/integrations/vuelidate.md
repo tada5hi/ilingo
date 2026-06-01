@@ -67,14 +67,14 @@ Validator messages live in the `vuelidate` namespace. Override per-locale by add
 
 ```typescript
 import { install } from '@ilingo/vuelidate';
-import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new MemoryStore({
         data: defineCatalog([
             defineLocale('en', [
                 defineNamespace('vuelidate', [
-                    defineLines({ required: 'This field is required, please.' }),
+                    defineTranslations({ required: 'This field is required, please.' }),
                 ]),
             ]),
         ]),

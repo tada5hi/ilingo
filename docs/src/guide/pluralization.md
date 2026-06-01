@@ -7,10 +7,10 @@ Leaves can be **plural objects** keyed by CLDR category (`zero | one | two | few
 Author plurals with the `definePlural` helper. Its argument type is `PluralForms`, so you get autocomplete for the CLDR categories and a compile error on a missing `other` / non-CLDR key:
 
 ```typescript
-import { defineNamespace, defineLines, definePlural } from 'ilingo';
+import { defineNamespace, defineTranslations, definePlural } from 'ilingo';
 
 defineNamespace('cart', [
-    defineLines({
+    defineTranslations({
         items: definePlural({
             one: '{{count}} item',
             other: '{{count}} items',
@@ -19,15 +19,15 @@ defineNamespace('cart', [
 ]);
 ```
 
-`definePlural` returns a plural node (`{ type: 'plural', data: forms }`). A plain `{ one, other }` object passed to `defineLines` is **not** a plural — it's a key-nested map, so siblings called `one`, `other`, etc. are reachable via dotted access. Only a node produced by `definePlural` (or the literal `{ "type": "plural", ... }` form in JSON) is interpreted as a plural.
+`definePlural` returns a plural node (`{ type: 'plural', data: forms }`). A plain `{ one, other }` object passed to `defineTranslations` is **not** a plural — it's a key-nested map, so siblings called `one`, `other`, etc. are reachable via dotted access. Only a node produced by `definePlural` (or the literal `{ "type": "plural", ... }` form in JSON) is interpreted as a plural.
 
 ## JSON
 
-JSON cannot call functions, so a plural is spelled as a literal plural node inside the file's lines node:
+JSON cannot call functions, so a plural is spelled as a literal plural node inside the file's translations node:
 
 ```json
 {
-    "type": "lines",
+    "type": "translations",
     "data": {
         "items": {
             "type": "plural",

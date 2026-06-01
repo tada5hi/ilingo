@@ -8,12 +8,12 @@
 import { isObject } from 'smob';
 import type {
     CatalogNode,
-    LinesNode,
     LocaleNode,
     NamespaceNode,
     PluralCategory,
     PluralForms,
     PluralNode,
+    TranslationsNode,
 } from '../types';
 
 const PLURAL_CATEGORIES = new Set<PluralCategory>([
@@ -54,7 +54,7 @@ export function isPluralForms(value: unknown): value is PluralForms {
 /**
  * Detects a plural leaf — the tagged `{ type: 'plural', data: PluralForms }`
  * node. The `type` discriminator disambiguates a plural from a regular
- * nested lines object whose keys happen to be CLDR-category names.
+ * nested translations object whose keys happen to be CLDR-category names.
  */
 export function isPluralNode(value: unknown): value is PluralNode {
     return isObject(value) &&
@@ -62,10 +62,10 @@ export function isPluralNode(value: unknown): value is PluralNode {
         isPluralForms((value as { data?: unknown }).data);
 }
 
-/** Detects a `{ type: 'lines', data }` node. */
-export function isLinesNode(value: unknown): value is LinesNode {
+/** Detects a `{ type: 'translations', data }` node. */
+export function isTranslationsNode(value: unknown): value is TranslationsNode {
     return isObject(value) &&
-        (value as { type?: unknown }).type === 'lines' &&
+        (value as { type?: unknown }).type === 'translations' &&
         isObject((value as { data?: unknown }).data);
 }
 

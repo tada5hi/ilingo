@@ -43,13 +43,13 @@ Loading is provided by [`locter`](https://github.com/Tada5hi/locter) — first m
 
 ## File formats
 
-Each file holds a single namespace's **lines node** — a `{ "type": "lines", "data": { … } }` object. Plurals are plural nodes inside `data`.
+Each file holds a single namespace's **translations node** — a `{ "type": "translations", "data": { … } }` object. Plurals are plural nodes inside `data`.
 
 ### JSON
 
 ```json
 {
-    "type": "lines",
+    "type": "translations",
     "data": {
         "greeting": "Hello, {{name}}!",
         "nested": {
@@ -70,12 +70,12 @@ Each file holds a single namespace's **lines node** — a `{ "type": "lines", "d
 
 ### TypeScript / JavaScript (ESM)
 
-The default export is a lines node — build it with `defineLines` (and `definePlural` for plurals):
+The default export is a translations node — build it with `defineTranslations` (and `definePlural` for plurals):
 
 ```typescript
-import { defineLines } from 'ilingo';
+import { defineTranslations } from 'ilingo';
 
-export default defineLines({
+export default defineTranslations({
     greeting: 'Hello, {{name}}!',
 });
 ```
@@ -83,9 +83,9 @@ export default defineLines({
 ### CommonJS
 
 ```javascript
-const { defineLines } = require('ilingo');
+const { defineTranslations } = require('ilingo');
 
-module.exports = defineLines({
+module.exports = defineTranslations({
     greeting: 'Hello, {{name}}!',
 });
 ```

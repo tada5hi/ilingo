@@ -9,7 +9,7 @@ import { describe, it, expect } from "vitest";
 
 import {
     isCatalogNode,
-    isLinesNode,
+    isTranslationsNode,
     isLocaleNode,
     isNamespaceNode,
     isPluralForms,
@@ -38,7 +38,7 @@ describe('src/utils/identify.ts', () => {
         });
 
         it('rejects a wrong tag, missing data, or invalid forms', () => {
-            expect(isPluralNode({ type: 'lines', data: { other: 'n' } })).toBe(false);
+            expect(isPluralNode({ type: 'translations', data: { other: 'n' } })).toBe(false);
             expect(isPluralNode({ type: 'plural', data: { one: '1' } })).toBe(false);
             expect(isPluralNode({ other: 'n' })).toBe(false);
             expect(isPluralNode('nope')).toBe(false);
@@ -46,10 +46,10 @@ describe('src/utils/identify.ts', () => {
     });
 
     describe('node guards', () => {
-        it('isLinesNode', () => {
-            expect(isLinesNode({ type: 'lines', data: { hi: 'x' } })).toBe(true);
-            expect(isLinesNode({ type: 'lines', data: 'nope' })).toBe(false);
-            expect(isLinesNode({ type: 'namespace', name: 'a', data: [] })).toBe(false);
+        it('isTranslationsNode', () => {
+            expect(isTranslationsNode({ type: 'translations', data: { hi: 'x' } })).toBe(true);
+            expect(isTranslationsNode({ type: 'translations', data: 'nope' })).toBe(false);
+            expect(isTranslationsNode({ type: 'namespace', name: 'a', data: [] })).toBe(false);
         });
 
         it('isNamespaceNode', () => {

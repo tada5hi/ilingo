@@ -5,9 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Lines } from 'ilingo';
+import type { Translations } from 'ilingo';
 
-export function useEnglishTranslation(): Lines {
+export function useEnglishTranslation(): Translations {
     return {
         alpha: 'The value is not alphabetical',
         alphaNum: 'The value must be alpha-numeric',

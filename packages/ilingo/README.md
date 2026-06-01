@@ -60,7 +60,7 @@ const ilingo = new Ilingo({
 ```
 
 The **default** (memory-) store is initialized with a catalog built from the
-`defineCatalog` / `defineLocale` / `defineNamespace` / `defineLines` tree helpers.
+`defineCatalog` / `defineLocale` / `defineNamespace` / `defineTranslations` tree helpers.
 ```typescript
 import {
     Ilingo,
@@ -68,7 +68,7 @@ import {
     defineCatalog,
     defineLocale,
     defineNamespace,
-    defineLines,
+    defineTranslations,
 } from 'ilingo';
 
 const catalog = defineCatalog([
@@ -76,13 +76,13 @@ const catalog = defineCatalog([
     defineLocale('de', [
         // namespace: app
         defineNamespace('app', [
-            defineLines({ key: 'Hallo mein Name ist {{name}}' }),
+            defineTranslations({ key: 'Hallo mein Name ist {{name}}' }),
         ]),
     ]),
     // locale: en
     defineLocale('en', [
         defineNamespace('app', [
-            defineLines({ key: 'Hello my name is {{name}}' }),
+            defineTranslations({ key: 'Hello my name is {{name}}' }),
         ]),
     ]),
 ]);
@@ -138,14 +138,14 @@ As a template delimiter a mustache like `{{}}` interpolation is used.
 Data properties can be injected as a second argument, e.g.
 
 ```typescript
-import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new MemoryStore({
         data: defineCatalog([
             defineLocale('en', [
                 defineNamespace('app', [
-                    defineLines({ age: 'I am {{age}} years old.' }),
+                    defineTranslations({ age: 'I am {{age}} years old.' }),
                 ]),
             ]),
         ]),
@@ -239,19 +239,19 @@ await ilingo.get({
 Another option is to add translations on the fly and access them afterwards.
 
 ```typescript
-import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 
 const ilingo = new Ilingo({
     store: new MemoryStore({
         data: defineCatalog([
             defineLocale('en', [
                 defineNamespace('foo', [
-                    defineLines({ bar: 'baz {{param}}' }),
+                    defineTranslations({ bar: 'baz {{param}}' }),
                 ]),
             ]),
             defineLocale('de', [
                 defineNamespace('foo', [
-                    defineLines({ bar: 'boz {{param}}' }),
+                    defineTranslations({ bar: 'boz {{param}}' }),
                 ]),
             ]),
         ]),
@@ -282,7 +282,7 @@ await ilingo.get({
 
 Plural forms are CLDR categories (`zero | one | two | few | many | other`, `other` required); the matching form is selected via `Intl.PluralRules`. The `count` is automatically merged into `data` so `{{count}}` works without restating it.
 
-A plural leaf is a dedicated **plural node** — built with the `definePlural` helper in TS / JS, or written as a `{ "type": "plural", "data": { ... } }` literal in JSON. A plural node is the only thing interpreted as a plural; a plain object inside `defineLines` is always treated as a nested key.
+A plural leaf is a dedicated **plural node** — built with the `definePlural` helper in TS / JS, or written as a `{ "type": "plural", "data": { ... } }` literal in JSON. A plural node is the only thing interpreted as a plural; a plain object inside `defineTranslations` is always treated as a nested key.
 
 **TS / JS files** (inline `defineCatalog`, or loaded by `FSStore`) — use the `definePlural` helper:
 
@@ -293,14 +293,14 @@ import {
     defineCatalog,
     defineLocale,
     defineNamespace,
-    defineLines,
+    defineTranslations,
     definePlural,
 } from 'ilingo';
 
 const catalog = defineCatalog([
     defineLocale('en', [
         defineNamespace('cart', [
-            defineLines({
+            defineTranslations({
                 items: definePlural({
                     one: '{{count}} item',
                     other: '{{count}} items',
@@ -322,7 +322,7 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 5 });  // "5 items"
 
 ```json
 {
-    "type": "lines",
+    "type": "translations",
     "data": {
         "items": {
             "type": "plural",
@@ -398,7 +398,7 @@ const ilingo = new Ilingo({
         data: defineCatalog([
             defineLocale('en', [
                 defineNamespace('app', [
-                    defineLines({
+                    defineTranslations({
                         owe: 'You owe {{amount, number(style=currency, currency=EUR)}}',
                         signed: 'Signed {{date, date(dateStyle=medium, timeZone=UTC)}}',
                         invited: '{{people, list(style=long, type=conjunction)}}',
@@ -434,9 +434,9 @@ Unknown modifiers fall back to `String(value)` and emit a one-shot dev-mode warn
 A catalog is a **tree of tagged descriptor nodes** built with four helpers:
 
 - `defineCatalog(locales)` — the root; the value you pass to `new MemoryStore({ data })`. Its children are `defineLocale(...)` nodes.
-- `defineLocale(name, children)` — one locale (`'en'`, `'de'`, …). Its children are `defineNamespace(...)` (and/or `defineLines(...)`) nodes.
-- `defineNamespace(name, children)` — a namespace. Its children are nested `defineNamespace(...)` and/or `defineLines(...)` nodes.
-- `defineLines(obj)` — a flat or key-nested map of translation strings (and `definePlural(...)` leaves).
+- `defineLocale(name, children)` — one locale (`'en'`, `'de'`, …). Its children are `defineNamespace(...)` (and/or `defineTranslations(...)`) nodes.
+- `defineNamespace(name, children)` — a namespace. Its children are nested `defineNamespace(...)` and/or `defineTranslations(...)` nodes.
+- `defineTranslations(obj)` — a flat or key-nested map of translation strings (and `definePlural(...)` leaves).
 
 ```typescript
 import {
@@ -445,17 +445,17 @@ import {
     defineCatalog,
     defineLocale,
     defineNamespace,
-    defineLines,
+    defineTranslations,
     definePlural,
 } from 'ilingo';
 
 const catalog = defineCatalog([
     defineLocale('en', [
         defineNamespace('app', [
-            defineLines({ greeting: 'Hi {{name}}', nav: { home: 'Home' } }), // nav.home is a dotted KEY
+            defineTranslations({ greeting: 'Hi {{name}}', nav: { home: 'Home' } }), // nav.home is a dotted KEY
         ]),
         defineNamespace('cart', [
-            defineLines({ items: definePlural({ one: '{{count}} item', other: '{{count}} items' }) }),
+            defineTranslations({ items: definePlural({ one: '{{count}} item', other: '{{count}} items' }) }),
         ]),
     ]),
 ]);
@@ -470,11 +470,11 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 5 });                
 There are **two independent nesting hierarchies**:
 
 - **Nested `defineNamespace`** builds a dotted **namespace**. `defineNamespace('app', [defineNamespace('nav', …)])` exposes the inner namespace as `'app.nav'`.
-- **A nested object inside `defineLines`** builds a dotted **key**. `defineLines({ nav: { home: 'Home' } })` exposes the leaf as key `'nav.home'`.
+- **A nested object inside `defineTranslations`** builds a dotted **key**. `defineTranslations({ nav: { home: 'Home' } })` exposes the leaf as key `'nav.home'`.
 
 `get()` keys are loose `string`s and `get()` returns `Promise<string | undefined>`. The store model is open-world — API- and loader-backed stores hold keys that aren't known at build time — so there is **no** catalog-driven key inference. `definePlural` still gives you local CLDR-category autocomplete and a compile error on a missing `other` (or a non-CLDR key), but it does not drive `get()`'s key types.
 
-`defineCatalog` and friends are runtime functions that normalize the tree into the internal `Locales` shape (`normalizeCatalog` / `normalizeNamespaceBody` are exported for advanced use). Node types (`CatalogNode`, `LocaleNode`, `NamespaceNode`, `LinesNode`, `PluralNode`, `NamespaceChild`, `CatalogInput`, `NamespaceBodyInput`) and guards (`isCatalogNode`, `isLocaleNode`, `isNamespaceNode`, `isLinesNode`, `isPluralNode`) are exported too.
+`defineCatalog` and friends are runtime functions that normalize the tree into the internal `Locales` shape (`normalizeCatalog` / `normalizeNamespaceBody` are exported for advanced use). Node types (`CatalogNode`, `LocaleNode`, `NamespaceNode`, `TranslationsNode`, `PluralNode`, `NamespaceChild`, `CatalogInput`, `NamespaceBodyInput`) and guards (`isCatalogNode`, `isLocaleNode`, `isNamespaceNode`, `isTranslationsNode`, `isPluralNode`) are exported too.
 
 ### The `IIlingo` interface
 
@@ -595,8 +595,8 @@ import { Ilingo, LoaderStore } from 'ilingo';
 const ilingo = new Ilingo({
     store: new LoaderStore({
         loader: async (locale, namespace) => {
-            // The module default is a lines node (`{ "type": "lines", "data": { ... } }`,
-            // or `export default defineLines({ ... })` for TS/JS chunks).
+            // The module default is a translations node (`{ "type": "translations", "data": { ... } }`,
+            // or `export default defineTranslations({ ... })` for TS/JS chunks).
             const m = await import(`./locales/${locale}/${namespace}.json`);
             return m.default;
         },

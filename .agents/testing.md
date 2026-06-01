@@ -27,7 +27,7 @@ Nx caches `test` (see `nx.json` → `cacheableOperations`). To re-run an already
 
 ```
 helpers/
-└── catalog.ts                      # converts the legacy {locale:{ns:lines}} shape to a descriptor tree
+└── catalog.ts                      # converts the legacy {locale:{ns:translations}} shape to a descriptor tree
 unit/
 ├── module.spec.ts                  # legacy core behaviour — get/set, locale switching, merge()
 ├── resolution.spec.ts              # pluralization (incl. the explicit { type:'plural' } node), fallback chain
@@ -41,13 +41,13 @@ unit/
 │   └── normalize.spec.ts           # normalizeCatalog — tree→Locales, dotted-namespace nesting, key
 │                                   #   nesting, plural node, sibling merge, default-namespace seam
 └── utils/
-    ├── identify.spec.ts            # isPluralNode / isLinesNode / isNamespaceNode / isLocaleNode / isCatalogNode / isPluralForms
+    ├── identify.spec.ts            # isPluralNode / isTranslationsNode / isNamespaceNode / isLocaleNode / isCatalogNode / isPluralForms
     ├── locale.spec.ts              # bcp47Parents, resolveLocaleChain (incl. opt-out forms)
     ├── formatters.spec.ts          # parseFormatterOptions, parseModifier, FormatterRegistry,
     │                               #   template-level modifier dispatch
     └── template.spec.ts            # {{var}} interpolation
 data/
-└── language/{en,de,fr}/form.{js,ts,json}   # cross-extension loader fixtures — each a lines node
+└── language/{en,de,fr}/form.{js,ts,json}   # cross-extension loader fixtures — each a translations node
 ```
 
 `*.spec-d.ts` type tests are gone with the type-safe-keys feature: there is no `test:types` package script and no `typecheck` block in `test/vitest.config.ts` anymore.
@@ -75,17 +75,17 @@ unit/
                                 #   manual invalidate() drops cache; close() teardown is idempotent.
                                 #   Needs the optional `chokidar` peer dep installed (it is, devDep).
 data/
-└── language/{en,de,fr}/form.{cjs,ts,json}  # lines nodes; exercises locter's multi-extension resolution
+└── language/{en,de,fr}/form.{cjs,ts,json}  # translations nodes; exercises locter's multi-extension resolution
 ```
 
 ## Test Helpers & Fixtures
 
-- Since `MemoryStore` now ingests the descriptor tree (`CatalogInput`), a small shared helper at `packages/ilingo/test/helpers/catalog.ts` (mirrored at `packages/vue/test/helpers/catalog.ts`) converts the legacy `{ locale: { ns: lines } }` shape into a tree so contract tests stay concise. Tests build stores through it, e.g.:
+- Since `MemoryStore` now ingests the descriptor tree (`CatalogInput`), a small shared helper at `packages/ilingo/test/helpers/catalog.ts` (mirrored at `packages/vue/test/helpers/catalog.ts`) converts the legacy `{ locale: { ns: translations } }` shape into a tree so contract tests stay concise. Tests build stores through it, e.g.:
   ```typescript
   const ilingo = new Ilingo({ store: new MemoryStore({ data: toCatalog({ en: { app: { hi: 'Hello' } } }) }) });
   ```
   (This is the one shared test-utility module — everything else is still constructed inline.)
-- `test/data/language/<locale>/<namespace>.{ts,js,json,cjs}` are lines nodes and double as both a fixture and a smoke test of `FSStore`'s loader extension matrix.
+- `test/data/language/<locale>/<namespace>.{ts,js,json,cjs}` are translations nodes and double as both a fixture and a smoke test of `FSStore`'s loader extension matrix.
 
 ## Testing Philosophy
 

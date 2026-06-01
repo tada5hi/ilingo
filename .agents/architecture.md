@@ -41,11 +41,11 @@ Library adapters register their catalog under a `Symbol.for('@scope/pkg')` globa
 
 Translations are addressed by `(locale, namespace, key)` plus an optional `count` for pluralization. The `namespace` is a logical, possibly **dotted** namespace — typically a filename when using `FSStore` (`packages/fs/src/module.ts` resolves `<directory>/<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}`, where a dotted namespace maps to a dotted filename, e.g. `app.nav.json`). The `key` is a `pathtrace`-style dotted path within that namespace's nested object.
 
-The internal lookup shape every store resolves to is `Locales` = `Record<locale, Record<namespace, Lines>>`. Catalogs are *authored* as a descriptor tree (see §7) and **normalized** into this shape before lookup — `Locales`/`Namespaces`/`Lines`/`Leaf`/`PluralForms` are the normalized data-shape types, not the authoring surface.
+The internal lookup shape every store resolves to is `Locales` = `Record<locale, Record<namespace, Translations>>`. Catalogs are *authored* as a descriptor tree (see §7) and **normalized** into this shape before lookup — `Locales`/`Namespaces`/`Translations`/`Leaf`/`PluralForms` are the normalized data-shape types, not the authoring surface.
 
 ### 5. Plural leaves: the `{ type: 'plural' }` node
 
-A catalog leaf is either a plain `string` or a `PluralNode` (`{ type: 'plural', data: { zero?, one?, two?, few?, many?, other } }`, produced by `definePlural(forms)`). The inner CLDR-categorised `data` shape is exported as `PluralForms`. A `PluralNode` is the only signal that a value should be interpreted as a plural — a bare `{ one, other }` object inside a lines body is treated as an ordinary nested key path.
+A catalog leaf is either a plain `string` or a `PluralNode` (`{ type: 'plural', data: { zero?, one?, two?, few?, many?, other } }`, produced by `definePlural(forms)`). The inner CLDR-categorised `data` shape is exported as `PluralForms`. A `PluralNode` is the only signal that a value should be interpreted as a plural — a bare `{ one, other }` object inside a translations body is treated as an ordinary nested key path.
 
 The descriptor `{ type: 'plural' }` node **replaces** the previous `@plural` JSON marker outright — there is no `@plural` key and no `PluralLeaf` wrapper type anymore. The single tagged-node form keeps authoring (TS via `definePlural()`, JSON via the literal `{ "type": "plural", "data": { … } }`) and the normalized internal shape consistent, and avoids the earlier collision (#917 Track B) between a marker key and sibling keys named after CLDR categories. Since pluralization had never shipped a stable release, the marker form was removed rather than deprecated.
 
@@ -70,7 +70,7 @@ Both `LoaderStore` (core) and `FSStore` (`@ilingo/fs`) implement it. Detect at r
 
 ### `LoaderStore`
 
-`packages/ilingo/src/store/loader.ts`. Lazy-loaded store backed by a user-supplied `loader(locale, namespace) => Promise<Lines | undefined>`. Caches per `(locale, namespace)` so the loader is called at most once per pair until `invalidate()` is called. De-duplicates concurrent `get()`s for the same pair via an in-flight map.
+`packages/ilingo/src/store/loader.ts`. Lazy-loaded store backed by a user-supplied `loader(locale, namespace) => Promise<Translations | undefined>`. Caches per `(locale, namespace)` so the loader is called at most once per pair until `invalidate()` is called. De-duplicates concurrent `get()`s for the same pair via an in-flight map.
 
 Misses (loader returning `undefined`) are cached too — the loader isn't re-called for known-missing pairs. Designed for browser code-splitting: typical loader is `(l, g) => import(\`./locales/${l}/${g}.json\`).then(m => m.default)`.
 
@@ -116,23 +116,23 @@ The builders live in `packages/ilingo/src/catalog.ts` and produce tagged nodes:
 - `defineCatalog(locales: LocaleNode[])` → `{ type: 'catalog', data }` — the root.
 - `defineLocale(name, children)` → `{ type: 'locale', name, data }`.
 - `defineNamespace(name, children)` → `{ type: 'namespace', name, data }`.
-- `defineLines(obj)` → `{ type: 'lines', data }` — flat or key-nested translation strings/plurals.
-- `definePlural(forms)` → `{ type: 'plural', data }` — a plural leaf inside a lines body.
+- `defineTranslations(obj)` → `{ type: 'translations', data }` — flat or key-nested translation strings/plurals.
+- `definePlural(forms)` → `{ type: 'plural', data }` — a plural leaf inside a translations body.
 
 ```text
 CatalogNode   = { type:'catalog',   data: LocaleNode[] }
-LocaleNode    = { type:'locale',    name, data: (NamespaceNode | LinesNode)[] }
-NamespaceNode = { type:'namespace', name, data: (NamespaceNode | LinesNode)[] }
-LinesNode     = { type:'lines',     data: Lines }        // Lines leaves: string | PluralNode | nested Lines
+LocaleNode    = { type:'locale',    name, data: (NamespaceNode | TranslationsNode)[] }
+NamespaceNode = { type:'namespace', name, data: (NamespaceNode | TranslationsNode)[] }
+TranslationsNode     = { type:'translations',     data: Translations }        // Translations leaves: string | PluralNode | nested Translations
 PluralNode    = { type:'plural',    data: PluralForms }
 ```
 
 Two independent nesting hierarchies:
 
 - A nested **`NamespaceNode`** extends the dotted **namespace** (`app` ▸ `nav` → `'app.nav'`).
-- A nested object inside a **`LinesNode`** extends the dotted **key** (`{ nav: { home } }` → key `'nav.home'`).
+- A nested object inside a **`TranslationsNode`** extends the dotted **key** (`{ nav: { home } }` → key `'nav.home'`).
 
-A `LinesNode` placed directly under a `LocaleNode` is routed to the default namespace (`''`) by `normalizeCatalog` — the seam for a future optional-namespace API (ergonomics still provisional).
+A `TranslationsNode` placed directly under a `LocaleNode` is routed to the default namespace (`''`) by `normalizeCatalog` — the seam for a future optional-namespace API (ergonomics still provisional).
 
 `definePlural` keeps **local** CLDR-category autocomplete and a compile error on missing-`other` / non-CLDR keys (its argument is typed `PluralForms`) — this validation is independent of any catalog-wide inference and survives the type-safe-keys removal.
 
@@ -141,15 +141,15 @@ A `LinesNode` placed directly under a `LocaleNode` is routed to the default name
 `packages/ilingo/src/catalog/normalize.ts` is the single reducer that turns the authoring tree into the internal `Locales` lookup shape every store consumes. Exported from the barrel (`src/index.ts`):
 
 - `normalizeCatalog(input: CatalogInput): Locales` — folds the tree, flattening nested `NamespaceNode`s into dotted namespace keys and merging sibling nodes.
-- `normalizeNamespaceBody(body: NamespaceBodyInput): Lines` — reduces a single lines node into a `Lines` record.
+- `normalizeNamespaceBody(body: NamespaceBodyInput): Translations` — reduces a single translations node into a `Translations` record.
 
-`CatalogInput = CatalogNode | LocaleNode[] | LocaleNode` (the root accepts a built `defineCatalog(...)` node, a bare array of locale nodes, or a single locale node). `NamespaceBodyInput = LinesNode`.
+`CatalogInput = CatalogNode | LocaleNode[] | LocaleNode` (the root accepts a built `defineCatalog(...)` node, a bare array of locale nodes, or a single locale node). `NamespaceBodyInput = TranslationsNode`.
 
 Every store ingests the tree through this reducer:
 
 - `MemoryStore({ data })` takes a `CatalogInput` and runs `normalizeCatalog` in its constructor. The legacy plain `{ locale: { ns: {…} } }` object is **no longer accepted** as input.
-- `LoaderStore`'s loader returns a `NamespaceBodyInput` (a lines node); `normalizeNamespaceBody` reduces it per `(locale, namespace)`.
-- `@ilingo/fs` files are lines nodes — JSON `{ "type": "lines", "data": {…} }`, or `export default defineLines({…})`; `persist()` writes `{ type: 'lines', data }`. `FSStore.mergeFiles` uses `isLinesNode` + `normalizeNamespaceBody` (the old `isLineRecord` path is gone).
+- `LoaderStore`'s loader returns a `NamespaceBodyInput` (a translations node); `normalizeNamespaceBody` reduces it per `(locale, namespace)`.
+- `@ilingo/fs` files are translations nodes — JSON `{ "type": "translations", "data": {…} }`, or `export default defineTranslations({…})`; `persist()` writes `{ type: 'translations', data }`. `FSStore.mergeFiles` uses `isTranslationsNode` + `normalizeNamespaceBody` (the old `isLineRecord` path is gone).
 
 ### 8. ESM-first, dependency-light, browser-safe
 
@@ -302,12 +302,12 @@ Output:
 packages/ilingo/src/
 ├── module.ts                ← orchestrator (Ilingo class)
 ├── store/{types,memory}     ← port + default adapter
-├── catalog.ts               ← defineCatalog / defineLocale / defineNamespace / defineLines / definePlural node builders
-├── catalog/normalize.ts     ← normalizeCatalog(CatalogInput) → Locales; normalizeNamespaceBody(NamespaceBodyInput) → Lines (shared reducer)
+├── catalog.ts               ← defineCatalog / defineLocale / defineNamespace / defineTranslations / definePlural node builders
+├── catalog/normalize.ts     ← normalizeCatalog(CatalogInput) → Locales; normalizeNamespaceBody(NamespaceBodyInput) → Translations (shared reducer)
 ├── utils/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
 │   ├── negotiate.ts         ← negotiateLocale, parseAcceptLanguage (request-side locale picking)
-│   ├── identify.ts          ← isPluralNode + node guards isLinesNode/isNamespaceNode/isLocaleNode/isCatalogNode, isPluralForms (inner-shape guard)
+│   ├── identify.ts          ← isPluralNode + node guards isTranslationsNode/isNamespaceNode/isLocaleNode/isCatalogNode, isPluralForms (inner-shape guard)
 │   ├── formatters.ts        ← FormatterRegistry (with public register/get), parseFormatterOptions, parseModifier, Formatter type
 │   ├── template.ts          ← {{var}} + {{var, formatter(opts)}} substitution; tokenize() for slot-aware renderers
 │   └── language/            ← isBCP47LanguageCode + CLDR data

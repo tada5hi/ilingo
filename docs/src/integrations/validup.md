@@ -93,7 +93,7 @@ const groups = await translateIssueGroups(groupIssues, ilingo);
 The `validup` namespace is a **shared key-space** — it isn't owned solely by this package. ilingo's serial store walk falls through store-by-store *per key*, so an app co-owns the namespace by registering its own store **first**: it adds translations for custom extension `IssueCode`s and overrides individual built-in messages, while this catalog (appended) supplies the defaults for everything else.
 
 ```typescript
-import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 import { createMemoryStore } from '@ilingo/validup/store/memory';
 
 const ilingo = new Ilingo({ locale: 'en' });
@@ -103,7 +103,7 @@ ilingo.registerStore(new MemoryStore({
     data: defineCatalog([
         defineLocale('en', [
             defineNamespace('validup', [
-                defineLines({
+                defineTranslations({
                     email_taken: 'That email is already registered', // custom extension code
                     value_invalid: 'Please check this field',        // overrides the built-in
                 }),
@@ -111,7 +111,7 @@ ilingo.registerStore(new MemoryStore({
         ]),
         defineLocale('de', [
             defineNamespace('validup', [
-                defineLines({ email_taken: 'Diese E-Mail ist bereits registriert' }),
+                defineTranslations({ email_taken: 'Diese E-Mail ist bereits registriert' }),
             ]),
         ]),
     ]),

@@ -19,10 +19,10 @@ import type {
     IInvalidatingStore,
     InvalidateListener,
     Leaf,
-    Lines,
     NamespaceBodyInput,
     StoreGetContext,
     StoreSetContext,
+    Translations,
 } from 'ilingo';
 import {
     MemoryStore,
@@ -210,7 +210,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
      * `.json` sits alongside it; on next load both are merged by smob and the
      * new JSON keys win because the loader applies later sources on top.
      *
-     * The file is written as a lines node (`{ type: 'lines', data }`) so it
+     * The file is written as a translations node (`{ type: 'translations', data }`) so it
      * round-trips through `loadNamespace`, which expects that shape.
      */
     protected async persist(locale: string, namespace: string): Promise<void> {
@@ -219,7 +219,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
         const tmpFile = `${targetFile}.${process.pid}.tmp`;
 
         const record = (this.data[locale] && this.data[locale][namespace]) || {};
-        const content = `${JSON.stringify({ type: 'lines', data: record }, null, 4)}\n`;
+        const content = `${JSON.stringify({ type: 'translations', data: record }, null, 4)}\n`;
 
         await mkdir(targetDir, { recursive: true });
         await writeFile(tmpFile, content, 'utf8');
@@ -307,11 +307,11 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
     }
 
     protected mergeFiles(files: unknown[]) {
-        const lineRecord: Lines = {};
+        const lineRecord: Translations = {};
         for (const file of files) {
-            // Each file is a lines node — `{ type: 'lines', data }` (JSON) or
-            // `export default defineLines({ ... })` (TS/JS). Reduce it to the
-            // internal `Lines` shape and merge. A non-lines file normalizes to
+            // Each file is a translations node — `{ type: 'translations', data }` (JSON) or
+            // `export default defineTranslations({ ... })` (TS/JS). Reduce it to the
+            // internal `Translations` shape and merge. A non-translations file normalizes to
             // `{}` and emits a dev warning (see normalizeNamespaceBody).
             this.merger(lineRecord, normalizeNamespaceBody(file as NamespaceBodyInput));
         }

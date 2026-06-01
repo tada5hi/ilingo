@@ -29,7 +29,7 @@ import {
     Ilingo,
     MemoryStore,
     defineCatalog,
-    defineLines,
+    defineTranslations,
     defineLocale,
     defineNamespace,
     definePlural,
@@ -54,7 +54,7 @@ const ilingo = new Ilingo({
         data: defineCatalog([
             defineLocale('en', [
                 defineNamespace('app', [
-                    defineLines({
+                    defineTranslations({
                         greeting: 'Hi {{name}}',
                         cart: {
                             items: definePlural({
@@ -67,7 +67,7 @@ const ilingo = new Ilingo({
             ]),
             defineLocale('de', [
                 defineNamespace('app', [
-                    defineLines({
+                    defineTranslations({
                         greeting: 'Hallo {{name}}',
                         cart: {
                             items: definePlural({ one: '{{count}} Artikel', other: '{{count}} Artikel' }),
@@ -77,7 +77,7 @@ const ilingo = new Ilingo({
             ]),
             // empty namespace — forces fallback
             defineLocale('pt-BR', [
-                defineNamespace('app', [defineLines({})]),
+                defineNamespace('app', [defineTranslations({})]),
             ]),
         ]),
     }),

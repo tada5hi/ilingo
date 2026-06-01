@@ -24,7 +24,7 @@ export type PluralForms = { other: string } &
 /**
  * A plural leaf at a catalog key position — a tagged `{ type: 'plural' }`
  * node carrying the CLDR-categorised [[PluralForms]]. The `type`
- * discriminator disambiguates a plural from a regular nested lines object
+ * discriminator disambiguates a plural from a regular nested translations object
  * whose keys happen to be CLDR-category names. It is the only recognised
  * plural form: build it with `definePlural()`, or (in JSON, which can't
  * call functions) write the literal `{ "type": "plural", "data": { ... } }`.
@@ -49,9 +49,9 @@ export type ValueOrNestedValue<T> = {
  * value is `string | PluralNode`; a nested object extends the dotted
  * **key** path (`{ nav: { home: 'Home' } }` → key `nav.home`).
  */
-export type Lines = ValueOrNestedValue<string | PluralNode>;
-// normalized internal shape: Record<namespace, Lines>
-export type Namespaces = Record<string, Lines>;
+export type Translations = ValueOrNestedValue<string | PluralNode>;
+// normalized internal shape: Record<namespace, Translations>
+export type Namespaces = Record<string, Translations>;
 // normalized internal shape: Record<locale, Namespaces>
 export type Locales = Record<string, Namespaces>;
 
@@ -64,15 +64,15 @@ export type Locales = Record<string, Namespaces>;
 // Two nesting hierarchies, chosen explicitly by the author:
 //   - a nested `NamespaceNode` extends the *namespace* as a dotted suffix
 //     (`app` ▸ `nav` → namespace `app.nav`);
-//   - a nested object inside a `LinesNode`'s `data` extends the *key*
+//   - a nested object inside a `TranslationsNode`'s `data` extends the *key*
 //     (`{ nav: { home } }` → key `nav.home`).
 // A plural is unambiguous either way because it is a tagged `PluralNode`.
 
 /** Terminal leaf-group: a flat or key-nested map of translations. */
-export type LinesNode = { type: 'lines', data: Lines };
+export type TranslationsNode = { type: 'translations', data: Translations };
 
-/** A named child of a locale / namespace — a sub-namespace or a lines group. */
-export type NamespaceChild = NamespaceNode | LinesNode;
+/** A named child of a locale / namespace — a sub-namespace or a translations group. */
+export type NamespaceChild = NamespaceNode | TranslationsNode;
 
 /** A (possibly nested) namespace. Nesting extends the dotted namespace path. */
 export type NamespaceNode = {
@@ -82,7 +82,7 @@ export type NamespaceNode = {
 };
 
 /**
- * One locale's content. A `LinesNode` placed directly here (no enclosing
+ * One locale's content. A `TranslationsNode` placed directly here (no enclosing
  * namespace) is routed to the default namespace (`''`) by `normalizeCatalog`
  * — the seam for a future optional-namespace API, whose ergonomics are still
  * provisional.
@@ -107,7 +107,7 @@ export type CatalogInput = CatalogNode | LocaleNode[] | LocaleNode;
  * a `LoaderStore` loader return value or an `@ilingo/fs` file. Reduced by
  * `normalizeNamespaceBody`.
  */
-export type NamespaceBodyInput = LinesNode;
+export type NamespaceBodyInput = TranslationsNode;
 
 export type DotKey = `${string}.${string}`;
 

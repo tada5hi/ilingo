@@ -16,11 +16,11 @@ await ilingo.get({
 A `{{var}}` whose key is **not in `data`** is left untouched — the placeholder stays in the output. This is intentional: missing data is a developer-facing signal, not an error.
 
 ```typescript
-import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 
 const store = new MemoryStore({
     data: defineCatalog([
-        defineLocale('en', [defineNamespace('app', [defineLines({ hi: 'Hello, {{name}}!' })])]),
+        defineLocale('en', [defineNamespace('app', [defineTranslations({ hi: 'Hello, {{name}}!' })])]),
     ]),
 });
 const ilingo = new Ilingo({ store });
@@ -55,7 +55,7 @@ const store = new MemoryStore({
     data: defineCatalog([
         defineLocale('en', [
             defineNamespace('settings', [
-                defineLines({
+                defineTranslations({
                     profile: {
                         avatar: 'Change avatar',
                         nested: { deep: 'Deep value' },

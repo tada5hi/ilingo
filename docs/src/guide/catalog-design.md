@@ -1,20 +1,20 @@
 # Catalog Design
 
-A **catalog** is the value you hand to `MemoryStore({ data })` (or persist to disk via `FSStore`). It is a **tree of tagged descriptor nodes** built with five helpers — `defineCatalog`, `defineLocale`, `defineNamespace`, `defineLines`, and `definePlural`. The tree shape is small but every layer carries meaning: getting it right unlocks BCP-47 fallback, plural selection, and per-file authoring.
+A **catalog** is the value you hand to `MemoryStore({ data })` (or persist to disk via `FSStore`). It is a **tree of tagged descriptor nodes** built with five helpers — `defineCatalog`, `defineLocale`, `defineNamespace`, `defineTranslations`, and `definePlural`. The tree shape is small but every layer carries meaning: getting it right unlocks BCP-47 fallback, plural selection, and per-file authoring.
 
 ```typescript
 import {
     Ilingo, MemoryStore,
-    defineCatalog, defineLocale, defineNamespace, defineLines, definePlural,
+    defineCatalog, defineLocale, defineNamespace, defineTranslations, definePlural,
 } from 'ilingo';
 
 const catalog = defineCatalog([
     defineLocale('en', [
         defineNamespace('app', [
-            defineLines({ greeting: 'Hi {{name}}', nav: { home: 'Home' } }), // nav.home is a dotted KEY
+            defineTranslations({ greeting: 'Hi {{name}}', nav: { home: 'Home' } }), // nav.home is a dotted KEY
         ]),
         defineNamespace('cart', [
-            defineLines({ items: definePlural({ one: '{{count}} item', other: '{{count}} items' }) }),
+            defineTranslations({ items: definePlural({ one: '{{count}} item', other: '{{count}} items' }) }),
         ]),
     ]),
 ]);
@@ -30,9 +30,9 @@ The five helpers map one-to-one onto the tree levels:
 | Helper | Produces | Children |
 |---|---|---|
 | `defineCatalog(locales)` | the **root** you pass to `MemoryStore({ data })` | an array of `defineLocale(...)` nodes |
-| `defineLocale(name, children)` | a locale (`'en'`, `'pt-BR'`, …) | `defineNamespace(...)` / `defineLines(...)` |
-| `defineNamespace(name, children)` | a namespace under a locale | nested `defineNamespace(...)` / `defineLines(...)` |
-| `defineLines(obj)` | a flat or key-nested map of translations | — (the leaves) |
+| `defineLocale(name, children)` | a locale (`'en'`, `'pt-BR'`, …) | `defineNamespace(...)` / `defineTranslations(...)` |
+| `defineNamespace(name, children)` | a namespace under a locale | nested `defineNamespace(...)` / `defineTranslations(...)` |
+| `defineTranslations(obj)` | a flat or key-nested map of translations | — (the leaves) |
 | `definePlural(forms)` | a plural leaf | — (CLDR-categorised strings) |
 
 ## The two nesting hierarchies
@@ -47,7 +47,7 @@ A `defineNamespace` inside another `defineNamespace` builds a dotted **namespace
 defineLocale('en', [
     defineNamespace('app', [
         defineNamespace('nav', [
-            defineLines({ home: 'Home' }),
+            defineTranslations({ home: 'Home' }),
         ]),
     ]),
 ]);
@@ -55,13 +55,13 @@ defineLocale('en', [
 await ilingo.get({ namespace: 'app.nav', key: 'home' });
 ```
 
-### Nested objects inside `defineLines` extend the dotted KEY
+### Nested objects inside `defineTranslations` extend the dotted KEY
 
-A plain nested object passed to `defineLines` builds a dotted **key** within the current namespace:
+A plain nested object passed to `defineTranslations` builds a dotted **key** within the current namespace:
 
 ```typescript
 defineNamespace('app', [
-    defineLines({ nav: { home: 'Home', settings: { title: 'Settings' } } }),
+    defineTranslations({ nav: { home: 'Home', settings: { title: 'Settings' } } }),
 ]);
 // → namespace 'app', keys 'nav.home' and 'nav.settings.title'
 await ilingo.get({ namespace: 'app', key: 'nav.settings.title' });
@@ -77,11 +77,11 @@ The library is agnostic to how you split data across files — it only sees the 
 
 ```typescript
 // locales/en.ts
-import { defineLocale, defineNamespace, defineLines, definePlural } from 'ilingo';
+import { defineLocale, defineNamespace, defineTranslations, definePlural } from 'ilingo';
 
 export default defineLocale('en', [
-    defineNamespace('app',  [defineLines({ greeting: 'Hi {{name}}' })]),
-    defineNamespace('cart', [defineLines({ items: definePlural({ one: '1 item', other: '{{count}} items' }) })]),
+    defineNamespace('app',  [defineTranslations({ greeting: 'Hi {{name}}' })]),
+    defineNamespace('cart', [defineTranslations({ items: definePlural({ one: '1 item', other: '{{count}} items' }) })]),
 ]);
 ```
 
@@ -102,10 +102,10 @@ export const catalog = defineCatalog([en, de]);
 
 ```typescript
 // locales/en/app.ts
-import { defineNamespace, defineLines, definePlural } from 'ilingo';
+import { defineNamespace, defineTranslations, definePlural } from 'ilingo';
 
 export default defineNamespace('app', [
-    defineLines({
+    defineTranslations({
         greeting: 'Hi {{name}}',
         items: definePlural({ one: '1 item', other: '{{count}} items' }),
     }),
@@ -128,7 +128,7 @@ export default defineLocale('en', [app, cart]);
 A plural leaf is built with `definePlural(forms)`, where `forms` is keyed by CLDR category. The `other` form is required; the rest (`zero`, `one`, `two`, `few`, `many`) are optional:
 
 ```typescript
-defineLines({
+defineTranslations({
     items: definePlural({
         one:   '{{count}} item',
         other: '{{count}} items',
@@ -145,16 +145,16 @@ defineLines({
 It returns a plural node (`{ type: 'plural', data: forms }`) — the same runtime shape JSON files spell out by hand. See [Pluralization](./pluralization) for the selection rules and the JSON literal form.
 
 ::: tip No `@plural` marker
-`definePlural` **replaces** the old `@plural` JSON marker. A plain `{ one, other }` object inside `defineLines` is *not* a plural — it's a key-nested map (keys `one` and `other` become dotted keys). Only `definePlural(...)` (or the literal `{ "type": "plural", "data": { … } }` node in JSON) is interpreted as a plural.
+`definePlural` **replaces** the old `@plural` JSON marker. A plain `{ one, other }` object inside `defineTranslations` is *not* a plural — it's a key-nested map (keys `one` and `other` become dotted keys). Only `definePlural(...)` (or the literal `{ "type": "plural", "data": { … } }` node in JSON) is interpreted as a plural.
 :::
 
 ## JSON files
 
-JSON can't call functions, so files spell out the node `type` literally — a lines node for ordinary strings, a plural node for plurals:
+JSON can't call functions, so files spell out the node `type` literally — a translations node for ordinary strings, a plural node for plurals:
 
 ```json
 {
-    "type": "lines",
+    "type": "translations",
     "data": {
         "greeting": "Hi {{name}}",
         "nav": { "home": "Home" },
@@ -166,7 +166,7 @@ JSON can't call functions, so files spell out the node `type` literally — a li
 }
 ```
 
-A JSON file is a single namespace's lines node — `FSStore` derives the namespace from the filename. See [Integrations → File System](/integrations/fs) for the on-disk layout and the dotted-namespace-to-dotted-filename rule.
+A JSON file is a single namespace's translations node — `FSStore` derives the namespace from the filename. See [Integrations → File System](/integrations/fs) for the on-disk layout and the dotted-namespace-to-dotted-filename rule.
 
 ## Why keys are not type-checked against the catalog
 

@@ -1,12 +1,12 @@
-import type { Lines, PluralNode } from '../types';
+import type { PluralNode, Translations } from '../types';
 import { isPluralNode } from './identify';
 
-export type LinesRecordParsed = {
+export type TranslationsRecordParsed = {
     key: string,
     value: string | PluralNode
 };
-export function parseLinesRecord(record: Lines, parent?: string): LinesRecordParsed[] {
-    const output : LinesRecordParsed[] = [];
+export function parseTranslationsRecord(record: Translations, parent?: string): TranslationsRecordParsed[] {
+    const output : TranslationsRecordParsed[] = [];
     const keys = Object.keys(record);
     for (const key of keys) {
         const value = record[key];
@@ -20,7 +20,7 @@ export function parseLinesRecord(record: Lines, parent?: string): LinesRecordPar
                 key: nextKey,
             });
         } else {
-            output.push(...parseLinesRecord(value, nextKey));
+            output.push(...parseTranslationsRecord(value, nextKey));
         }
     }
 

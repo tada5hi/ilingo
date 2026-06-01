@@ -6,7 +6,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Ilingo, MemoryStore, defineCatalog, defineLines, defineLocale, defineNamespace, definePlural } from '../../src';
+import { Ilingo, MemoryStore, defineCatalog, defineTranslations, defineLocale, defineNamespace, definePlural } from '../../src';
 import { toCatalog } from '../helpers/catalog';
 
 describe('Ilingo — resolution path', () => {
@@ -335,7 +335,7 @@ describe('Ilingo — resolution path', () => {
                     data: defineCatalog([
                         defineLocale('en', [
                             defineNamespace('cart', [
-                                defineLines({
+                                defineTranslations({
                                     items: definePlural({
                                         one: '{{count}} item',
                                         other: '{{count}} items',

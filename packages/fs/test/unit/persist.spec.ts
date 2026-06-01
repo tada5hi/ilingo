@@ -39,7 +39,7 @@ describe('FSStore.set persistence', () => {
         );
 
         expect(JSON.parse(written)).toEqual({
-            type: 'lines',
+            type: 'translations',
             data: { greeting: 'Hello {{name}}' },
         });
     });
@@ -79,7 +79,7 @@ describe('FSStore.set persistence', () => {
             await readFile(path.join(tmpDir, 'en', 'app.json'), 'utf8'),
         );
 
-        expect(written).toEqual({ type: 'lines', data: { first: 'A', second: 'B' } });
+        expect(written).toEqual({ type: 'translations', data: { first: 'A', second: 'B' } });
     });
 
     it('writes nested keys via dotted access', async () => {
@@ -96,7 +96,7 @@ describe('FSStore.set persistence', () => {
         );
 
         expect(written).toEqual({
-            type: 'lines',
+            type: 'translations',
             data: { nested: { deep: { key: 'deeply nested' } } },
         });
     });
@@ -116,6 +116,6 @@ describe('FSStore.set persistence', () => {
         const written = JSON.parse(
             await readFile(path.join(writeDir, 'en', 'app.json'), 'utf8'),
         );
-        expect(written).toEqual({ type: 'lines', data: { k: 'v' } });
+        expect(written).toEqual({ type: 'translations', data: { k: 'v' } });
     });
 });

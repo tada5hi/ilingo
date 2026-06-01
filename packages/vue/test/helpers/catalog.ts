@@ -7,12 +7,12 @@
 
 import {
     defineCatalog,
-    defineLines,
+    defineTranslations,
     defineLocale,
     defineNamespace,
     definePlural,
 } from 'ilingo';
-import type { CatalogNode, Lines, PluralForms, PluralNode } from 'ilingo';
+import type { CatalogNode, Translations, PluralForms, PluralNode } from 'ilingo';
 
 type PluralMarker = { '@plural': PluralForms };
 type PlainValue = string | PluralMarker | PluralNode | PlainLines;
@@ -27,8 +27,8 @@ function isPluralNodeValue(value: object): value is PluralNode {
     return (value as { type?: unknown }).type === 'plural';
 }
 
-function toLines(plain: PlainLines): Lines {
-    const out: Lines = {};
+function toLines(plain: PlainLines): Translations {
+    const out: Translations = {};
     for (const [key, value] of Object.entries(plain)) {
         if (typeof value === 'string') {
             out[key] = value;
@@ -44,16 +44,16 @@ function toLines(plain: PlainLines): Lines {
 }
 
 /**
- * Build a catalog tree from the legacy `{ locale: { namespace: lines } }`
+ * Build a catalog tree from the legacy `{ locale: { namespace: translations } }`
  * shape — keeps the Vue component/composable tests concise.
  */
 export function toCatalog(plain: PlainCatalog): CatalogNode {
     return defineCatalog(
         Object.entries(plain).map(([locale, namespaces]) => defineLocale(
             locale,
-            Object.entries(namespaces).map(([namespace, lines]) => defineNamespace(
+            Object.entries(namespaces).map(([namespace, translations]) => defineNamespace(
                 namespace,
-                [defineLines(toLines(lines))],
+                [defineTranslations(toLines(translations))],
             )),
         )),
     );

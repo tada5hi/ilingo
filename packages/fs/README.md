@@ -53,12 +53,12 @@ You should name the file according to the type of content it holds (e.g. app, fo
 For example, let’s say you want to create a file containing error messages.
 You might simply name it: `error.{ts,js,json}`.
 
-Each file should return a **lines node** — a `defineLines(...)` value for script files, or a `{ "type": "lines", "data": { ... } }` literal for JSON files.
+Each file should return a **translations node** — a `defineTranslations(...)` value for script files, or a `{ "type": "translations", "data": { ... } }` literal for JSON files.
 
 **`app.json`**
 ```json
 {
-    "type": "lines",
+    "type": "translations",
     "data": {
         "key": "The locale string to be shown."
     }
@@ -67,9 +67,9 @@ Each file should return a **lines node** — a `defineLines(...)` value for scri
 
 **`app.{ts,js}`**
 ```typescript
-import { defineLines } from 'ilingo';
+import { defineTranslations } from 'ilingo';
 
-export default defineLines({
+export default defineTranslations({
     key: 'The locale string to be shown.',
 });
 ```
@@ -78,9 +78,9 @@ The `data` object can also be (deeply) nested ⚡ — a nested object extends th
 
 **`app.{ts,js}`**
 ```typescript
-import { defineLines } from 'ilingo';
+import { defineTranslations } from 'ilingo';
 
-export default defineLines({
+export default defineTranslations({
     nested: {
         key: 'The locale string to be shown.',
     },

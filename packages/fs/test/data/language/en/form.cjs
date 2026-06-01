@@ -6,7 +6,7 @@
  */
 
 module.exports = {
-    type: 'lines',
+    type: 'translations',
     data: {
         email: 'The input must be a valid email address.',
         maxLength: 'The length of the input must be less than {{max}}.',

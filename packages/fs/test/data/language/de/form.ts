@@ -6,7 +6,7 @@
  */
 
 export default {
-    type: 'lines',
+    type: 'translations',
     data: {
         email: 'Die Eingabe muss eine gültige E-Mail sein.',
         maxLength: 'Die Länge der Eingabe muss kleiner als {{max}} sein.',

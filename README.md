@@ -34,7 +34,7 @@ import {
     defineCatalog,
     defineLocale,
     defineNamespace,
-    defineLines,
+    defineTranslations,
 } from 'ilingo';
 
 const store = new MemoryStore({
@@ -43,13 +43,13 @@ const store = new MemoryStore({
         defineLocale('de', [
             // namespace: app
             defineNamespace('app', [
-                defineLines({ key: 'Hallo mein Name ist {{name}}' }),
+                defineTranslations({ key: 'Hallo mein Name ist {{name}}' }),
             ]),
         ]),
         // locale: en
         defineLocale('en', [
             defineNamespace('app', [
-                defineLines({ key: 'Hello my name is {{name}}' }),
+                defineTranslations({ key: 'Hello my name is {{name}}' }),
             ]),
         ]),
     ]),
