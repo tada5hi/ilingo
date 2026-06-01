@@ -3,10 +3,10 @@
 A **store** is anything that can return a translation leaf for a given `(locale, namespace, key)`. ilingo is **read-first** — its job is to *read* a datasource — so the `IStore` port is the read contract: `id`, `get`, `getLocales`.
 
 ```typescript
-import type { Leaf, PluralForms } from 'ilingo';
+import type { Leaf, PluralNode } from 'ilingo';
 
 export type StoreGetContext = { locale: string, namespace: string, key: string };
-export type StoreSetContext = StoreGetContext & { value: string | PluralForms };
+export type StoreSetContext = StoreGetContext & { value: string | PluralNode };
 
 export interface IStore {
     readonly id: string | symbol;

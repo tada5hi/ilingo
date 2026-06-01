@@ -119,7 +119,7 @@ The builders live in `packages/ilingo/src/catalog.ts` and produce tagged nodes:
 - `defineLines(obj)` → `{ type: 'lines', data }` — flat or key-nested translation strings/plurals.
 - `definePlural(forms)` → `{ type: 'plural', data }` — a plural leaf inside a lines body.
 
-```
+```text
 CatalogNode   = { type:'catalog',   data: LocaleNode[] }
 LocaleNode    = { type:'locale',    name, data: (NamespaceNode | LinesNode)[] }
 NamespaceNode = { type:'namespace', name, data: (NamespaceNode | LinesNode)[] }
@@ -132,7 +132,7 @@ Two independent nesting hierarchies:
 - A nested **`NamespaceNode`** extends the dotted **namespace** (`app` ▸ `nav` → `'app.nav'`).
 - A nested object inside a **`LinesNode`** extends the dotted **key** (`{ nav: { home } }` → key `'nav.home'`).
 
-A `LinesNode` placed directly under a `LocaleNode` is structurally allowed and reserved for a future default-namespace feature (not wired up today).
+A `LinesNode` placed directly under a `LocaleNode` is routed to the default namespace (`''`) by `normalizeCatalog` — the seam for a future optional-namespace API (ergonomics still provisional).
 
 `definePlural` keeps **local** CLDR-category autocomplete and a compile error on missing-`other` / non-CLDR keys (its argument is typed `PluralForms`) — this validation is independent of any catalog-wide inference and survives the type-safe-keys removal.
 

@@ -83,8 +83,9 @@ export type NamespaceNode = {
 
 /**
  * One locale's content. A `LinesNode` placed directly here (no enclosing
- * namespace) is structurally allowed and reserved for the future
- * default-namespace feature — not wired up today.
+ * namespace) is routed to the default namespace (`''`) by `normalizeCatalog`
+ * — the seam for a future optional-namespace API, whose ergonomics are still
+ * provisional.
  */
 export type LocaleNode = {
     type: 'locale', 

@@ -13,6 +13,8 @@ Template placeholders accept inline modifiers powered by `Intl.NumberFormat`, `I
 ## Built-in formatters
 
 ```typescript
+import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineLines } from 'ilingo';
+
 const ilingo = new Ilingo({
     store: new MemoryStore({
         data: defineCatalog([
