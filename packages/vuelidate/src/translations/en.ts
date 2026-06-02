@@ -27,6 +27,6 @@ export default defineTranslations({
     required: 'The value is required',
     requiredIf: 'The value is required',
     requiredUnless: 'The value is required',
-    sameAs: 'The input values is not equal to {{otherName}}',
+    sameAs: 'The input value is not equal to {{otherName}}',
     url: 'The input value must be a valid URL',
 });
