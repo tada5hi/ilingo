@@ -11,8 +11,10 @@ import { defineConfig } from 'tsdown';
  * Pure-core build. No vue / @vueuse / @ilingo/vue / @validup/vue
  * in the import graph — the Vue surface lives in `@ilingo/validup-vue`.
  *
- * `dts: true` lets tsdown emit `.d.mts` directly (no `vue-tsc` needed
- * because no SFCs).
+ * `.d.ts` is emitted by a separate `tsc --emitDeclarationOnly` pass
+ * (build:types) via tsconfig.build.json — plain `tsc` (no `vue-tsc`)
+ * because there are no SFCs. Keeps the build:js / build:types split
+ * consistent with every other package.
  */
 export default defineConfig({
     entry: [
@@ -21,7 +23,7 @@ export default defineConfig({
         'src/store/loader.ts',
     ],
     format: 'esm',
-    dts: true,
+    dts: false,
     sourcemap: true,
     clean: true,
 });

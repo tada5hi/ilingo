@@ -15,12 +15,12 @@
     },
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",
-    "types": "./dist/index.d.mts",
+    "types": "./dist/index.d.ts",
     "sideEffects": false,
     "exports": {
         "./package.json": "./package.json",
         ".": {
-            "types": "./dist/index.d.mts",
+            "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs"
         },
         "./core": {
@@ -34,7 +34,9 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsdown",
+        "build:js": "tsdown",
+        "build:types": "tsc --declaration --emitDeclarationOnly -p tsconfig.build.json",
+        "build": "npm run build:js && npm run build:types",
         "lint": "eslint",
         "lint:fix": "npm run lint -- --fix",
         "test": "cross-env NODE_ENV=test vitest --config test/vitest.config.ts --run",

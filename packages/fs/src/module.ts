@@ -54,7 +54,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
     protected watcher: ReturnType<ChokidarLike['watch']> | undefined;
 
     constructor(input?: FSStoreOptionsInput) {
-        super({ id: input?.id ?? Symbol('FSStore'), data: {} });
+        super({ id: input?.id ?? Symbol('FSStore'), data: [] });
 
         const options = normalizeOptions(input);
 

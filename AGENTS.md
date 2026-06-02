@@ -20,8 +20,8 @@ npm run lint:fix              # eslint --fix
 - **Node.js**: `>=22.0.0`
 - **Package manager**: npm (workspaces)
 - **Build orchestration**: Nx (`nx.json`, cacheable: `build`, `lint`, `test`)
-- **Bundler**: tsdown (Rolldown + Oxc); `@ilingo/vue` adds `unplugin-vue/rolldown` to compile `.vue` SFCs
-- **Type declarations**: tsdown's built-in `dts: true` for `.ts`-only packages; `vue-tsc --emitDeclarationOnly -p tsconfig.build.json` for Vue packages (tsdown's dts pipeline does not understand `.vue` files)
+- **Bundler**: tsdown (Rolldown + Oxc), `dts: false` everywhere — JS only; `@ilingo/vue` adds `unplugin-vue/rolldown` to compile `.vue` SFCs
+- **Type declarations**: every package splits `build:js` (tsdown) from `build:types`, a separate declaration-only pass via `tsconfig.build.json` → `tsc --declaration --emitDeclarationOnly` for `.ts`-only packages (`ilingo`, `@ilingo/fs`, `@ilingo/validup`), `vue-tsc` for Vue packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup-vue`; tsdown's dts pipeline does not understand `.vue` files). All packages emit `.d.ts` (not `.d.mts`)
 - **Test runner**: Vitest 4 (config at `packages/<pkg>/test/vitest.config.ts`)
 - **Linter**: ESLint 10 flat config via `@tada5hi/eslint-config` factory (`vue: true`, `typescript: true`)
 - **Releases**: release-please opens the version-bump PR; merging it triggers `tada5hi/monoship@v2` which publishes any workspace whose `version` is not yet on the registry (OIDC trusted publishing, no `NPM_TOKEN` needed)

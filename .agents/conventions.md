@@ -7,9 +7,10 @@
 | npm workspaces                             | Monorepo package management                                             |
 | Nx (`nx.json`)                             | Task orchestration + caching for `build`, `lint`, `test`                |
 | TypeScript 6                               | Source language; `@tada5hi/tsconfig` is the base config                 |
-| tsdown                                     | JS bundling — Rolldown (Rust) + Oxc, emits a single ESM `.mjs` per package |
+| tsdown                                     | JS bundling — Rolldown (Rust) + Oxc, emits a single ESM `.mjs` per package (`dts: false` — no declarations) |
 | `unplugin-vue/rolldown`                    | Vue SFC compilation inside tsdown (only `@ilingo/vue` uses it)          |
-| `vue-tsc`                                  | `.d.ts` emission for Vue packages (`@ilingo/vue`, `@ilingo/vuelidate`) — tsdown's dts pipeline does not understand `.vue` |
+| `tsc`                                      | `.d.ts` emission (`build:types`) for `.ts`-only packages (`ilingo`, `@ilingo/fs`, `@ilingo/validup`) via `tsconfig.build.json` |
+| `vue-tsc`                                  | `.d.ts` emission (`build:types`) for Vue packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup-vue`) — `tsc` cannot read `.vue` SFCs |
 | Vitest 4                                   | Test runner; config lives in `packages/<pkg>/test/vitest.config.ts`     |
 | ESLint 10 (flat config)                    | Linting via `@tada5hi/eslint-config({ typescript: true, vue: true })`   |
 | Husky + commitlint                         | Pre-commit hook validating Conventional Commits                         |
@@ -119,17 +120,18 @@ Conventional Commits, validated by commitlint:
 
 ## TypeScript
 
-- Base: `@tada5hi/tsconfig` (strict settings). The root `tsconfig.json` extends it and overrides `module`/`moduleResolution` to `ESNext`/`bundler`, sets `noEmit: true` and `allowImportingTsExtensions: true`. tsc is used for type-checking only — tsdown handles emission.
+- Base: `@tada5hi/tsconfig` (strict settings). The root `tsconfig.json` extends it and overrides `module`/`moduleResolution` to `ESNext`/`bundler`, sets `noEmit: true` and `allowImportingTsExtensions: true`. This root config (and each package's `tsconfig.json` that extends it) is the **IDE / type-check** config — `noEmit: true`, never emits. Declaration emission is the separate `tsconfig.build.json` pass (see below).
 - `target: ES2022`, `module: ESNext`, `moduleResolution: bundler`, `lib: ["ESNext"]` (Vue packages add `"DOM", "DOM.Iterable"`).
 - `strict: false` repo-wide — do not turn on strictness as a side effect of other work; treat it as a separate migration if attempted.
-- Each Vue package keeps a `tsconfig.build.json` (`emitDeclarationOnly: true`, `outDir: dist`) consumed exclusively by `vue-tsc` to produce `.d.ts` for `.vue` SFCs. Non-Vue packages need no `tsconfig.build.json` — tsdown handles their `.d.mts`.
-- Each package's own `tsconfig.json` carries a `paths` map for the workspace packages it imports (e.g. `@ilingo/vuelidate` maps `ilingo` → `../ilingo/src/index.ts` and `@ilingo/vue` → `../vue/src/index.ts`) so the IDE and `tsc` type-check resolve cross-package imports to **source**, not the built `dist/`. The map lives in the *package* config (not the root) — TS anchors `paths` to the file that declares them, so the `../<pkg>/src/index.ts` values stay relative to that package dir. Each `tsconfig.build.json` resets `paths: {}` — `vue-tsc` declaration emission must resolve peers from `dist` (their published `.d.ts`), not source, or it pulls foreign `src/` into the program and fails the `rootDir` constraint. Runtime/bundle resolution is unaffected (tsdown externalises peers; `paths` is type-resolution only).
+- **The build splits `build:js` (tsdown, `dts: false`) from `build:types`, and both `tsconfig`s are real:** every package keeps a `tsconfig.build.json` (`extends ./tsconfig.json`, then `noEmit: false`, `declaration: true`, `emitDeclarationOnly: true`, `outDir: dist`, `rootDir: src`, `paths: {}`) consumed by the `build:types` pass. `.ts`-only packages (`ilingo`, `@ilingo/fs`, `@ilingo/validup`) run `tsc --declaration --emitDeclarationOnly -p tsconfig.build.json`; Vue packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup-vue`) run `vue-tsc` with the same flags because plain `tsc` cannot read `.vue` SFCs. `build` is `npm run build:js && npm run build:types` — tsdown's `clean: true` wipes `dist/` in the JS pass first, then the declaration pass adds `.d.ts`. All packages emit `.d.ts` (tsc/vue-tsc name declarations after the `.ts` source, never `.d.mts`); `package.json` `types`/`exports[].types` point at `.d.ts`.
+- Each package's own `tsconfig.json` carries a `paths` map for the workspace packages it imports (e.g. `@ilingo/vuelidate` maps `ilingo` → `../ilingo/src/index.ts` and `@ilingo/vue` → `../vue/src/index.ts`) so the IDE and `tsc` type-check resolve cross-package imports to **source**, not the built `dist/`. The map lives in the *package* config (not the root) — TS anchors `paths` to the file that declares them, so the `../<pkg>/src/index.ts` values stay relative to that package dir. Each `tsconfig.build.json` resets `paths: {}` — the declaration-emit pass (`tsc` / `vue-tsc`) must resolve peers from `dist` (their published `.d.ts`), not source, or it pulls foreign `src/` into the program and fails the `rootDir` constraint. This is why `build` depends on `^build` in Nx: a package's peers must be built before its `build:types` runs. Runtime/bundle resolution is unaffected (tsdown externalises peers; `paths` is type-resolution only).
+- A package that uses Node built-ins (`@ilingo/fs` imports `node:fs/promises`, `node:path`, `node:process`) declares `types: ["node"]` in its `tsconfig.json` (alongside `ilingo`, which needs it for `resolveJsonModule`). The IDE / tsdown were lenient about ambient node types; the real `tsc` `build:types` pass is not.
 
 ## Build Output
 
 - One `dist/` per package, gitignored.
-- `dist/index.mjs` — single ES-module bundle produced by tsdown.
-- `dist/index.d.mts` (non-Vue packages) or `dist/index.d.ts` (Vue packages, via `vue-tsc`).
+- `dist/index.mjs` — single ES-module bundle produced by tsdown (`build:js`).
+- `dist/index.d.ts` for every package, produced by the `build:types` pass (`tsc` for `.ts`-only packages, `vue-tsc` for Vue packages). Note the asymmetry: the `.mjs` is a single bundled file, but `tsc`/`vue-tsc` emit `.d.ts` mirroring the `src/` tree (so subpath exports like `@ilingo/validup`'s `./store/memory` resolve to `dist/store/memory.d.ts` ↔ the bundled `dist/store/memory.mjs`).
 - Source maps are emitted (`sourcemap: true` in `tsdown.config.ts`).
 - The `files` field in each `package.json` controls what is published — `dist/` plus any pre-built subpath dirs (`core/`, `vue/`).
 

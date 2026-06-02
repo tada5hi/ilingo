@@ -5,20 +5,20 @@
     "description": "Translate validup Issues through ilingo — framework-agnostic core with default EN/DE/FR/ES catalogs.",
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",
-    "types": "./dist/index.d.mts",
+    "types": "./dist/index.d.ts",
     "sideEffects": false,
     "exports": {
         "./package.json": "./package.json",
         ".": {
-            "types": "./dist/index.d.mts",
+            "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs"
         },
         "./store/memory": {
-            "types": "./dist/store/memory.d.mts",
+            "types": "./dist/store/memory.d.ts",
             "import": "./dist/store/memory.mjs"
         },
         "./store/loader": {
-            "types": "./dist/store/loader.d.mts",
+            "types": "./dist/store/loader.d.ts",
             "import": "./dist/store/loader.mjs"
         }
     },
@@ -26,7 +26,9 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsdown",
+        "build:js": "tsdown",
+        "build:types": "tsc --declaration --emitDeclarationOnly -p tsconfig.build.json",
+        "build": "npm run build:js && npm run build:types",
         "test": "vitest --config test/vitest.config.ts --run",
         "test:coverage": "vitest --config test/vitest.config.ts --run --coverage",
         "lint": "eslint",
