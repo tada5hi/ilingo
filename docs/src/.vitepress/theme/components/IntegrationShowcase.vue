@@ -59,7 +59,7 @@ const cards: IntegrationCard[] = [
         summary: 'The Vue 3 layer for @ilingo/validup.',
         bullets: [
             'Per-field, group & cross-cutting error composables',
-            'useFieldFeedback — severity + messages in one v-bind',
+            'useFieldValidation — severity + messages in one bind',
             '<IValidup> / <IValidupT> renderless components',
         ],
     },

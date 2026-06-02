@@ -142,7 +142,7 @@ The `validup` namespace name is exported as `NAMESPACE` if you'd rather build th
 
 ## Going Vue
 
-For composables (`useTranslationsForIssues`, `useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForGroupErrors`, `useFieldFeedback`), the `<IValidup>` / `<IValidupT>` renderless components, and the Vue plugin install hook, add [`@ilingo/validup-vue`](../validup-vue).
+For composables (`useTranslationsForIssues`, `useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForGroupErrors`, `useFieldValidation`), the `<IValidup>` / `<IValidupT>` renderless components, and the Vue plugin install hook, add [`@ilingo/validup-vue`](../validup-vue).
 
 ## License
 

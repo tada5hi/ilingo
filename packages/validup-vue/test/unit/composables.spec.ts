@@ -18,7 +18,7 @@ import type { Ref } from 'vue';
 import { describe, expect, it } from 'vitest';
 import {
     install,
-    useFieldFeedback,
+    useFieldValidation,
     useTranslationsForComposable,
     useTranslationsForField,
     useTranslationsForGroupErrors,
@@ -218,7 +218,7 @@ describe('useTranslationsForGroupErrors', () => {
     });
 });
 
-describe('useFieldFeedback', () => {
+describe('useFieldValidation', () => {
     it('bundles severity + reshaped messages + the raw issues escape hatch', async () => {
         const container = new Container<{ email: string }>();
         container.mount('email', isString);
@@ -229,7 +229,7 @@ describe('useFieldFeedback', () => {
         const wrapper = mount(defineComponent({
             setup() {
                 const $v = useValidup(container, formState);
-                const feedback = useFieldFeedback($v.fields.email);
+                const feedback = useFieldValidation($v.fields.email);
                 $v.fields.email.$touch();
                 return { feedback };
             },
@@ -262,7 +262,7 @@ describe('useFieldFeedback', () => {
         const wrapper = mount(defineComponent({
             setup() {
                 const $v = useValidup(container, formState, { lazy: true });
-                const feedback = useFieldFeedback($v.fields.email);
+                const feedback = useFieldValidation($v.fields.email);
                 return { severity: feedback.severity };
             },
             template: '<div class="severity">{{ severity === undefined ? "none" : severity }}</div>',

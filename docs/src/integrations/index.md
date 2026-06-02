@@ -55,7 +55,7 @@ const message = await translateIssue(issue, ilingo);
 
 ## [@ilingo/validup-vue](./validup-vue) — Validup in Vue
 
-The Vue 3 layer for `@ilingo/validup`: an install hook, five composables (per-field, group, and `useFieldFeedback`), and the renderless `<IValidup>` / `<IValidupT>` components.
+The Vue 3 layer for `@ilingo/validup`: an install hook, five composables (per-field, group, and `useFieldValidation`), and the renderless `<IValidup>` / `<IValidupT>` components.
 
 ```typescript
 import { install as installIlingo } from '@ilingo/vue';

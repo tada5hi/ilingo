@@ -1,6 +1,6 @@
 # Validup (Vue)
 
-`@ilingo/validup-vue` is the Vue 3 layer for [`@ilingo/validup`](./validup) — the install hook, five composables, the renderless `<IValidup>` / `<IValidupT>` components, and the `FieldTranslations` / `GroupTranslations` / `FieldFeedback` type aliases. It mirrors the `validup` → [`@validup/vue`](https://www.npmjs.com/package/@validup/vue) package split so the framework-agnostic message surface stays free of Vue.
+`@ilingo/validup-vue` is the Vue 3 layer for [`@ilingo/validup`](./validup) — the install hook, five composables, the renderless `<IValidup>` / `<IValidupT>` components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` type aliases. It mirrors the `validup` → [`@validup/vue`](https://www.npmjs.com/package/@validup/vue) package split so the framework-agnostic message surface stays free of Vue.
 
 ## Install
 
@@ -36,7 +36,7 @@ app.mount('#app');
 | `useTranslationsForField(fieldState)` | `MaybeRef<FieldState>` → reactive translations of the field's dirty-gated `$errors`. |
 | `useTranslationsForComposable($v)` | `MaybeRef<Composable<T>>` → reactive translations of every field's `$errors`. |
 | `useTranslationsForGroupErrors($v)` | `MaybeRef<Composable<T>>` → `Ref<IssueGroupTranslation[]>`. Translates `$groupErrors` by each group's own `code`, **without** flattening children. |
-| `useFieldFeedback(fieldState)` | `MaybeRef<FieldState>` → a `reactive` `{ severity, messages, issues }` bundle. |
+| `useFieldValidation(fieldState)` | `MaybeRef<FieldState>` → a `reactive` `{ severity, messages, issues }` bundle for vuecs's `<VCFormGroup :validation>`. |
 
 All re-run when the injected locale flips. `useTranslationsForIssues` and `useTranslationsForGroupErrors` keep the previously-resolved batch visible during an async re-run, so a locale switch on a form with visible errors doesn't blank the UI for a tick.
 
@@ -80,25 +80,25 @@ const groupErrors = useTranslationsForGroupErrors($v);
 </template>
 ```
 
-### `useFieldFeedback` — severity + messages in one bind
+### `useFieldValidation` — severity + messages in one bind
 
-Collapses the three reactive shims a per-field feedback block usually needs (severity, translated messages, reshape) into one `v-bind`. The return value is a `reactive` bundle, so its keys auto-unwrap when spread:
+Collapses the three reactive shims a per-field validation block usually needs (severity, translated messages, reshape) into one binding onto vuecs's `<VCFormGroup :validation>` prop. The return value is a `reactive` bundle, so its keys auto-unwrap when bound:
 
 ```vue
 <script setup lang="ts">
-import { useFieldFeedback } from '@ilingo/validup-vue';
-const feedback = useFieldFeedback($v.fields.email);
+import { useFieldValidation } from '@ilingo/validup-vue';
+const validation = useFieldValidation($v.fields.email);
 </script>
 
 <template>
-    <VCFormGroup v-bind="feedback">
+    <VCFormGroup :validation="validation">
         <VCFormInput v-model="$v.fields.email.$model" />
     </VCFormGroup>
 </template>
 ```
 
-- `severity` — `getSeverity(field)` from `@validup/vue` (dirty / pending / optional aware; `undefined` while pristine), maps onto `validation-severity`.
-- `messages` — `{ key: issue.code ?? 'validation', value: message }[]`, maps onto `validation-messages`.
+- `severity` — `getSeverity(field)` from `@validup/vue` (dirty / pending / optional aware; `undefined` while pristine); the host's `validation-severity`.
+- `messages` — `{ key: issue.code ?? 'validation', value: message }[]`; the host's `validation-messages`.
 - `issues` — the raw `IssueTranslation[]` escape hatch for richer rendering.
 
 ## `<IValidup>` — renderless component
@@ -164,7 +164,7 @@ This is **forward-compat**: useful once a message carries a component placeholde
 |---|---|---|
 | `FieldTranslations` | `Ref<IssueTranslation[]>` | the leaf composables |
 | `GroupTranslations` | `Ref<IssueGroupTranslation[]>` | `useTranslationsForGroupErrors` |
-| `FieldFeedback` | `reactive` `{ severity, messages, issues }` | `useFieldFeedback` |
+| `FieldValidation` | `reactive` `{ severity, messages, issues }` | `useFieldValidation` |
 
 Re-exported so consumers can type props without reaching into Vue's `Ref` directly.
 
