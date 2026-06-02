@@ -7,7 +7,6 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Ilingo, MemoryStore, defineCatalog, defineTranslations, defineLocale, defineNamespace, definePlural } from '../../src';
-import { toCatalog } from '../helpers/catalog';
 
 describe('Ilingo — resolution path', () => {
     let warn: ReturnType<typeof vi.spyOn>;
@@ -23,32 +22,32 @@ describe('Ilingo — resolution path', () => {
     describe('#895 — pluralization', () => {
         const make = () => new Ilingo({
             store: new MemoryStore({
-                data: toCatalog({
-                    en: {
-                        cart: {
-                            items: {
-                                '@plural': {
+                data: defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('cart', [
+                            defineTranslations({
+                                items: definePlural({
                                     one: '{{count}} item',
                                     other: '{{count}} items',
-                                },
-                            },
-                        },
-                    },
-                    cy: {
-                        cart: {
-                            items: {
-                                '@plural': {
+                                }),
+                            }),
+                        ]),
+                    ]),
+                    defineLocale('cy', [
+                        defineNamespace('cart', [
+                            defineTranslations({
+                                items: definePlural({
                                     zero: 'dim eitemau',
                                     one: '{{count}} eitem',
                                     two: '{{count}} eitem',
                                     few: '{{count}} eitem',
                                     many: '{{count}} eitem',
                                     other: '{{count}} eitem',
-                                },
-                            },
-                        },
-                    },
-                }),
+                                }),
+                            }),
+                        ]),
+                    ]),
+                ]),
             }),
         });
 
@@ -75,7 +74,13 @@ describe('Ilingo — resolution path', () => {
         it('falls back to "other" if the selected category is absent', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({ en: { cart: { items: { '@plural': { other: '{{count}} items' } } } } }),
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('cart', [
+                                defineTranslations({ items: definePlural({ other: '{{count}} items' }) }),
+                            ]),
+                        ]),
+                    ]),
                 }),
             });
             expect(
@@ -93,18 +98,18 @@ describe('Ilingo — resolution path', () => {
         it('count merges into data without overriding an explicit value', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({
-                        en: {
-                            cart: {
-                                items: {
-                                    '@plural': {
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('cart', [
+                                defineTranslations({
+                                    items: definePlural({
                                         one: '{{count}} of {{total}}',
                                         other: '{{count}} of {{total}}',
-                                    },
-                                },
-                            },
-                        },
-                    }),
+                                    }),
+                                }),
+                            ]),
+                        ]),
+                    ]),
                 }),
             });
             expect(
@@ -122,10 +127,14 @@ describe('Ilingo — resolution path', () => {
         it('derives BCP-47 parents by default', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({
-                        pt: { app: { hi: 'olá pt' } },
-                        'pt-BR': { app: {} },
-                    }),
+                    data: defineCatalog([
+                        defineLocale('pt', [
+                            defineNamespace('app', [defineTranslations({ hi: 'olá pt' })]),
+                        ]),
+                        defineLocale('pt-BR', [
+                            defineNamespace('app', [defineTranslations({})]),
+                        ]),
+                    ]),
                 }),
                 locale: 'pt-BR',
             });
@@ -135,7 +144,11 @@ describe('Ilingo — resolution path', () => {
         it('falls all the way to LOCALE_DEFAULT', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({ en: { app: { hi: 'hello' } } }),
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('app', [defineTranslations({ hi: 'hello' })]),
+                        ]),
+                    ]),
                 }),
                 locale: 'pt-BR',
             });
@@ -145,7 +158,11 @@ describe('Ilingo — resolution path', () => {
         it('respects an explicit string fallback', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({ es: { app: { hi: 'hola' } } }),
+                    data: defineCatalog([
+                        defineLocale('es', [
+                            defineNamespace('app', [defineTranslations({ hi: 'hola' })]),
+                        ]),
+                    ]),
                 }),
                 locale: 'pt-BR',
                 fallback: 'es',
@@ -156,10 +173,14 @@ describe('Ilingo — resolution path', () => {
         it('respects an explicit fallback array, in order', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({
-                        fr: { app: { hi: 'salut' } },
-                        es: { app: { hi: 'hola' } },
-                    }),
+                    data: defineCatalog([
+                        defineLocale('fr', [
+                            defineNamespace('app', [defineTranslations({ hi: 'salut' })]),
+                        ]),
+                        defineLocale('es', [
+                            defineNamespace('app', [defineTranslations({ hi: 'hola' })]),
+                        ]),
+                    ]),
                 }),
                 locale: 'pt-BR',
                 fallback: ['es', 'fr'],
@@ -170,7 +191,11 @@ describe('Ilingo — resolution path', () => {
         it('respects a fallback resolver function', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({ fr: { app: { hi: 'salut' } } }),
+                    data: defineCatalog([
+                        defineLocale('fr', [
+                            defineNamespace('app', [defineTranslations({ hi: 'salut' })]),
+                        ]),
+                    ]),
                 }),
                 locale: 'pt-BR',
                 fallback: (locale) => (locale.startsWith('pt') ? ['fr'] : []),
@@ -181,9 +206,11 @@ describe('Ilingo — resolution path', () => {
         it('getResolvedLocale reports which locale yielded the value', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({
-                        pt: { app: { hi: 'olá pt' } },
-                    }),
+                    data: defineCatalog([
+                        defineLocale('pt', [
+                            defineNamespace('app', [defineTranslations({ hi: 'olá pt' })]),
+                        ]),
+                    ]),
                 }),
                 locale: 'pt-BR',
             });
@@ -198,12 +225,20 @@ describe('Ilingo — resolution path', () => {
         it('locale-closeness beats store priority', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({ en: { app: { hi: 'hello (store1)' } } }),
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('app', [defineTranslations({ hi: 'hello (store1)' })]),
+                        ]),
+                    ]),
                 }),
                 locale: 'pt-BR',
             });
             ilingo.registerStore(new MemoryStore({
-                data: toCatalog({ pt: { app: { hi: 'olá (store2)' } } }),
+                data: defineCatalog([
+                    defineLocale('pt', [
+                        defineNamespace('app', [defineTranslations({ hi: 'olá (store2)' })]),
+                    ]),
+                ]),
             }));
             expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('olá (store2)');
         });
@@ -253,7 +288,13 @@ describe('Ilingo — resolution path', () => {
         it('handler is not called when a hit is found', async () => {
             const onMissingKey = vi.fn();
             const ilingo = new Ilingo({
-                store: new MemoryStore({ data: toCatalog({ en: { app: { hi: 'hello' } } }) }),
+                store: new MemoryStore({
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('app', [defineTranslations({ hi: 'hello' })]),
+                        ]),
+                    ]),
+                }),
                 onMissingKey,
             });
             await ilingo.get({ namespace: 'app', key: 'hi' });
@@ -302,16 +343,18 @@ describe('Ilingo — resolution path', () => {
             // non-leaf.
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({
-                        en: {
-                            cart: {
-                                items: {
-                                    one: '{{count}} item',
-                                    other: '{{count}} items',
-                                },
-                            },
-                        },
-                    }),
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('cart', [
+                                defineTranslations({
+                                    items: {
+                                        one: '{{count}} item',
+                                        other: '{{count}} items',
+                                    },
+                                }),
+                            ]),
+                        ]),
+                    ]),
                 }),
             });
 
@@ -358,19 +401,21 @@ describe('Ilingo — resolution path', () => {
             // literally. The store recognises it the same way.
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({
-                        en: {
-                            cart: {
-                                items: {
-                                    type: 'plural',
-                                    data: {
-                                        one: '{{count}} item',
-                                        other: '{{count}} items',
-                                    },
-                                } as never,
-                            },
-                        },
-                    }),
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('cart', [
+                                defineTranslations({
+                                    items: {
+                                        type: 'plural',
+                                        data: {
+                                            one: '{{count}} item',
+                                            other: '{{count}} items',
+                                        },
+                                    } as never,
+                                }),
+                            ]),
+                        ]),
+                    ]),
                 }),
             });
             expect(
@@ -387,15 +432,17 @@ describe('Ilingo — resolution path', () => {
             // reachable via dotted access.
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({
-                        en: {
-                            form: {
-                                kind: {
-                                    other: { label: 'Other' },
-                                },
-                            },
-                        },
-                    }),
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('form', [
+                                defineTranslations({
+                                    kind: {
+                                        other: { label: 'Other' },
+                                    },
+                                }),
+                            ]),
+                        ]),
+                    ]),
                 }),
             });
             expect(
@@ -454,11 +501,19 @@ describe('Ilingo — resolution path', () => {
         it('preserves store insertion order on a tie within a locale', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({ en: { app: { hi: 'from store 1' } } }),
+                    data: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('app', [defineTranslations({ hi: 'from store 1' })]),
+                        ]),
+                    ]),
                 }),
             });
             ilingo.registerStore(new MemoryStore({
-                data: toCatalog({ en: { app: { hi: 'from store 2' } } }),
+                data: defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ hi: 'from store 2' })]),
+                    ]),
+                ]),
             }));
 
             expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('from store 1');
@@ -468,7 +523,13 @@ describe('Ilingo — resolution path', () => {
     describe('Ilingo.clone() — config override semantics', () => {
         it('inherits parent config when overrides are omitted', async () => {
             const parent = new Ilingo({
-                store: new MemoryStore({ data: toCatalog({ de: { app: { hi: 'Hallo' } } }) }),
+                store: new MemoryStore({
+                    data: defineCatalog([
+                        defineLocale('de', [
+                            defineNamespace('app', [defineTranslations({ hi: 'Hallo' })]),
+                        ]),
+                    ]),
+                }),
                 locale: 'de',
                 fallback: 'de',
             });
@@ -484,10 +545,14 @@ describe('Ilingo — resolution path', () => {
         it('overrides.fallback === undefined clears the inherited fallback', async () => {
             const parent = new Ilingo({
                 store: new MemoryStore({
-                    data: toCatalog({
-                        de: { app: { hi: 'Hallo' } },
-                        en: { app: { hi: 'Hello' } },
-                    }),
+                    data: defineCatalog([
+                        defineLocale('de', [
+                            defineNamespace('app', [defineTranslations({ hi: 'Hallo' })]),
+                        ]),
+                        defineLocale('en', [
+                            defineNamespace('app', [defineTranslations({ hi: 'Hello' })]),
+                        ]),
+                    ]),
                 }),
                 locale: 'en',
                 fallback: 'de',

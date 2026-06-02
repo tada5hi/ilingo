@@ -8,19 +8,18 @@
 import {
     type IMutableStore,
     MemoryStore,
-    type Translations,
+    type TranslationsNode,
     defineCatalog,
     defineLocale,
     defineNamespace,
-    defineTranslations,
     parseTranslationsRecord,
 } from 'ilingo';
 import { NAMESPACE, STORE_ID } from '../constants';
 import {
-    useEnglishTranslation,
-    useFrenchTranslation,
-    useGermanTranslation,
-    useSpanishTranslation,
+    de, 
+    en, 
+    es, 
+    fr,
 } from '../translations';
 
 /**
@@ -39,10 +38,10 @@ export class Store extends MemoryStore {
         super({
             id: STORE_ID,
             data: defineCatalog([
-                defineLocale('en', [defineNamespace(NAMESPACE, [defineTranslations(useEnglishTranslation())])]),
-                defineLocale('de', [defineNamespace(NAMESPACE, [defineTranslations(useGermanTranslation())])]),
-                defineLocale('fr', [defineNamespace(NAMESPACE, [defineTranslations(useFrenchTranslation())])]),
-                defineLocale('es', [defineNamespace(NAMESPACE, [defineTranslations(useSpanishTranslation())])]),
+                defineLocale('en', [defineNamespace(NAMESPACE, [en])]),
+                defineLocale('de', [defineNamespace(NAMESPACE, [de])]),
+                defineLocale('fr', [defineNamespace(NAMESPACE, [fr])]),
+                defineLocale('es', [defineNamespace(NAMESPACE, [es])]),
             ]),
         });
     }
@@ -72,19 +71,19 @@ export function createMemoryStore(): Store {
  * to dedupe as the vuelidate catalog on `Ilingo.registerStore`.
  */
 export async function extendStore(store: IMutableStore) {
-    const translations : Record<string, Translations> = {
-        en: useEnglishTranslation(),
-        de: useGermanTranslation(),
-        fr: useFrenchTranslation(),
-        es: useSpanishTranslation(),
+    const translations : Record<string, TranslationsNode> = {
+        en, 
+        de, 
+        fr, 
+        es,
     };
 
     const promises : Promise<void>[] = [];
 
     const locales = Object.keys(translations);
     for (const locale of locales) {
-        const records = translations[locale];
-        const pairs = parseTranslationsRecord(records);
+        const node = translations[locale];
+        const pairs = parseTranslationsRecord(node.data);
         for (const pair of pairs) {
             promises.push(
                 store.set({

@@ -6,18 +6,24 @@
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
-import { MemoryStore } from 'ilingo';
+import {
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineTranslations,
+} from 'ilingo';
+import type { CatalogInput } from 'ilingo';
 import type { Ref } from 'vue';
 import { defineComponent } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import { injectLocale, install } from '../../src';
-import { toCatalog } from '../helpers/catalog';
 
-function plugin(messages: Record<string, unknown>, locale = 'en', options: { directives?: boolean } = {}) {
+function plugin(data: CatalogInput, locale = 'en', options: { directives?: boolean } = {}) {
     return {
         install(app: import('vue').App) {
             install(app, {
-                store: new MemoryStore({ data: toCatalog(messages as never) }),
+                store: new MemoryStore({ data }),
                 locale,
                 directives: options.directives,
             });
@@ -32,7 +38,11 @@ describe('v-t directive (#901)', () => {
         });
 
         const wrapper = mount(Wrapper, {
-            global: { plugins: [plugin({ en: { app: { hi: 'Hello there' } } })] },
+            global: { plugins: [plugin(defineCatalog([
+                defineLocale('en', [
+                    defineNamespace('app', [defineTranslations({ hi: 'Hello there' })]),
+                ]),
+            ]))] },
         });
 
         await flushPromises();
@@ -45,7 +55,11 @@ describe('v-t directive (#901)', () => {
         });
 
         const wrapper = mount(Wrapper, {
-            global: { plugins: [plugin({ en: { app: { greet: 'Hi {{name}}!' } } })] },
+            global: { plugins: [plugin(defineCatalog([
+                defineLocale('en', [
+                    defineNamespace('app', [defineTranslations({ greet: 'Hi {{name}}!' })]),
+                ]),
+            ]))] },
         });
 
         await flushPromises();
@@ -70,10 +84,14 @@ describe('v-t directive (#901)', () => {
 
         const wrapper = mount(ProbeRoot, {
             global: {
-                plugins: [plugin({
-                    en: { app: { hi: 'Hello' } },
-                    de: { app: { hi: 'Hallo' } },
-                })],
+                plugins: [plugin(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ hi: 'Hello' })]),
+                    ]),
+                    defineLocale('de', [
+                        defineNamespace('app', [defineTranslations({ hi: 'Hallo' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -98,10 +116,14 @@ describe('v-t directive (#901)', () => {
         // had already changed and clobber `textContent` with the stale
         // translation.
         const store = new MemoryStore({
-            data: toCatalog({
-                en: { app: { hi: 'Hello' } },
-                de: { app: { hi: 'Hallo' } },
-            }),
+            data: defineCatalog([
+                defineLocale('en', [
+                    defineNamespace('app', [defineTranslations({ hi: 'Hello' })]),
+                ]),
+                defineLocale('de', [
+                    defineNamespace('app', [defineTranslations({ hi: 'Hallo' })]),
+                ]),
+            ]),
         });
 
         // Wrap the store to make `get()` artificially slow for 'en' but fast
@@ -196,7 +218,11 @@ describe('v-t directive (#901)', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         mount(Wrapper, {
             global: {
-                plugins: [plugin({ en: { app: { hi: 'Hello' } } }, 'en', { directives: false })],
+                plugins: [plugin(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ hi: 'Hello' })]),
+                    ]),
+                ]), 'en', { directives: false })],
             },
         });
         const messages = warn.mock.calls.map((args) => String(args[0])).join('\n');

@@ -26,9 +26,7 @@ Nx caches `test` (see `nx.json` → `cacheableOperations`). To re-run an already
 ### `packages/ilingo/test/`
 
 ```
-helpers/
-└── catalog.ts                      # converts the legacy {locale:{ns:translations}} shape to a descriptor tree
-unit/
+unit/                               # catalogs built inline with the define* helpers (no shared toCatalog helper)
 ├── module.spec.ts                  # legacy core behaviour — get/set, locale switching, merge()
 ├── resolution.spec.ts              # pluralization (incl. the explicit { type:'plural' } node), fallback chain
 │                                   #   (default, string, array, function, false, []), missing-key
@@ -81,11 +79,18 @@ data/
 
 ## Test Helpers & Fixtures
 
-- Since `MemoryStore` now ingests the descriptor tree (`CatalogInput`), a small shared helper at `packages/ilingo/test/helpers/catalog.ts` (mirrored at `packages/vue/test/helpers/catalog.ts`) converts the legacy `{ locale: { ns: translations } }` shape into a tree so contract tests stay concise. Tests build stores through it, e.g.:
+- `MemoryStore` ingests the descriptor tree (`CatalogInput`), so tests build catalogs **inline with the `define*` helpers** — there is no shared `toCatalog` legacy-shape helper anymore (it was removed along with its `@plural` marker support; author plurals with `definePlural(...)`). Construct the tree directly:
   ```typescript
-  const ilingo = new Ilingo({ store: new MemoryStore({ data: toCatalog({ en: { app: { hi: 'Hello' } } }) }) });
+  const ilingo = new Ilingo({
+      store: new MemoryStore({
+          data: defineCatalog([
+              defineLocale('en', [
+                  defineNamespace('app', [defineTranslations({ hi: 'Hello' })]),
+              ]),
+          ]),
+      }),
+  });
   ```
-  (This is the one shared test-utility module — everything else is still constructed inline.)
 - `test/data/language/<locale>/<namespace>.{ts,js,json,cjs}` are translations nodes and double as both a fixture and a smoke test of `FSStore`'s loader extension matrix.
 
 ## Testing Philosophy
@@ -100,8 +105,14 @@ For tests covering store call order (serial walk, fallthrough, debounce, etc.), 
 
 ```typescript
 // Good — real implementation of the port, no mocking layer
-// MemoryStore takes the descriptor tree; toCatalog() (test/helpers/catalog.ts) lifts the legacy shape into one
-const store = new MemoryStore({ data: toCatalog({ en: { app: { hi: 'Hello' } } }) });
+// MemoryStore takes the descriptor tree, built inline with the define* helpers
+const store = new MemoryStore({
+    data: defineCatalog([
+        defineLocale('en', [
+            defineNamespace('app', [defineTranslations({ hi: 'Hello' })]),
+        ]),
+    ]),
+});
 const ilingo = new Ilingo({ store });
 
 // Bad — opaque spy stubs, couple the test to internal call shapes
