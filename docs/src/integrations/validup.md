@@ -52,7 +52,7 @@ ilingo.registerStore(createMemoryStore()); // no-op — same STORE_ID
 ilingo.stores.has(STORE_ID);               // → true
 ```
 
-This subpath also exports `Store`, `extendStore()`, and the raw per-locale catalogs (`en`, `de`, `fr`, `es` — each a `Translations` node).
+This subpath also exports `Store`, `extendStore()`, and the raw per-locale catalogs (`en`, `de`, `fr`, `es` — each a `TranslationsNode`).
 
 ### `@ilingo/validup/store/loader` — lazy
 

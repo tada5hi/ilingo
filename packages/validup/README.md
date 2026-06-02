@@ -57,7 +57,7 @@ ilingo.stores.has(STORE_ID);               // → true
 ```
 
 This subpath also exports `Store`, `extendStore()`, and the raw per-locale
-catalogs (`en`, `de`, `fr`, `es` — each a `Translations` node).
+catalogs (`en`, `de`, `fr`, `es` — each a `TranslationsNode`).
 
 ### `@ilingo/validup/store/loader` — lazy
 
@@ -98,7 +98,7 @@ Options on all three: `{ locale?: string, namespace?: string }`. The default nam
 import { en, de, fr, es } from '@ilingo/validup/store/memory';
 ```
 
-Each is a `Translations` node (`defineTranslations(...)`, i.e. `{ type: 'translations', data }`) keyed by the built-in `IssueCode` runtime values. (They live on the `./store/memory` subpath — the eager entry — so the data-free core stays free of translation modules.)
+Each is a `TranslationsNode` (`defineTranslations(...)`, i.e. `{ type: 'translations', data }`) keyed by the built-in `IssueCode` runtime values. (They live on the `./store/memory` subpath — the eager entry — so the data-free core stays free of translation modules.)
 
 ### Extending / overriding the `validup` namespace
 
