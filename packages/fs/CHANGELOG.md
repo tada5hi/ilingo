@@ -1,5 +1,42 @@
 # Changelog
 
+## [6.0.0](https://github.com/tada5hi/ilingo/compare/fs-v5.0.0...fs-v6.0.0) (2026-06-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* the `Config` and `ConfigInput` exports are removed. Use `IlingoOptions` instead (e.g. import { IlingoOptions } from 'ilingo').
+* MemoryStore({ data }) now requires a descriptor tree (defineCatalog([...])) rather than a plain { locale: { namespace: lines } } object; the @plural marker is replaced by definePlural() / a { type: 'plural', data } node; FSStore files and LoaderStore loaders return a lines node ({ type: 'lines', data }); Ilingo and IIlingo are no longer generic and get() keys are loose strings; @ilingo/validup no longer exports ValidupCatalog / ValidupCatalogEntries.
+* `Ilingo.stores` is now a `Map<symbol|string, IStore>` (was `Set<IStore>`); `Ilingo.register(store)` is renamed to `registerStore(store)` and dedupes by `store.id`; `IStore` now requires a `readonly id`. `@ilingo/validup`'s `Store` / `createStore` / translations moved to the `@ilingo/validup/store/memory` subpath (`createStore` → `createMemoryStore`); the `register(ilingo)` helper was removed in favour of `ilingo.registerStore(createMemoryStore())`.
+* **ilingo:** a get({ locale: 'X' }) call where 'X' has no data now falls through to the default locale rather than returning undefined. Pass fallback: [] to opt out (or pre-check via getResolvedLocale).
+
+### Features
+
+* descriptor-tree catalogs and remove type-safe key inference ([#959](https://github.com/tada5hi/ilingo/issues/959)) ([f61ee8c](https://github.com/tada5hi/ilingo/commit/f61ee8c00fc093e6efaee425736a97c1bdc48a5a))
+* **fs:** persist FSStore.set to disk ([bab057a](https://github.com/tada5hi/ilingo/commit/bab057a003726d3929d7582679b5f05a4bcf7e14))
+* **ilingo:** deprecate bare structural plural form ([#920](https://github.com/tada5hi/ilingo/issues/920)) ([21a5efa](https://github.com/tada5hi/ilingo/commit/21a5efafa14de01daa7e2e18104c8d00c7707ccf))
+* **ilingo:** pluralization, fallback chain, missing-key handler ([#912](https://github.com/tada5hi/ilingo/issues/912)) ([b091bb4](https://github.com/tada5hi/ilingo/commit/b091bb4ba181163863ad17d9b9b56573796e476b))
+* loader store + FSStore watch mode + invalidation API ([#919](https://github.com/tada5hi/ilingo/issues/919)) ([f615d35](https://github.com/tada5hi/ilingo/commit/f615d35c9ddf1fe28db75fa479c6a31d8032de0e))
+* validup bridge — new @ilingo/validup(-vue) packages + breaking catalog/store API ([#939](https://github.com/tada5hi/ilingo/issues/939)) ([f19f03f](https://github.com/tada5hi/ilingo/commit/f19f03f48f17e739f2b6ed533d4f8ddef59f92e0))
+
+
+### Bug Fixes
+
+* **deps:** bump the majorprod group across 1 directory with 2 updates ([#922](https://github.com/tada5hi/ilingo/issues/922)) ([5b2bf7d](https://github.com/tada5hi/ilingo/commit/5b2bf7d083c09438003057f8832664afd1444b7b))
+* **fs:** adapt FSStore to locter v3 cwd option rename ([4f1cb64](https://github.com/tada5hi/ilingo/commit/4f1cb641f7006fde6d300b1dec80ab1145ef34aa))
+
+
+### Code Refactoring
+
+* remove dead code and realign docs after descriptor-tree migration ([#960](https://github.com/tada5hi/ilingo/issues/960)) ([0d1e798](https://github.com/tada5hi/ilingo/commit/0d1e7985b224812e33214699fdcdfa88bf579cef))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^5.0.0 to ^6.0.0
+
 ## [5.0.0](https://github.com/tada5hi/ilingo/compare/fs-v4.3.3...fs-v5.0.0) (2026-01-14)
 
 
