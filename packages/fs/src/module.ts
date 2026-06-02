@@ -99,7 +99,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
 
     override async getLocales(): Promise<string[]> {
         const locations = await locateMany(['*'], {
-            path: this.directories,
+            cwd: this.directories,
             onlyDirectories: true,
         });
 
@@ -297,7 +297,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
         }
 
         return {
-            path: directory,
+            cwd: directory,
             ignore: [],
         };
     }
