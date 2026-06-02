@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export * from './de';
-export * from './en';
-export * from './es';
-export * from './fr';
+export { default as en } from './en';
+export { default as de } from './de';
+export { default as fr } from './fr';
+export { default as es } from './es';
