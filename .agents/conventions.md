@@ -166,7 +166,8 @@ Same ratchet rule as coverage thresholds: tighten budgets in the same PR that im
 
 ## Release Process
 
-- **release-please** (`.github/workflows/release.yml`) reads Conventional Commits since the last release tag and opens a PR that bumps versions and updates `CHANGELOG.md` per workspace.
+- **release-please** (`.github/workflows/release.yml`) reads Conventional Commits since the last release tag and opens a PR that bumps versions and updates `CHANGELOG.md` per workspace. The release-please step only runs on `push` to `master`.
+- The workflow can also be **triggered manually** (`workflow_dispatch`, via the Actions UI "Run workflow" button or `gh workflow run release.yml --ref master`). A `Set publish flag` step computes `should_publish`: a manual run forces it to `true`; a `push` mirrors release-please's `releases_created`. Every install/build/publish step is gated on `should_publish == 'true'`. This lets a publish that was missed or failed (e.g. the release PR is already merged, so `releases_created` is now `false`) be re-run without a new release commit — monoship still only publishes workspaces whose `version` is not yet on the registry, so a redundant manual run is a safe no-op.
 - `release-please-config.json` lists the four components (`ilingo`, `fs`, `vue`, `vuelidate`) and uses the `node-workspace` plugin so internal version ranges are kept in sync (`updatePeerDependencies: true`).
 - Merging the release-please PR triggers the rest of the `release.yml` job: install → build → `tada5hi/monoship@v2`. monoship checks each workspace's `version` against the npm registry and publishes only the ones that aren't there yet.
 - **OIDC trusted publishing** is enabled via `permissions: id-token: write`. No `NPM_TOKEN` secret is configured or needed — npm 10+ negotiates a short-lived token with the registry.
