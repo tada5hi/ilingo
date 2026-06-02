@@ -82,9 +82,7 @@ src/
         ├── module.ts         # isBCP47LanguageCode
         └── data.json         # BCP-47 language code table
 test/
-├── helpers/
-│   └── catalog.ts                    # converts the legacy {locale:{ns:translations}} shape to a descriptor tree (keeps contract tests concise)
-└── unit/
+└── unit/                             # catalogs built inline with the define* helpers (no shared toCatalog helper)
     ├── module.spec.ts                # legacy core behaviour
     ├── resolution.spec.ts            # plural, fallback chain, missing-key handler, serial store walk, clone()
     ├── formatters-integration.spec.ts # Ilingo.get() with number/date/list modifiers, cache + dev-warn
@@ -146,9 +144,7 @@ src/
     ├── use-scoped-catalog.ts # useScopedCatalog({ messages }) → { instance, t } + provides scoped Ilingo
     └── utils.ts              # extractReactiveData
 test/                         # happy-dom + @vue/test-utils via vitest
-├── helpers/
-│   └── catalog.ts            # mirror of the core helper — {locale:{ns:translations}} → descriptor tree
-└── unit/
+└── unit/                     # catalogs built inline with the define* helpers (no shared toCatalog helper)
     ├── component-t.spec.ts   # <ITranslateT> rendering (slots, vars, fragments, error paths)
     ├── directive-t.spec.ts   # v-t directive (string/object bindings, reactive locale, opt-out)
     └── scoped-catalog.spec.ts# useScopedCatalog (same-component t, descendant provide, no-leak, fallback)

@@ -6,17 +6,24 @@
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
-import { Ilingo, MemoryStore } from 'ilingo';
+import {
+    Ilingo,
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineTranslations,
+} from 'ilingo';
+import type { CatalogInput } from 'ilingo';
 import { defineComponent } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { install, useScopedCatalog, useTranslation } from '../../src';
-import { toCatalog } from '../helpers/catalog';
 
-function plugin(messages: Record<string, unknown>, locale = 'en') {
+function plugin(data: CatalogInput, locale = 'en') {
     return {
         install(app: import('vue').App) {
             install(app, {
-                store: new MemoryStore({ data: toCatalog(messages as never) }),
+                store: new MemoryStore({ data }),
                 locale,
             });
         },
@@ -29,9 +36,11 @@ describe('useScopedCatalog (#902)', () => {
             template: '<p data-test="modal">{{ text }}</p>',
             setup() {
                 const { t } = useScopedCatalog({
-                    messages: toCatalog({
-                        en: { modal: { greeting: 'Scoped hello' } },
-                    }),
+                    messages: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('modal', [defineTranslations({ greeting: 'Scoped hello' })]),
+                        ]),
+                    ]),
                 });
                 const text = t({ namespace: 'modal', key: 'greeting' });
                 return { text };
@@ -40,9 +49,11 @@ describe('useScopedCatalog (#902)', () => {
 
         const wrapper = mount(Modal, {
             global: {
-                plugins: [plugin({
-                    en: { modal: { greeting: 'Default hello' } },
-                })],
+                plugins: [plugin(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('modal', [defineTranslations({ greeting: 'Default hello' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -66,16 +77,22 @@ describe('useScopedCatalog (#902)', () => {
             template: '<Body />',
             setup() {
                 useScopedCatalog({
-                    messages: toCatalog({ en: { modal: { greeting: 'Scoped hello' } } }),
+                    messages: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('modal', [defineTranslations({ greeting: 'Scoped hello' })]),
+                        ]),
+                    ]),
                 });
             },
         });
 
         const wrapper = mount(Modal, {
             global: {
-                plugins: [plugin({
-                    en: { modal: { greeting: 'Default hello' } },
-                })],
+                plugins: [plugin(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('modal', [defineTranslations({ greeting: 'Default hello' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -97,7 +114,11 @@ describe('useScopedCatalog (#902)', () => {
             template: '<ModalBody />',
             setup() {
                 useScopedCatalog({
-                    messages: toCatalog({ en: { modal: { greeting: 'Scoped hello' } } }),
+                    messages: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('modal', [defineTranslations({ greeting: 'Scoped hello' })]),
+                        ]),
+                    ]),
                 });
             },
         });
@@ -117,9 +138,11 @@ describe('useScopedCatalog (#902)', () => {
 
         const wrapper = mount(Page, {
             global: {
-                plugins: [plugin({
-                    en: { modal: { greeting: 'Default hello' } },
-                })],
+                plugins: [plugin(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('modal', [defineTranslations({ greeting: 'Default hello' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -137,7 +160,11 @@ describe('useScopedCatalog (#902)', () => {
             template: '<p data-test="modal">{{ text }}</p>',
             setup() {
                 const { t } = useScopedCatalog({
-                    messages: toCatalog({ en: { modal: { greeting: 'Scoped hello' } } }),
+                    messages: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('modal', [defineTranslations({ greeting: 'Scoped hello' })]),
+                        ]),
+                    ]),
                 });
                 // Request a locale ('ru') that has no data anywhere; with the
                 // parent's `fallback: 'de'` honoured, the chain reaches the
@@ -157,10 +184,14 @@ describe('useScopedCatalog (#902)', () => {
                 const ilingo = new Ilingo({
                     fallback: 'de',
                     store: new MemoryStore({
-                        data: toCatalog({
-                            de: { app: { farewell: 'Tschüss aus DE' } },
-                            en: { app: { farewell: 'Bye from EN' } },
-                        }),
+                        data: defineCatalog([
+                            defineLocale('de', [
+                                defineNamespace('app', [defineTranslations({ farewell: 'Tschüss aus DE' })]),
+                            ]),
+                            defineLocale('en', [
+                                defineNamespace('app', [defineTranslations({ farewell: 'Bye from EN' })]),
+                            ]),
+                        ]),
                     }),
                     locale: 'en',
                 });
@@ -184,7 +215,11 @@ describe('useScopedCatalog (#902)', () => {
             setup() {
                 // Only `modal.greeting` is scoped. `app.foo` falls through.
                 const { t } = useScopedCatalog({
-                    messages: toCatalog({ en: { modal: { greeting: 'Scoped hello' } } }),
+                    messages: defineCatalog([
+                        defineLocale('en', [
+                            defineNamespace('modal', [defineTranslations({ greeting: 'Scoped hello' })]),
+                        ]),
+                    ]),
                 });
                 const text = t({ namespace: 'app', key: 'foo' });
                 return { text };
@@ -193,9 +228,11 @@ describe('useScopedCatalog (#902)', () => {
 
         const wrapper = mount(Modal, {
             global: {
-                plugins: [plugin({
-                    en: { app: { foo: 'global foo' } },
-                })],
+                plugins: [plugin(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ foo: 'global foo' })]),
+                    ]),
+                ]))],
             },
         });
 

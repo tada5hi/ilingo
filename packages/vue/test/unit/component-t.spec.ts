@@ -6,17 +6,23 @@
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
-import { MemoryStore } from 'ilingo';
+import {
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineTranslations,
+} from 'ilingo';
+import type { CatalogInput } from 'ilingo';
 import { defineComponent, h } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { ITranslateT, install } from '../../src';
-import { toCatalog } from '../helpers/catalog';
 
-function makeApp(messages: Record<string, Record<string, Record<string, unknown>>>) {
+function makeApp(data: CatalogInput) {
     return {
         install(app: import('vue').App) {
             install(app, {
-                store: new MemoryStore({ data: toCatalog(messages) }),
+                store: new MemoryStore({ data }),
                 locale: 'en',
             });
         },
@@ -28,7 +34,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         const wrapper = mount(ITranslateT, {
             props: { path: 'app.hi' },
             global: {
-                plugins: [makeApp({ en: { app: { hi: 'Hello there' } } })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ hi: 'Hello there' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -41,7 +51,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         const wrapper = mount(ITranslateT, {
             props: { path: 'app.greet', data: { name: 'Peter' } },
             global: {
-                plugins: [makeApp({ en: { app: { greet: 'Hi {{name}}!' } } })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ greet: 'Hi {{name}}!' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -56,9 +70,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
                 cta: () => h('a', { href: '/start' }, 'get started'),
             },
             global: {
-                plugins: [makeApp({
-                    en: { app: { cta: 'Please {cta} to continue.' } },
-                })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ cta: 'Please {cta} to continue.' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -76,13 +92,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
                 cta: () => h('strong', null, 'get started'),
             },
             global: {
-                plugins: [makeApp({
-                    en: {
-                        app: {
-                            welcome: 'Hi {{user}}, please {cta} now.',
-                        },
-                    },
-                })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ welcome: 'Hi {{user}}, please {cta} now.' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -96,9 +110,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
             props: { path: 'app.cta' },
             // no `cta` slot provided
             global: {
-                plugins: [makeApp({
-                    en: { app: { cta: 'Please {cta} to continue.' } },
-                })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ cta: 'Please {cta} to continue.' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -110,7 +126,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         expect(() => mount(ITranslateT, {
             props: { path: 'no-dot' },
             global: {
-                plugins: [makeApp({ en: { app: {} } })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({})]),
+                    ]),
+                ]))],
             },
         })).toThrow(/namespace\.key/);
     });
@@ -123,7 +143,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         expect(() => mount(ITranslateT, {
             props: { path: badPath },
             global: {
-                plugins: [makeApp({ en: { app: {} } })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({})]),
+                    ]),
+                ]))],
             },
         })).toThrow(/namespace\.key/);
     });
@@ -136,9 +160,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         const wrapper = mount(ITranslateT, {
             props: { path: 'app.owe', data: {} as never },
             global: {
-                plugins: [makeApp({
-                    en: { app: { owe: 'You owe {{amount, number(currency=EUR)}}' } },
-                })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ owe: 'You owe {{amount, number(currency=EUR)}}' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -160,7 +186,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
 
         const wrapper = mount(Wrapper, {
             global: {
-                plugins: [makeApp({ en: { app: { hi: 'Hello', bye: 'Goodbye' } } })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ hi: 'Hello', bye: 'Goodbye' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -178,7 +208,11 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
             template: '<div><ITranslateT path="app.hi" tag="" /></div>',
         }, {
             global: {
-                plugins: [makeApp({ en: { app: { hi: 'Hello' } } })],
+                plugins: [makeApp(defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('app', [defineTranslations({ hi: 'Hello' })]),
+                    ]),
+                ]))],
             },
         });
 
@@ -188,4 +222,3 @@ describe('<ITranslateT> — slot-aware interpolation (#900)', () => {
         expect(wrapper.text()).toEqual('Hello');
     });
 });
-

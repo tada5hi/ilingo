@@ -6,25 +6,27 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {Ilingo, MemoryStore} from "../../src";
-import { toCatalog } from "../helpers/catalog";
+import {
+    Ilingo,
+    MemoryStore,
+    defineCatalog,
+    defineLocale,
+    defineNamespace,
+    defineTranslations,
+} from "../../src";
 
 describe('src/module.ts', () => {
     it('should get/set directory + locale + namespaces', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: toCatalog({
-                    ru: {
-                        foo: {
-                            line: 'bar-baz'
-                        }
-                    },
-                    en: {
-                        foo: {
-                            line: 'baz-boz'
-                        }
-                    }
-                })
+                data: defineCatalog([
+                    defineLocale('ru', [
+                        defineNamespace('foo', [defineTranslations({ line: 'bar-baz' })]),
+                    ]),
+                    defineLocale('en', [
+                        defineNamespace('foo', [defineTranslations({ line: 'baz-boz' })]),
+                    ]),
+                ]),
             })
         });
 
@@ -38,18 +40,14 @@ describe('src/module.ts', () => {
     it('should get locales', async () => {
         const ilingo = new Ilingo({
             store: new MemoryStore({
-                data: toCatalog({
-                    ru: {
-                        foo: {
-                            line: 'bar-baz'
-                        }
-                    },
-                    en: {
-                        foo: {
-                            line: 'baz-boz'
-                        }
-                    }
-                })
+                data: defineCatalog([
+                    defineLocale('ru', [
+                        defineNamespace('foo', [defineTranslations({ line: 'bar-baz' })]),
+                    ]),
+                    defineLocale('en', [
+                        defineNamespace('foo', [defineTranslations({ line: 'baz-boz' })]),
+                    ]),
+                ]),
             })
         });
 
@@ -71,23 +69,17 @@ describe('src/module.ts', () => {
     it('should set/get locales record', async () => {
         const language = new Ilingo({
             store: new MemoryStore({
-                data: toCatalog({
-                    en: {
-                        namespace: {
-                            foo: 'My name is {{name}}'
-                        }
-                    },
-                    de: {
-                        namespace: {
-                            foo: 'Mein Name ist {{name}}'
-                        }
-                    },
-                    fr: {
-                        namespace: {
-                            foo: 'Mon nom est {{name}}'
-                        }
-                    }
-                })
+                data: defineCatalog([
+                    defineLocale('en', [
+                        defineNamespace('namespace', [defineTranslations({ foo: 'My name is {{name}}' })]),
+                    ]),
+                    defineLocale('de', [
+                        defineNamespace('namespace', [defineTranslations({ foo: 'Mein Name ist {{name}}' })]),
+                    ]),
+                    defineLocale('fr', [
+                        defineNamespace('namespace', [defineTranslations({ foo: 'Mon nom est {{name}}' })]),
+                    ]),
+                ]),
             })
         });
 
@@ -109,23 +101,19 @@ describe('src/module.ts', () => {
 
     it('should merge stores', async () => {
         const storeA = new MemoryStore({
-            data: toCatalog({
-                en: {
-                    app: {
-                        foo: 'bar'
-                    }
-                }
-            })
+            data: defineCatalog([
+                defineLocale('en', [
+                    defineNamespace('app', [defineTranslations({ foo: 'bar' })]),
+                ]),
+            ])
         });
 
         const storeB = new MemoryStore({
-            data: toCatalog({
-                en: {
-                    app: {
-                        bar: 'boz'
-                    }
-                }
-            })
+            data: defineCatalog([
+                defineLocale('en', [
+                    defineNamespace('app', [defineTranslations({ bar: 'boz' })]),
+                ]),
+            ])
         });
 
         const instanceA = new Ilingo({store: storeA});
