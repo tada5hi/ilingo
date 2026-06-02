@@ -10,7 +10,7 @@ import { defineConfig } from 'tsdown';
 /**
  * Vue surface for `@ilingo/validup`: the install plugin, the five
  * composables, the `<IValidup>` / `<IValidupT>` components, and the
- * `FieldTranslations` / `GroupTranslations` / `FieldFeedback` Ref-shaped
+ * `FieldTranslations` / `GroupTranslations` / `FieldValidation` Ref-shaped
  * aliases. All `@ilingo/validup` core symbols stay external — consumers
  * always have it installed alongside this package.
  *

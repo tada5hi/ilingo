@@ -32,13 +32,18 @@ export type FieldTranslations = Ref<IssueTranslation[]>;
 export type GroupTranslations = Ref<IssueGroupTranslation[]>;
 
 /**
- * Return shape of `useFieldFeedback` — a **`reactive`** bundle (so its
- * keys auto-unwrap when `v-bind`'d onto a `<VCFormGroup>`-style host) of
- * the field's `severity`, its reshaped `messages`
- * (`validation-severity` / `validation-messages`), and the raw
- * `issues` escape hatch.
+ * Return shape of `useFieldValidation` — a **`reactive`** bundle of the
+ * field's `severity`, its reshaped `messages`, and the raw `issues`
+ * escape hatch. Structurally what vuecs's `<VCFormGroup :validation>`
+ * prop consumes, so the bundle binds straight onto it:
+ * `<VCFormGroup :validation="useFieldValidation($v.fields.email)">`.
+ *
+ * The name mirrors vuecs's `validation-*` vocabulary (`validation-severity`
+ * / `validation-messages`, `<VCValidationGroup>`); compatibility is
+ * structural — vuecs declares its own identical type rather than importing
+ * this one.
  */
-export type FieldFeedback = {
+export type FieldValidation = {
     severity: Severity;
     messages: KeyValue<string>[];
     issues: IssueTranslation[];
