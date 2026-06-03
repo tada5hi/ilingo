@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.0.1](https://github.com/tada5hi/ilingo/compare/fs-v6.0.0...fs-v6.0.1) (2026-06-03)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^6.0.0 to ^7.0.0
+
 ## [6.0.0](https://github.com/tada5hi/ilingo/compare/fs-v5.0.0...fs-v6.0.0) (2026-06-02)
 
 

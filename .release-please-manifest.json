@@ -1,8 +1,8 @@
 {
-    "packages/ilingo": "6.0.0",
-    "packages/fs": "6.0.0",
-    "packages/vue": "6.0.0",
-    "packages/vuelidate": "7.0.0",
-    "packages/validup": "1.0.0",
-    "packages/validup-vue": "1.0.0"
+    "packages/ilingo": "7.0.0",
+    "packages/fs": "6.0.1",
+    "packages/vue": "7.0.0",
+    "packages/vuelidate": "8.0.0",
+    "packages/validup": "2.0.0",
+    "packages/validup-vue": "2.0.0"
 }
