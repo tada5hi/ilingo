@@ -268,6 +268,14 @@ Core support lives in `packages/ilingo/src/utils/template.ts` as a separate `tok
 
 Creates a fresh `Ilingo` instance with a `MemoryStore` for the scoped messages registered *first* (scoped strings win), then re-adds every store from the parent instance (non-scoped keys still fall through). Calls `provideIlingo(scoped)` so the component subtree sees the scoped instance via plain `useTranslation`. Returns `{ instance, t }` for same-component use, since Vue's provide can't reach the current setup's own injections.
 
+### `@ilingo/validup-vue` — `useFieldValidation` per-field memoization
+
+Every reactive composable in `@ilingo/validup-vue` ultimately wires a VueUse `computedAsync`, which registers a `watchEffect` in the **active effect scope at call time**. Called from `setup()` (the `<IValidup>` / `<IValidupT>` components, and the README's other composables) that scope is the component's setup scope — created once, disposed on unmount; no accumulation.
+
+`useFieldValidation` is the exception: it is *documented to be called inline in the template* (`<VCFormGroup :validation="useFieldValidation($v.fields.email)">`), where the active scope is the component's **render** scope. Vue does not dispose render-created effects between renders, so a naïve inline call leaks one watcher per render → an unbounded, self-amplifying watcher list that hangs the page on the second keystroke (#965).
+
+The fix is **memoization keyed by `FieldState` identity** (`WeakMap<object, FieldValidation>` in `use-field-validation.ts`). `@validup/vue`'s `useValidup` exposes `fields` through a Proxy backed by an internal `fieldsCache: Map<path, FieldState>`, so `$v.fields.email` is the *same* object across renders — a sound `WeakMap` key. First call per field builds the `reactive` bundle and registers the watcher once (lifetime = the component, exactly like a `setup()` call); subsequent renders return the cached bundle and register nothing. Distinct `useValidup()` instances mint distinct `FieldState` identities, so two forms never share a bundle; a `Ref<FieldState>` source keys by the ref's own (stable) identity and the bundle stays reactive to whichever field it points at.
+
 ## Data Flow
 
 ```

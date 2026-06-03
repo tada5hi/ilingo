@@ -13,7 +13,7 @@ import type { IssueGroup, IssueItem, Validator } from 'validup';
 import type { Composable } from '@validup/vue';
 import { useValidup } from '@validup/vue';
 import { mount } from '@vue/test-utils';
-import { computed, defineComponent, nextTick, reactive, ref } from 'vue';
+import { computed, defineComponent, h, nextTick, reactive, ref } from 'vue';
 import type { Ref } from 'vue';
 import { describe, expect, it } from 'vitest';
 import {
@@ -272,5 +272,98 @@ describe('useFieldValidation', () => {
 
         await flush();
         expect(wrapper.find('.severity').text()).toBe('none');
+    });
+
+    // Regression: the documented inline pattern
+    // `<VCFormGroup :validation="useFieldValidation($v.fields.email)">` calls
+    // this composable from the render function. Each call wires a
+    // `computedAsync` watcher into the component scope, which Vue does not
+    // dispose between renders — without memoization every keystroke leaks a
+    // fresh watcher and the page hangs. See issue #965. Memoizing per
+    // `FieldState` identity makes repeated calls return the *same* bundle, so
+    // the watcher is registered exactly once.
+    it('returns the same bundle for the same field across re-renders (issue #965)', async () => {
+        const container = new Container<{ email: string }>();
+        container.mount('email', isString);
+        const formState = reactive({ email: 42 as unknown as string });
+
+        const ilingo = new Ilingo({ locale: 'en' });
+        const tick = ref(0);
+        const seen: unknown[] = [];
+
+        const wrapper = mount(defineComponent({
+            setup() {
+                const $v = useValidup(container, formState);
+                $v.fields.email.$touch();
+                return () => {
+                    // Re-read `tick` so each bump forces a fresh render, and
+                    // call the composable inline exactly like the README's
+                    // `:validation="useFieldValidation(...)"` pattern.
+                    void tick.value;
+                    const bundle = useFieldValidation($v.fields.email);
+                    seen.push(bundle);
+                    return h('div', { class: 'values' }, bundle.messages.map((m) => m.value).join(','));
+                };
+            },
+        }), {
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        await flush();
+        tick.value++;
+        await flush();
+        tick.value++;
+        await flush();
+
+        // The render ran multiple times...
+        expect(seen.length).toBeGreaterThan(1);
+        // ...but every render saw the identical memoized bundle (no new watcher).
+        for (const bundle of seen) {
+            expect(bundle).toBe(seen[0]);
+        }
+        // And the bundle stayed live/reactive across those renders.
+        expect(wrapper.find('.values').text()).toBe('The value is invalid');
+
+        wrapper.unmount();
+    });
+
+    it('memoizes distinct bundles for distinct fields and form instances', () => {
+        const container = new Container<{ email: string, name: string }>();
+        container.mount('email', isString);
+        container.mount('name', isString);
+        const formState = reactive({ email: '', name: '' });
+
+        const ilingo = new Ilingo({ locale: 'en' });
+        let probe: {
+            sameField: boolean,
+            distinctFields: boolean,
+            distinctForms: boolean,
+        } | undefined;
+
+        const wrapper = mount(defineComponent({
+            setup() {
+                const a = useValidup(container, formState);
+                const b = useValidup(container, reactive({ email: '', name: '' }));
+
+                probe = {
+                    // Same field identity → same bundle.
+                    sameField: useFieldValidation(a.fields.email) === useFieldValidation(a.fields.email),
+                    // Different fields of one form → different bundles.
+                    distinctFields: useFieldValidation(a.fields.email) !== useFieldValidation(a.fields.name),
+                    // Same path, different form instance → different bundles.
+                    distinctForms: useFieldValidation(a.fields.email) !== useFieldValidation(b.fields.email),
+                };
+
+                return () => h('div');
+            },
+        }), {
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        expect(probe?.sameField).toBe(true);
+        expect(probe?.distinctFields).toBe(true);
+        expect(probe?.distinctForms).toBe(true);
+
+        wrapper.unmount();
     });
 });

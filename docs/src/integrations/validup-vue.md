@@ -101,6 +101,10 @@ const validation = useFieldValidation($v.fields.email);
 - `messages` — `{ key: issue.code ?? 'validation', value: message }[]`; the host's `validation-messages`.
 - `issues` — the raw `IssueTranslation[]` escape hatch for richer rendering.
 
+::: tip Safe to call inline in the template
+You can also call it directly in the binding — `<VCFormGroup :validation="useFieldValidation($v.fields.email)">` — without declaring `validation` in `setup()`. The bundle is **memoized per `FieldState` identity**: `@validup/vue` hands out a stable field object per `(form, path)`, so repeated calls across renders return the *same* bundle and the underlying async watcher is registered exactly once (lives for the component's lifetime, like a `setup()`-level call). Without that memoization, an inline call would leak a fresh watcher every render and hang the page on typing — see [issue #965](https://github.com/tada5hi/ilingo/issues/965).
+:::
+
 ## `<IValidup>` — renderless component
 
 ### Leaf mode — `:issues`

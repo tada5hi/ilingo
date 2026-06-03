@@ -13,6 +13,35 @@ import type { FieldValidation } from '../types';
 import { useTranslationsForField } from './use-translations-for-field';
 
 /**
+ * Memoize each built bundle against the identity of the `field` argument.
+ *
+ * The bundle wires a `computedAsync` (via `useTranslationsForField` →
+ * `useTranslationsForIssues`), and `computedAsync` registers a
+ * `watchEffect` in the **active effect scope** at call time. When this
+ * composable is called *inline in a template* — the documented
+ * `<VCFormGroup :validation="useFieldValidation($v.fields.email)">`
+ * pattern — that scope is the enclosing component's render scope, which
+ * Vue does not auto-dispose between renders. Each keystroke would
+ * register a fresh watcher, accumulating an unbounded list that re-fires
+ * every render and saturates the scheduler (the page hangs on the second
+ * keystroke). See https://github.com/tada5hi/ilingo/issues/965.
+ *
+ * `@validup/vue`'s `useValidup` hands out a **stable** `FieldState` per
+ * `(form, path)` — its internal `fieldsCache` returns the same object for
+ * repeated `$v.fields.email` accesses across renders — so the field is a
+ * sound `WeakMap` key. The first call through a given field registers the
+ * watcher once (it lives for the component's lifetime, exactly like a
+ * `setup()`-level composable call); every later render returns the cached
+ * bundle and registers nothing.
+ *
+ * Cross-component pollution can't happen: two `useValidup()` instances
+ * mint distinct `FieldState` identities even for the same path. A `Ref`
+ * source keys by the ref's own identity (also stable), and the cached
+ * bundle stays reactive to whichever field the ref currently points at.
+ */
+const bundleCache = new WeakMap<object, FieldValidation>();
+
+/**
  * Bundle a field's presentational **severity** and its **translated
  * messages** into the single shape vuecs's `<VCFormGroup :validation>`
  * prop consumes — so a per-field validation block collapses from three
@@ -38,12 +67,22 @@ import { useTranslationsForField } from './use-translations-for-field';
  * - `issues` — the original `IssueTranslation[]` (from
  *   `useTranslationsForField`), for consumers that opt out of the reshape.
  *
+ * The bundle is **memoized per `field` identity** so it is safe to call
+ * inline in a template (as the example above does) — the underlying async
+ * watcher is registered once per field, not once per render. See
+ * {@link bundleCache} for the why.
+ *
  * The injected `Ilingo` instance + locale `Ref` come from the
  * `@ilingo/vue` plugin — call its `install()` (and this package's) first.
  */
 export function useFieldValidation<V = unknown>(
     field: MaybeRef<FieldState<V>>,
 ): FieldValidation {
+    const cached = bundleCache.get(field);
+    if (cached) {
+        return cached;
+    }
+
     const issues = useTranslationsForField(field);
 
     const severity = computed(() => getSeverity(unref(field)));
@@ -56,9 +95,12 @@ export function useFieldValidation<V = unknown>(
     // binds unwrapped, reactive values onto the host component. `reactive`'s
     // `UnwrapNestedRefs` collapses the computed/refs to `FieldValidation`'s
     // plain shape, so no cast is needed.
-    return reactive({
+    const bundle = reactive({
         severity,
         messages,
         issues,
     });
+
+    bundleCache.set(field, bundle);
+    return bundle;
 }
