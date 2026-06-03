@@ -1,7 +1,7 @@
 {
     "name": "@ilingo/validup",
     "type": "module",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Translate validup Issues through ilingo — framework-agnostic core with default EN/DE/FR/ES catalogs.",
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",
