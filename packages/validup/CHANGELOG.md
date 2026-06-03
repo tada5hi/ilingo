@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/tada5hi/ilingo/compare/validup-v1.0.0...validup-v1.0.1) (2026-06-03)
+
+
+### Bug Fixes
+
+* **validup-vue:** memoize useFieldValidation per field ([#965](https://github.com/tada5hi/ilingo/issues/965)) ([#966](https://github.com/tada5hi/ilingo/issues/966)) ([f32fc4b](https://github.com/tada5hi/ilingo/commit/f32fc4bf839e1fb8ebde0deb1fbd349792a10b17))
+
 ## [1.0.0](https://github.com/tada5hi/ilingo/compare/validup-v0.1.0...validup-v1.0.0) (2026-06-02)
 
 
