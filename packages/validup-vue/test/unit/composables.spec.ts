@@ -15,7 +15,7 @@ import { useValidup } from '@validup/vue';
 import { mount } from '@vue/test-utils';
 import { computed, defineComponent, nextTick, reactive, ref } from 'vue';
 import type { Ref } from 'vue';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
     install,
     useFieldValidation,
@@ -272,5 +272,61 @@ describe('useFieldValidation', () => {
 
         await flush();
         expect(wrapper.find('.severity').text()).toBe('none');
+    });
+
+    // Called from setup() the composable's watcher lives in the component
+    // scope, so unmount disposes it. We observe liveness through `ilingo.get`
+    // (which `translateIssues` calls): a locale flip re-translates only while
+    // a live watcher is subscribed; after unmount it must go quiet. (The
+    // template-only ergonomic is the renderless <IFieldValidation>, which owns
+    // the same lifecycle — see component spec — rather than an inline call,
+    // which would leak a watcher per render, #965.)
+    it('disposes the field watcher on unmount when used in setup()', async () => {
+        const container = new Container<{ email: string }>();
+        container.mount('email', isString);
+        const formState = reactive({ email: 42 as unknown as string });
+
+        const localeRef = ref('en');
+        const ilingo = new Ilingo({ locale: 'en' });
+
+        const wrapper = mount(defineComponent({
+            setup() {
+                const $v = useValidup(container, formState);
+                const feedback = useFieldValidation($v.fields.email);
+                $v.fields.email.$touch();
+                return { feedback };
+            },
+            template: '<div>{{ feedback.messages.map((m) => m.value).join(",") }}</div>',
+        }), {
+            global: {
+                plugins: [{
+                    install(app: import('vue').App) {
+                        provideLocale(localeRef, app);
+                        installIlingoVue(app, ilingo);
+                        install(app);
+                    },
+                }],
+            },
+        });
+
+        await flush();
+
+        const getSpy = vi.spyOn(ilingo, 'get');
+
+        // While mounted, a locale flip drives a re-translation → the watcher
+        // is alive and calls through to the instance.
+        localeRef.value = 'de';
+        await flush();
+        expect(getSpy.mock.calls.length).toBeGreaterThan(0);
+
+        // After unmount, the component scope is stopped: a further locale flip
+        // must trigger no work at all.
+        getSpy.mockClear();
+        wrapper.unmount();
+        localeRef.value = 'fr';
+        await flush();
+        expect(getSpy).not.toHaveBeenCalled();
+
+        getSpy.mockRestore();
     });
 });

@@ -268,6 +268,19 @@ Core support lives in `packages/ilingo/src/utils/template.ts` as a separate `tok
 
 Creates a fresh `Ilingo` instance with a `MemoryStore` for the scoped messages registered *first* (scoped strings win), then re-adds every store from the parent instance (non-scoped keys still fall through). Calls `provideIlingo(scoped)` so the component subtree sees the scoped instance via plain `useTranslation`. Returns `{ instance, t }` for same-component use, since Vue's provide can't reach the current setup's own injections.
 
+### `@ilingo/validup-vue` — composables are `setup()`-only; `<IFieldValidation>` for templates
+
+Every reactive composable in `@ilingo/validup-vue` ultimately wires a VueUse `computedAsync`, which registers a `watchEffect` in the **active effect scope at call time**. The contract is therefore: **call these composables from `setup()`**, where the active scope is the component scope — the watcher is created once and disposed on unmount. The `<IValidup>` / `<IValidupT>` components and all the `useTranslations*` composables already follow this.
+
+The trap (#965) is calling a composable from the **render** function. Empirically (Vue 3.5, verified by probe) the active effect scope during render is **`undefined`**, so a render-created `computedAsync` watcher belongs to no scope and Vue **never disposes it** — not between renders (it accumulates → unbounded self-amplifying list that hangs the page on the second keystroke) and **not on unmount** (each leaked watcher stays subscribed to the long-lived injected locale ref forever). `useFieldValidation` was the one composable *documented* to be used inline in the template (`:validation="useFieldValidation(...)"`), which is exactly this trap.
+
+The fix moves the lifecycle into a **renderless component** rather than papering over the render-time call:
+
+- `useFieldValidation` (`use-field-validation.ts`) is now a plain `setup()`-time composable — no cache, no scope plumbing. Used from `setup()` it is leak-free by construction.
+- `<IFieldValidation>` (`component-field-validation.ts`) is the template-only path. It calls `useFieldValidation(toRef(props, 'field'))` in its **own** `setup()`, so the watcher lives in that component's scope — created once, disposed on the component's unmount. The default scoped slot exposes the bundle as `value` (`<IFieldValidation :field v-slot="{ value }">`). Each `<IFieldValidation>` instance is its own component, so two of them over the same `FieldState` never share a watcher. This mirrors the existing `<IValidup>` / `<IValidupT>` renderless pattern — the package's established answer to "translation needs a lifecycle."
+
+A per-`(component, field)` memoization cache (keyed by `getCurrentInstance()`, watcher in an `effectScope` torn down via `onUnmounted`) was prototyped and rejected: it works, but it relies on render-time `getCurrentInstance()` (undocumented) and a module-level `WeakMap`, where the renderless component achieves the same lifetime guarantees with only public, idiomatic Vue. A *module-global* cache keyed only by `FieldState` was rejected outright — the single surviving watcher outlives its creating component and is shared across components, re-introducing both the unmount leak and cross-component staleness.
+
 ## Data Flow
 
 ```

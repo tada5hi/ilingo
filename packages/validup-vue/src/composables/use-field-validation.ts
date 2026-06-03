@@ -18,10 +18,26 @@ import { useTranslationsForField } from './use-translations-for-field';
  * prop consumes — so a per-field validation block collapses from three
  * reactive shims (severity, translations, reshape) to one binding.
  *
+ * **Call this in `setup()`, not in the template.** Like every composable
+ * here it wires a `computedAsync` (via `useTranslationsForField`), whose
+ * watcher is owned by the effect scope active at call time. From `setup()`
+ * that is the component scope — created once, disposed on unmount. Called
+ * *inline in the template* it would register a fresh, never-disposed
+ * watcher on every render and hang the page on typing (#965), because the
+ * render path has no active effect scope. For the template-only ergonomic
+ * (no `setup()` line) use the renderless {@link IFieldValidation} component,
+ * which owns the lifecycle for you.
+ *
  * ```vue
- * <VCFormGroup :validation="useFieldValidation($v.fields.email)">
- *     <VCFormInput v-model="$v.fields.email.$model" />
- * </VCFormGroup>
+ * <script setup lang="ts">
+ * const validation = useFieldValidation($v.fields.email);
+ * </script>
+ *
+ * <template>
+ *     <VCFormGroup :validation="validation">
+ *         <VCFormInput v-model="$v.fields.email.$model" />
+ *     </VCFormGroup>
+ * </template>
  * ```
  *
  * Binding the return value works because it is a **`reactive`** bundle —
@@ -52,7 +68,7 @@ export function useFieldValidation<V = unknown>(
         value: t.message,
     })));
 
-    // A `reactive` bundle (not a bag of refs) so `:validation="useFieldValidation(…)"`
+    // A `reactive` bundle (not a bag of refs) so `:validation="validation"`
     // binds unwrapped, reactive values onto the host component. `reactive`'s
     // `UnwrapNestedRefs` collapses the computed/refs to `FieldValidation`'s
     // plain shape, so no cast is needed.

@@ -5,15 +5,16 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { install as installIlingoVue } from '@ilingo/vue';
+import { install as installIlingoVue, provideLocale } from '@ilingo/vue';
 import { Ilingo, MemoryStore, defineCatalog, defineTranslations, defineLocale, defineNamespace } from 'ilingo';
-import { IssueCode, defineIssueGroup, defineIssueItem } from 'validup';
-import type { IssueGroup, IssueItem } from 'validup';
+import { Container, IssueCode, defineIssueGroup, defineIssueItem } from 'validup';
+import type { IssueGroup, IssueItem, Validator } from 'validup';
 import type { Composable } from '@validup/vue';
+import { useValidup } from '@validup/vue';
 import { mount } from '@vue/test-utils';
-import { computed, defineComponent, h, nextTick } from 'vue';
-import { describe, expect, it } from 'vitest';
-import { IValidup, IValidupT, install } from '../../src';
+import { computed, defineComponent, h, nextTick, reactive, ref } from 'vue';
+import { describe, expect, it, vi } from 'vitest';
+import { IFieldValidation, IValidup, IValidupT, install } from '../../src';
 
 function ilingoTestPlugin(ilingo: Ilingo) {
     return {
@@ -234,5 +235,113 @@ describe('<IValidupT>', () => {
 
         await flush();
         expect(wrapper.text()).toBe('no code here');
+    });
+});
+
+const isString: Validator = (ctx) => {
+    if (typeof ctx.value !== 'string') {
+        throw new Error('Value is not a string');
+    }
+    return ctx.value;
+};
+
+describe('<IFieldValidation>', () => {
+    it('exposes the reactive validation bundle to the default slot as `value`', async () => {
+        const container = new Container<{ email: string }>();
+        container.mount('email', isString);
+        const formState = reactive({ email: 42 as unknown as string });
+
+        const ilingo = new Ilingo({ locale: 'en' });
+        const wrapper = mount(defineComponent({
+            setup() {
+                const $v = useValidup(container, formState);
+                $v.fields.email.$touch();
+                return () => h(IFieldValidation, { field: $v.fields.email }, {
+                    default: ({ value }: any) => h('div', [
+                        h('span', { class: 'sev' }, value.severity),
+                        h('span', { class: 'msg' }, value.messages.map((m: any) => m.value).join(',')),
+                    ]),
+                });
+            },
+        }), {
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        await flush();
+        // A required field with a hard failure → 'error', message from catalog.
+        expect(wrapper.find('.sev').text()).toBe('error');
+        expect(wrapper.find('.msg').text()).toBe('The value is invalid');
+
+        wrapper.unmount();
+    });
+
+    it('renders nothing when no default slot is provided', async () => {
+        const container = new Container<{ email: string }>();
+        container.mount('email', isString);
+        const formState = reactive({ email: 42 as unknown as string });
+
+        const ilingo = new Ilingo({ locale: 'en' });
+        const wrapper = mount(defineComponent({
+            setup() {
+                const $v = useValidup(container, formState);
+                $v.fields.email.$touch();
+                return () => h(IFieldValidation, { field: $v.fields.email });
+            },
+        }), {
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        await flush();
+        expect(wrapper.text()).toBe('');
+
+        wrapper.unmount();
+    });
+
+    // The renderless component owns the `useFieldValidation` call in its own
+    // setup scope, so unmounting it disposes the async watcher — the leak-free
+    // alternative to an inline-in-template call (#965). We observe liveness via
+    // `ilingo.get` (which `translateIssues` calls): live while mounted, silent
+    // after unmount.
+    it('disposes its field watcher on unmount (no leak)', async () => {
+        const container = new Container<{ email: string }>();
+        container.mount('email', isString);
+        const formState = reactive({ email: 42 as unknown as string });
+
+        const localeRef = ref('en');
+        const ilingo = new Ilingo({ locale: 'en' });
+        const wrapper = mount(defineComponent({
+            setup() {
+                const $v = useValidup(container, formState);
+                $v.fields.email.$touch();
+                return () => h(IFieldValidation, { field: $v.fields.email }, {
+                    default: ({ value }: any) => h('div', value.messages.map((m: any) => m.value).join(',')),
+                });
+            },
+        }), {
+            global: {
+                plugins: [{
+                    install(app: import('vue').App) {
+                        provideLocale(localeRef, app);
+                        installIlingoVue(app, ilingo);
+                        install(app);
+                    },
+                }],
+            },
+        });
+
+        await flush();
+
+        const getSpy = vi.spyOn(ilingo, 'get');
+        localeRef.value = 'de';
+        await flush();
+        expect(getSpy.mock.calls.length).toBeGreaterThan(0);
+
+        getSpy.mockClear();
+        wrapper.unmount();
+        localeRef.value = 'fr';
+        await flush();
+        expect(getSpy).not.toHaveBeenCalled();
+
+        getSpy.mockRestore();
     });
 });

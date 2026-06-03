@@ -1,6 +1,6 @@
 # Validup (Vue)
 
-`@ilingo/validup-vue` is the Vue 3 layer for [`@ilingo/validup`](./validup) — the install hook, five composables, the renderless `<IValidup>` / `<IValidupT>` components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` type aliases. It mirrors the `validup` → [`@validup/vue`](https://www.npmjs.com/package/@validup/vue) package split so the framework-agnostic message surface stays free of Vue.
+`@ilingo/validup-vue` is the Vue 3 layer for [`@ilingo/validup`](./validup) — the install hook, five composables, the renderless `<IValidup>` / `<IValidupT>` / `<IFieldValidation>` components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` type aliases. It mirrors the `validup` → [`@validup/vue`](https://www.npmjs.com/package/@validup/vue) package split so the framework-agnostic message surface stays free of Vue.
 
 ## Install
 
@@ -100,6 +100,24 @@ const validation = useFieldValidation($v.fields.email);
 - `severity` — `getSeverity(field)` from `@validup/vue` (dirty / pending / optional aware; `undefined` while pristine); the host's `validation-severity`.
 - `messages` — `{ key: issue.code ?? 'validation', value: message }[]`; the host's `validation-messages`.
 - `issues` — the raw `IssueTranslation[]` escape hatch for richer rendering.
+
+::: warning Call it in `setup()`, not inline in the template
+Like every composable here, `useFieldValidation` wires a `computedAsync` watcher owned by the effect scope active at call time. From `setup()` that is the component scope (created once, disposed on unmount). On the **render path there is no active scope**, so calling it inline as `:validation="useFieldValidation($v.fields.email)"` registers a fresh, never-disposed watcher on *every render* — the accumulating list re-fires each keystroke and hangs the page ([issue #965](https://github.com/tada5hi/ilingo/issues/965)). For the template-only ergonomic without a `setup()` line, use the [`<IFieldValidation>`](#ifieldvalidation-renderless) component, which owns the lifecycle.
+:::
+
+### `<IFieldValidation>` {#ifieldvalidation-renderless}
+
+Renderless companion to `useFieldValidation` for **template-only** use. It calls `useFieldValidation` in its own `setup()`, so the watcher is created once and disposed on unmount — the leak-free way to bind the bundle straight in the template (mirrors the `<IValidup>` / `<IValidupT>` renderless pattern). The default scoped slot exposes the bundle as `value` (the component name already says "validation"):
+
+```vue
+<IFieldValidation :field="$v.fields.email" v-slot="{ value }">
+    <VCFormGroup :validation="value">
+        <VCFormInput v-model="$v.fields.email.$model" />
+    </VCFormGroup>
+</IFieldValidation>
+```
+
+Without a default slot it renders nothing.
 
 ## `<IValidup>` — renderless component
 
