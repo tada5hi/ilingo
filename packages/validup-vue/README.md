@@ -1,6 +1,6 @@
 # @ilingo/validup-vue
 
-Vue 3 plugin for [`@ilingo/validup`](../validup) — the install hook, five composables, the `<IValidup>` / `<IValidupT>` renderless components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases.
+Vue 3 plugin for [`@ilingo/validup`](../validup) — the install hook, five composables, the `<IValidup>` / `<IValidupT>` / `<IFieldValidation>` renderless components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases.
 
 Sibling of [`@ilingo/vue`](../vue) and [`@ilingo/vuelidate`](../vuelidate); mirrors the `validup` → `@validup/vue` package split so the framework-agnostic validation-message surface (`@ilingo/validup`) stays free of Vue.
 
@@ -96,11 +96,25 @@ const validation = useFieldValidation($v.fields.email);
 - `messages` — `{ key: issue.code ?? 'validation', value: message }[]`; the host's `validation-messages`.
 - `issues` — the raw `IssueTranslation[]` escape hatch for consumers that want richer rendering.
 
-You can also skip the `setup()` line and call it **inline in the binding** — `<VCFormGroup :validation="useFieldValidation($v.fields.email)">`. The bundle is memoized per `FieldState` identity (`@validup/vue` returns a stable field object per `(form, path)`), so repeated calls across renders return the same bundle and the async watcher is registered exactly once — like a `setup()`-level call. Without that memoization an inline call would leak a watcher every render and hang the page on typing ([#965](https://github.com/tada5hi/ilingo/issues/965)).
+> **Call it in `setup()`, not inline in the template.** Like every composable here it wires a `computedAsync` watcher, owned by the effect scope active at call time — the component scope from `setup()` (created once, disposed on unmount), but **no scope at all** on the render path. Calling it inline as `:validation="useFieldValidation(...)"` registers a fresh, never-disposed watcher on every render and hangs the page on typing ([#965](https://github.com/tada5hi/ilingo/issues/965)). For the template-only ergonomic without a `setup()` line, use the [`<IFieldValidation>`](#ifieldvalidation--severity--messages-without-a-setup-line) component below, which owns the lifecycle for you.
 
 ### Component
 
-#### Leaf mode — `:issues`
+#### `<IFieldValidation>` — severity + messages without a `setup()` line
+
+Renderless companion to `useFieldValidation` for template-only use. Because it is a component, the `useFieldValidation` call (and its watcher) runs in the component's own `setup()` scope — created once, disposed on unmount — so it is the leak-free way to get the bundle straight into the template. Mirrors the `<IValidup>` / `<IValidupT>` renderless pattern. The default scoped slot exposes the bundle as `value` (the name already says "validation"):
+
+```vue
+<IFieldValidation :field="$v.fields.email" v-slot="{ value }">
+    <VCFormGroup :validation="value">
+        <VCFormInput v-model="$v.fields.email.$model" />
+    </VCFormGroup>
+</IFieldValidation>
+```
+
+Without a default slot it renders nothing.
+
+#### `<IValidup>` leaf mode — `:issues`
 
 ```vue
 <IValidup :issues="$v.fields.email.$errors.value">
@@ -114,7 +128,7 @@ You can also skip the `setup()` line and call it **inline in the binding** — `
 
 Without a default slot, renders one text node per translation. With a slot, the consumer receives the `IssueTranslation[]` and renders whatever structure makes sense.
 
-#### Composable mode — `:composable`
+#### `<IValidup>` composable mode — `:composable`
 
 Pass the whole `@validup/vue` `Composable<T>` to render all three error channels it exposes, each via its own named slot:
 
