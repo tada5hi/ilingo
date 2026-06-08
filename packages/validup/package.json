@@ -61,12 +61,12 @@
     "homepage": "https://github.com/tada5hi/ilingo#readme",
     "devDependencies": {
         "ilingo": "^6.0.0",
-        "validup": "^0.4.0",
+        "validup": "^0.5.1",
         "vite": "^8.0.16"
     },
     "peerDependencies": {
         "ilingo": "^6.0.0",
-        "validup": "^0.4.0"
+        "validup": "^0.5.1"
     },
     "publishConfig": {
         "access": "public"
