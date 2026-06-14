@@ -2,7 +2,7 @@
     "name": "@ilingo/vuelidate",
     "type": "module",
     "version": "7.0.0",
-    "description": "This package contains a vuelidate plugin for ilingo.",
+    "description": "Vuelidate message adapter for ilingo — drop-in localized validator messages (EN/DE/FR/ES) for Vue 3 forms.",
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
@@ -48,7 +48,19 @@
     "engines": {
         "node": ">=22.0.0"
     },
-    "keywords": [],
+    "keywords": [
+        "i18n",
+        "internationalization",
+        "translation",
+        "locale",
+        "ilingo",
+        "vuelidate",
+        "vue",
+        "vue3",
+        "validation",
+        "validation-messages",
+        "typescript"
+    ],
     "author": {
         "name": "Peter Placzek",
         "email": "contact@tada5hi.net",

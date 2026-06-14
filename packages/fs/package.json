@@ -2,7 +2,7 @@
     "name": "@ilingo/fs",
     "type": "module",
     "version": "6.0.0",
-    "description": "This is a lightweight library for translation.",
+    "description": "File-system store adapter for ilingo — lazy-loads locale catalogs from disk and persists translations as JSON.",
     "author": {
         "name": "Peter Placzek",
         "email": "contact@tada5hi.net",
@@ -47,15 +47,17 @@
     },
     "keywords": [
         "i18n",
-        "language",
-        "translate",
-        "translation",
-        "bilingual",
         "internationalization",
+        "translation",
         "locale",
-        "locales",
+        "ilingo",
+        "filesystem",
+        "fs",
+        "file-loader",
+        "node",
         "server-side",
-        "client-side"
+        "typescript",
+        "lightweight"
     ],
     "license": "MIT",
     "dependencies": {
