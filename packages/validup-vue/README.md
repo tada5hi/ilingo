@@ -1,5 +1,11 @@
 # @ilingo/validup-vue
 
+[![npm version](https://img.shields.io/npm/v/@ilingo/validup-vue.svg)](https://www.npmjs.com/package/@ilingo/validup-vue)
+[![npm downloads](https://img.shields.io/npm/dm/@ilingo/validup-vue.svg)](https://www.npmjs.com/package/@ilingo/validup-vue)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/@ilingo/validup-vue)](https://bundlephobia.com/package/@ilingo/validup-vue)
+[![main](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo/actions/workflows/main.yml)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+
 Vue 3 plugin for [`@ilingo/validup`](../validup) — the install hook, five composables, the `<IValidup>` / `<IValidupT>` / `<IFieldValidation>` renderless components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases.
 
 Sibling of [`@ilingo/vue`](../vue) and [`@ilingo/vuelidate`](../vuelidate); mirrors the `validup` → `@validup/vue` package split so the framework-agnostic validation-message surface (`@ilingo/validup`) stays free of Vue.

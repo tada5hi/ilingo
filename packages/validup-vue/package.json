@@ -34,8 +34,12 @@
         "validup",
         "validation",
         "i18n",
+        "internationalization",
         "translation",
-        "vue"
+        "locale",
+        "vue",
+        "vue3",
+        "typescript"
     ],
     "author": {
         "name": "Peter Placzek",

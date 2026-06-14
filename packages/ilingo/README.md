@@ -1,10 +1,12 @@
 # ilingo 💬
 
-[![npm version](https://badge.fury.io/js/ilingo.svg)](https://badge.fury.io/js/ilingo)
+[![npm version](https://img.shields.io/npm/v/ilingo.svg)](https://www.npmjs.com/package/ilingo)
+[![npm downloads](https://img.shields.io/npm/dm/ilingo.svg)](https://www.npmjs.com/package/ilingo)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/ilingo)](https://bundlephobia.com/package/ilingo)
 [![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=4KNSG8L13V)](https://codecov.io/gh/tada5hi/ilingo)
 [![Master Workflow](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo)
 [![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Tada5hi/ilingo?targetFile=package.json)
-[![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
 Ilingo is a lightweight library for translation and internationalization. The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob); on common workloads it runs **1.6× – 2.3× faster than `i18next`** ([benchmarks](https://ilingo.tada5hi.net/performance)).
 

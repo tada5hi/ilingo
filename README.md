@@ -1,6 +1,12 @@
 # ilingo 📚
 
-A lightweight library for translation and internationalization.
+[![npm version](https://img.shields.io/npm/v/ilingo.svg)](https://www.npmjs.com/package/ilingo)
+[![npm downloads](https://img.shields.io/npm/dm/ilingo.svg)](https://www.npmjs.com/package/ilingo)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/ilingo)](https://bundlephobia.com/package/ilingo)
+[![Master Workflow](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo/actions/workflows/main.yml)
+[![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=4KNSG8L13V)](https://codecov.io/gh/tada5hi/ilingo)
+
+A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript — pluggable stores, BCP-47 fallback, ICU-lite plurals, and Intl-native formatters.
 
 **Table of Contents**
 

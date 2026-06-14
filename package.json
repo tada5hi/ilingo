@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "type": "module",
-    "description": "This is a lightweight library for translation.",
+    "description": "A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript — pluggable stores, BCP-47 fallback, ICU-lite plurals, Intl formatters.",
     "author": {
         "name": "Peter Placzek",
         "email": "contact@tada5hi.net",
@@ -19,15 +19,24 @@
     },
     "keywords": [
         "i18n",
-        "language",
+        "internationalization",
+        "localization",
+        "l10n",
         "translate",
         "translation",
-        "bilingual",
-        "internationalization",
         "locale",
         "locales",
+        "intl",
+        "pluralization",
+        "bcp47",
+        "typescript",
+        "lightweight",
+        "tree-shakeable",
+        "ssr",
+        "edge",
         "server-side",
-        "client-side"
+        "client-side",
+        "i18next-alternative"
     ],
     "license": "MIT",
     "engines": {

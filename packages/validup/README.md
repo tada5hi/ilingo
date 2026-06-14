@@ -1,5 +1,11 @@
 # @ilingo/validup
 
+[![npm version](https://img.shields.io/npm/v/@ilingo/validup.svg)](https://www.npmjs.com/package/@ilingo/validup)
+[![npm downloads](https://img.shields.io/npm/dm/@ilingo/validup.svg)](https://www.npmjs.com/package/@ilingo/validup)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/@ilingo/validup)](https://bundlephobia.com/package/@ilingo/validup)
+[![main](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo/actions/workflows/main.yml)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+
 Translate [validup](https://www.npmjs.com/package/validup) `Issue`s through [ilingo](https://www.npmjs.com/package/ilingo) — default EN / DE / FR / ES catalogs for the built-in `IssueCode`s, a pre-seeded `Store`, and pure `translateIssue` / `translateIssues` helpers.
 
 **No Vue dependency.** Embeddable in any runtime: Node SSR, edge workers, queue handlers, CLI tools. Vue 3 users add [`@ilingo/validup-vue`](../validup-vue) on top for composables, the renderless component, and the install plugin.

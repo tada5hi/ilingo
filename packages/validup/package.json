@@ -42,7 +42,10 @@
         "validup",
         "validation",
         "i18n",
-        "translation"
+        "internationalization",
+        "translation",
+        "locale",
+        "typescript"
     ],
     "author": {
         "name": "Peter Placzek",
