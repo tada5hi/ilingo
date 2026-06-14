@@ -1,6 +1,8 @@
 # @ilingo/vue 🖌️
 
-[![npm version](https://badge.fury.io/js/@ilingo%2Fvue.svg)](https://badge.fury.io/js/@ilingo%2Fvue)
+[![npm version](https://img.shields.io/npm/v/@ilingo/vue.svg)](https://www.npmjs.com/package/@ilingo/vue)
+[![npm downloads](https://img.shields.io/npm/dm/@ilingo/vue.svg)](https://www.npmjs.com/package/@ilingo/vue)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/@ilingo/vue)](https://bundlephobia.com/package/@ilingo/vue)
 [![main](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml)
 [![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=CLIA667K6V)](https://codecov.io/gh/tada5hi/ilingo)
 [![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg)](https://snyk.io/test/github/Tada5hi/ilingo)

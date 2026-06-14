@@ -1,6 +1,8 @@
 # @ilingo/vuelidate 🎉
 
-[![npm version](https://badge.fury.io/js/@ilingo%2Fvuelidate.svg)](https://badge.fury.io/js/@ilingo%2Fvuelidate)
+[![npm version](https://img.shields.io/npm/v/@ilingo/vuelidate.svg)](https://www.npmjs.com/package/@ilingo/vuelidate)
+[![npm downloads](https://img.shields.io/npm/dm/@ilingo/vuelidate.svg)](https://www.npmjs.com/package/@ilingo/vuelidate)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/@ilingo/vuelidate)](https://bundlephobia.com/package/@ilingo/vuelidate)
 [![main](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml)
 [![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=CLIA667K6V)](https://codecov.io/gh/tada5hi/ilingo)
 [![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg)](https://snyk.io/test/github/Tada5hi/ilingo)
