@@ -71,6 +71,6 @@
         "access": "public"
     },
     "devDependencies": {
-        "i18next": "^26.3.0"
+        "i18next": "^26.3.1"
     }
 }
