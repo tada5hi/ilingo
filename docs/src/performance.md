@@ -40,6 +40,8 @@ The async API is intentional — it's what allows `LoaderStore` (lazy code-split
 
 A dedicated [`size-limit`](https://github.com/ai/size-limit) CI gate enforces a per-package byte budget: CI runs `npm run size` against the limits declared in `.size-limit.json` (brotli, gzipped) and fails the build on any regression.
 
+For a head-to-head size and feature comparison against `i18next`, see [ilingo vs. i18next](./guide/comparison).
+
 ## Re-running the suite
 
 ```bash

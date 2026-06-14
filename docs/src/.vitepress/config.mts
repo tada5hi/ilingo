@@ -49,6 +49,7 @@ export default defineConfig({
                     text: 'Concepts',
                     items: [
                         { text: 'Overview', link: '/guide/' },
+                        { text: 'ilingo vs. i18next', link: '/guide/comparison' },
                         { text: 'Catalog Design', link: '/guide/catalog-design' },
                         { text: 'Stores', link: '/guide/stores' },
                         { text: 'Locales & Fallback', link: '/guide/locales' },
