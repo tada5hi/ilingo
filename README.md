@@ -8,6 +8,10 @@
 
 A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript — pluggable stores, BCP-47 fallback, ICU-lite plurals, and Intl-native formatters.
 
+<p align="center">
+  <img src="docs/src/public/ilingo-demo.gif" alt="ilingo live demo — switch locale, watch the BCP-47 fallback chain, plurals, interpolation, and Intl currency formatting re-render" width="620">
+</p>
+
 **Table of Contents**
 
 - [Usage](#usage)

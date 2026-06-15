@@ -10,6 +10,10 @@
 
 Ilingo is a lightweight library for translation and internationalization. The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob); on common workloads it runs **1.6× – 2.3× faster than `i18next`** ([benchmarks](https://ilingo.tada5hi.net/performance)).
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/tada5hi/ilingo/master/docs/src/public/ilingo-demo.gif" alt="ilingo live demo — switch locale, watch the BCP-47 fallback chain, plurals, interpolation, and Intl currency formatting re-render" width="620">
+</p>
+
 **Table of Contents**
 
 - [Installation](#installation)
