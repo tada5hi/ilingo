@@ -208,11 +208,10 @@ The guarantee is equivalence: whenever `getSync()` returns a string, it is the s
 | `MemoryStore` (catalog compiled into the bundle) | resolved synchronously ✅ |
 | `LoaderStore`, locale already loaded | resolved synchronously ✅ |
 | `LoaderStore`, cold | placeholder — `await` the keys, or the whole namespace, before rendering |
-| `FSStore`, namespace already read | resolved synchronously ✅ |
-| `FSStore`, cold | placeholder — prime it before rendering |
+| `FSStore`, cold **or** warm | resolved synchronously ✅ — it reads the file on the spot |
 | custom HTTP/DB store consulted before the hit | placeholder — no synchronous answer exists |
 
-So for a lazy store, *warm what the route renders* before you render it. Warm through the **store**, not the orchestrator — a `get()` for a probe key would trip the missing-key warning:
+`@ilingo/fs` needs nothing: it reads the file synchronously when asked (see [File System → Synchronous reads](../integrations/fs#synchronous-reads-ssr)). For a **lazy** store, *warm what the route renders* before you render it. Warm through the **store**, not the orchestrator — a `get()` for a probe key would trip the missing-key warning:
 
 ```typescript
 // LoaderStore: any get() for the pair populates the cache; the key can be absent
@@ -220,15 +219,10 @@ await Promise.all(['app', 'nav'].map(
     (namespace) => store.get({ locale, namespace, key: '' }),
 ));
 
-// FSStore: loadNamespace is public and does exactly this
-await Promise.all(['app', 'nav'].map(
-    (namespace) => store.loadNamespace(namespace, locale),
-));
-
 const html = await renderToString(app); // now resolves synchronously
 ```
 
-Both caches are per-store, not per-request, so on a long-lived server this cost is paid once per `(locale, namespace)` — the second request for the same route renders synchronously with no warm-up at all.
+The cache is per-store, not per-request, so on a long-lived server this cost is paid once per `(locale, namespace)` — the second request for the same route renders synchronously with no warm-up at all. `FSStore` also exposes `loadNamespaceSync(namespace, locale)` if you would rather prime it at start-up than block on the first render.
 
 If you can't warm the store (a genuinely remote catalog), keep the payload approach from [§4](#_4-hand-state-to-the-client): serialise the slice the page used and build the client instance over a `MemoryStore`, which *can* answer synchronously.
 

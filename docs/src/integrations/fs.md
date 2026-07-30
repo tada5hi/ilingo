@@ -131,20 +131,25 @@ If the original source for a namespace was a `.ts`/`.js`/`.cjs` file, that file 
 
 ## Synchronous reads (SSR)
 
-`FSStore` extends `MemoryStore` and uses its map as a load cache, so it implements the [`getSync`](/guide/stores#synchronous-reads-getsync) capability for data it has already read. A `(locale, namespace)` pulled off disk answers synchronously; a **cold** (or still-loading) one throws `SyncUnavailableError` — not a miss, because the file may define the key and treating it as absent would let the lookup fall through to another locale.
+`FSStore` answers [`getSync`](/guide/stores#synchronous-reads-getsync) for real, not merely from a warm cache: [`locter`](https://github.com/tada5hi/locter) provides a synchronous twin for every read it dispatches, so a **cold** namespace is read from disk on the spot.
 
 ```typescript
-const store = new FSStore({ directory: './language' });
-const ilingo = new Ilingo({ store });
+const ilingo = new Ilingo({ store: new FSStore({ directory: './language' }) });
 
-ilingo.getSync({ namespace: 'app', key: 'hi' });    // throws — cold
-await ilingo.get({ namespace: 'app', key: 'hi' });  // 'Hello' — reads en/app.*
-ilingo.getSync({ namespace: 'app', key: 'hi' });    // 'Hello' — warm, synchronous
+ilingo.getSync({ namespace: 'app', key: 'hi' });   // 'Hello' — no warm-up, no await
 ```
 
-That is what lets a server-rendered Vue tree emit real translations instead of `namespace.key` placeholders. Prime what a route renders with `await store.loadNamespace('app', locale)` before rendering; the cache lives on the store, so subsequent requests need no warm-up. See the [SSR recipe](/recipes/ssr#_5-the-first-render-getsync).
+So a server-rendered Vue tree emits real translations on its **first** pass — no priming step, no hydration payload, no mismatch. Every extension in the matrix above works on both paths, since each locter reader has a sync twin.
 
-Note the interaction with watch mode: an `invalidate` drops the cached namespace, so it is cold — and `getSync` declines again — until the next `get()`.
+::: tip The read blocks — on purpose
+`getSync` must not start work whose result it cannot return. Synchronous I/O returns its result; an `import()` does not. One glob plus one file read per `(locale, namespace)`, cached for the process lifetime, so the cost is paid once per namespace.
+
+If blocking during a render doesn't suit your deployment, prime the store — `await store.loadNamespace('app', locale)`, or the new `store.loadNamespaceSync('app', locale)` at start-up — and `getSync` finds everything cached.
+:::
+
+Two failure modes stay distinct: a module that can only load through an asynchronous `import()` raises `SyncUnavailableError` so the caller falls back to `get()`, while a malformed file propagates its real parse error (the async load would fail identically — it isn't a "not available yet").
+
+Note the interaction with watch mode: an `invalidate` drops the cached namespace, so the next read goes back to disk.
 
 ## Watch mode (dev hot-reload)
 

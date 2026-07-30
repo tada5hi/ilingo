@@ -8,10 +8,12 @@
 import { mkdir, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
-import type { LocatorOptionsInput } from 'locter';
+import type { LocatorInfo, LocatorOptionsInput } from 'locter';
 import {
-    load,
     locateMany,
+    locateManySync,
+    readAsModule,
+    readAsModuleSync,
 } from 'locter';
 import type { Merger } from 'smob';
 import { createMerger } from 'smob';
@@ -32,6 +34,8 @@ import {
 } from 'ilingo';
 import type { FSStoreOptionsInput } from './types';
 import { normalizeOptions } from './utils';
+import type { TwinBody } from './utils/twin';
+import { op, runTwinAsync, runTwinSync } from './utils/twin';
 
 type ChokidarLike = {
     watch(paths: string | string[], options?: object): {
@@ -101,32 +105,47 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
     }
 
     /**
-     * Synchronous read — served from the in-memory cache the parent
-     * `MemoryStore` holds, i.e. only for a `(locale, namespace)` a previous
-     * `get()` already pulled off disk. A cold namespace (or one whose read is
-     * still in flight) **throws** rather than reporting a miss: the file may
-     * well define the key, and a miss would let the caller resolve to a
-     * fallback-locale value that `get()` would never have returned.
+     * Synchronous read. Unlike a network-backed adapter, a filesystem store
+     * *can* honour this: `locter` ships a synchronous twin for every read
+     * (`locateManySync`, `loadSync`), so a cold namespace is read from disk
+     * right here rather than declining. That is what lets a server-rendered
+     * tree resolve `@ilingo/fs` translations on its first pass with no
+     * warm-up step at all.
      *
-     * So an `FSStore` participates in `Ilingo.getSync()` once warm. On a
-     * server that means priming the namespaces a route renders (a plain
-     * `await ilingo.get(...)`, or `store.loadNamespace(ns, locale)`) before
-     * rendering — after that, SSR resolves synchronously.
+     * The read blocks — deliberately. `getSync`'s contract is that it must not
+     * start work whose result it cannot return; synchronous I/O returns its
+     * result, an `import()` does not. The cost is one glob plus one file read
+     * per `(locale, namespace)`, cached for the process lifetime, so it is
+     * paid once per namespace and never again. If blocking the event loop
+     * during a render is unacceptable for your deployment, warm the store with
+     * `await loadNamespace(...)` and this method will find everything cached.
      *
-     * @throws {SyncUnavailableError} while the namespace is not loaded.
+     * @throws {SyncUnavailableError} only when the file genuinely cannot be
+     * read synchronously — an ESM module that needs an asynchronous `import()`.
+     * A malformed file propagates its real parse error instead, because that
+     * is a fault to fix, not a reason to fall back.
      */
     override getSync(context: StoreGetContext): Leaf | undefined {
         if (!this.isLoaded(context.namespace, context.locale)) {
-            throw new SyncUnavailableError(
-                `[ilingo/fs] "${context.locale}/${context.namespace}" has not been read from ` +
-                'disk yet — await get() or loadNamespace() before reading synchronously.',
-                {
-                    locale: context.locale,
-                    namespace: context.namespace,
-                    key: context.key,
-                    storeId: this.id,
-                },
-            );
+            try {
+                this.loadNamespaceSync(context.namespace, context.locale);
+            } catch (e) {
+                if (!isAsyncOnlyLoadError(e)) {
+                    throw e;
+                }
+
+                throw new SyncUnavailableError(
+                    `[ilingo/fs] "${context.locale}/${context.namespace}" can only be loaded ` +
+                    'asynchronously (an ES module requiring import()) — await get() instead.',
+                    {
+                        locale: context.locale,
+                        namespace: context.namespace,
+                        key: context.key,
+                        storeId: this.id,
+                        cause: e,
+                    },
+                );
+            }
         }
 
         return super.getSync(context);
@@ -229,17 +248,17 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
         }
 
         // De-duplicate concurrent loads for the same pair. The flag is only
-        // set once the data is actually in place (see readNamespace), so a
+        // set once the data is actually in place (see readNamespaceBody), so a
         // second caller arriving mid-load must wait on the first one's promise
         // rather than short-circuit on the flag — otherwise it would read the
         // still-empty record and report a spurious miss.
-        const key = `${locale} ${namespace}`;
+        const key = `${locale} ${namespace}`;
         const inflight = this.loading.get(key);
         if (inflight) {
             return inflight;
         }
 
-        const promise = this.readNamespace(namespace, locale)
+        const promise = runTwinAsync(this.readNamespaceBody(namespace, locale))
             .finally(() => {
                 this.loading.delete(key);
             });
@@ -249,33 +268,67 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
     }
 
     /**
+     * Synchronous twin of {@link loadNamespace}, reading through `locter`'s
+     * `locateManySync` / `loadSync`. Used by {@link getSync}, and available
+     * directly for priming a store at start-up without an `await`.
+     *
+     * A load already in flight asynchronously cannot be awaited from here, so
+     * this reads the same files again rather than waiting. Both writes produce
+     * the same merged record, so the duplicate work is wasteful but never
+     * inconsistent — and it only happens when the two idioms race on a cold
+     * namespace.
+     */
+    loadNamespaceSync(namespace: string, locale: string): Record<string, any> {
+        if (this.isLoaded(namespace, locale)) {
+            return {};
+        }
+
+        return runTwinSync(this.readNamespaceBody(namespace, locale));
+    }
+
+    /**
      * Read every file that backs `(locale, namespace)` and merge it into the
-     * in-memory record.
+     * in-memory record — written **once**, as a twin body, so the async and
+     * sync loads cannot drift apart on any of the bookkeeping around the I/O.
      *
      * `setIsLoaded` runs **after** the merge, so `isLoaded` means "the data is
-     * here" rather than "someone started fetching it". That is what lets
-     * `getSync` report `SYNC_UNAVAILABLE` for the whole in-flight window
-     * instead of a miss the async result would contradict.
+     * here" rather than "someone started fetching it". That is what keeps a
+     * concurrent reader from seeing the still-empty record as a miss.
      *
-     * A `invalidate()` that lands mid-read makes this result stale by
-     * definition: the generation counter is captured at the start and the
-     * write is dropped if it changed, so the next `get()` re-reads from disk.
-     * Same guard as `LoaderStore`.
+     * An `invalidate()` that lands mid-read makes this result stale by
+     * definition: the generation counter is captured at the start and the write
+     * is dropped if it changed, so the next read re-reads from disk. Same guard
+     * as `LoaderStore`.
      */
-    protected async readNamespace(namespace: string, locale: string): Promise<Record<string, any>> {
+    protected* readNamespaceBody(namespace: string, locale: string): TwinBody<Record<string, any>> {
         const startGeneration = this.generation;
 
-        const locations = await locateMany(
-            this.addExtensionPattern(namespace),
-            this.buildLocatorOptionsForLocale(locale),
+        const locations: LocatorInfo[] = yield* op(
+            () => locateMany(
+                this.addExtensionPattern(namespace),
+                this.buildLocatorOptionsForLocale(locale),
+            ),
+            () => locateManySync(
+                this.addExtensionPattern(namespace),
+                this.buildLocatorOptionsForLocale(locale),
+            ),
         );
 
-        const loadPromises = locations.map(
-            (location) => load(location)
-                .then((data) => (data && data.default ? data.default : data)),
+        // One effect for the whole batch rather than one per file, so the async
+        // side keeps loading them in parallel.
+        //
+        // `readAsModule` normalises every format to the same frozen module
+        // record — `.default` always holds the file's value, whether it came
+        // from JSON, a `.ts` module or a `.conf` — so the old
+        // `data.default ? data.default : data` dance is gone. Both are locter
+        // twins, which is what lets the two sides of this body stay a rename
+        // apart.
+        const files: unknown[] = yield* op(
+            () => Promise.all(locations.map(
+                (location) => readAsModule(location).then((record) => record.default),
+            )),
+            () => locations.map((location) => readAsModuleSync(location).default),
         );
-
-        const files = await Promise.all(loadPromises);
 
         if (this.generation !== startGeneration) {
             // Invalidated mid-read — drop the result rather than repopulating
@@ -418,4 +471,29 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
 
         return translations;
     }
+}
+
+/**
+ * Node codes for "this module cannot be `require`d" — the only failures that
+ * mean *try the asynchronous path instead*. Everything else (a syntax error, a
+ * permissions problem, a missing directory) is a real fault: the async load
+ * would fail the same way, so it must not be dressed up as "not available yet".
+ */
+const ASYNC_ONLY_LOAD_ERROR_CODES = new Set([
+    'ERR_REQUIRE_ESM',
+    'ERR_REQUIRE_ASYNC_MODULE',
+]);
+
+function isAsyncOnlyLoadError(input: unknown): boolean {
+    if (typeof input !== 'object' || input === null) {
+        return false;
+    }
+
+    const { code, cause } = input as { code?: unknown, cause?: unknown };
+    if (typeof code === 'string' && ASYNC_ONLY_LOAD_ERROR_CODES.has(code)) {
+        return true;
+    }
+
+    // locter wraps loader failures in a LoadError carrying the original.
+    return typeof cause === 'undefined' ? false : isAsyncOnlyLoadError(cause);
 }

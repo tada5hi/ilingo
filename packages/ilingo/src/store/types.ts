@@ -87,9 +87,13 @@ export interface IStore {
      * }
      * ```
      *
-     * It must **not** start a load. A synchronous read that kicks off I/O
-     * turns a render-path call into a fetch, which is precisely what callers
-     * use this method to avoid.
+     * It must not start work whose result it cannot return. Synchronous I/O is
+     * fine — `FSStore` reads the file right here via `locter`'s `readSync`, and
+     * that is why a server-rendered tree resolves filesystem translations on
+     * its first pass. Kicking off an `import()` or a fetch is not: the value
+     * would arrive after this method has already returned, so the caller gets a
+     * miss *and* pays for the I/O. That is the line between `FSStore` (reads) and
+     * `LoaderStore` (declines).
      *
      * The distinction between a throw and `undefined` is load-bearing: a miss
      * lets the orchestrator continue its walk, while an unavailable answer

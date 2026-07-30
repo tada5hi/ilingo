@@ -78,7 +78,7 @@ Implementations:
 |---|---|
 | `MemoryStore` | always answers; never throws `SyncUnavailableError` |
 | `LoaderStore` | cache-only — throws for an unloaded pair; does **not** start a load. A cached loader-miss is a definite miss |
-| `FSStore` | throws until `loadNamespace` has *completed* for the `(locale, namespace)` — including the whole in-flight window; warm afterwards, cold again after `invalidate` |
+| `FSStore` | **reads the file synchronously** via locter's `locateManySync` / `readAsModuleSync`, cold or warm; throws only for a module that needs an asynchronous `import()` (a malformed file propagates its real parse error) |
 | async-only adapter (HTTP/DB) | `getSync(context) { throwSyncUnavailable(context, this.id); }` |
 
 `MemoryStore` keeps the map lookup in a protected `resolve()` that both `get` and `getSync` delegate to (same shape as confinity's `Store.resolve`). `get` must **not** route through the overridable `getSync`: `FSStore` overrides `getSync` to decline, and an async `get` that inherited that refusal threw for a namespace it had just chosen not to cache.
@@ -122,9 +122,13 @@ Misses (loader returning `undefined`) are cached too — the loader isn't re-cal
 
 ### `FSStore` load bookkeeping
 
+Both load paths are generated from **one** body (`readNamespaceBody`) via locter's twin scheme, vendored as `packages/fs/src/utils/twin.ts`: a generator yields `op(asyncThunk, syncThunk)` pairs and two drivers (`runTwinAsync` / `runTwinSync`) execute the side they stand for, re-entering effect errors with `Generator.throw` so `try`/`catch` behaves identically in both. The point is not the I/O — it is everything *around* it (the loaded flag, the in-flight dedup, the generation guard, the merge order), which two hand-written copies would let drift until `get` and `getSync` disagreed. That drift is exactly the bug class this feature kept hitting; one body cannot drift from itself. The utility is internal, matching locter's own choice not to export it.
+
 `loadNamespace` sets the `loaded` flag **after** the file data is merged, not before, and de-duplicates concurrent callers through a `loading` map keyed by `(locale, namespace)`. Both details are load-bearing for the sync path: `isLoaded` has to mean "the data is here", or `getSync` would report a definite miss during the in-flight window and let the orchestrator resolve a farther locale that the pending read is about to contradict.
 
 Setting the flag eagerly was also a pre-existing async bug (found while auditing #988): a second concurrent `get()` short-circuited on the flag, read the still-empty record, and resolved to `undefined`. The in-flight map fixes both.
+
+`loadNamespaceSync` is the public sync twin — it primes the store without an `await`, and `getSync` uses it for a cold namespace. It cannot await a load already in flight asynchronously, so it re-reads instead; both writes produce the same merged record, making the duplicate work wasteful but never inconsistent.
 
 `invalidate()` bumps a `generation` counter that a read captures at its start; a read whose generation changed discards its result instead of repopulating a cache the consumer just dropped. Same guard as `LoaderStore` — and it matters more now that the flag is set at the end, since a stale write would otherwise also mark the namespace loaded.
 

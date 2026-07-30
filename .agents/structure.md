@@ -7,7 +7,7 @@ This is an npm-workspaces monorepo. Workspaces under `packages/` are publishable
 | Name                                                   | Version | Description                                                                 |
 |--------------------------------------------------------|---------|-----------------------------------------------------------------------------|
 | [`ilingo`](../packages/ilingo)                         | 5.x     | Framework-agnostic core: `Ilingo` orchestrator, `IStore` port, `MemoryStore`, template formatter, BCP-47 helpers |
-| [`@ilingo/fs`](../packages/fs)                         | 5.x     | File-system store adapter — extends `MemoryStore`, lazy-loads `<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}`; serves `getSync` for warm namespaces |
+| [`@ilingo/fs`](../packages/fs)                         | 5.x     | File-system store adapter — extends `MemoryStore`, lazy-loads `<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}` through locter v4 (`readAsModule`/`readAsModuleSync`); answers `getSync` by reading the file synchronously |
 | [`@ilingo/vue`](../packages/vue)                       | 5.x     | Vue 3 plugin: `install()`, `provide/inject` for the `Ilingo` instance and reactive locale, `<ITranslate>` component, `useTranslation` composable |
 | [`@ilingo/vuelidate`](../packages/vuelidate)           | 6.x     | Vuelidate-message adapter on top of `@ilingo/vue` — ships built-in EN/DE/FR/ES translations for validator names |
 | [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Framework-agnostic core for the validup ecosystem. **Data-free `.` entry**: `translateIssue` / `translateIssues` / `translateIssueGroups` (+ the synchronous `translateIssueSync` / `translateIssuesSync` / `translateIssueGroupsSync` used to seed SSR first renders) / `coerceIssueData` helpers, `NAMESPACE` / `STORE_ID` constants, `SlotName` enum + slot-prop types. Catalog stores live on subpaths — `./store/memory` (`createMemoryStore()`, eager, all locales — builds its catalog via `defineCatalog([...])`) and `./store/loader` (`createLoaderStore()`, lazy per-locale `import()` chunks returning `defineTranslations(...)`), each keyed by `STORE_ID`; register with `ilingo.registerStore(...)`. **No Vue deps** — embeddable in Node SSR, edge, workers. Peer-deps `ilingo`, `validup`. |
@@ -124,7 +124,10 @@ src/
 ├── module.ts                 # FSStore extends MemoryStore — directory[], writeDirectory,
 │                             #   lazy loadNamespace(), atomic persist() (write-tmp + rename)
 ├── types.ts                  # FSStoreOptionsInput (input) + FSStoreOptions (resolved, includes writeDirectory + watch)
-└── utils.ts                  # normalizeOptions (normalize directory[] + writeDirectory)
+├── utils.ts                  # normalizeOptions (normalize directory[] + writeDirectory)
+└── utils/
+    └── twin.ts               # internal: op() + runTwinAsync/runTwinSync — locter's scheme for
+                              #   deriving loadNamespace / loadNamespaceSync from one body
 test/
 ├── unit/
 │   ├── module.spec.ts        # loads test/data/language/<locale>/<namespace>.* via FSStore

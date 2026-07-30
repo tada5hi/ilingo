@@ -78,10 +78,10 @@ unit/
 ├── dotted-namespace.spec.ts    # dotted namespace ↔ dotted filename (app.nav.json): load, key/namespace separation, persist round-trip
 ├── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
 │                               #   split read/write directories
-├── sync.spec.ts                # getSync — throws while cold, warm after a get(),
-│                               #   Ilingo.getSync end-to-end, cold again after invalidate,
-│                               #   declines for the whole in-flight window,
-│                               #   concurrent readers share one load, invalidate mid-read drops it
+├── sync.spec.ts                # getSync — reads a cold namespace off disk (no warm-up), the whole
+│                               #   extension matrix, definite miss, cache reuse, loadNamespaceSync,
+│                               #   answering during an in-flight async load, concurrent async readers,
+│                               #   invalidate mid-read, and the async-only-module vs real-fault split
 └── watch.spec.ts               # FSStore({ watch: true }) emits invalidate on file change;
                                 #   manual invalidate() drops cache; close() teardown is idempotent.
                                 #   Needs the optional `chokidar` peer dep installed (it is, devDep).

@@ -154,7 +154,7 @@ When adding new source files, keep this contract:
 | `ilingo` — `Ilingo + MemoryStore` | 5 kB | 4.06 kB |
 | `ilingo` — `defineCatalog` only | 1.3 kB | 1.12 kB |
 | `ilingo` — `negotiateLocale + parseAcceptLanguage` | 1.7 kB | 1.48 kB |
-| `@ilingo/fs` — full barrel | 4 kB | 3.24 kB |
+| `@ilingo/fs` — full barrel | 4 kB | 3.46 kB |
 | `@ilingo/vue` — full barrel | 2 kB | 1.81 kB |
 | `@ilingo/vuelidate` — full barrel | 2.5 kB | 1.96 kB |
 | `@ilingo/validup` — core barrel | 2 kB | 794 B |
