@@ -61,16 +61,22 @@ src/
 │                             #   normalizeNamespaceBody(NamespaceBodyInput) → Translations
 │                             #   (shared reducer every store uses; exported from the barrel)
 ├── constants.ts              # LOCALE_DEFAULT = 'en'
+├── errors/
+│   ├── index.ts              # barrel
+│   ├── base.ts               # IlingoError + markError/hasErrorMarker (Symbol.for markers so
+│   │                         #   instanceof survives duplicate package copies)
+│   └── sync-unavailable.ts   # SyncUnavailableError (locale/namespace/key/storeId) +
+│                             #   isSyncUnavailableError guard + throwSyncUnavailable helper
 ├── options/
 │   ├── index.ts
 │   └── types.ts              # IlingoOptions { store?: IStore | IStore[], locale?, fallback?, onMissingKey?, formatters? } — all fields optional (defaults applied at runtime)
 ├── store/
 │   ├── index.ts              # barrel
-│   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext (value: string | PluralNode),
-│   │                         #   MemoryStoreOptions, IInvalidatingStore + isInvalidatingStore guard,
-│   │                         #   ISyncStore + isSyncStore guard + SYNC_UNAVAILABLE sentinel
-│   ├── memory.ts             # MemoryStore — takes CatalogInput (runs normalizeCatalog in ctor); get() returns string | PluralForms | undefined (unwraps the plural node's .data); getSync() = ISyncStore read (never SYNC_UNAVAILABLE itself)
-│   └── loader.ts             # LoaderStore — lazy load + per-(locale,namespace) cache + invalidate; getSync() answers cache-only (SYNC_UNAVAILABLE while cold)
+│   ├── types.ts              # IStore port (id / get / getSync / getLocales), StoreGetContext,
+│   │                         #   StoreSetContext (value: string | PluralNode), MemoryStoreOptions,
+│   │                         #   IMutableStore + IInvalidatingStore (+ their guards)
+│   ├── memory.ts             # MemoryStore — takes CatalogInput (runs normalizeCatalog in ctor); get()/getSync() both delegate to a protected resolve(); never throws SyncUnavailableError
+│   └── loader.ts             # LoaderStore — lazy load + per-(locale,namespace) cache + invalidate; getSync() answers cache-only (throws while cold)
 └── utils/
     ├── index.ts
     ├── locale.ts             # bcp47Parents, resolveLocaleChain
@@ -90,8 +96,8 @@ test/
     ├── formatters-integration.spec.ts # Ilingo.get() with number/date/list modifiers, cache + dev-warn
     ├── custom-formatters.spec.ts     # registerFormatter + IlingoOptions.formatters constructor sugar
     ├── loader-store.spec.ts          # LoaderStore lazy load, cache, miss cache, dedupe, invalidate, events
-    ├── sync.spec.ts                  # getSync — equivalence with get(), bail-out on a non-sync store,
-    │                                 #   SYNC_UNAVAILABLE vs definite miss, isSyncStore
+    ├── sync.spec.ts                  # getSync — equivalence with get(), throw when a store needs I/O,
+    │                                 #   throw vs definite miss, error identity across copies
     ├── catalog/
     │   └── normalize.spec.ts         # normalizeCatalog (tree→Locales, dotted-namespace nesting, key nesting,
     │                                 #   plural node, sibling merge, default-namespace seam)
@@ -124,7 +130,7 @@ test/
 │   ├── module.spec.ts        # loads test/data/language/<locale>/<namespace>.* via FSStore
 │   ├── dotted-namespace.spec.ts # dotted namespace ↔ dotted-filename resolution (app.nav.json)
 │   ├── persist.spec.ts       # set() round-trip, sibling preservation, split read/write dirs
-│   ├── sync.spec.ts          # getSync — SYNC_UNAVAILABLE while cold, warm after get(), cold again after invalidate
+│   ├── sync.spec.ts          # getSync — throws while cold/in-flight, warm after get(), cold again after invalidate
 │   └── watch.spec.ts         # watch: true emits invalidate on file change, close() teardown
 └── data/language/{en,de,fr}/form.{cjs,ts,json}   # translations nodes — JSON `{ "type":"translations", "data":{…} }` / `export default defineTranslations({…})`
 ```

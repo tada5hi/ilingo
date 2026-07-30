@@ -7,6 +7,7 @@
 
 import { computedAsync } from '@vueuse/core';
 import { injectIlingo, injectLocale } from '@ilingo/vue';
+import { isSyncUnavailableError } from 'ilingo';
 import type { BaseValidation, ValidationRuleCollection } from '@vuelidate/core';
 import { computed } from 'vue';
 import { NAMESPACE } from '../constants';
@@ -42,45 +43,46 @@ export function useTranslationsForBaseValidation<
      * carries the messages instead of an empty record — no blink on mount,
      * and server-rendered markup the client reproduces exactly (#988).
      *
-     * **All or nothing.** `Ilingo.getSync()` returns `undefined` both for a
-     * rule that has no catalog entry (where the async path falls back to the
-     * rule *name*) and for a store that needs I/O (where it resolves a real
-     * message a tick later). Those want opposite fallbacks, so rather than
-     * guess, a single unresolvable rule abandons the whole seed and the
-     * previous behaviour — empty until the async pass lands — applies.
+     * Mirrors the async body exactly, including its `value || rule` fallback:
+     * `Ilingo.getSync` reports a rule with no catalog entry as `undefined`
+     * (fall back to the rule name, same as the async pass) and *throws*
+     * `SyncUnavailableError` only when a store would need I/O — where falling
+     * back would be wrong, because the async pass is about to resolve a real
+     * message. In that case the whole seed is abandoned and the previous
+     * behaviour applies: empty until the async pass lands.
      *
-     * Wrapped in a `try` because this runs on the component's synchronous
-     * setup path: a throwing custom store or formatter would abort the mount,
-     * where the same throw inside the `computedAsync` below is absorbed by its
-     * `onError`. A seed must never be able to make things worse than not
-     * seeding — the async pass re-runs the work and reports the failure.
+     * Any other throw is swallowed too. This runs on the component's
+     * synchronous setup path, where an escaping error aborts the mount, and a
+     * seed must never be able to make things worse than not seeding.
      */
     const seed = () : Record<string, string> | undefined => {
-        try {
-            const output : Record<string, string> = {};
+        const output : Record<string, string> = {};
 
-            for (let i = 0; i < rules.value.length; i++) {
-                const rule = rules.value[i];
-                const ruleResult = (result as Record<string, any>)[rule];
+        for (let i = 0; i < rules.value.length; i++) {
+            const rule = rules.value[i];
+            const ruleResult = (result as Record<string, any>)[rule];
 
-                const value = instance.getSync?.({
+            let value : string | undefined;
+            try {
+                value = instance.getSync({
                     namespace: NAMESPACE,
                     key: rule,
                     data: ruleResult.$params,
                     locale: locale.value,
                 });
-
-                if (!value) {
-                    return undefined;
+            } catch (e) {
+                if (!isSyncUnavailableError(e)) {
+                    // eslint-disable-next-line no-console
+                    console.warn('[ilingo/vuelidate] synchronous message lookup failed', e);
                 }
 
-                output[rule] = value;
+                return undefined;
             }
 
-            return output;
-        } catch {
-            return undefined;
+            output[rule] = value || rule;
         }
+
+        return output;
     };
 
     return computedAsync(async () => {

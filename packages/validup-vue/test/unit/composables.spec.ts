@@ -127,7 +127,7 @@ describe('useTranslationsForIssues', () => {
         expect(wrapper.text()).toBe('Der Wert ist ungültig');
     });
 
-    it('leaves the first render empty when a code has no translation (all-or-nothing seed)', async () => {
+    it('seeds an untranslated code from its own message on the first render', () => {
         const issuesRef = ref([
             defineIssueItem({ path: ['email'], message: 'Email already taken', code: 'email_taken' }),
         ]);
@@ -140,10 +140,9 @@ describe('useTranslationsForIssues', () => {
             global: { plugins: [ilingoTestPlugin(ilingo)] },
         });
 
-        // `getSync` can't distinguish "no catalog entry" from "store needs
-        // I/O", so no message is invented — the async pass fills it in.
-        expect(wrapper.text()).toBe('');
-        await flush();
+        // No flush: a code the catalog doesn't carry is a *definite* miss, so
+        // the seed can apply the same issue.message fallback the async pass
+        // would — it no longer has to decline.
         expect(wrapper.text()).toBe('Email already taken');
     });
 

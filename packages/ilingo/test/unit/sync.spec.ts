@@ -15,13 +15,14 @@ import {
     Ilingo,
     LoaderStore,
     MemoryStore,
-    SYNC_UNAVAILABLE,
+    SyncUnavailableError,
     defineCatalog,
     defineLocale,
     defineNamespace,
     definePlural,
     defineTranslations,
-    isSyncStore,
+    isSyncUnavailableError,
+    throwSyncUnavailable,
 } from '../../src';
 
 const catalog = defineCatalog([
@@ -39,7 +40,10 @@ const catalog = defineCatalog([
     ]),
 ]);
 
-/** Async-only adapter — the shape a remote/HTTP backend has. */
+/**
+ * Async-only adapter — the shape a remote/HTTP backend has, written the way the
+ * port documents it: `getSync` is implemented, and declines.
+ */
 class AsyncOnlyStore implements IStore {
     readonly id = Symbol('AsyncOnlyStore');
 
@@ -47,6 +51,10 @@ class AsyncOnlyStore implements IStore {
 
     async get(_context: StoreGetContext): Promise<Leaf | undefined> {
         return this.leaf;
+    }
+
+    getSync(context: StoreGetContext): Leaf | undefined {
+        throwSyncUnavailable(context, this.id);
     }
 
     async getLocales(): Promise<string[]> {
@@ -112,11 +120,28 @@ describe('Ilingo — synchronous read path (#988)', () => {
     });
 
     describe('stores that cannot answer synchronously', () => {
-        it('bails out when an async-only store is reached before a hit', () => {
+        it('throws when an async-only store is reached before a hit', () => {
             const ilingo = make(new AsyncOnlyStore('Remote'), new MemoryStore({ data: catalog }));
 
-            expect(ilingo.getSync({ namespace: 'app', key: 'hi', data: { name: 'Peter' } }))
-                .toBeUndefined();
+            expect(() => ilingo.getSync({ namespace: 'app', key: 'hi', data: { name: 'Peter' } }))
+                .toThrow(SyncUnavailableError);
+        });
+
+        it('names the offending store and lookup on the error', () => {
+            const store = new AsyncOnlyStore();
+            const ilingo = make(store);
+
+            try {
+                ilingo.getSync({ namespace: 'app', key: 'hi', locale: 'de' });
+                expect.unreachable('should have thrown');
+            } catch (e) {
+                expect(isSyncUnavailableError(e)).toBe(true);
+                const error = e as SyncUnavailableError;
+                expect(error.storeId).toBe(store.id);
+                expect(error.namespace).toEqual('app');
+                expect(error.key).toEqual('hi');
+                expect(error.locale).toEqual('de');
+            }
         });
 
         it('does not run the missing-key handler when it bailed out', () => {
@@ -126,7 +151,11 @@ describe('Ilingo — synchronous read path (#988)', () => {
                 onMissingKey,
             });
 
-            expect(ilingo.getSync({ namespace: 'app', key: 'hi' })).toBeUndefined();
+            // Not a miss — so the handler must stay out of it. This is the
+            // distinction the throw buys: `undefined` from getSync now means
+            // "missing key" and nothing else.
+            expect(() => ilingo.getSync({ namespace: 'app', key: 'hi' }))
+                .toThrow(SyncUnavailableError);
             expect(onMissingKey).not.toHaveBeenCalled();
         });
 
@@ -160,7 +189,7 @@ describe('Ilingo — synchronous read path (#988)', () => {
             const ilingo = make(cold, warm);
             const ctx = { namespace: 'app', key: 'hi', locale: 'de', data: { name: 'Peter' } };
 
-            expect(ilingo.getSync(ctx)).toBeUndefined();
+            expect(() => ilingo.getSync(ctx)).toThrow(SyncUnavailableError);
             expect(await ilingo.get(ctx)).toEqual('Hallo Peter');
             // Warm now — and the sync answer agrees with the async one.
             expect(ilingo.getSync(ctx)).toEqual('Hallo Peter');
@@ -172,9 +201,11 @@ describe('Ilingo — synchronous read path (#988)', () => {
             const loader = vi.fn(() => defineTranslations({ hi: 'Hello' }));
             const ilingo = make(new LoaderStore({ loader }));
 
-            ilingo.getSync({ namespace: 'app', key: 'hi' });
             // Reading synchronously must stay read-only: kicking off the load
-            // here would make a render-path call trigger I/O.
+            // here would make a render-path call trigger I/O. It declines
+            // instead — hence the throw.
+            expect(() => ilingo.getSync({ namespace: 'app', key: 'hi' }))
+                .toThrow(SyncUnavailableError);
             expect(loader).not.toHaveBeenCalled();
 
             expect(await ilingo.get({ namespace: 'app', key: 'hi' })).toEqual('Hello');
@@ -191,8 +222,8 @@ describe('Ilingo — synchronous read path (#988)', () => {
             const pending = ilingo.get({ namespace: 'app', key: 'hi' });
             // Mid-flight the cache is still empty — reporting a miss here would
             // hand out a fallback the async call is about to contradict.
-            expect(store.getSync({ locale: 'en', namespace: 'app', key: 'hi' }))
-                .toBe(SYNC_UNAVAILABLE);
+            expect(() => store.getSync({ locale: 'en', namespace: 'app', key: 'hi' }))
+                .toThrow(SyncUnavailableError);
 
             settle(defineTranslations({ hi: 'Hello' }));
             expect(await pending).toEqual('Hello');
@@ -235,6 +266,21 @@ describe('Ilingo — synchronous read path (#988)', () => {
             expect(await ilingo.get(ctx)).toEqual('');
         });
 
+        it('is recognised across duplicate package copies', () => {
+            // The guard is marker-based (Symbol.for), so an error thrown by
+            // another copy of ilingo — e.g. the one inside @ilingo/fs — is
+            // still caught by an app compiled against this one.
+            const error = new SyncUnavailableError('cold', { locale: 'en' });
+            const foreign = JSON.parse(JSON.stringify({})) as Record<symbol, unknown>;
+            foreign[Symbol.for('ilingo.sync-unavailable-error')] = true;
+
+            expect(isSyncUnavailableError(error)).toBe(true);
+            expect(error instanceof SyncUnavailableError).toBe(true);
+            expect(error instanceof Error).toBe(true);
+            expect(isSyncUnavailableError(foreign)).toBe(true);
+            expect(isSyncUnavailableError(new Error('other'))).toBe(false);
+        });
+
         it('honours a fallback opt-out identically', async () => {
             const ilingo = new Ilingo({
                 store: new MemoryStore({ data: catalog }),
@@ -262,27 +308,69 @@ describe('Ilingo — synchronous read path (#988)', () => {
         });
     });
 
-    describe('store capability', () => {
-        it('detects sync-capable stores', () => {
-            expect(isSyncStore(new MemoryStore({ data: catalog }))).toBe(true);
-            expect(isSyncStore(new LoaderStore({ loader: () => undefined }))).toBe(true);
-            expect(isSyncStore(new AsyncOnlyStore())).toBe(false);
+    describe('store contract', () => {
+        it('gives every store both read idioms, an async-only one declining', () => {
+            // getSync is part of IStore, not an opt-in capability: two outcomes
+            // per idiom — a value or a failure — so a caller never has to
+            // feature-detect.
+            for (const store of [
+                new MemoryStore({ data: catalog }),
+                new LoaderStore({ loader: () => undefined }),
+                new AsyncOnlyStore(),
+            ]) {
+                expect(typeof store.getSync).toBe('function');
+            }
+
+            expect(() => new AsyncOnlyStore().getSync({ locale: 'en', namespace: 'app', key: 'hi' }))
+                .toThrow(SyncUnavailableError);
         });
 
-        it('MemoryStore reports a definite miss, never SYNC_UNAVAILABLE', () => {
+        it('gives an actionable error for a pre-v7 store with no getSync', () => {
+            // The shape every ilingo<7 adapter has. Without the guard this is a
+            // bare "store.getSync is not a function" from inside the walk.
+            const legacy = {
+                id: Symbol('legacy'),
+                get: async () => undefined,
+                getLocales: async () => [],
+            } as unknown as IStore;
+
+            try {
+                make(legacy).getSync({ namespace: 'app', key: 'hi' });
+                expect.unreachable('should have thrown');
+            } catch (e) {
+                expect(isSyncUnavailableError(e)).toBe(true);
+                expect((e as Error).message).toContain('does not implement getSync()');
+                expect((e as Error).message).toContain('throwSyncUnavailable');
+            }
+        });
+
+        it('throwSyncUnavailable names the store and the lookup', () => {
+            try {
+                throwSyncUnavailable({ locale: 'de', namespace: 'app', key: 'hi' }, 'my-store');
+                expect.unreachable('should have thrown');
+            } catch (e) {
+                expect(isSyncUnavailableError(e)).toBe(true);
+                const error = e as SyncUnavailableError;
+                expect(error.message).toContain('de/app.hi');
+                expect(error.message).toContain('my-store');
+                expect(error.storeId).toEqual('my-store');
+            }
+        });
+
+        it('MemoryStore reports a definite miss, never throwing', () => {
             const store = new MemoryStore({ data: catalog });
 
             expect(store.getSync({ locale: 'en', namespace: 'app', key: 'nope' })).toBeUndefined();
             expect(store.getSync({ locale: 'zz', namespace: 'app', key: 'hi' })).toBeUndefined();
         });
 
-        it('LoaderStore reports SYNC_UNAVAILABLE until the pair is cached', async () => {
+        it('LoaderStore throws until the pair is cached', async () => {
             const store = new LoaderStore({
                 loader: () => defineTranslations({ hi: 'Hello' }),
             });
             const ctx = { locale: 'en', namespace: 'app', key: 'hi' };
 
-            expect(store.getSync(ctx)).toBe(SYNC_UNAVAILABLE);
+            expect(() => store.getSync(ctx)).toThrow(SyncUnavailableError);
 
             await store.get(ctx);
             expect(store.getSync(ctx)).toEqual('Hello');
@@ -290,7 +378,7 @@ describe('Ilingo — synchronous read path (#988)', () => {
             expect(store.getSync({ ...ctx, key: 'nope' })).toBeUndefined();
 
             store.invalidate('en', 'app');
-            expect(store.getSync(ctx)).toBe(SYNC_UNAVAILABLE);
+            expect(() => store.getSync(ctx)).toThrow(SyncUnavailableError);
         });
 
         it('LoaderStore reports a cached loader miss as a definite miss', async () => {

@@ -88,9 +88,9 @@ The plugin still seeds the missing locales (DE/FR/ES); your overrides take prece
 
 ## First render (SSR)
 
-Messages resolve through a `computedAsync`, whose initial value is **seeded synchronously** via [`Ilingo.getSync()`](/guide/stores#synchronous-reads-isyncstore) when the catalog is in memory — the eager `createMemoryStore()` default. Validator messages therefore appear on the first render, and a server-rendered form hydrates without a text mismatch ([#988](https://github.com/tada5hi/ilingo/issues/988)).
+Messages resolve through a `computedAsync`, whose initial value is **seeded synchronously** via [`Ilingo.getSync()`](/guide/stores#synchronous-reads-getsync) when the catalog is in memory — the eager `createMemoryStore()` default. Validator messages therefore appear on the first render, and a server-rendered form hydrates without a text mismatch ([#988](https://github.com/tada5hi/ilingo/issues/988)).
 
-The seed is all-or-nothing: an app-specific rule with no catalog entry, or a `createLoaderStore()` locale that hasn't loaded, leaves the record empty as before rather than showing a message that changes a tick later.
+An app-specific rule with no catalog entry still seeds — with the rule *name*, which is what the async pass falls back to. Only a store that needs I/O (a `createLoaderStore()` locale that hasn't loaded) abandons the seed, since a fallback there would be contradicted a tick later.
 
 ## Locale switching
 

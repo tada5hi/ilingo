@@ -131,20 +131,20 @@ If the original source for a namespace was a `.ts`/`.js`/`.cjs` file, that file 
 
 ## Synchronous reads (SSR)
 
-`FSStore` extends `MemoryStore` and uses its map as a load cache, so it implements the [`ISyncStore`](/guide/stores#synchronous-reads-isyncstore) capability for data it has already read. A `(locale, namespace)` pulled off disk answers synchronously; a **cold** (or still-loading) one returns `SYNC_UNAVAILABLE` — not a miss, because the file may define the key and treating it as absent would let the lookup fall through to another locale.
+`FSStore` extends `MemoryStore` and uses its map as a load cache, so it implements the [`getSync`](/guide/stores#synchronous-reads-getsync) capability for data it has already read. A `(locale, namespace)` pulled off disk answers synchronously; a **cold** (or still-loading) one throws `SyncUnavailableError` — not a miss, because the file may define the key and treating it as absent would let the lookup fall through to another locale.
 
 ```typescript
 const store = new FSStore({ directory: './language' });
 const ilingo = new Ilingo({ store });
 
-ilingo.getSync({ namespace: 'app', key: 'hi' });    // undefined — cold
+ilingo.getSync({ namespace: 'app', key: 'hi' });    // throws — cold
 await ilingo.get({ namespace: 'app', key: 'hi' });  // 'Hello' — reads en/app.*
 ilingo.getSync({ namespace: 'app', key: 'hi' });    // 'Hello' — warm, synchronous
 ```
 
 That is what lets a server-rendered Vue tree emit real translations instead of `namespace.key` placeholders. Prime what a route renders with `await store.loadNamespace('app', locale)` before rendering; the cache lives on the store, so subsequent requests need no warm-up. See the [SSR recipe](/recipes/ssr#_5-the-first-render-getsync).
 
-Note the interaction with watch mode: an `invalidate` drops the cached namespace, so it is cold — and back to `SYNC_UNAVAILABLE` — until the next `get()`.
+Note the interaction with watch mode: an `invalidate` drops the cached namespace, so it is cold — and `getSync` declines again — until the next `get()`.
 
 ## Watch mode (dev hot-reload)
 

@@ -6,8 +6,15 @@
  */
 
 import type { Data, GetContext, IIlingo } from 'ilingo';
+import { isProductionEnv, isSyncUnavailableError } from 'ilingo';
 import { unref } from 'vue';
 import type { DataMaybeRef } from '../types';
+
+/**
+ * Errors already reported by {@link resolveSync}, so a broken store warns once
+ * instead of once per translated binding on the page.
+ */
+const warned = new Set<string>();
 
 /**
  * Best-effort synchronous lookup, used to seed the `computedAsync`s in this
@@ -15,27 +22,47 @@ import type { DataMaybeRef } from '../types';
  * `namespace.key` placeholder — the difference between correct and
  * mismatching server-rendered markup (issue #988).
  *
- * `getSync` is optional on `IIlingo`: an implementation that cannot answer
- * without I/O (a remote-backed decorator, a test double, an older core
- * version resolved through the peer range) simply doesn't have it, and the
- * caller falls back to its placeholder.
+ * Never throws. Two distinct reasons it can come back empty:
+ *
+ * - `SyncUnavailableError` — expected control flow. A store needs I/O (a cold
+ *   `FSStore` / `LoaderStore`, an adapter with no synchronous read), so there
+ *   is nothing to seed and the async pass will resolve it.
+ * - anything else — a genuine fault in a store or formatter. Swallowed too,
+ *   because this runs on the component's synchronous setup path where an
+ *   escaping throw aborts the mount, but reported once in development: the
+ *   async pass hands the same error to VueUse's `onError`, which forwards to
+ *   `globalThis.reportError` — absent in a Node SSR run, so it would otherwise
+ *   vanish exactly where it matters most.
+ *
+ * `getSync` is a required member of `IIlingo`, so there is nothing to feature
+ * detect: an instance that lacks it (a hand-rolled double, a stale copy pulled
+ * in through the peer range) trips the `catch` below and is reported like any
+ * other fault.
  */
 export function resolveSync(instance: IIlingo, ctx: GetContext): string | undefined {
-    if (typeof instance.getSync !== 'function') {
-        return undefined;
-    }
-
     try {
         return instance.getSync(ctx);
-    } catch {
-        // A seed must never be able to make things worse than not seeding.
-        // The lookup runs on this component's synchronous setup path, so a
-        // throwing custom store or formatter would break the mount outright —
-        // whereas the same throw inside the `computedAsync` below is handled
-        // by its `onError` (and surfaces via `globalThis.reportError`). Fall
-        // through to the placeholder and let the async pass report it.
+    } catch (e) {
+        if (!isSyncUnavailableError(e) && !isProductionEnv()) {
+            reportSeedFailure(e);
+        }
+
         return undefined;
     }
+}
+
+function reportSeedFailure(e: unknown): void {
+    const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    if (warned.has(message)) {
+        return;
+    }
+
+    warned.add(message);
+    // eslint-disable-next-line no-console
+    console.warn(
+        '[ilingo/vue] a synchronous translation lookup failed; falling back to the ' +
+        `asynchronous one. ${message}`,
+    );
 }
 
 export function extractReactiveData(input: DataMaybeRef) : Data {

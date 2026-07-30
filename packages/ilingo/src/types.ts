@@ -181,18 +181,16 @@ export interface IIlingo {
     get(ctx: GetContext): Promise<string | undefined>;
 
     /**
-     * Optional synchronous read — see `Ilingo.getSync`. Returns `undefined`
-     * when the key is missing *or* when a consulted store cannot answer
-     * without I/O, so callers treat it as a best-effort seed and keep
-     * `get()` as the authoritative path.
+     * Synchronous read — see `Ilingo.getSync`. Returns what `get` would
+     * resolve, or throws `SyncUnavailableError` when a consulted store cannot
+     * answer without I/O.
      *
-     * Optional on the interface (rather than required) because not every
-     * `IIlingo` implementation can answer synchronously — a decorator over a
-     * remote backend, a minimal test double. Consumers call it as
-     * `instance.getSync?.(ctx)`; implementations that *can* answer should
-     * provide it so server-side rendering gets a correct first paint.
+     * Required, like `IStore.getSync`: an implementation that cannot read
+     * synchronously still provides it and throws (see `throwSyncUnavailable`),
+     * so a caller never has to feature-detect. Two outcomes, mirroring `get`'s
+     * value-or-rejection.
      */
-    getSync?(ctx: GetContext): string | undefined;
+    getSync(ctx: GetContext): string | undefined;
 
     format(input: string, data: Record<string, any>, locale?: string): string;
 }

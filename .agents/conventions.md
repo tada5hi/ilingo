@@ -150,16 +150,16 @@ When adding new source files, keep this contract:
 
 | Entry | Budget | Current |
 |---|---|---|
-| `ilingo` — full barrel | 6.25 kB | 6.05 kB |
-| `ilingo` — `Ilingo + MemoryStore` | 5 kB | 3.83 kB |
+| `ilingo` — full barrel | 6.5 kB | 6.35 kB |
+| `ilingo` — `Ilingo + MemoryStore` | 5 kB | 4.06 kB |
 | `ilingo` — `defineCatalog` only | 1.3 kB | 1.12 kB |
 | `ilingo` — `negotiateLocale + parseAcceptLanguage` | 1.7 kB | 1.48 kB |
-| `@ilingo/fs` — full barrel | 4 kB | 3.06 kB |
+| `@ilingo/fs` — full barrel | 4 kB | 3.24 kB |
 | `@ilingo/vue` — full barrel | 2 kB | 1.81 kB |
 | `@ilingo/vuelidate` — full barrel | 2.5 kB | 1.96 kB |
-| `@ilingo/validup` — core barrel | 2 kB | 665 B |
+| `@ilingo/validup` — core barrel | 2 kB | 794 B |
 
-The `ilingo` full-barrel budget was raised 6 → 6.25 kB when the synchronous read path (`getSync` / `ISyncStore`, #988) landed: the baseline was already 5.92 kB and the new public method plus the store capability add ~130 B. That is the *only* legitimate reason to move a budget — a deliberate feature, measured, in the PR that adds it. Silent creep still fails CI, which is the point.
+The `ilingo` full-barrel budget was raised 6 → 6.5 kB when the synchronous read path (`getSync`, #988) landed: the baseline was already 5.92 kB, and the new public method plus the `SyncUnavailableError` class and its marker plumbing add ~430 B. That is the *only* legitimate reason to move a budget — a deliberate feature, measured, in the PR that adds it. Silent creep still fails CI, which is the point.
 
 `@ilingo/fs`'s entry ignores `node:*` modules and the optional `chokidar` peer (server-only package — those aren't consumer-bundled). `@ilingo/vue` and `@ilingo/vuelidate` ignore their declared peers (`vue`, `ilingo`, etc.).
 

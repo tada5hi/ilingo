@@ -232,7 +232,7 @@ Both caches are per-store, not per-request, so on a long-lived server this cost 
 
 If you can't warm the store (a genuinely remote catalog), keep the payload approach from [§4](#_4-hand-state-to-the-client): serialise the slice the page used and build the client instance over a `MemoryStore`, which *can* answer synchronously.
 
-See [Stores → Synchronous reads](../guide/stores#synchronous-reads-isyncstore) for the store-side contract, including how to implement `getSync` on a custom adapter.
+See [Stores → Synchronous reads](../guide/stores#synchronous-reads-getsync) for the store-side contract, including how to implement `getSync` on a custom adapter.
 
 ## Nuxt
 

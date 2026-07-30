@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { isProductionEnv } from 'ilingo';
+import { isProductionEnv, isSyncUnavailableError } from 'ilingo';
 import type { IIlingo } from 'ilingo';
 import type { Issue, IssueGroup, IssueItem } from 'validup';
 import { flattenIssueItems } from 'validup';
@@ -144,20 +144,20 @@ export async function translateIssue(
 }
 
 /**
- * Synchronous counterpart of {@link translateIssue}, for call sites that
- * need a message *now* — a server render, or seeding a Vue `computedAsync`
- * so its first render isn't a placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).
+ * Synchronous counterpart of {@link translateIssue}, for call sites that need
+ * a message *now* — a server render, or seeding a Vue `computedAsync` so its
+ * first render isn't empty ([#988](https://github.com/tada5hi/ilingo/issues/988)).
  *
- * Returns `undefined` when it cannot produce the **same** string the async
- * path would. That is the whole point: `ilingo.getSync()` collapses "key
- * missing from the catalog" and "a store needs I/O" into a single
- * `undefined`, and those two want opposite fallbacks here — a missing key
- * should fall back to `issue.message`, while a cold store must *not*, since
- * `translateIssue` will resolve a real translation a tick later. Rather than
- * guess, this bails and lets the caller keep whatever it was showing.
+ * Resolves to the **same** string {@link translateIssue} would, including its
+ * `issue.message` fallback for a code the catalog doesn't carry. That is only
+ * possible because `Ilingo.getSync` separates the two failure modes: a missing
+ * key comes back as `undefined` (fall back, exactly like the async path), while
+ * a store that would need I/O throws `SyncUnavailableError` — where falling
+ * back would be wrong, since the async pass is about to produce a real
+ * translation.
  *
- * The one case it can always answer: an issue with no `code`, where
- * `translateIssue` returns `issue.message` without consulting ilingo at all.
+ * Returns `undefined` only for that second case, i.e. "ask me again after
+ * `translateIssue`".
  */
 export function translateIssueSync(
     issue: Issue,
@@ -165,20 +165,32 @@ export function translateIssueSync(
     options: TranslateIssueOptions = {},
 ): string | undefined {
     const { code } = issue;
-    if (typeof code === 'string' && code.length > 0) {
-        const translated = ilingo.getSync?.({
+    if (typeof code !== 'string' || code.length === 0) {
+        // No code — the async path never consults ilingo either.
+        return issue.message;
+    }
+
+    let translated: string | undefined;
+    try {
+        translated = ilingo.getSync({
             namespace: options.namespace ?? NAMESPACE,
             key: code,
             data: coerceIssueData(issue.data),
             locale: options.locale,
         });
+    } catch (e) {
+        if (isSyncUnavailableError(e)) {
+            return undefined;
+        }
 
-        return typeof translated === 'string' && translated.length > 0 ?
-            translated :
-            undefined;
+        // A fault in a store or formatter is not ours to swallow — the caller
+        // (or the async pass) should see it.
+        throw e;
     }
 
-    return issue.message;
+    return typeof translated === 'string' && translated.length > 0 ?
+        translated :
+        issue.message;
 }
 
 /**
@@ -215,14 +227,14 @@ export async function translateIssues(
  *
  * Returns the full batch only if every leaf issue resolves synchronously;
  * otherwise `undefined`. A partial seed is deliberately not offered: a batch
- * where some messages are localized and others are English defaults that
- * then flip a tick later is harder to reason about (and, across an SSR
- * boundary, a mismatch risk) than simply not seeding.
+ * where some messages are real and others are placeholders that flip a tick
+ * later is harder to reason about (and, across an SSR boundary, a mismatch
+ * risk) than simply not seeding.
  *
- * In the common setup — the bundled `createMemoryStore()` catalog and
- * built-in `IssueCode`s — every lookup resolves and the batch is complete.
- * An unregistered extension code, or a lazy store that hasn't loaded the
- * locale, makes the whole call return `undefined`.
+ * In practice this is now rarely partial: an untranslated extension code still
+ * resolves — to `issue.message`, exactly as the async path does — so the only
+ * thing that drops a batch is a store that genuinely needs I/O, which applies
+ * to every issue in it equally.
  */
 export function translateIssuesSync(
     issues: Issue[],

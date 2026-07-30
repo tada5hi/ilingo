@@ -46,7 +46,7 @@ The handler is useful for:
 
 ## Called from both read paths
 
-`onMissingKey` runs whenever a lookup exhausts the chain — on `get()` **and** on [`getSync()`](./stores#synchronous-reads-isyncstore). That is required by the equivalence guarantee: if the handler substitutes a string, the synchronous seed must produce the same string as the eventual async value, or the first render would differ from the second.
+`onMissingKey` runs whenever a lookup exhausts the chain — on `get()` **and** on [`getSync()`](./stores#synchronous-reads-getsync). That is required by the equivalence guarantee: if the handler substitutes a string, the synchronous seed must produce the same string as the eventual async value, or the first render would differ from the second.
 
 The consequence is that a consumer which seeds from `getSync()` (`@ilingo/vue` does, for every translated binding) reaches the handler **twice** for a genuinely missing key: once for the seed, once for the async pass. That is harmless for a pure handler that just returns a string, but a handler with side effects — reporting to Sentry, incrementing a counter, appending to a file — should dedupe on `(locale, namespace, key)` itself:
 

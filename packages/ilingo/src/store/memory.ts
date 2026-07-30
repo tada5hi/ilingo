@@ -11,14 +11,12 @@ import type { Leaf, Locales } from '../types';
 import { isPluralNode } from '../utils/identify';
 import type {
     IMutableStore,
-    ISyncStore,
     MemoryStoreOptions,
     StoreGetContext,
     StoreSetContext,
 } from './types';
-import { SYNC_UNAVAILABLE } from './types';
 
-export class MemoryStore implements IMutableStore, ISyncStore {
+export class MemoryStore implements IMutableStore {
     readonly id: string | symbol;
 
     protected data: Locales;
@@ -30,22 +28,30 @@ export class MemoryStore implements IMutableStore, ISyncStore {
     }
 
     async get(context: StoreGetContext): Promise<Leaf | undefined> {
-        const value = this.getSync(context);
-
-        // `MemoryStore.getSync` never yields the sentinel; a subclass using
-        // this map as a cache can, and by the time it delegates here it has
-        // already loaded what it needs — so "still unavailable" is a miss.
-        return value === SYNC_UNAVAILABLE ? undefined : value;
+        return this.resolve(context);
     }
 
     /**
-     * {@link ISyncStore} read. `MemoryStore` itself holds everything in
-     * memory, so it never returns `SYNC_UNAVAILABLE` — `undefined` is always
-     * a definite miss. The sentinel is part of the signature because
-     * subclasses that use this map as a *cache* do return it for data they
-     * haven't pulled in yet (see `FSStore` on a cold namespace).
+     * Synchronous read. Everything is in memory, so this never throws
+     * `SyncUnavailableError` — an `undefined` is always a definite miss.
+     * Subclasses that use this map as a *cache* do throw for data they haven't
+     * pulled in yet (see `FSStore` on a cold namespace).
      */
-    getSync(context: StoreGetContext): Leaf | undefined | typeof SYNC_UNAVAILABLE {
+    getSync(context: StoreGetContext): Leaf | undefined {
+        return this.resolve(context);
+    }
+
+    /**
+     * The actual map lookup, shared by both public faces so they can never
+     * disagree about what this store holds.
+     *
+     * Kept separate from `getSync` because a subclass may legitimately
+     * *override* `getSync` to decline (`FSStore` throws while a namespace is
+     * cold) — and `get`, being the asynchronous face that loads first, must not
+     * inherit that refusal. Routing `get` through the overridable method made
+     * `FSStore.get()` throw for a namespace it had just chosen not to cache.
+     */
+    protected resolve(context: StoreGetContext): Leaf | undefined {
         if (
             !this.data[context.locale] ||
             !this.data[context.locale][context.namespace]

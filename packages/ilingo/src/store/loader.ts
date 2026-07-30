@@ -7,17 +7,16 @@
 
 import { getPathValue, setPathValue } from 'pathtrace';
 import { normalizeNamespaceBody } from '../catalog/normalize';
+import { SyncUnavailableError } from '../errors';
 import type { Leaf, NamespaceBodyInput, Translations } from '../types';
 import { isPluralNode } from '../utils/identify';
 import type {
     IInvalidatingStore,
     IMutableStore,
-    ISyncStore,
     InvalidateListener,
     StoreGetContext,
     StoreSetContext,
 } from './types';
-import { SYNC_UNAVAILABLE } from './types';
 
 /**
  * User-supplied loader. Resolves a `(locale, namespace)` pair to a
@@ -92,7 +91,7 @@ const KEY_SEP = '\u0000';
  * drops the matching cached entries and fires the `invalidate` event so
  * subscribers (e.g. a Vue composable in dev mode) can re-fetch.
  */
-export class LoaderStore implements IInvalidatingStore, IMutableStore, ISyncStore {
+export class LoaderStore implements IInvalidatingStore, IMutableStore {
     readonly id: string | symbol;
 
     protected loaderFn: LoaderFn;
@@ -128,14 +127,27 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore, ISyncStor
     }
 
     /**
-     * {@link ISyncStore} read — answers only from the cache. A pair that has
-     * not been loaded yet resolves to `SYNC_UNAVAILABLE` (the loader is *not*
-     * kicked off; that is `get`'s job). A pair cached as a miss is a definite
-     * miss, matching `get`.
+     * Synchronous read — answers only from the cache. A pair cached as a
+     * miss is a definite miss (`undefined`), matching `get`. A pair that has
+     * not been loaded yet throws: the loader is deliberately *not* kicked off
+     * here, because a synchronous read must not start I/O.
+     *
+     * @throws {SyncUnavailableError} for a `(locale, namespace)` that isn't cached.
      */
-    getSync(context: StoreGetContext): Leaf | undefined | typeof SYNC_UNAVAILABLE {
+    getSync(context: StoreGetContext): Leaf | undefined {
         const cached = this.cache.get(this.cacheKey(context.locale, context.namespace));
-        if (!cached) return SYNC_UNAVAILABLE;
+        if (!cached) {
+            throw new SyncUnavailableError(
+                `[ilingo] "${context.locale}/${context.namespace}" is not loaded yet — ` +
+                'await get() to populate the cache before reading synchronously.',
+                {
+                    locale: context.locale,
+                    namespace: context.namespace,
+                    key: context.key,
+                    storeId: this.id,
+                },
+            );
+        }
 
         return this.readKey(cached.record, context.key);
     }

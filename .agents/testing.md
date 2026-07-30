@@ -36,9 +36,10 @@ unit/                               # catalogs built inline with the define* hel
 ├── custom-formatters.spec.ts       # registerFormatter + IlingoOptions.formatters; built-in override; clone shares
 ├── loader-store.spec.ts            # LoaderStore lazy load, dedupe, cache, miss cache, invalidate, events
 ├── sync.spec.ts                    # getSync — equivalence with get() (interpolation, plural, fallback,
-│                                   #   onMissingKey), bail-out when an async-only store precedes the hit,
-│                                   #   no onMissingKey on bail-out, SYNC_UNAVAILABLE vs definite miss,
-│                                   #   isSyncStore, LoaderStore cold/warm/invalidated
+│                                   #   onMissingKey), throws when an async-only store precedes the hit,
+│                                   #   no onMissingKey on that throw, throw vs definite miss,
+│                                   #   marker-based error identity, throwSyncUnavailable,
+│                                   #   LoaderStore cold/warm/invalidated
 ├── catalog/
 │   └── normalize.spec.ts           # normalizeCatalog — tree→Locales, dotted-namespace nesting, key
 │                                   #   nesting, plural node, sibling merge, default-namespace seam
@@ -77,9 +78,9 @@ unit/
 ├── dotted-namespace.spec.ts    # dotted namespace ↔ dotted filename (app.nav.json): load, key/namespace separation, persist round-trip
 ├── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
 │                               #   split read/write directories
-├── sync.spec.ts                # getSync — SYNC_UNAVAILABLE while cold, warm after a get(),
+├── sync.spec.ts                # getSync — throws while cold, warm after a get(),
 │                               #   Ilingo.getSync end-to-end, cold again after invalidate,
-│                               #   SYNC_UNAVAILABLE for the whole in-flight window,
+│                               #   declines for the whole in-flight window,
 │                               #   concurrent readers share one load, invalidate mid-read drops it
 └── watch.spec.ts               # FSStore({ watch: true }) emits invalidate on file change;
                                 #   manual invalidate() drops cache; close() teardown is idempotent.
@@ -175,7 +176,7 @@ CI runs `npm run test:coverage`, so threshold violations fail the build. Treat t
 
 ## Cross-runtime smoke
 
-`packages/ilingo/test/smoke.mjs` is a runtime-agnostic script that loads the built `dist/index.mjs` exactly like a published consumer and exercises a representative API slice (construct → locale chain → fallback → plural → interpolation → missing-key → `getSync`, including a `getSync(ctx) === await get(ctx)` assertion). It uses only the JS standard library (no `node:*` imports — a tiny inline `equal()` helper stands in for `assert.strictEqual`) so it runs unmodified under any ES2022 + ESM + Promise runtime: Node, Bun, Deno, modern browsers via `<script type="module">`, Cloudflare Workers, Vercel Edge.
+`packages/ilingo/test/smoke.mjs` is a runtime-agnostic script that loads the built `dist/index.mjs` exactly like a published consumer and exercises a representative API slice (construct → locale chain → fallback → plural → interpolation → missing-key → `getSync`, including a `getSync(ctx) === await get(ctx)` assertion and the `SyncUnavailableError` an async-only store throws, checked through the marker-based guard). It uses only the JS standard library (no `node:*` imports — a tiny inline `equal()` helper stands in for `assert.strictEqual`) so it runs unmodified under any ES2022 + ESM + Promise runtime: Node, Bun, Deno, modern browsers via `<script type="module">`, Cloudflare Workers, Vercel Edge.
 
 CI runs it under **Node** and **Bun** via a matrix job in `.github/workflows/main.yml` (`oven-sh/setup-bun@v2` for the Bun runner). Other runtimes aren't gated in CI today, but because the script has no Node-specific dependencies, adding a runner is one matrix entry away.
 

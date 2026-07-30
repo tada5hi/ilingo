@@ -78,11 +78,11 @@ Each has a synchronous counterpart for server rendering and `computedAsync` seed
 
 | Helper | Returns | Use |
 |---|---|---|
-| `translateIssueSync(issue, ilingo, opts?)` | `string \| undefined` | Same lookup via [`Ilingo.getSync()`](/guide/stores#synchronous-reads-isyncstore). `undefined` when it cannot guarantee the async result. |
+| `translateIssueSync(issue, ilingo, opts?)` | `string \| undefined` | Same lookup via [`Ilingo.getSync()`](/guide/stores#synchronous-reads-getsync), including the `issue.message` fallback. `undefined` only when a store would need I/O. |
 | `translateIssuesSync(issues, ilingo, opts?)` | `IssueTranslation[] \| undefined` | All-or-nothing batch — never half-translated. |
 | `translateIssueGroupsSync(groups, ilingo, opts?)` | `IssueGroupTranslation[] \| undefined` | All-or-nothing batch of group-level messages. |
 
-The `undefined` is deliberate. `getSync()` reports the same `undefined` for "this code has no catalog entry" (async falls back to `issue.message`) and for "a store needs I/O" (async resolves a real translation), and those want opposite fallbacks — so the sync helpers decline rather than render a message that changes a tick later. With the bundled memory catalog and built-in codes they always answer.
+The `undefined` is narrow by design. `getSync()` separates the two failure modes — a code with no catalog entry comes back as `undefined` (so these helpers apply the same `issue.message` fallback the async path does), while a store that needs I/O *throws*. Only the second makes a sync helper decline, because falling back there would render a message that changes a tick later. With the bundled memory catalog every call answers.
 
 Options on all six: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
 

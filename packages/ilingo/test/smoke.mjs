@@ -29,6 +29,8 @@
 import {
     Ilingo,
     MemoryStore,
+    SyncUnavailableError,
+    isSyncUnavailableError,
     defineCatalog,
     defineTranslations,
     defineLocale,
@@ -155,7 +157,36 @@ const ilingo = new Ilingo({
     );
 }
 
+// ─── 9. a legacy store (no getSync) fails with an actionable error ─────
+{
+    // The shape every ilingo<7 adapter has. It must not surface as a bare
+    // "store.getSync is not a function".
+    const remote = new Ilingo({
+        store: {
+            id: Symbol('legacy-async-only'),
+            get: async () => undefined,
+            getLocales: async () => [],
+        },
+    });
+
+    let caught;
+    try {
+        remote.getSync({ namespace: 'app', key: 'greeting' });
+    } catch (e) {
+        caught = e;
+    }
+
+    equal(typeof caught, 'object', '[9] getSync throws for a legacy store');
+    equal(isSyncUnavailableError(caught), true, '[9] the throw is a SyncUnavailableError');
+    equal(caught instanceof SyncUnavailableError, true, '[9] marker-based instanceof holds');
+    equal(
+        caught.message.includes('does not implement getSync()'),
+        true,
+        '[9] the message says what to implement',
+    );
+}
+
 // Successful exit signals a green run; any failed assert throws and
 // CI sees a non-zero exit.
 // eslint-disable-next-line no-console
-console.log('ok — 11 assertions passed');
+console.log('ok — 15 assertions passed');

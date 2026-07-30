@@ -69,7 +69,7 @@ const items = useTranslation({
 
 ### The first render is not a placeholder
 
-The ref is a `computedAsync` over `Ilingo.get()`, so it needs an initial value before the promise settles. It is seeded with [`Ilingo.getSync()`](../guide/stores#synchronous-reads-isyncstore) — the synchronous read path — which means an in-memory catalog renders the **real string on the very first pass**, not the `namespace.key` placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).
+The ref is a `computedAsync` over `Ilingo.get()`, so it needs an initial value before the promise settles. It is seeded with [`Ilingo.getSync()`](../guide/stores#synchronous-reads-getsync) — the synchronous read path — which means an in-memory catalog renders the **real string on the very first pass**, not the `namespace.key` placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).
 
 That is what makes server-side rendering work: the SSR markup carries the translation, and the client's first render produces the same text instead of a hydration mismatch. Nothing to opt into — `useTranslation`, `<ITranslate>`, `<ITranslateT>` and `useScopedCatalog().t` all do it.
 

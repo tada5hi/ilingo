@@ -4,7 +4,7 @@
 
 ilingo follows a small **port-and-adapter** design:
 
-- **Port**: `IStore` (`packages/ilingo/src/store/types.ts`) is the **read** contract — `id`, `get`, `getLocales` (ilingo reads a datasource; the orchestrator never writes). Writing is the opt-in `IMutableStore` (`set`) and synchronous reading the opt-in `ISyncStore` (`getSync`, used by `Ilingo.getSync` for SSR); `MemoryStore` additionally exposes concrete `setSync` / `getLocalesSync` for in-memory seeding without `await` (those two are store-specific, not port members).
+- **Port**: `IStore` (`packages/ilingo/src/store/types.ts`) is the **read** contract — `id`, `get`, `getSync`, `getLocales` (ilingo reads a datasource; the orchestrator never writes). The read is required in *both* idioms, matching confinity's `IStore` and locter's `IReader`; an adapter that cannot read without I/O implements `getSync` by throwing `SyncUnavailableError` (`throwSyncUnavailable`). Writing is the opt-in `IMutableStore` (`set`); `MemoryStore` additionally exposes concrete `setSync` / `getLocalesSync` for in-memory seeding without `await` (those two are store-specific, not port members).
 - **Adapters**: `MemoryStore` (default, in-memory; implements `IMutableStore`) and `FSStore` (lazy-loads files from disk, persists `set()` to JSON) implement the port.
 - **Orchestrator**: `Ilingo` (`packages/ilingo/src/module.ts`, implementing the `IIlingo` interface) holds a `Map<symbol, IStore>` plus per-instance state for the locale, fallback chain, missing-key handler, plural-rules cache, and warn-once memo. On each `get()` it walks a resolved locale chain in order; within each locale it queries stores **serially in insertion order** and stops at the first hit.
 - **Public contract**: `IIlingo` is the orchestrator's interface — every method on `Ilingo` plus the `stores` map and `formatters` registry. Neither `Ilingo` nor `IIlingo` is generic in the catalog (`class Ilingo implements IIlingo`); `get`/`getResolvedLocale` take a loose `GetContext` and return `Promise<string | undefined>`. Higher-layer packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accept and return `IIlingo` in type positions so consumers can swap test doubles or decorating wrappers without depending on the concrete class. Construction still goes through the `Ilingo` class; runtime discrimination uses structural duck-typing (`'stores' in input`) so non-concrete `IIlingo` implementations are still recognised by `@ilingo/vue`'s `applyInstallInput`.
@@ -51,49 +51,49 @@ The descriptor `{ type: 'plural' }` node **replaces** the previous `@plural` JSO
 
 The orchestrator selects a form using `Intl.PluralRules` keyed by the *resolved* locale (the one that actually matched). `Intl.PluralRules` instances are cached per locale on the `Ilingo` instance.
 
-### Synchronous read path (`getSync` / `ISyncStore`)
+### Synchronous read path (`getSync`)
 
 `Ilingo.get()` is always a `Promise`, which breaks server-side rendering: `@ilingo/vue`'s `computedAsync` has to render *something* first, that placeholder lands in the SSR markup, and the client's first render then mismatches it (#988). `getSync(ctx)` is the synchronous counterpart — same locale chain, same serial store order, same plural/interpolation/`onMissingKey` handling.
 
-The store-side capability is opt-in, layered exactly like `IMutableStore` / `IInvalidatingStore`:
+**The read is required in both idioms.** `getSync` is part of `IStore` and of `IIlingo`, not an opt-in capability:
 
 ```typescript
-export const SYNC_UNAVAILABLE = Symbol.for('ilingo.sync-unavailable');
-
-export interface ISyncStore extends IStore {
-    getSync(context: StoreGetContext): Leaf | undefined | typeof SYNC_UNAVAILABLE;
+export interface IStore {
+    readonly id: string | symbol;
+    get(context: StoreGetContext): Promise<Leaf | undefined>;
+    getSync(context: StoreGetContext): Leaf | undefined;   // throws SyncUnavailableError
+    getLocales(): Promise<string[]>;
 }
-export function isSyncStore(store: IStore): store is ISyncStore;
 ```
 
-**Three outcomes, not two.** `undefined` is a *definite* miss ("I can answer; I don't have this key") and lets the walk continue; `SYNC_UNAVAILABLE` means "I might have it but not without I/O" and aborts the entire sync lookup. The distinction is load-bearing: a two-valued `getSync` would let a cold `FSStore` look like a miss, and the walk would return the `en` fallback while `get()` returns the `de` string — a *wrong* value, silently, which is strictly worse than the placeholder it replaced. This is also why a method-presence guard is enough: `FSStore` inherits `getSync` from `MemoryStore` and overrides it to report `SYNC_UNAVAILABLE` while cold, rather than opting out of the capability.
+**Two outcomes, not three.** A synchronous read either produces a value (`Leaf` for a hit, `undefined` for a definite miss) or throws — which is exactly the pair the asynchronous read has as resolve-or-reject. An earlier iteration returned a `SYNC_UNAVAILABLE` sentinel; it was dropped because it invented a third outcome async has no analogue for, and it shared a channel with `undefined`. Callers *must* separate "no such key" from "ask me later": the first wants a fallback (`issue.message`, the rule name, the `namespace.key` placeholder), the second must not fall back at all, because the async pass is about to produce a real translation. Dropping the sentinel also un-widened `MemoryStore.getSync`'s return type, which had only widened so `FSStore` could override it.
 
-`Ilingo.lookupSync` mirrors `lookup` and bails at the first store that declines — *at that point*, not skipping past it. Everything earlier in the walk answered identically to the async path, and nothing later can be consulted without knowing what the declining store would have said. Hence the contract: **when `getSync` returns a string it equals `await get()`**; otherwise it returns `undefined` and the caller falls back. `getSync` deliberately does *not* run `onMissingKey` (or warn) when it bailed out — that's not a miss, and `get()` will handle it.
+`SyncUnavailableError` lives in `src/errors/` alongside an `IlingoError` base, following the convention in the sibling packages (`LocterError` in locter, `ConfinityError` in confinity): a base class per library, subclasses carrying structured fields (here `locale` / `namespace` / `key` / `storeId`), and **`Symbol.for` markers plus a `[Symbol.hasInstance]` override** so `instanceof` survives duplicate package copies — the same motivation that makes library catalog stores key themselves with `Symbol.for('@scope/pkg')`. The `@ebec/core` base used by locter is deliberately *not* pulled in: core ships to browsers under a bundle-size budget and this is its only error class. Use `isSyncUnavailableError` at any boundary where the error may cross copies (thrown inside `@ilingo/fs`, caught in an app).
+
+`Ilingo.lookupSync` mirrors `lookup` and lets a store's throw unwind untouched — no capability branch, and the error already names the store and lookup that declined. Aborting *at* the declining store rather than skipping it is what keeps the result equivalent to the async walk: everything before it answered identically, and nothing after it can be consulted without knowing what the decliner would have said. Hence the contract: **when `getSync` returns, it equals `await get()`**; when it can't guarantee that, it throws.
 
 Implementations:
 
 | Store | `getSync` |
 |---|---|
-| `MemoryStore` | always answers (never `SYNC_UNAVAILABLE`); its `get()` maps a subclass's sentinel to `undefined` |
-| `LoaderStore` | cache-only — `SYNC_UNAVAILABLE` for an unloaded pair; does **not** start a load. A cached loader-miss is a definite miss |
-| `FSStore` | `SYNC_UNAVAILABLE` until `loadNamespace` has **completed** for the `(locale, namespace)` — including the whole in-flight window; warm afterwards, cold again after `invalidate` |
-| async-only adapter (HTTP/DB) | absent — its presence before the hit makes `Ilingo.getSync()` return `undefined` |
+| `MemoryStore` | always answers; never throws `SyncUnavailableError` |
+| `LoaderStore` | cache-only — throws for an unloaded pair; does **not** start a load. A cached loader-miss is a definite miss |
+| `FSStore` | throws until `loadNamespace` has *completed* for the `(locale, namespace)` — including the whole in-flight window; warm afterwards, cold again after `invalidate` |
+| async-only adapter (HTTP/DB) | `getSync(context) { throwSyncUnavailable(context, this.id); }` |
+
+`MemoryStore` keeps the map lookup in a protected `resolve()` that both `get` and `getSync` delegate to (same shape as confinity's `Store.resolve`). `get` must **not** route through the overridable `getSync`: `FSStore` overrides `getSync` to decline, and an async `get` that inherited that refusal threw for a namespace it had just chosen not to cache.
 
 **`onMissingKey` fires on both paths.** Required by the equivalence guarantee — a handler-substituted string has to be identical for the seed and the async pass. Consequence: a seeding consumer reaches the handler twice per missing key. The built-in default is unaffected (`warnedKeys` is shared, so one warning total); a consumer handler with side effects must dedupe itself, which the missing-key guide documents.
 
-`IIlingo.getSync?` is **optional** on the interface: not every implementation (a remote-backed decorator, a test double) can answer synchronously, and keeping it optional means adding it wasn't a breaking change for external implementers. `MemoryStore.getSync`'s declared return type had to widen to include the sentinel so `FSStore` can override it — TypeScript forbids widening a return type in a subclass.
-
-`@ilingo/vue` consumes it through one helper (`composables/utils.ts` → `resolveSync(instance, ctx)`, which guards `typeof instance.getSync === 'function'` for version skew across the peer range). All four async translation surfaces seed their `computedAsync` with it: `useTranslation`, `<ITranslateT>`, `useScopedCatalog().t`, and `<ITranslate>` (via `useTranslation`). The `v-t` directive is unchanged — Vue SSR does not execute directives without `getSSRProps`, and there is no `getSSRProps` shape for text content.
+`@ilingo/vue` consumes it through one helper (`composables/utils.ts` → `resolveSync`). It never throws: a `SyncUnavailableError` is expected control flow (nothing to seed), and any *other* error is swallowed too — the lookup runs on the synchronous setup path where an escaping throw aborts the mount — but reported once in dev, because the async pass hands the same error to VueUse's `onError` → `globalThis.reportError`, which is absent under Node SSR and would otherwise lose it exactly where it matters. All four async translation surfaces seed from it: `useTranslation`, `<ITranslateT>`, `useScopedCatalog().t`, and `<ITranslate>` (via `useTranslation`). The `v-t` directive is unchanged — Vue SSR does not execute directives without `getSSRProps`, and there is no `getSSRProps` shape for text content.
 
 #### Seeding the validation-message layers
 
 `@ilingo/validup` mirrors its three async helpers with `translateIssueSync` / `translateIssuesSync` / `translateIssueGroupsSync`, and `@ilingo/validup-vue` + `@ilingo/vuelidate` use them (resp. `instance.getSync?.()`) to seed their own `computedAsync`s.
 
-These layers hit the ambiguity the core deliberately collapses. `Ilingo.getSync()` returns `undefined` both for a definite miss and for a bail-out, and the two want **opposite** fallbacks here: a code with no catalog entry should fall back to `issue.message` (that is what the async path does), while a cold store must *not* — the async path will produce a real translation a tick later. Guessing either way is a message that changes under the user, i.e. exactly the SSR mismatch class being fixed.
+These layers are the reason the core separates the two failure modes instead of collapsing them into one `undefined`. A code with no catalog entry must fall back to `issue.message` (exactly what the async path does), while a store that merely needs I/O must **not** — the async pass is about to produce a real translation, and falling back now would be a message that changes under the user, i.e. the very SSR mismatch class being fixed.
 
-So the sync helpers **decline**: `translateIssueSync` returns `undefined` unless it got a non-empty string (or the issue has no `code` at all, where the async path also answers from `issue.message` without consulting ilingo). The batch helpers are **all-or-nothing** — a partial batch would render some messages localized and others as English defaults that then flip, which is harder to reason about than not seeding, and is a mismatch risk across an SSR boundary. `@ilingo/vuelidate`'s `useTranslationsForBaseValidation` applies the same rule per rule-name record.
-
-Consequence worth knowing: an app with custom extension codes / app-specific validator rules that aren't in any catalog gets **no** seed for that batch, and behaves exactly as before this feature. Adding translations for those codes is what turns the seed on.
+With a definite miss reported as `undefined` and unavailability thrown, `translateIssueSync` applies the async path's own fallback for the first case and returns `undefined` only for the second. An unexpected error (a broken store or formatter) is **re-thrown**, not masked as "unavailable". The batch helpers stay **all-or-nothing** — a batch where some messages are real and others placeholders that flip a tick later is harder to reason about, and a mismatch risk across an SSR boundary — but that now triggers rarely, since the only cause is a store needing I/O, which applies to every issue in the batch equally. `@ilingo/vuelidate`'s `useTranslationsForBaseValidation` applies the same rule per rule-name record (`value || rule`, matching its async body).
 
 ### Cache invalidation
 
@@ -231,11 +231,6 @@ export interface IMutableStore extends IStore {
 }
 export function isMutableStore(store: IStore): store is IMutableStore;
 
-// Synchronous reads are opt-in too — see "Synchronous read path" below.
-export interface ISyncStore extends IStore {
-    getSync(context: StoreGetContext): Leaf | undefined | typeof SYNC_UNAVAILABLE;
-}
-export function isSyncStore(store: IStore): store is ISyncStore;
 ```
 
 Adapter — `packages/ilingo/src/store/memory.ts`. The constructor normalizes the `CatalogInput` tree into `Locales`; `get` unwraps a `PluralNode` to its inner `data` (a bare `{ one, other }` object is a nested key path, not a plural):
@@ -366,7 +361,7 @@ Output:
 ```
 
 `getSync(ctx)` runs the identical pipeline with step 3 replaced by `lookupSync`
-(same order, `SYNC_UNAVAILABLE` aborts the walk) and returns
+(same order; a store's `SyncUnavailableError` aborts the walk) and returns
 `string | undefined` directly — no Promise. An aborted walk skips step 4
 entirely (no `onMissingKey`, no warning) and yields `undefined`.
 

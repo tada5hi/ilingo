@@ -25,10 +25,19 @@ export type StoreSetContext = StoreGetContext & {
 
 /**
  * **Read** port for translation backends — the contract `Ilingo` relies on.
- * ilingo's job is to *read* a datasource: the orchestrator only ever calls
- * `get` (and `getLocales`), never `set`. So the required surface is just
- * `id` + `get` + `getLocales`, and it is **frozen** at those — external
- * adapters can rely on this being the complete required contract.
+ * ilingo's job is to *read* a datasource: the orchestrator only ever reads,
+ * never writes. So the required surface is `id` + `get` + `getSync` +
+ * `getLocales` — every adapter provides the read in both idioms, the same way
+ * confinity's `IStore` pairs `get`/`getSync` and locter's `IReader` pairs
+ * `read`/`readSync`.
+ *
+ * A store that genuinely cannot read without I/O still implements `getSync` —
+ * by throwing {@link SyncUnavailableError} (use {@link throwSyncUnavailable}).
+ * That is not a workaround: a synchronous read has exactly two outcomes, a
+ * value or a throw, which is the same pair the asynchronous read has as a value
+ * or a rejection. Encoding "no answer" as a *return* value would invent a third
+ * outcome the async side doesn't have, and would put it in the same channel as
+ * `undefined` (= "no such key"), which callers must be able to tell apart.
  *
  * Writing is an *optional* capability layered as a separate interface
  * detected via a type guard — see {@link IMutableStore} / {@link isMutableStore}
@@ -61,6 +70,33 @@ export interface IStore {
      * Stores that don't support plurals can return just `string | undefined`.
      */
     get(context: StoreGetContext): Promise<Leaf | undefined>;
+
+    /**
+     * Resolve a `(locale, namespace, key)` **without I/O** — the synchronous
+     * twin of {@link get}, and the reason `Ilingo.getSync()` can exist.
+     *
+     * Returns exactly what `get` would return for the same context: a `Leaf`
+     * for a hit, `undefined` for a miss. When the store cannot honour that
+     * promise from memory it throws {@link SyncUnavailableError} instead —
+     * a cold `FSStore` namespace, an unloaded `LoaderStore` pair, or an
+     * adapter (HTTP, database) that has no synchronous read at all:
+     *
+     * ```typescript
+     * getSync(context: StoreGetContext): Leaf | undefined {
+     *     throwSyncUnavailable(context, this.id);
+     * }
+     * ```
+     *
+     * It must **not** start a load. A synchronous read that kicks off I/O
+     * turns a render-path call into a fetch, which is precisely what callers
+     * use this method to avoid.
+     *
+     * The distinction between a throw and `undefined` is load-bearing: a miss
+     * lets the orchestrator continue its walk, while an unavailable answer
+     * aborts it. Reporting a cold store as a miss would let the locale chain
+     * resolve a *farther* locale's string — a silently wrong translation.
+     */
+    getSync(context: StoreGetContext): Leaf | undefined;
 
     /**
      * Enumerate the locales the store can currently resolve. Used by
@@ -99,65 +135,6 @@ export interface IMutableStore extends IStore {
  */
 export function isMutableStore(store: IStore): store is IMutableStore {
     return typeof (store as Partial<IMutableStore>).set === 'function';
-}
-
-/**
- * Sentinel returned by {@link ISyncStore.getSync} when the store *may* hold
- * the key but cannot answer without I/O — a cold `FSStore` namespace, a
- * `LoaderStore` pair that hasn't been imported yet.
- *
- * Deliberately distinct from `undefined`, which means a **definite miss**
- * ("I can answer, and I don't have this key"). The orchestrator needs the
- * difference: a definite miss lets the walk continue to the next store /
- * locale, while an unavailable answer aborts the whole synchronous lookup.
- * Continuing past it could resolve to a *different* value than the async
- * walk — a fallback-locale string from a warm store while the cold store
- * holds the exact-locale one — which is the very mismatch `getSync` exists
- * to prevent.
- *
- * `Symbol.for` (global registry) so duplicate package copies — pnpm, a
- * peer-dep mismatch — still compare equal.
- */
-export const SYNC_UNAVAILABLE = Symbol.for('ilingo.sync-unavailable');
-
-/**
- * Optional **synchronous read** capability, for stores that hold their data
- * in memory. Layered as an opt-in interface detected by a type guard, like
- * {@link IMutableStore} and {@link IInvalidatingStore} — the required
- * {@link IStore} port stays async so network- and disk-backed adapters can
- * implement it uniformly.
- *
- * Exists for server-side rendering: `Ilingo.get()` is a `Promise`, so a Vue
- * `computedAsync` renders its placeholder first, which lands in the SSR
- * markup and then mismatches on hydration. `Ilingo.getSync()` walks the same
- * chain synchronously and lets the first render be the real string on both
- * sides of the boundary.
- *
- * **Contract**: when `getSync` returns anything other than
- * {@link SYNC_UNAVAILABLE}, it MUST return what `get` would have returned
- * for the same context. A store that can only answer for part of its data
- * (a warmed cache) returns {@link SYNC_UNAVAILABLE} for the rest rather
- * than reporting a miss — see `FSStore` (cold namespace) and `LoaderStore`
- * (unloaded pair). Detect at runtime with {@link isSyncStore}.
- */
-export interface ISyncStore extends IStore {
-    /**
-     * Resolve a `(locale, namespace, key)` without I/O.
-     *
-     * - `Leaf` — a hit; identical to what `get` would resolve.
-     * - `undefined` — a definite miss; the caller may continue its walk.
-     * - {@link SYNC_UNAVAILABLE} — cannot answer synchronously; the caller
-     *   must abandon the synchronous lookup and fall back to `get`.
-     */
-    getSync(context: StoreGetContext): Leaf | undefined | typeof SYNC_UNAVAILABLE;
-}
-
-/**
- * Type guard for {@link ISyncStore} — true when the store exposes a
- * `getSync` method.
- */
-export function isSyncStore(store: IStore): store is ISyncStore {
-    return typeof (store as Partial<ISyncStore>).getSync === 'function';
 }
 
 export type MemoryStoreOptions = {

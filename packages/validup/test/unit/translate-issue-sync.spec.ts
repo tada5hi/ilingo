@@ -40,7 +40,7 @@ describe('translateIssueSync (#988)', () => {
         expect(translateIssueSync(invalid, ilingo)).toBe(await translateIssue(invalid, ilingo));
     });
 
-    it('returns undefined for an untranslated code instead of guessing', async () => {
+    it('falls back to issue.message for an untranslated code, exactly like the async path', async () => {
         const ilingo = setupIlingo('en');
         const issue = defineIssueItem({
             path: ['email'],
@@ -48,11 +48,10 @@ describe('translateIssueSync (#988)', () => {
             code: 'email_taken',
         });
 
-        // The async path falls back to issue.message — but a sync `undefined`
-        // cannot be told apart from "a store needs I/O", so no fallback is
-        // invented here.
-        expect(translateIssueSync(issue, ilingo)).toBeUndefined();
-        expect(await translateIssue(issue, ilingo)).toBe('Email already taken');
+        // Possible only because a missing key is `undefined` while a store that
+        // needs I/O throws — the two no longer share one channel.
+        expect(translateIssueSync(issue, ilingo)).toBe('Email already taken');
+        expect(translateIssueSync(issue, ilingo)).toBe(await translateIssue(issue, ilingo));
     });
 
     it('answers a codeless issue from its message', () => {
@@ -63,19 +62,29 @@ describe('translateIssueSync (#988)', () => {
         expect(translateIssueSync(issue, setupIlingo())).toBe('Plain message');
     });
 
-    it('returns undefined when the instance cannot read synchronously', () => {
+    it('returns undefined when a store needs I/O', () => {
         const ilingo = new Ilingo();
         ilingo.registerStore(new LoaderStore({ loader: () => undefined }));
 
+        // Declines rather than falling back: the async pass is about to resolve
+        // a real translation, and a fallback now would flip a tick later.
         expect(translateIssueSync(invalid, ilingo)).toBeUndefined();
     });
 
-    it('returns undefined when the instance has no getSync at all', () => {
-        // An IIlingo implementation from an older core / a partial test double.
+    it('propagates an unexpected store fault instead of masking it as unavailable', () => {
         const ilingo = setupIlingo('en');
-        const partial = { ...ilingo, getSync: undefined } as unknown as Ilingo;
+        ilingo.getSync = () => { throw new TypeError('broken store'); };
 
-        expect(translateIssueSync(invalid, partial)).toBeUndefined();
+        expect(() => translateIssueSync(invalid, ilingo)).toThrow(TypeError);
+    });
+
+    it('does not mask a store fault as unavailable', () => {
+        // `getSync` is a required member now, so a missing/broken one is a
+        // genuine fault — surfaced, not translated into "ask me later".
+        const ilingo = setupIlingo('en');
+        ilingo.getSync = undefined as unknown as typeof ilingo.getSync;
+
+        expect(() => translateIssueSync(invalid, ilingo)).toThrow(TypeError);
     });
 });
 
@@ -92,11 +101,23 @@ describe('translateIssuesSync (#988)', () => {
         ]);
     });
 
-    it('is all-or-nothing — one unresolvable issue drops the whole batch', () => {
+    it('keeps an untranslated code in the batch, using its own message', () => {
         const out = translateIssuesSync([
             invalid,
             defineIssueItem({ path: ['email'], message: 'Email already taken', code: 'email_taken' }),
         ], setupIlingo('en'));
+
+        expect(out?.map((entry) => entry.message)).toEqual([
+            'The value is invalid',
+            'Email already taken',
+        ]);
+    });
+
+    it('is all-or-nothing — a store that needs I/O drops the whole batch', () => {
+        const ilingo = new Ilingo({ locale: 'en' });
+        ilingo.registerStore(new LoaderStore({ loader: () => undefined }));
+
+        const out = translateIssuesSync([invalid], ilingo);
 
         expect(out).toBeUndefined();
     });
@@ -122,7 +143,7 @@ describe('translateIssueGroupsSync (#988)', () => {
         expect(typeof out?.[0]?.message).toBe('string');
     });
 
-    it('is all-or-nothing', () => {
+    it('falls back to a group\'s own message when its code is untranslated', () => {
         const untranslated = defineIssueGroup({
             path: [],
             message: 'custom group failure',
@@ -130,6 +151,15 @@ describe('translateIssueGroupsSync (#988)', () => {
             children: [],
         });
 
-        expect(translateIssueGroupsSync([group, untranslated], setupIlingo('en'))).toBeUndefined();
+        const out = translateIssueGroupsSync([group, untranslated], setupIlingo('en'));
+
+        expect(out?.[1]?.message).toBe('custom group failure');
+    });
+
+    it('is all-or-nothing when a store needs I/O', () => {
+        const ilingo = new Ilingo({ locale: 'en' });
+        ilingo.registerStore(new LoaderStore({ loader: () => undefined }));
+
+        expect(translateIssueGroupsSync([group], ilingo)).toBeUndefined();
     });
 });

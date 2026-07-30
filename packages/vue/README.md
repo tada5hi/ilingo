@@ -102,7 +102,7 @@ For server-side rendering that removes a whole class of bugs: the translated str
   - expected on client: "app.name"
 ```
 
-No opt-in, no payload plumbing. Stores that need I/O (a cold `LoaderStore` or `FSStore`, a remote adapter) can't answer synchronously — those keys still start at the placeholder and settle a tick later; warm them before rendering if the server output matters. See the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr) and [`ISyncStore`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-isyncstore).
+No opt-in, no payload plumbing. Stores that need I/O (a cold `LoaderStore` or `FSStore`, a remote adapter) can't answer synchronously — those keys still start at the placeholder and settle a tick later; warm them before rendering if the server output matters. See the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr) and [`getSync`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-getsync).
 
 ## `<ITranslateT>` — slot-aware interpolation
 

@@ -7,18 +7,17 @@
 
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { Ilingo, SYNC_UNAVAILABLE, isSyncStore } from 'ilingo';
+import { Ilingo, SyncUnavailableError } from 'ilingo';
 import { FSStore } from '../../src';
 
 const basePath = path.join(__dirname, '..', 'data', 'language');
 
 describe('FSStore — synchronous read path (#988)', () => {
-    it('reports SYNC_UNAVAILABLE for a namespace that is not loaded yet', () => {
+    it('throws for a namespace that is not loaded yet', () => {
         const store = new FSStore({ directory: basePath });
 
-        expect(isSyncStore(store)).toBe(true);
-        expect(store.getSync({ locale: 'en', namespace: 'form', key: 'name' }))
-            .toBe(SYNC_UNAVAILABLE);
+        expect(() => store.getSync({ locale: 'en', namespace: 'form', key: 'name' }))
+            .toThrow(SyncUnavailableError);
     });
 
     it('answers from the cache once the namespace is warm', async () => {
@@ -36,13 +35,13 @@ describe('FSStore — synchronous read path (#988)', () => {
         const ilingo = new Ilingo({ store: new FSStore({ directory: basePath }) });
         const ctx = { namespace: 'form', key: 'nested.key' };
 
-        expect(ilingo.getSync(ctx)).toBeUndefined();
+        expect(() => ilingo.getSync(ctx)).toThrow(SyncUnavailableError);
 
         expect(await ilingo.get(ctx)).toEqual('I am nested');
         expect(ilingo.getSync(ctx)).toEqual('I am nested');
     });
 
-    it('stays SYNC_UNAVAILABLE for the whole in-flight window', async () => {
+    it('keeps declining for the whole in-flight window', async () => {
         const store = new FSStore({ directory: basePath });
         const ctx = { locale: 'en', namespace: 'form', key: 'nested.key' };
 
@@ -51,7 +50,7 @@ describe('FSStore — synchronous read path (#988)', () => {
         // a miss here would let the orchestrator resolve a farther locale that
         // the in-flight read is about to contradict — the exact hazard
         // SYNC_UNAVAILABLE exists for.
-        expect(store.getSync(ctx)).toBe(SYNC_UNAVAILABLE);
+        expect(() => store.getSync(ctx)).toThrow(SyncUnavailableError);
 
         expect(await pending).toEqual('I am nested');
         expect(store.getSync(ctx)).toEqual('I am nested');
@@ -80,7 +79,7 @@ describe('FSStore — synchronous read path (#988)', () => {
 
         // The invalidated read must not have repopulated the cache, so the
         // namespace is cold again and the next get() re-reads from disk.
-        expect(store.getSync(ctx)).toBe(SYNC_UNAVAILABLE);
+        expect(() => store.getSync(ctx)).toThrow(SyncUnavailableError);
         expect(await store.get(ctx)).toEqual('I am nested');
     });
 
@@ -91,6 +90,6 @@ describe('FSStore — synchronous read path (#988)', () => {
         await store.get(ctx);
         store.invalidate('en', 'form');
 
-        expect(store.getSync(ctx)).toBe(SYNC_UNAVAILABLE);
+        expect(() => store.getSync(ctx)).toThrow(SyncUnavailableError);
     });
 });
