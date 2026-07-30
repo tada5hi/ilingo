@@ -124,10 +124,7 @@ src/
 ├── module.ts                 # FSStore extends MemoryStore — directory[], writeDirectory,
 │                             #   lazy loadNamespace(), atomic persist() (write-tmp + rename)
 ├── types.ts                  # FSStoreOptionsInput (input) + FSStoreOptions (resolved, includes writeDirectory + watch)
-├── utils.ts                  # normalizeOptions (normalize directory[] + writeDirectory)
-└── utils/
-    └── twin.ts               # internal: op() + runTwinAsync/runTwinSync — locter's scheme for
-                              #   deriving loadNamespace / loadNamespaceSync from one body
+└── utils.ts                  # normalizeOptions (normalize directory[] + writeDirectory)
 test/
 ├── unit/
 │   ├── module.spec.ts        # loads test/data/language/<locale>/<namespace>.* via FSStore

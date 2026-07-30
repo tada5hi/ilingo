@@ -34,8 +34,8 @@ import {
 } from 'ilingo';
 import type { FSStoreOptionsInput } from './types';
 import { normalizeOptions } from './utils';
-import type { TwinBody } from './utils/twin';
-import { op, runTwinAsync, runTwinSync } from './utils/twin';
+import type { TwinBody } from 'twinop';
+import { op, runTwinAsync, runTwinSync } from 'twinop';
 
 type ChokidarLike = {
     watch(paths: string | string[], options?: object): {
@@ -288,8 +288,13 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
 
     /**
      * Read every file that backs `(locale, namespace)` and merge it into the
-     * in-memory record — written **once**, as a twin body, so the async and
-     * sync loads cannot drift apart on any of the bookkeeping around the I/O.
+     * in-memory record, written **once** as a `twinop` body, so the async and
+     * sync loads cannot drift apart on any of the bookkeeping around the I/O:
+     * the cache write, the loaded flag, the invalidation generation guard and
+     * the merge order. Two hand-written copies drift, and when they do `get`
+     * and `getSync` disagree about what the store holds, which is the bug class
+     * this package kept hitting while the synchronous read path was built
+     * (see #988).
      *
      * `setIsLoaded` runs **after** the merge, so `isLoaded` means "the data is
      * here" rather than "someone started fetching it". That is what keeps a
