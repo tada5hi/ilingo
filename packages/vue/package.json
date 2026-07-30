@@ -68,7 +68,7 @@
     "homepage": "https://github.com/tada5hi/ilingo#readme",
     "devDependencies": {
         "@vitejs/plugin-vue": "^6.0.8",
-        "@vue/server-renderer": "^3.5.35",
+        "@vue/server-renderer": "^3.5.40",
         "@vue/test-utils": "^2.4.11",
         "@vueuse/core": "^14.4.0",
         "cross-env": "^10.1.0",
