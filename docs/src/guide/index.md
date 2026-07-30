@@ -43,6 +43,8 @@ Input: { namespace, key, locale?, data?, count? }
 
 The chain is walked **locale-first**: the closest locale beats the farthest one regardless of which store holds the value. Within a single locale, stores are queried **serially in insertion order** and the walk stops at the first hit — later stores are not pre-fetched, so an expensive adapter never fires when a cheap one has already answered.
 
+`getSync()` runs the identical pipeline without awaiting, for call sites that need a string *now* — the first render of a server-rendered component. It succeeds when every store consulted before the hit can answer from memory, and returns `undefined` otherwise. See [Stores → Synchronous reads](./stores#synchronous-reads-isyncstore).
+
 ## Concepts
 
 | Concept | Page |
@@ -54,3 +56,4 @@ The chain is walked **locale-first**: the closest locale beats the farthest one 
 | CLDR-category plural selection | [Pluralization](./pluralization) |
 | `Intl.NumberFormat` / `Intl.DateTimeFormat` / `Intl.ListFormat` | [Formatters](./formatters) |
 | Custom miss reporting | [Missing-Key Handler](./missing-key) |
+| Synchronous reads for SSR (`getSync` / `ISyncStore`) | [Stores](./stores#synchronous-reads-isyncstore) · [SSR recipe](../recipes/ssr) |

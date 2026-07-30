@@ -67,6 +67,14 @@ const items = useTranslation({
 
 `useTranslation(ctx)` returns a `Ref<string>` that re-renders when any reactive input — `locale`, `data`, `count` — changes. `count` accepts `MaybeRef<number>`.
 
+### The first render is not a placeholder
+
+The ref is a `computedAsync` over `Ilingo.get()`, so it needs an initial value before the promise settles. It is seeded with [`Ilingo.getSync()`](../guide/stores#synchronous-reads-isyncstore) — the synchronous read path — which means an in-memory catalog renders the **real string on the very first pass**, not the `namespace.key` placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).
+
+That is what makes server-side rendering work: the SSR markup carries the translation, and the client's first render produces the same text instead of a hydration mismatch. Nothing to opt into — `useTranslation`, `<ITranslate>`, `<ITranslateT>` and `useScopedCatalog().t` all do it.
+
+Stores that need I/O (a cold `LoaderStore` or `FSStore`, a remote adapter) can't answer synchronously, so those keys still start at the placeholder and settle a tick later. See the [SSR recipe](../recipes/ssr#_5-the-first-render-getsync) for warming them up before a server render.
+
 ## `<ITranslate>` component
 
 For inline use:

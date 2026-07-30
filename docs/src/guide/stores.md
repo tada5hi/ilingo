@@ -30,7 +30,7 @@ export function isMutableStore(store: IStore): store is IMutableStore; // type g
 `MemoryStore` (in-memory mutation) and `FSStore` (writes through to disk) implement it; `extendStore(...)` takes a `IMutableStore`. All methods are async — keep that contract even when the implementation is synchronous, because `Ilingo.lookup` awaits every store call.
 
 ::: tip Frozen surface
-The `IStore` **read** port is **frozen** at `id` / `get` / `getLocales` for the stable release. Capabilities beyond reading layer as separate interfaces detected via type guards — `IMutableStore` (writing) and `IInvalidatingStore` (caching, below) are the pattern. `has`, `delete`, `getKeys`, and batch `getAll` were considered and deferred (see the source JSDoc for the rationale per method); they would follow the same opt-in-interface pattern if added later.
+The `IStore` **read** port is **frozen** at `id` / `get` / `getLocales` for the stable release. Capabilities beyond reading layer as separate interfaces detected via type guards — `IMutableStore` (writing), `ISyncStore` (synchronous reads, below) and `IInvalidatingStore` (caching, below) are the pattern. `has`, `delete`, `getKeys`, and batch `getAll` were considered and deferred (see the source JSDoc for the rationale per method); they would follow the same opt-in-interface pattern if added later.
 :::
 
 ## MemoryStore
@@ -60,7 +60,52 @@ store.setSync({ locale: 'es', namespace: 'app', key: 'hi', value: '¡Hola, {{nam
 await store.set({ locale: 'es', namespace: 'app', key: 'hi', value: '¡Hola, {{name}}!' });
 ```
 
-`setSync` (and the matching `getSync` / `getLocalesSync`) are concrete `MemoryStore` methods, **not** part of the async `IStore` / `IMutableStore` port — an async-only backend (`LoaderStore`, a remote datasource) can't answer synchronously, so the port stays async and only stores that genuinely hold data in memory offer the sync variants.
+`setSync` and `getLocalesSync` are concrete `MemoryStore` methods, **not** part of the async `IStore` / `IMutableStore` port — an async-only backend (a remote datasource) can't answer synchronously, so the port stays async and only stores that genuinely hold data in memory offer the sync variants. Synchronous *reading* is different: it has a formal opt-in capability, [`ISyncStore`](#synchronous-reads-isyncstore), because the orchestrator itself uses it.
+
+## Synchronous reads (`ISyncStore`)
+
+`Ilingo.get()` returns a `Promise`, which is a problem for server-side rendering: a Vue `computedAsync` renders its placeholder first, that placeholder lands in the HTML, and the client's first render then mismatches it. `Ilingo.getSync()` resolves the same lookup without awaiting, so the first render is the real string on both sides of the hydration boundary ([issue #988](https://github.com/tada5hi/ilingo/issues/988)).
+
+It works when every store consulted before the hit can answer without I/O — the opt-in capability:
+
+```typescript
+export const SYNC_UNAVAILABLE: unique symbol;
+
+export interface ISyncStore extends IStore {
+    getSync(context: StoreGetContext): Leaf | undefined | typeof SYNC_UNAVAILABLE;
+}
+```
+
+Three outcomes, and the third is the important one:
+
+| Return | Meaning | Orchestrator |
+|---|---|---|
+| `Leaf` | hit — identical to what `get()` would resolve | renders it |
+| `undefined` | **definite** miss — "I can answer, and I don't have this key" | continues the walk |
+| `SYNC_UNAVAILABLE` | cannot answer without I/O — cold cache, unloaded file | abandons the whole sync lookup |
+
+Bailing out on `SYNC_UNAVAILABLE` (instead of treating it as a miss) is what keeps `getSync()` **strictly equivalent** to `await get()`: same locale chain, same store order, same plural selection and interpolation, same `onMissingKey` routing. Without it a cold store holding the `de` string would be skipped and the walk would happily return the `en` fallback — a wrong string, silently, which is worse than the placeholder it replaced.
+
+```typescript
+import { isSyncStore } from 'ilingo';
+
+// undefined = key missing OR no synchronous answer; get() stays authoritative
+const seed = ilingo.getSync({ namespace: 'app', key: 'hi', data: { name: 'Peter' } });
+const value = seed ?? await ilingo.get({ namespace: 'app', key: 'hi', data: { name: 'Peter' } });
+
+isSyncStore(new MemoryStore({ data })); // true
+```
+
+Who can answer synchronously:
+
+| Store | Behaviour |
+|---|---|
+| `MemoryStore` | always — `undefined` is always a definite miss |
+| `LoaderStore` | for `(locale, namespace)` pairs already loaded; `SYNC_UNAVAILABLE` otherwise (it does **not** kick off the loader) |
+| `FSStore` | for namespaces already read from disk; `SYNC_UNAVAILABLE` while cold |
+| a custom async-only store (HTTP, DB) | no `getSync` — its presence anywhere before the hit makes `Ilingo.getSync()` return `undefined` |
+
+`@ilingo/vue` uses this automatically — see [SSR & hydration](../recipes/ssr).
 
 ## LoaderStore
 

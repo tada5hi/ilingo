@@ -10,7 +10,7 @@ import { isInvalidatingStore } from 'ilingo';
 import type { Ref } from 'vue';
 import { onScopeDispose, ref, unref } from 'vue';
 import type { GetContextReactive } from '../types';
-import { extractReactiveData } from './utils';
+import { extractReactiveData, resolveSync } from './utils';
 import { injectIlingo } from './instance';
 import { injectLocale } from './locale';
 
@@ -19,6 +19,26 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
     const locale = injectLocale();
 
     const defaultValue = `${ctx.namespace}.${ctx.key}`;
+
+    const buildContext = () => ({
+        locale: ctx.locale ?
+            ctx.locale :
+            locale.value,
+        data: ctx.data ?
+            extractReactiveData(ctx.data) :
+            undefined,
+        namespace: ctx.namespace,
+        key: ctx.key,
+        count: unref(ctx.count),
+    });
+
+    // Seed the computedAsync with a synchronous lookup instead of the
+    // placeholder. In-memory stores can answer right away, which makes the
+    // *first* render the real string — on the server (no await point to
+    // wait for) and on the client (no hydration mismatch against the
+    // server's markup). Stores that need I/O return undefined here and the
+    // placeholder is used, exactly as before. See issue #988.
+    const initialValue = resolveSync(instance, buildContext()) || defaultValue;
 
     // Bumping this ref forces the computedAsync below to re-run. Used by the
     // invalidation subscriptions further down — without a tracked dep that
@@ -50,20 +70,10 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
             // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             invalidationTick.value;
 
-            const value = await instance.get({
-                locale: ctx.locale ?
-                    ctx.locale :
-                    locale.value,
-                data: ctx.data ?
-                    extractReactiveData(ctx.data) :
-                    undefined,
-                namespace: ctx.namespace,
-                key: ctx.key,
-                count: unref(ctx.count),
-            });
+            const value = await instance.get(buildContext());
 
             return value || defaultValue;
         },
-        defaultValue,
+        initialValue,
     );
 }

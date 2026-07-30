@@ -13,7 +13,7 @@ import { unref } from 'vue';
 import type { GetContextReactive } from '../types';
 import { injectIlingo, provideIlingo } from './instance';
 import { injectLocale } from './locale';
-import { extractReactiveData } from './utils';
+import { extractReactiveData, resolveSync } from './utils';
 
 export type UseScopedCatalogResult = {
     /** The scoped `Ilingo` instance — exposed for advanced cases. */
@@ -82,18 +82,22 @@ export function useScopedCatalog(options: { messages: CatalogInput }): UseScoped
 
     function t(ctx: GetContextReactive): Ref<string> {
         const defaultValue = `${ctx.namespace}.${ctx.key}`;
+        const buildContext = () => ({
+            locale: ctx.locale ?? locale.value,
+            data: ctx.data ? extractReactiveData(ctx.data) : undefined,
+            namespace: ctx.namespace,
+            key: ctx.key,
+            count: unref(ctx.count),
+        });
+
         return computedAsync(
             async () => {
-                const value = await instance.get({
-                    locale: ctx.locale ?? locale.value,
-                    data: ctx.data ? extractReactiveData(ctx.data) : undefined,
-                    namespace: ctx.namespace,
-                    key: ctx.key,
-                    count: unref(ctx.count),
-                });
+                const value = await instance.get(buildContext());
                 return value || defaultValue;
             },
-            defaultValue,
+            // Synchronous seed, so a scoped message renders correctly on the
+            // very first pass (SSR included) — see issue #988.
+            resolveSync(instance, buildContext()) || defaultValue,
         );
     }
 

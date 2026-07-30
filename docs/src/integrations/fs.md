@@ -129,6 +129,23 @@ Writes are **atomic** — `FSStore` writes to a temporary file in the same direc
 
 If the original source for a namespace was a `.ts`/`.js`/`.cjs` file, that file is left untouched. The new `.json` lives alongside it. On the next load, `smob` merges both — the newer JSON wins.
 
+## Synchronous reads (SSR)
+
+`FSStore` extends `MemoryStore` and uses its map as a load cache, so it implements the [`ISyncStore`](/guide/stores#synchronous-reads-isyncstore) capability for data it has already read. A `(locale, namespace)` pulled off disk answers synchronously; a **cold** one returns `SYNC_UNAVAILABLE` — not a miss, because the file may define the key and treating it as absent would let the lookup fall through to another locale.
+
+```typescript
+const store = new FSStore({ directory: './language' });
+const ilingo = new Ilingo({ store });
+
+ilingo.getSync({ namespace: 'app', key: 'hi' });    // undefined — cold
+await ilingo.get({ namespace: 'app', key: 'hi' });  // 'Hello' — reads en/app.*
+ilingo.getSync({ namespace: 'app', key: 'hi' });    // 'Hello' — warm, synchronous
+```
+
+That is what lets a server-rendered Vue tree emit real translations instead of `namespace.key` placeholders. Prime what a route renders with `await store.loadNamespace('app', locale)` before rendering; the cache lives on the store, so subsequent requests need no warm-up. See the [SSR recipe](/recipes/ssr#_5-the-first-render-getsync).
+
+Note the interaction with watch mode: an `invalidate` drops the cached namespace, so it is cold — and back to `SYNC_UNAVAILABLE` — until the next `get()`.
+
 ## Watch mode (dev hot-reload)
 
 `FSStore({ watch: true })` keeps the cache in sync with the filesystem via [chokidar](https://github.com/paulmillr/chokidar). Each file change under the configured `directory` paths invalidates the matching `(locale, namespace)` cache entry and emits an `invalidate` event:

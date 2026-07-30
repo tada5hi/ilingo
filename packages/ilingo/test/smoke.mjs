@@ -10,8 +10,9 @@
  *
  * Loads the built `dist/index.mjs` exactly the way a published consumer
  * would, exercises a representative slice of the API (construct +
- * locale chain + fallback + plural + interpolation), and asserts the
- * expected outputs. Uses only the JS standard library — no Node `node:`
+ * locale chain + fallback + plural + interpolation + the synchronous
+ * read path), and asserts the expected outputs. Uses only the JS
+ * standard library — no Node `node:`
  * imports — so it runs unmodified on any ES2022 + ESM + Promise runtime
  * (Node, Bun, Deno, modern browsers via `<script type="module">`,
  * Cloudflare Workers, Vercel Edge).
@@ -137,7 +138,24 @@ const ilingo = new Ilingo({
     equal(out, undefined, '[7] missing key returns undefined');
 }
 
+// ─── 8. synchronous read path (SSR first render) ───────────────────────
+{
+    const ctx = { namespace: 'app', key: 'greeting', data: { name: 'Peter' } };
+    equal(ilingo.getSync(ctx), 'Hi Peter', '[8] getSync resolves an in-memory hit');
+    equal(ilingo.getSync(ctx), await ilingo.get(ctx), '[8] getSync agrees with get');
+    equal(
+        ilingo.getSync({ namespace: 'app', key: 'cart.items', count: 5 }),
+        '5 items',
+        '[8] getSync selects the plural form',
+    );
+    equal(
+        ilingo.getSync({ namespace: 'app', key: 'definitely-missing' }),
+        undefined,
+        '[8] getSync returns undefined for a missing key',
+    );
+}
+
 // Successful exit signals a green run; any failed assert throws and
 // CI sees a non-zero exit.
 // eslint-disable-next-line no-console
-console.log('ok — 7 assertions passed');
+console.log('ok — 11 assertions passed');

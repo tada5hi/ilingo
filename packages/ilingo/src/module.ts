@@ -8,6 +8,7 @@
 import type { IlingoOptions } from './options';
 import { LOCALE_DEFAULT } from './constants';
 import type { IStore } from './store';
+import { SYNC_UNAVAILABLE, isSyncStore } from './store';
 import type {
     Data,
     Fallback,
@@ -264,6 +265,47 @@ export class Ilingo implements IIlingo {
     }
 
     /**
+     * Synchronous counterpart of {@link get}, for call sites that must
+     * produce a string *now* — most importantly the first render of a
+     * server-rendered component, where an awaited value arrives too late and
+     * a placeholder ends up in the markup (and then mismatches on hydration).
+     *
+     * Succeeds only when every store consulted before the hit can answer
+     * without I/O (see {@link ISyncStore}). Otherwise the walk is abandoned
+     * and `undefined` is returned — the caller should fall back to `get()`.
+     * That makes the result **strictly equivalent** to `await get(ctx)`
+     * whenever it is not `undefined`: same locale chain, same store order,
+     * same plural selection, same interpolation, and the same
+     * `onMissingKey` routing for a key that is genuinely absent.
+     *
+     * `undefined` is therefore ambiguous by design — "missing key" and "no
+     * synchronous answer" collapse into it, exactly as they do for `get()`'s
+     * missing-key result. Callers that need to tell them apart should await
+     * `get()`.
+     *
+     * @example
+     *     // seed a Vue computedAsync so the first render is already correct
+     *     const initial = ilingo.getSync(ctx) ?? `${ctx.namespace}.${ctx.key}`;
+     */
+    getSync(ctx: GetContext): string | undefined {
+        const requestedLocale = ctx.locale ?? this.getLocale();
+        const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
+
+        const hit = this.lookupSync(chain, ctx);
+        if (hit === SYNC_UNAVAILABLE) {
+            // Not a miss — a store declined to answer without I/O. Stay
+            // silent (no onMissingKey, no warning): `get()` is authoritative
+            // here and will run the missing-key path itself if the key
+            // really is absent.
+            return undefined;
+        }
+
+        return hit ?
+            this.render(hit.leaf, hit.locale, ctx) :
+            this.handleMissingKey(ctx, requestedLocale, chain);
+    }
+
+    /**
      * The post-lookup half of `get()`: pick the plural form for `ctx.count`,
      * auto-merge `count` into the interpolation data (so `{{count}}` works
      * without restating it), and substitute `{{var}}` placeholders against
@@ -305,6 +347,48 @@ export class Ilingo implements IIlingo {
                     namespace: ctx.namespace,
                     key: ctx.key,
                 });
+                if (typeof candidate !== 'undefined') {
+                    return { locale, leaf: candidate };
+                }
+            }
+        }
+        return undefined;
+    }
+
+    /**
+     * Synchronous mirror of {@link lookup} — same chain order, same serial
+     * intra-locale store order, same stop-at-first-hit rule.
+     *
+     * Bails with `SYNC_UNAVAILABLE` the moment the walk reaches a store that
+     * cannot answer synchronously (no {@link ISyncStore} capability, or a
+     * capable store reporting an unloaded namespace). Bailing *at that point*
+     * rather than skipping the store is what keeps the result equivalent to
+     * the async walk: everything before it answered identically, and nothing
+     * after it can be consulted without knowing what the declining store
+     * would have said.
+     */
+    protected lookupSync(
+        chain: string[],
+        ctx: Pick<GetContext, 'namespace' | 'key'>,
+    ): { locale: string, leaf: Leaf } | undefined | typeof SYNC_UNAVAILABLE {
+        if (this.stores.size === 0) {
+            return undefined;
+        }
+
+        for (const locale of chain) {
+            for (const store of this.stores.values()) {
+                if (!isSyncStore(store)) {
+                    return SYNC_UNAVAILABLE;
+                }
+
+                const candidate = store.getSync({
+                    locale,
+                    namespace: ctx.namespace,
+                    key: ctx.key,
+                });
+                if (candidate === SYNC_UNAVAILABLE) {
+                    return SYNC_UNAVAILABLE;
+                }
                 if (typeof candidate !== 'undefined') {
                     return { locale, leaf: candidate };
                 }

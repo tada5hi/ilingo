@@ -2,7 +2,7 @@
     {
         "name": "ilingo — full barrel",
         "path": "packages/ilingo/dist/index.mjs",
-        "limit": "6 KB"
+        "limit": "6.25 KB"
     },
     {
         "name": "ilingo — Ilingo + MemoryStore (typical minimum)",

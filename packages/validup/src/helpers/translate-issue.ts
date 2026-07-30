@@ -144,6 +144,44 @@ export async function translateIssue(
 }
 
 /**
+ * Synchronous counterpart of {@link translateIssue}, for call sites that
+ * need a message *now* — a server render, or seeding a Vue `computedAsync`
+ * so its first render isn't a placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).
+ *
+ * Returns `undefined` when it cannot produce the **same** string the async
+ * path would. That is the whole point: `ilingo.getSync()` collapses "key
+ * missing from the catalog" and "a store needs I/O" into a single
+ * `undefined`, and those two want opposite fallbacks here — a missing key
+ * should fall back to `issue.message`, while a cold store must *not*, since
+ * `translateIssue` will resolve a real translation a tick later. Rather than
+ * guess, this bails and lets the caller keep whatever it was showing.
+ *
+ * The one case it can always answer: an issue with no `code`, where
+ * `translateIssue` returns `issue.message` without consulting ilingo at all.
+ */
+export function translateIssueSync(
+    issue: Issue,
+    ilingo: IIlingo,
+    options: TranslateIssueOptions = {},
+): string | undefined {
+    const { code } = issue;
+    if (typeof code === 'string' && code.length > 0) {
+        const translated = ilingo.getSync?.({
+            namespace: options.namespace ?? NAMESPACE,
+            key: code,
+            data: coerceIssueData(issue.data),
+            locale: options.locale,
+        });
+
+        return typeof translated === 'string' && translated.length > 0 ?
+            translated :
+            undefined;
+    }
+
+    return issue.message;
+}
+
+/**
  * Flatten an `Issue[]` to its leaf `IssueItem`s and translate each via
  * `translateIssue`. The returned array preserves the flatten order, so a
  * consumer can zip it back against the original tree if needed.
@@ -173,6 +211,39 @@ export async function translateIssues(
 }
 
 /**
+ * Synchronous counterpart of {@link translateIssues} — **all or nothing**.
+ *
+ * Returns the full batch only if every leaf issue resolves synchronously;
+ * otherwise `undefined`. A partial seed is deliberately not offered: a batch
+ * where some messages are localized and others are English defaults that
+ * then flip a tick later is harder to reason about (and, across an SSR
+ * boundary, a mismatch risk) than simply not seeding.
+ *
+ * In the common setup — the bundled `createMemoryStore()` catalog and
+ * built-in `IssueCode`s — every lookup resolves and the batch is complete.
+ * An unregistered extension code, or a lazy store that hasn't loaded the
+ * locale, makes the whole call return `undefined`.
+ */
+export function translateIssuesSync(
+    issues: Issue[],
+    ilingo: IIlingo,
+    options: TranslateIssueOptions = {},
+): Array<{ issue: IssueItem, message: string }> | undefined {
+    const flat = flattenIssueItems(issues);
+    const output: Array<{ issue: IssueItem, message: string }> = [];
+
+    for (const issue of flat) {
+        const message = translateIssueSync(issue, ilingo, options);
+        if (typeof message === 'undefined') {
+            return undefined;
+        }
+        output.push({ issue, message });
+    }
+
+    return output;
+}
+
+/**
  * Translate a list of `IssueGroup`s — each by its **own** `code` — to
  * localized messages, **without** descending into the group's children.
  *
@@ -199,4 +270,27 @@ export async function translateIssueGroups(
         groups.map((group) => translateIssue(group, ilingo, options)),
     );
     return groups.map((issue, i) => ({ issue, message: messages[i]! }));
+}
+
+/**
+ * Synchronous counterpart of {@link translateIssueGroups} — **all or
+ * nothing**, on the same terms as {@link translateIssuesSync}: the full
+ * batch when every group resolves without I/O, `undefined` otherwise.
+ */
+export function translateIssueGroupsSync(
+    groups: IssueGroup[],
+    ilingo: IIlingo,
+    options: TranslateIssueOptions = {},
+): IssueGroupTranslation[] | undefined {
+    const output: IssueGroupTranslation[] = [];
+
+    for (const group of groups) {
+        const message = translateIssueSync(group, ilingo, options);
+        if (typeof message === 'undefined') {
+            return undefined;
+        }
+        output.push({ issue: group, message });
+    }
+
+    return output;
 }

@@ -26,6 +26,7 @@ import type {
 } from 'ilingo';
 import {
     MemoryStore,
+    SYNC_UNAVAILABLE,
     isBCP47LanguageCode,
     normalizeNamespaceBody,
 } from 'ilingo';
@@ -83,6 +84,27 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
         await this.loadNamespace(context.namespace, context.locale);
 
         return super.get(context);
+    }
+
+    /**
+     * Synchronous read — served from the in-memory cache the parent
+     * `MemoryStore` holds, i.e. only for a `(locale, namespace)` a previous
+     * `get()` already pulled off disk. A cold namespace returns
+     * `SYNC_UNAVAILABLE` rather than a miss: the file may well define the
+     * key, and reporting a miss would let the caller resolve to a
+     * fallback-locale value that `get()` would never have returned.
+     *
+     * So an `FSStore` participates in `Ilingo.getSync()` once warm. On a
+     * server that means priming the namespaces a route renders (a plain
+     * `await ilingo.get(...)`, or `store.loadNamespace(ns, locale)`) before
+     * rendering — after that, SSR resolves synchronously.
+     */
+    override getSync(context: StoreGetContext): Leaf | undefined | typeof SYNC_UNAVAILABLE {
+        if (!this.isLoaded(context.namespace, context.locale)) {
+            return SYNC_UNAVAILABLE;
+        }
+
+        return super.getSync(context);
     }
 
     override async set(context: StoreSetContext): Promise<void> {

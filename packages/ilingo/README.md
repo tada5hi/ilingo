@@ -491,6 +491,8 @@ function register(ilingo: IIlingo) {
 
 `new Ilingo()` is still the way to construct an instance. Prefer `IIlingo` as the type position; reserve `Ilingo` (the class) for construction and `instanceof` checks.
 
+One member is optional on the interface: [`getSync`](#synchronous-reads-for-ssr). Not every implementation can answer without I/O (a decorator over a remote backend, a minimal test double), so consumers call it as `instance.getSync?.(ctx)` — and implementations that *can* answer should provide it, so server-side rendering gets a correct first paint.
+
 ### Slot placeholders & `tokenize()`
 
 In addition to `{{var}}` data placeholders (and modifier syntax), messages can carry `{slot}` markers (single curly braces) for renderers that produce structured output rather than a string. The core `tokenize(str)` helper parses a message into `text` / `var` / `slot` tokens:
@@ -564,7 +566,7 @@ ilingo.setLocale(chosen);
 
 ## Store
 
-A store implements the read `IStore` port — `id`, `get`, `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract, and it is **frozen** for the stable release. **Writing** is an opt-in capability — `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Other capabilities (cache invalidation, file watching, …) layer the same way (see [Invalidation](#invalidation) below). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
+A store implements the read `IStore` port — `id`, `get`, `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract, and it is **frozen** for the stable release. **Writing** is an opt-in capability — `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Other capabilities layer the same way: [`ISyncStore`](#synchronous-reads-for-ssr) (synchronous reads, for SSR) and [`IInvalidatingStore`](#invalidation) (caching). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
 
 ### Registering stores — `registerStore(store)`
 
@@ -610,6 +612,39 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 3 });
 ```
 
 Concurrent `get()`s for the same `(locale, namespace)` share one loader invocation. Misses (loader returning `undefined`) are cached too, so the loader isn't re-called for keys it has no answer for.
+
+### Synchronous reads for SSR
+
+`get()` is a `Promise`, which is a problem for server-side rendering: a Vue `computedAsync` renders its placeholder first, the placeholder ends up in the HTML, and the client's first render then mismatches it. `getSync(ctx)` walks the same locale chain and the same stores without awaiting, so the first render is the real string on both sides of the hydration boundary ([#988](https://github.com/tada5hi/ilingo/issues/988)):
+
+```typescript
+const ilingo = new Ilingo({ store: new MemoryStore({ data: catalog }), locale: 'de' });
+
+ilingo.getSync({ namespace: 'app', key: 'hi', data: { name: 'Peter' } }); // 'Hallo Peter'
+```
+
+Whenever it returns a string, that string is exactly what `await get(ctx)` would produce — same fallback chain, same plural form, same interpolation, same `onMissingKey` routing. When it cannot guarantee that it returns `undefined`, so the caller keeps `get()` as the authoritative path (`undefined` covers both "key missing" and "no synchronous answer" — await `get()` to tell them apart).
+
+Answering synchronously is an opt-in store capability, layered like `IMutableStore`:
+
+```typescript
+export const SYNC_UNAVAILABLE: unique symbol;
+
+export interface ISyncStore extends IStore {
+    getSync(context: StoreGetContext): Leaf | undefined | typeof SYNC_UNAVAILABLE;
+}
+```
+
+Three outcomes: a `Leaf` is a hit; `undefined` is a **definite** miss (the walk continues); `SYNC_UNAVAILABLE` means "I might have this key but can't answer without I/O" and aborts the whole synchronous lookup. That third case is what makes the equivalence guarantee hold — treating a cold store as a miss would let the walk return a fallback-locale string that `get()` would never have produced.
+
+- `MemoryStore` — always answers; `undefined` is always a definite miss.
+- `LoaderStore` — answers for `(locale, namespace)` pairs already loaded, `SYNC_UNAVAILABLE` otherwise (it does not start a load).
+- `FSStore` — answers for namespaces already read from disk, `SYNC_UNAVAILABLE` while cold.
+- An async-only store (HTTP, DB) simply has no `getSync`; reaching it before a hit makes `Ilingo.getSync()` return `undefined`.
+
+One behavioural note: because a genuinely missing key must resolve *identically* on both paths, `onMissingKey` runs for `getSync()` too. A consumer that seeds from it (`@ilingo/vue` does) therefore reaches the handler twice per missing key — once for the seed, once for the async pass. Pure handlers are unaffected; handlers with side effects (telemetry) should dedupe on `(locale, namespace, key)`. The built-in warn-once default already shares its memo across both paths, so a miss still warns once.
+
+Detect the capability with the `isSyncStore(store)` guard. `@ilingo/vue` consumes all of this automatically — see the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr).
 
 ### Invalidation
 

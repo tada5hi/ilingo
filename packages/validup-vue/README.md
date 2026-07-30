@@ -78,6 +78,7 @@ Looks up the `Ilingo` instance previously installed by `@ilingo/vue` and registe
 All re-run when the injected locale flips. The injected `Ilingo` instance and locale `Ref` come from `@ilingo/vue` — call its `install()` first, then this package's `install(app)` to register the default catalog.
 
 `useTranslationsForIssues` and `useTranslationsForGroupErrors` preserve the previously-resolved translations during async re-evaluation, so a locale switch on a form with visible errors doesn't blank the UI for a tick before the new translations paint.
+Both also **seed their first value synchronously** where the catalog allows it (`translateIssuesSync` / `translateIssueGroupsSync` under the hood), so the messages are present on the very first render rather than one tick later — no blink on mount, and identical markup on both sides of an SSR boundary ([#988](https://github.com/tada5hi/ilingo/issues/988)). The seed is all-or-nothing: if any issue's `code` has no catalog entry (or a store still needs I/O), the list starts empty exactly as before and the async pass fills it in. It never shows a message that then changes.
 
 #### `useFieldValidation`
 

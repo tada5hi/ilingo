@@ -114,6 +114,21 @@ await store.set({
 
 Writes are atomic (write-to-temp then `rename`) and the full merged record is serialized — sibling keys are preserved. If the original source for a namespace was a `.ts` / `.js` / `.cjs` file, that file is left untouched and the new `.json` lives alongside it; on the next load `smob` merges both, with the newer JSON taking precedence.
 
+### Synchronous reads (SSR)
+
+`FSStore` extends `MemoryStore`, using its map as a load cache — so it can serve [`Ilingo.getSync()`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-isyncstore) for any `(locale, namespace)` a previous `get()` already read from disk. A **cold** namespace returns `SYNC_UNAVAILABLE` rather than a miss: the file may well define the key, and reporting a miss would let the caller resolve to a fallback-locale value that `get()` would never have returned.
+
+```typescript
+const store = new FSStore({ directory: './language' });
+const ilingo = new Ilingo({ store });
+
+ilingo.getSync({ namespace: 'app', key: 'hi' });        // undefined — nothing loaded yet
+await ilingo.get({ namespace: 'app', key: 'hi' });      // 'Hello' — reads en/app.*
+ilingo.getSync({ namespace: 'app', key: 'hi' });        // 'Hello' — now synchronous
+```
+
+For server rendering, prime the namespaces a route needs before rendering — `await store.loadNamespace('app', locale)` — and every render after that resolves synchronously (the cache is per store, not per request). See the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr).
+
 ## Watch mode (dev hot-reload)
 
 `FSStore({ watch: true })` watches the configured `directory` paths via [chokidar](https://github.com/paulmillr/chokidar) and invalidates the matching `(locale, namespace)` cache entry on every file change. Subscribe via `store.on('invalidate', cb)` to react — `@ilingo/vue`'s `useTranslation` does this automatically, so file edits show up live in the rendered component without a remount.

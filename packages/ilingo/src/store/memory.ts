@@ -11,12 +11,14 @@ import type { Leaf, Locales } from '../types';
 import { isPluralNode } from '../utils/identify';
 import type {
     IMutableStore,
+    ISyncStore,
     MemoryStoreOptions,
     StoreGetContext,
     StoreSetContext,
 } from './types';
+import { SYNC_UNAVAILABLE } from './types';
 
-export class MemoryStore implements IMutableStore {
+export class MemoryStore implements IMutableStore, ISyncStore {
     readonly id: string | symbol;
 
     protected data: Locales;
@@ -28,10 +30,22 @@ export class MemoryStore implements IMutableStore {
     }
 
     async get(context: StoreGetContext): Promise<Leaf | undefined> {
-        return this.getSync(context);
+        const value = this.getSync(context);
+
+        // `MemoryStore.getSync` never yields the sentinel; a subclass using
+        // this map as a cache can, and by the time it delegates here it has
+        // already loaded what it needs — so "still unavailable" is a miss.
+        return value === SYNC_UNAVAILABLE ? undefined : value;
     }
 
-    getSync(context: StoreGetContext): Leaf | undefined {
+    /**
+     * {@link ISyncStore} read. `MemoryStore` itself holds everything in
+     * memory, so it never returns `SYNC_UNAVAILABLE` — `undefined` is always
+     * a definite miss. The sentinel is part of the signature because
+     * subclasses that use this map as a *cache* do return it for data they
+     * haven't pulled in yet (see `FSStore` on a cold namespace).
+     */
+    getSync(context: StoreGetContext): Leaf | undefined | typeof SYNC_UNAVAILABLE {
         if (
             !this.data[context.locale] ||
             !this.data[context.locale][context.namespace]

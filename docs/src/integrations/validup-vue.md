@@ -40,6 +40,8 @@ app.mount('#app');
 
 All re-run when the injected locale flips. `useTranslationsForIssues` and `useTranslationsForGroupErrors` keep the previously-resolved batch visible during an async re-run, so a locale switch on a form with visible errors doesn't blank the UI for a tick.
 
+Both also **seed the first value synchronously** when the catalog can answer without I/O — via [`translateIssuesSync` / `translateIssueGroupsSync`](./validup#helpers) — so messages appear on the first render instead of a tick later, and a server-rendered form hydrates without a mismatch ([#988](https://github.com/tada5hi/ilingo/issues/988)). The seed is all-or-nothing: an untranslated extension `code`, or a store that still needs I/O, leaves the list empty as before rather than showing a message that changes.
+
 ### Per-field errors
 
 ```vue

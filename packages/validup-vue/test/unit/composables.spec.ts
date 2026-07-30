@@ -104,6 +104,71 @@ describe('install', () => {
 });
 
 describe('useTranslationsForIssues', () => {
+    it('renders the translated message on the FIRST render, without a flush (#988)', () => {
+        const issuesRef = ref([
+            defineIssueItem({
+                path: ['email'],
+                message: 'The value is invalid',
+                code: IssueCode.VALUE_INVALID,
+            }),
+        ]);
+
+        const ilingo = new Ilingo({ locale: 'de' });
+        const wrapper = mount(defineComponent({
+            setup: () => ({ translations: useTranslationsForIssues(issuesRef) }),
+            template: '<div>{{ translations.map((t) => t.message).join(",") }}</div>',
+        }), {
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        // No `await flush()` — the synchronous seed must already be in place,
+        // which is what keeps server-rendered markup and the first client
+        // render identical.
+        expect(wrapper.text()).toBe('Der Wert ist ungültig');
+    });
+
+    it('leaves the first render empty when a code has no translation (all-or-nothing seed)', async () => {
+        const issuesRef = ref([
+            defineIssueItem({ path: ['email'], message: 'Email already taken', code: 'email_taken' }),
+        ]);
+
+        const ilingo = new Ilingo({ locale: 'en' });
+        const wrapper = mount(defineComponent({
+            setup: () => ({ translations: useTranslationsForIssues(issuesRef) }),
+            template: '<div>{{ translations.map((t) => t.message).join(",") }}</div>',
+        }), {
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        // `getSync` can't distinguish "no catalog entry" from "store needs
+        // I/O", so no message is invented — the async pass fills it in.
+        expect(wrapper.text()).toBe('');
+        await flush();
+        expect(wrapper.text()).toBe('Email already taken');
+    });
+
+    it('survives a seed that throws — a malformed issue must not break the mount (#988)', async () => {
+        // validup's `flattenIssueItems` treats an issue without a string
+        // `code` as a group and recurses into its absent `issues`, throwing.
+        // The async pass has always hit that (absorbed by computedAsync's
+        // onError); the synchronous seed must not turn it into a mount failure.
+        const noCode = { type: 'item', path: ['y'], message: 'no code here' } as unknown as IssueItem;
+
+        const ilingo = new Ilingo({ locale: 'en' });
+        const mounted = () => mount(defineComponent({
+            setup: () => ({ translations: useTranslationsForIssues([noCode]) }),
+            template: '<div>{{ translations.length }}</div>',
+        }), {
+            global: { plugins: [ilingoTestPlugin(ilingo)] },
+        });
+
+        expect(mounted).not.toThrow();
+        const wrapper = mounted();
+        expect(wrapper.text()).toBe('0');
+        await flush();
+        expect(wrapper.text()).toBe('0');
+    });
+
     it('returns a reactive list of translations and re-runs when issues change', async () => {
         const issuesRef = ref([
             defineIssueItem({

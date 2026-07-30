@@ -10,9 +10,10 @@ import { injectIlingo, injectLocale } from '@ilingo/vue';
 import type { Issue } from 'validup';
 import type { MaybeRefOrGetter } from 'vue';
 import { shallowRef, toValue } from 'vue';
-import { translateIssues } from '@ilingo/validup';
+import { translateIssues, translateIssuesSync } from '@ilingo/validup';
 import type { IssueTranslation } from '@ilingo/validup';
 import type { FieldTranslations } from '../types';
+import { trySeed } from './seed';
 
 /**
  * Translate a list of validup `Issue`s to leaf-level localized messages.
@@ -52,6 +53,28 @@ export function useTranslationsForIssues(
     // off (which otherwise tries to narrow the element shape) so the
     // ref / callback / initial-state triple share one nominal type.
     const lastResolved = shallowRef<IssueTranslation[]>([]);
+
+    // Synchronous seed: when the catalog can answer without I/O (the bundled
+    // memory store, the common case) the first render already carries the
+    // localized messages instead of an empty list — no blink on mount, and
+    // server-rendered markup that the client reproduces exactly (#988).
+    // `translateIssuesSync` is all-or-nothing and returns undefined when it
+    // cannot guarantee the async result, so a partial batch never leaks in.
+    //
+    // Guarded: this runs on the synchronous setup path, so anything that
+    // throws here (a malformed issue shape — validup's `flattenIssueItems`
+    // rejects an item without a `code` — a throwing custom store) would break
+    // the mount, where the same throw inside the `computedAsync` below is
+    // absorbed by its `onError`. Seeding is an optimization; it must never be
+    // able to make things worse than not seeding.
+    const seed = trySeed(() => translateIssuesSync(
+        toValue(issues) ?? [],
+        instance,
+        { locale: toValue(localeOverride) ?? locale.value },
+    ) as IssueTranslation[] | undefined);
+    if (seed) {
+        lastResolved.value = seed;
+    }
 
     return computedAsync<IssueTranslation[]>(async () => {
         const source = toValue(issues);
