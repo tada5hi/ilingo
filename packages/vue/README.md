@@ -96,7 +96,7 @@ app.mount('#app');
 
 For server-side rendering that removes a whole class of bugs: the translated string is what lands in the SSR markup, and the client's first render matches it instead of warning
 
-```
+```text
 [Vue warn]: Hydration text mismatch in th
   - rendered on server: "Name"
   - expected on client: "app.name"

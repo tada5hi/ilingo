@@ -131,7 +131,7 @@ If the original source for a namespace was a `.ts`/`.js`/`.cjs` file, that file 
 
 ## Synchronous reads (SSR)
 
-`FSStore` extends `MemoryStore` and uses its map as a load cache, so it implements the [`ISyncStore`](/guide/stores#synchronous-reads-isyncstore) capability for data it has already read. A `(locale, namespace)` pulled off disk answers synchronously; a **cold** one returns `SYNC_UNAVAILABLE` — not a miss, because the file may define the key and treating it as absent would let the lookup fall through to another locale.
+`FSStore` extends `MemoryStore` and uses its map as a load cache, so it implements the [`ISyncStore`](/guide/stores#synchronous-reads-isyncstore) capability for data it has already read. A `(locale, namespace)` pulled off disk answers synchronously; a **cold** (or still-loading) one returns `SYNC_UNAVAILABLE` — not a miss, because the file may define the key and treating it as absent would let the lookup fall through to another locale.
 
 ```typescript
 const store = new FSStore({ directory: './language' });

@@ -116,7 +116,7 @@ Writes are atomic (write-to-temp then `rename`) and the full merged record is se
 
 ### Synchronous reads (SSR)
 
-`FSStore` extends `MemoryStore`, using its map as a load cache — so it can serve [`Ilingo.getSync()`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-isyncstore) for any `(locale, namespace)` a previous `get()` already read from disk. A **cold** namespace returns `SYNC_UNAVAILABLE` rather than a miss: the file may well define the key, and reporting a miss would let the caller resolve to a fallback-locale value that `get()` would never have returned.
+`FSStore` extends `MemoryStore`, using its map as a load cache — so it can serve [`Ilingo.getSync()`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-isyncstore) for any `(locale, namespace)` a previous `get()` already read from disk. A **cold** (or still-loading) namespace returns `SYNC_UNAVAILABLE` rather than a miss: the file may well define the key, and reporting a miss would let the caller resolve to a fallback-locale value that `get()` would never have returned.
 
 ```typescript
 const store = new FSStore({ directory: './language' });

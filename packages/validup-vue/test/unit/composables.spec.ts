@@ -155,18 +155,21 @@ describe('useTranslationsForIssues', () => {
         const noCode = { type: 'item', path: ['y'], message: 'no code here' } as unknown as IssueItem;
 
         const ilingo = new Ilingo({ locale: 'en' });
-        const mounted = () => mount(defineComponent({
-            setup: () => ({ translations: useTranslationsForIssues([noCode]) }),
-            template: '<div>{{ translations.length }}</div>',
-        }), {
-            global: { plugins: [ilingoTestPlugin(ilingo)] },
-        });
+        // Mount once and keep the wrapper — a second mount would leave an
+        // undisposed component (and its watcher) behind for the rest of the run.
+        let wrapper: ReturnType<typeof mount> | undefined;
+        expect(() => {
+            wrapper = mount(defineComponent({
+                setup: () => ({ translations: useTranslationsForIssues([noCode]) }),
+                template: '<div>{{ translations.length }}</div>',
+            }), {
+                global: { plugins: [ilingoTestPlugin(ilingo)] },
+            });
+        }).not.toThrow();
 
-        expect(mounted).not.toThrow();
-        const wrapper = mounted();
-        expect(wrapper.text()).toBe('0');
+        expect(wrapper!.text()).toBe('0');
         await flush();
-        expect(wrapper.text()).toBe('0');
+        expect(wrapper!.text()).toBe('0');
     });
 
     it('returns a reactive list of translations and re-runs when issues change', async () => {

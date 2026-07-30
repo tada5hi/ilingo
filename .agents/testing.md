@@ -78,7 +78,9 @@ unit/
 ├── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
 │                               #   split read/write directories
 ├── sync.spec.ts                # getSync — SYNC_UNAVAILABLE while cold, warm after a get(),
-│                               #   Ilingo.getSync end-to-end, cold again after invalidate
+│                               #   Ilingo.getSync end-to-end, cold again after invalidate,
+│                               #   SYNC_UNAVAILABLE for the whole in-flight window,
+│                               #   concurrent readers share one load, invalidate mid-read drops it
 └── watch.spec.ts               # FSStore({ watch: true }) emits invalidate on file change;
                                 #   manual invalidate() drops cache; close() teardown is idempotent.
                                 #   Needs the optional `chokidar` peer dep installed (it is, devDep).

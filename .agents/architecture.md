@@ -76,7 +76,7 @@ Implementations:
 |---|---|
 | `MemoryStore` | always answers (never `SYNC_UNAVAILABLE`); its `get()` maps a subclass's sentinel to `undefined` |
 | `LoaderStore` | cache-only — `SYNC_UNAVAILABLE` for an unloaded pair; does **not** start a load. A cached loader-miss is a definite miss |
-| `FSStore` | `SYNC_UNAVAILABLE` until `loadNamespace` has run for the `(locale, namespace)`; warm afterwards, cold again after `invalidate` |
+| `FSStore` | `SYNC_UNAVAILABLE` until `loadNamespace` has **completed** for the `(locale, namespace)` — including the whole in-flight window; warm afterwards, cold again after `invalidate` |
 | async-only adapter (HTTP/DB) | absent — its presence before the hit makes `Ilingo.getSync()` return `undefined` |
 
 **`onMissingKey` fires on both paths.** Required by the equivalence guarantee — a handler-substituted string has to be identical for the seed and the async pass. Consequence: a seeding consumer reaches the handler twice per missing key. The built-in default is unaffected (`warnedKeys` is shared, so one warning total); a consumer handler with side effects must dedupe itself, which the missing-key guide documents.
@@ -119,6 +119,14 @@ Both `LoaderStore` (core) and `FSStore` (`@ilingo/fs`) implement it. Detect at r
 Misses (loader returning `undefined`) are cached too — the loader isn't re-called for known-missing pairs. Designed for browser code-splitting: typical loader is `(l, g) => import(\`./locales/${l}/${g}.json\`).then(m => m.default)`.
 
 `getLocales()` returns the declared `locales: string[]` option when provided; otherwise the set of locales seen so far (best-effort).
+
+### `FSStore` load bookkeeping
+
+`loadNamespace` sets the `loaded` flag **after** the file data is merged, not before, and de-duplicates concurrent callers through a `loading` map keyed by `(locale, namespace)`. Both details are load-bearing for the sync path: `isLoaded` has to mean "the data is here", or `getSync` would report a definite miss during the in-flight window and let the orchestrator resolve a farther locale that the pending read is about to contradict.
+
+Setting the flag eagerly was also a pre-existing async bug (found while auditing #988): a second concurrent `get()` short-circuited on the flag, read the still-empty record, and resolved to `undefined`. The in-flight map fixes both.
+
+`invalidate()` bumps a `generation` counter that a read captures at its start; a read whose generation changed discards its result instead of repopulating a cache the consumer just dropped. Same guard as `LoaderStore` — and it matters more now that the flag is set at the end, since a stale write would otherwise also mark the namespace loaded.
 
 ### `FSStore.watch`
 
@@ -365,7 +373,7 @@ entirely (no `onMissingKey`, no warning) and yields `undefined`.
 ## Error Handling
 
 - Misses return `undefined`. They are never errors.
-- `FSStore.loadNamespace` short-circuits the "already loaded" case (`isLoaded` guard).
+- `FSStore.loadNamespace` short-circuits the "already loaded" case (`isLoaded` guard) and shares one read between concurrent callers (`loading` map).
 - File-loading errors from `locter`/`load` propagate. There is no project-wide error wrapper.
 - `template()` does **not** error on a missing data key — the `{{var}}` stays in the output.
 - Vue's `useTranslation` falls back to `"${namespace}.${key}"` when `Ilingo.get` returns `undefined` (the orchestrator's `onMissingKey` runs first and may substitute) — and uses the same fallback for its synchronous seed when `getSync` can't answer.
