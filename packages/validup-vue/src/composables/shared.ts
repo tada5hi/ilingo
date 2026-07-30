@@ -7,12 +7,13 @@
 
 import { computedAsync } from '@vueuse/core';
 import { injectIlingo, injectLocale } from '@ilingo/vue';
-import { translateIssueGroups } from '@ilingo/validup';
+import { translateIssueGroups, translateIssueGroupsSync } from '@ilingo/validup';
 import type { IssueGroupTranslation } from '@ilingo/validup';
 import type { IssueGroup } from 'validup';
 import type { MaybeRefOrGetter } from 'vue';
 import { shallowRef, toValue } from 'vue';
 import type { GroupTranslations } from '../types';
+import { trySeed } from './seed';
 
 /**
  * Getter-based group translator shared by `useTranslationsForGroupErrors`
@@ -33,6 +34,20 @@ export function useTranslatedGroups(
     const locale = injectLocale();
 
     const lastResolved = shallowRef<IssueGroupTranslation[]>([]);
+
+    // Synchronous seed — same contract as `useTranslationsForIssues`: an
+    // all-or-nothing batch when the catalog answers without I/O, so the first
+    // render carries the group messages instead of an empty list (#988).
+    // Guarded via `trySeed` — see its JSDoc for why a throw on the setup path
+    // must not escape.
+    const seed = trySeed(() => translateIssueGroupsSync(
+        toValue(source) ?? [],
+        instance,
+        { locale: locale.value },
+    ));
+    if (seed) {
+        lastResolved.value = seed;
+    }
 
     return computedAsync<IssueGroupTranslation[]>(async () => {
         const groups = toValue(source);

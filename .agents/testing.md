@@ -7,7 +7,7 @@
 - **Fixtures**: `packages/<pkg>/test/data/` — real locale files loaded at test time (no mocking of the filesystem)
 - **Config**: `packages/<pkg>/test/vitest.config.ts` per package; the test script (`vitest --config test/vitest.config.ts --run`) sets `NODE_ENV=test` via `cross-env`. Coverage is configured but not enforced via thresholds.
 
-Only `ilingo` and `@ilingo/fs` have tests today. `@ilingo/vue` and `@ilingo/vuelidate` ship a `playground/` Vite app instead of a unit suite — manual verification through the playground is the current convention there.
+`ilingo`, `@ilingo/fs` and `@ilingo/vue` have unit suites; `@ilingo/vuelidate` ships a `playground/` Vite app instead — manual verification through the playground is the convention there. The Vue suite additionally renders through **`@vue/server-renderer`** (`ssr.spec.ts`, declared devDep) because the SSR-first-render contract cannot be observed via `@vue/test-utils` `mount` alone: the bug class it guards (#988) only appears when markup is produced by `renderToString` and then hydrated.
 
 ## Running Tests
 
@@ -35,6 +35,11 @@ unit/                               # catalogs built inline with the define* hel
 │                                   #   resolved-locale propagation, per-instance cache, dev-warn
 ├── custom-formatters.spec.ts       # registerFormatter + IlingoOptions.formatters; built-in override; clone shares
 ├── loader-store.spec.ts            # LoaderStore lazy load, dedupe, cache, miss cache, invalidate, events
+├── sync.spec.ts                    # getSync — equivalence with get() (interpolation, plural, fallback,
+│                                   #   onMissingKey), throws when an async-only store precedes the hit,
+│                                   #   no onMissingKey on that throw, throw vs definite miss,
+│                                   #   marker-based error identity, throwSyncUnavailable,
+│                                   #   LoaderStore cold/warm/invalidated
 ├── catalog/
 │   └── normalize.spec.ts           # normalizeCatalog — tree→Locales, dotted-namespace nesting, key
 │                                   #   nesting, plural node, sibling merge, default-namespace seam
@@ -57,7 +62,10 @@ unit/
 ├── component-t.spec.ts         # <ITranslateT> — slot rendering, vars, fragments, error paths
 ├── directive-t.spec.ts         # v-t directive — string/object bindings, reactive locale, opt-out
 ├── invalidation.spec.ts        # useTranslation re-runs on IInvalidatingStore.invalidate() (scoped)
-└── scoped-catalog.spec.ts      # useScopedCatalog — same-component t, descendant provide, no-leak, fallback
+├── scoped-catalog.spec.ts      # useScopedCatalog — same-component t, descendant provide, no-leak, fallback
+└── ssr.spec.ts                 # @vue/server-renderer: SSR markup carries the translation for
+                                #   useTranslation / <ITranslateT> / useScopedCatalog, placeholder
+                                #   for a cold LoaderStore, and hydration produces no mismatch (#988)
 ```
 
 The Vue package uses **happy-dom** for the DOM environment and **@vue/test-utils**'s `mount` + `flushPromises` for component rendering. Plain `nextTick` is not enough — `useTranslation` resolves through `computedAsync`, which needs the microtask queue flushed.
@@ -70,12 +78,35 @@ unit/
 ├── dotted-namespace.spec.ts    # dotted namespace ↔ dotted filename (app.nav.json): load, key/namespace separation, persist round-trip
 ├── persist.spec.ts             # set() round-trip, sibling preservation, nested keys,
 │                               #   split read/write directories
+├── sync.spec.ts                # getSync — reads a cold namespace off disk (no warm-up), the whole
+│                               #   extension matrix, definite miss, cache reuse, loadNamespaceSync,
+│                               #   answering during an in-flight async load, concurrent async readers,
+│                               #   invalidate mid-read, and the async-only-module vs real-fault split
 └── watch.spec.ts               # FSStore({ watch: true }) emits invalidate on file change;
                                 #   manual invalidate() drops cache; close() teardown is idempotent.
                                 #   Needs the optional `chokidar` peer dep installed (it is, devDep).
 data/
 └── language/{en,de,fr}/form.{cjs,ts,json}  # translations nodes; exercises locter's multi-extension resolution
 ```
+
+### `packages/validup/test/` + `packages/validup-vue/test/`
+
+```text
+validup/test/unit/
+├── store.spec.ts
+├── translate-issue.spec.ts             # async helpers
+└── translate-issue-sync.spec.ts        # *Sync helpers — equivalence with the async path,
+                                        #   undefined for an untranslated code, codeless issue,
+                                        #   cold LoaderStore, missing getSync, all-or-nothing batches
+
+validup-vue/test/unit/
+├── component.spec.ts
+└── composables.spec.ts                 # includes the #988 first-render assertions: the seeded
+                                        #   message is present *without* a flush, and an
+                                        #   untranslated code leaves the first render empty
+```
+
+The first-render tests deliberately assert **before** `await flush()` — that is the whole contract. A test that flushes first cannot distinguish a seeded value from an async one.
 
 ## Test Helpers & Fixtures
 
@@ -96,6 +127,8 @@ data/
 ## Testing Philosophy
 
 Tests assert the **public contract** of `Ilingo` and the stores — the things documented in `architecture.md`: locale-first walk with fallback chain, serial intra-locale store walk (stop at first hit), plural selection via `Intl.PluralRules`, missing-key handler routing, `{{var}}` substitution, `merge()` deduping by reference identity. If a test fails after a refactor, treat it as a real regression on that contract until proven otherwise.
+
+The sync read path carries one extra contract worth its own assertion style: **`getSync(ctx)` must equal `await get(ctx)` whenever it isn't `undefined`.** `sync.spec.ts` asserts that by comparing the two calls over a table of contexts (interpolation, plural, fallback locale, nested key) rather than hardcoding expected strings — a divergence in either path then fails the test regardless of which one changed. Cover the bail-out cases the same way: an async-only store *before* the hit yields `undefined` (and must not run `onMissingKey`), while one *after* the hit must not change the answer.
 
 For tests covering store call order (serial walk, fallthrough, debounce, etc.), assert the **invariant** (e.g. "later stores were not called when the first hit") with a recording fake — never wall-clock thresholds, which flake on CI scheduler jitter.
 
@@ -143,7 +176,7 @@ CI runs `npm run test:coverage`, so threshold violations fail the build. Treat t
 
 ## Cross-runtime smoke
 
-`packages/ilingo/test/smoke.mjs` is a runtime-agnostic script that loads the built `dist/index.mjs` exactly like a published consumer and exercises a representative API slice (construct → locale chain → fallback → plural → interpolation → missing-key). It uses only the JS standard library (no `node:*` imports — a tiny inline `equal()` helper stands in for `assert.strictEqual`) so it runs unmodified under any ES2022 + ESM + Promise runtime: Node, Bun, Deno, modern browsers via `<script type="module">`, Cloudflare Workers, Vercel Edge.
+`packages/ilingo/test/smoke.mjs` is a runtime-agnostic script that loads the built `dist/index.mjs` exactly like a published consumer and exercises a representative API slice (construct → locale chain → fallback → plural → interpolation → missing-key → `getSync`, including a `getSync(ctx) === await get(ctx)` assertion and the `SyncUnavailableError` an async-only store throws, checked through the marker-based guard). It uses only the JS standard library (no `node:*` imports — a tiny inline `equal()` helper stands in for `assert.strictEqual`) so it runs unmodified under any ES2022 + ESM + Promise runtime: Node, Bun, Deno, modern browsers via `<script type="module">`, Cloudflare Workers, Vercel Edge.
 
 CI runs it under **Node** and **Bun** via a matrix job in `.github/workflows/main.yml` (`oven-sh/setup-bun@v2` for the Bun runner). Other runtimes aren't gated in CI today, but because the script has no Node-specific dependencies, adding a runner is one matrix entry away.
 

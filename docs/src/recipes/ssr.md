@@ -5,6 +5,7 @@ Running ilingo through an SSR pipeline introduces three concerns:
 1. **Per-request state.** Every incoming request can ask for a different locale. The `Ilingo` instance must not leak that state between requests on a long-lived server.
 2. **Locale negotiation.** The locale isn't known until the request arrives — it has to be derived from `Accept-Language`, a cookie, a URL segment, or a combination.
 3. **Hydration.** The client should render the translated HTML without re-fetching every locale file. Whatever the server resolved should be handed to the client.
+4. **The first render.** `get()` is asynchronous, so a value that arrives one microtask late arrives *after* the markup is written. The synchronous read path ([§5](#_5-the-first-render-getsync)) is what makes the first render — server and client — carry the real string.
 
 The library ships every piece you need (`negotiateLocale`, `parseAcceptLanguage`, `Ilingo.clone`, `LoaderStore`), and stays framework-agnostic. This page shows the building blocks first, then sketches how each one slots into Nuxt and Astro.
 
@@ -172,6 +173,60 @@ ilingo.registerStore(new LoaderStore({
 // MemoryStore answers first (already-hydrated locale); LoaderStore covers everything else.
 // The serial store walk (#917 Track B) means LoaderStore never fires for keys MemoryStore has.
 ```
+
+### 5. The first render (`getSync()`)
+
+`Ilingo.get()` returns a `Promise`. In Vue that means `useTranslation` is a `computedAsync`, and a `computedAsync` has to render *something* before its promise settles. Before [#988](https://github.com/tada5hi/ilingo/issues/988) that something was the `namespace.key` placeholder, which produced two failure modes at once:
+
+```
+<!-- nothing else in the tree awaited → the placeholder is the markup -->
+<th>authupField.name</th>
+```
+
+```
+[Vue warn]: Hydration text mismatch in th
+  - rendered on server: "Name"
+  - expected on client: "authupField.name"
+```
+
+Both come from the same gap, and neither was fixable from the consumer side — whether a server-rendered label came out right depended on unrelated await points elsewhere in the component tree.
+
+`Ilingo.getSync(ctx)` closes it. It walks the same locale chain and the same stores as `get()`, synchronously:
+
+```typescript
+const ilingo = new Ilingo({ store: new MemoryStore({ data: catalog }), locale: 'de' });
+
+ilingo.getSync({ namespace: 'app', key: 'hi', data: { name: 'Peter' } }); // 'Hallo Peter'
+```
+
+**`@ilingo/vue` uses it automatically** — `useTranslation`, `<ITranslate>`, `<ITranslateT>` and `useScopedCatalog().t` all seed their `computedAsync` with it, so an in-memory catalog needs no changes on your side: the SSR markup carries the translation and hydration is clean. `get()` remains the authoritative path and still runs; the seed only fixes what the *first* render shows.
+
+The guarantee is equivalence: whenever `getSync()` returns a string, it is the same string `await get()` would produce — same fallback chain, same plural form, same interpolation, same `onMissingKey`. When it can't guarantee that, it returns `undefined` and the caller falls back to the placeholder (i.e. the old behaviour, never a wrong string). That happens when a store in the walk needs I/O:
+
+| Setup | First render |
+|---|---|
+| `MemoryStore` (catalog compiled into the bundle) | resolved synchronously ✅ |
+| `LoaderStore`, locale already loaded | resolved synchronously ✅ |
+| `LoaderStore`, cold | placeholder — `await` the keys, or the whole namespace, before rendering |
+| `FSStore`, cold **or** warm | resolved synchronously ✅ — it reads the file on the spot |
+| custom HTTP/DB store consulted before the hit | placeholder — no synchronous answer exists |
+
+`@ilingo/fs` needs nothing: it reads the file synchronously when asked (see [File System → Synchronous reads](../integrations/fs#synchronous-reads-ssr)). For a **lazy** store, *warm what the route renders* before you render it. Warm through the **store**, not the orchestrator — a `get()` for a probe key would trip the missing-key warning:
+
+```typescript
+// LoaderStore: any get() for the pair populates the cache; the key can be absent
+await Promise.all(['app', 'nav'].map(
+    (namespace) => store.get({ locale, namespace, key: '' }),
+));
+
+const html = await renderToString(app); // now resolves synchronously
+```
+
+The cache is per-store, not per-request, so on a long-lived server this cost is paid once per `(locale, namespace)` — the second request for the same route renders synchronously with no warm-up at all. `FSStore` also exposes `loadNamespaceSync(namespace, locale)` if you would rather prime it at start-up than block on the first render.
+
+If you can't warm the store (a genuinely remote catalog), keep the payload approach from [§4](#_4-hand-state-to-the-client): serialise the slice the page used and build the client instance over a `MemoryStore`, which *can* answer synchronously.
+
+See [Stores → Synchronous reads](../guide/stores#synchronous-reads-getsync) for the store-side contract, including how to implement `getSync` on a custom adapter.
 
 ## Nuxt
 

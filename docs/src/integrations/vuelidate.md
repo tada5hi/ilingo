@@ -86,6 +86,12 @@ install(app, ilingo);
 
 The plugin still seeds the missing locales (DE/FR/ES); your overrides take precedence within `en` because of the store-order rule.
 
+## First render (SSR)
+
+Messages resolve through a `computedAsync`, whose initial value is **seeded synchronously** via [`Ilingo.getSync()`](/guide/stores#synchronous-reads-getsync) when the catalog is in memory — the eager `createMemoryStore()` default. Validator messages therefore appear on the first render, and a server-rendered form hydrates without a text mismatch ([#988](https://github.com/tada5hi/ilingo/issues/988)).
+
+An app-specific rule with no catalog entry still seeds — with the rule *name*, which is what the async pass falls back to. Only a store that needs I/O (a `createLoaderStore()` locale that hasn't loaded) abandons the seed, since a fallback there would be contradicted a tick later.
+
 ## Locale switching
 
 Use `injectLocale()` from `@ilingo/vue` — Vuelidate messages re-render reactively when the locale changes:

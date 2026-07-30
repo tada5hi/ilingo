@@ -129,6 +129,28 @@ Writes are **atomic** — `FSStore` writes to a temporary file in the same direc
 
 If the original source for a namespace was a `.ts`/`.js`/`.cjs` file, that file is left untouched. The new `.json` lives alongside it. On the next load, `smob` merges both — the newer JSON wins.
 
+## Synchronous reads (SSR)
+
+`FSStore` answers [`getSync`](/guide/stores#synchronous-reads-getsync) for real, not merely from a warm cache: [`locter`](https://github.com/tada5hi/locter) provides a synchronous twin for every read it dispatches, so a **cold** namespace is read from disk on the spot.
+
+```typescript
+const ilingo = new Ilingo({ store: new FSStore({ directory: './language' }) });
+
+ilingo.getSync({ namespace: 'app', key: 'hi' });   // 'Hello' — no warm-up, no await
+```
+
+So a server-rendered Vue tree emits real translations on its **first** pass — no priming step, no hydration payload, no mismatch. Every extension in the matrix above works on both paths, since each locter reader has a sync twin.
+
+::: tip The read blocks — on purpose
+`getSync` must not start work whose result it cannot return. Synchronous I/O returns its result; an `import()` does not. One glob plus one file read per `(locale, namespace)`, cached for the process lifetime, so the cost is paid once per namespace.
+
+If blocking during a render doesn't suit your deployment, prime the store — `await store.loadNamespace('app', locale)`, or the new `store.loadNamespaceSync('app', locale)` at start-up — and `getSync` finds everything cached.
+:::
+
+Two failure modes stay distinct: a module that can only load through an asynchronous `import()` raises `SyncUnavailableError` so the caller falls back to `get()`, while a malformed file propagates its real parse error (the async load would fail identically — it isn't a "not available yet").
+
+Note the interaction with watch mode: an `invalidate` drops the cached namespace, so the next read goes back to disk.
+
 ## Watch mode (dev hot-reload)
 
 `FSStore({ watch: true })` keeps the cache in sync with the filesystem via [chokidar](https://github.com/paulmillr/chokidar). Each file change under the configured `directory` paths invalidates the matching `(locale, namespace)` cache entry and emits an `invalidate` event:

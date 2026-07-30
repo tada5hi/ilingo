@@ -55,14 +55,14 @@ These are micro-benchmarks — read the [caveats](../performance#caveats). Per-c
 | Lazy / code-split loading | `LoaderStore`, in-core | `i18next-http-backend` (plugin) |
 | File-system backend | `@ilingo/fs`, in-core | `i18next-fs-backend` (plugin) |
 | Locale negotiation | `negotiateLocale` / `parseAcceptLanguage`, in-core | `i18next-browser-languagedetector` (plugin) |
-| Translate call | **async** — `get()` returns a `Promise` | **sync** — `t()` returns a string |
+| Translate call | `get()` → `Promise`; `getSync()` → string when every store answers from memory | **sync** — `t()` returns a string |
 | Vue | `@ilingo/vue` (first-party) | `i18next-vue` (official) |
 | React | — (framework-agnostic core is usable) | `react-i18next` (first-party) |
 | Plugin ecosystem | small, young | large, mature |
 
 Two rows are the actual decision points — far more than bundle bytes:
 
-- **Sync vs. async.** i18next's `t()` is synchronous: call it in render, get a string back. ilingo's `get()` returns a `Promise`. That async surface is precisely what lets *any* store be lazy- or network-backed without an API break — it's what powers [`LoaderStore`](./stores#loaderstore) and `FSStore`. The cost is friction if you want a bare synchronous translate in a hot path. In Vue it's a non-issue: [`@ilingo/vue`](../integrations/vue)'s `useTranslation` hides the await behind a reactive `Ref`.
+- **Sync vs. async.** i18next's `t()` is synchronous: call it in render, get a string back. ilingo's primary `get()` returns a `Promise` — that async surface is precisely what lets *any* store be lazy- or network-backed without an API break, and it's what powers [`LoaderStore`](./stores#loaderstore) and `FSStore`. Since [#988](https://github.com/tada5hi/ilingo/issues/988) there is also [`getSync()`](./stores#synchronous-reads-getsync), which resolves the identical lookup without awaiting whenever every store consulted can answer from memory (the common "catalog compiled into the bundle" case) and returns `undefined` otherwise. So the async surface is the *contract*, not a tax on every call site: in Vue it's invisible either way — [`@ilingo/vue`](../integrations/vue)'s `useTranslation` hides the await behind a reactive `Ref` **and** seeds that `Ref` synchronously, so with an in-memory catalog the server-rendered markup and the first client render carry the real string. A store that still needs I/O (a cold `LoaderStore` / `FSStore`, a remote adapter) can't be seeded, so those keys start at the placeholder and settle a tick later — [warm them](../recipes/ssr#_5-the-first-render-getsync) if the first paint matters.
 - **ICU MessageFormat.** i18next + [`i18next-icu`](https://github.com/i18next/i18next-icu) supports the full ICU grammar (`select`, nested plurals, ordinals). ilingo is *ICU-lite*: CLDR plural categories via [`definePlural`](./pluralization) plus `Intl` formatters via [`{{value, number(...)}}`](./formatters) — but **no** `select` / nested message grammar. If your translators rely on full ICU, stay on i18next.
 
 ## Concept mapping
@@ -91,6 +91,6 @@ Honest disqualifiers — reach for i18next (or [FormatJS](https://formatjs.io/))
 - You need **full ICU MessageFormat** (`select`, gender, nested plurals) — use `i18next-icu` or FormatJS.
 - You're **React-first** and want the most-used, best-documented bindings — `react-i18next` has no ilingo equivalent today.
 - You depend on a specific **i18next plugin** (e.g. a [locize](https://locize.com/) workflow or a particular backend connector) with no ilingo store yet.
-- You want a **fully synchronous** translate function with no async surface anywhere in your stack.
+- You want a **fully synchronous** translate function with no async surface anywhere. `getSync()` covers in-memory catalogs (including SSR first paint), but `get()` is still the authoritative path and the only one that can drive a lazy or remote store.
 
 If none of those apply — and a small bundle and a framework-agnostic, modern core matter to you — ilingo is built for exactly that. Start with the [Quick Start](../getting-started/quick-start).

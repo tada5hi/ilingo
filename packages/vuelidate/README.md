@@ -53,6 +53,12 @@ ilingo.registerStore(createLoaderStore());
 
 The `vuelidate` namespace is a shared key-space — register your own store **first** to override individual validator messages while this catalog supplies the defaults.
 
+### First render (SSR)
+
+The message record is resolved through a `computedAsync`, and it is **seeded synchronously** when the catalog can answer without I/O — the eager `createMemoryStore()` case. So validator messages are present on the first render instead of a tick later, and a server-rendered form hydrates without a text mismatch ([#988](https://github.com/tada5hi/ilingo/issues/988)).
+
+A rule with no catalog entry still seeds — with the rule *name*, which is exactly what the async pass falls back to. The seed is only abandoned when a store would need I/O (a `createLoaderStore()` locale that hasn't loaded), where a fallback now would be contradicted a tick later.
+
 ```vue
 
 <script setup>

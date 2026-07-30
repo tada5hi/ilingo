@@ -1,6 +1,6 @@
 # Validup
 
-`@ilingo/validup` bridges [validup](https://www.npmjs.com/package/validup) `Issue`s to ilingo lookups. It ships built-in validator-message catalogs for **EN / DE / FR / ES** and pure `translateIssue` / `translateIssues` / `translateIssueGroups` helpers.
+`@ilingo/validup` bridges [validup](https://www.npmjs.com/package/validup) `Issue`s to ilingo lookups. It ships built-in validator-message catalogs for **EN / DE / FR / ES** and pure `translateIssue` / `translateIssues` / `translateIssueGroups` helpers — each with a synchronous `…Sync` variant for SSR.
 
 It is **framework-agnostic** — no Vue dependency. Embeddable in Node SSR, edge workers, queue handlers, and CLI tools. Vue 3 users add [`@ilingo/validup-vue`](./validup-vue) on top for composables and components.
 
@@ -74,7 +74,17 @@ ilingo.registerStore(createLoaderStore());
 | `translateIssues(issues, ilingo, opts?)` | `Promise<IssueTranslation[]>` | Flattens an `Issue[]` to leaf `IssueItem`s and translates each (parallel). Per-field rendering. |
 | `translateIssueGroups(groups, ilingo, opts?)` | `Promise<IssueGroupTranslation[]>` | Translates each `IssueGroup` by its **own** `code` (e.g. `one_of_failed`), **without** descending into children. Whole-form / banner rendering. |
 
-Options on all three: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
+Each has a synchronous counterpart for server rendering and `computedAsync` seeding:
+
+| Helper | Returns | Use |
+|---|---|---|
+| `translateIssueSync(issue, ilingo, opts?)` | `string \| undefined` | Same lookup via [`Ilingo.getSync()`](/guide/stores#synchronous-reads-getsync), including the `issue.message` fallback. `undefined` only when a store would need I/O. |
+| `translateIssuesSync(issues, ilingo, opts?)` | `IssueTranslation[] \| undefined` | All-or-nothing batch — never half-translated. |
+| `translateIssueGroupsSync(groups, ilingo, opts?)` | `IssueGroupTranslation[] \| undefined` | All-or-nothing batch of group-level messages. |
+
+The `undefined` is narrow by design. `getSync()` separates the two failure modes — a code with no catalog entry comes back as `undefined` (so these helpers apply the same `issue.message` fallback the async path does), while a store that needs I/O *throws*. Only the second makes a sync helper decline, because falling back there would render a message that changes a tick later. With the bundled memory catalog every call answers.
+
+Options on all six: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
 
 ```typescript
 import { translateIssues, translateIssueGroups } from '@ilingo/validup';

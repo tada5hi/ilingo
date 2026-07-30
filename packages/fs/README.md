@@ -114,6 +114,27 @@ await store.set({
 
 Writes are atomic (write-to-temp then `rename`) and the full merged record is serialized — sibling keys are preserved. If the original source for a namespace was a `.ts` / `.js` / `.cjs` file, that file is left untouched and the new `.json` lives alongside it; on the next load `smob` merges both, with the newer JSON taking precedence.
 
+### Synchronous reads (SSR)
+
+`FSStore` implements the synchronous half of the `IStore` port for real, not just from cache: [`locter`](https://github.com/tada5hi/locter) ships a sync twin for every read it dispatches (`locateManySync`, `readAsModuleSync`), so a **cold** namespace is read from disk on the spot.
+
+```typescript
+const ilingo = new Ilingo({ store: new FSStore({ directory: './language' }) });
+
+ilingo.getSync({ namespace: 'app', key: 'hi' });   // 'Hello' — no warm-up, no await
+```
+
+That is what lets a server-rendered Vue tree emit real translations on its first pass instead of `namespace.key` placeholders — with no priming step and no hydration payload. The whole extension matrix works on both paths (`.json`, `.conf`, `.ts`, `.mts`, `.js`, `.mjs`, `.cjs`), because each locter reader has a sync twin.
+
+The read **blocks**, deliberately. `getSync`'s contract is that it must not start work whose result it cannot return; synchronous I/O returns its result, an `import()` does not. The cost is one glob plus one file read per `(locale, namespace)`, cached for the process lifetime — paid once per namespace, never again. If blocking during a render is unacceptable for your deployment, prime the store first (`await store.loadNamespace('app', locale)`, or `store.loadNamespaceSync('app', locale)` at start-up) and `getSync` will find everything cached.
+
+Two failure modes are kept apart:
+
+- a module that can only be loaded through an asynchronous `import()` → `SyncUnavailableError`, so the caller falls back to `get()`;
+- a malformed file → its real parse error, propagated. The async load would fail identically, so it must not be dressed up as "not available yet".
+
+Both read paths share **one** body internally (locter's twin scheme: one generator, two drivers), so the cache bookkeeping — the loaded flag, the in-flight dedup, the invalidation generation guard, the merge order — cannot drift between them.
+
 ## Watch mode (dev hot-reload)
 
 `FSStore({ watch: true })` watches the configured `directory` paths via [chokidar](https://github.com/paulmillr/chokidar) and invalidates the matching `(locale, namespace)` cache entry on every file change. Subscribe via `store.on('invalidate', cb)` to react — `@ilingo/vue`'s `useTranslation` does this automatically, so file edits show up live in the rendered component without a remount.

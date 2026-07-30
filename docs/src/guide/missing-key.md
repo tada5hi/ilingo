@@ -44,6 +44,30 @@ The handler is useful for:
 - **Visible placeholders** in development — return `[missing: app.greeting]` so missed keys jump out in the UI.
 - **Fallback to the key itself** — return `key` so the UI shows something readable rather than blanking out.
 
+## Called from both read paths
+
+`onMissingKey` runs whenever a lookup exhausts the chain — on `get()` **and** on [`getSync()`](./stores#synchronous-reads-getsync). That is required by the equivalence guarantee: if the handler substitutes a string, the synchronous seed must produce the same string as the eventual async value, or the first render would differ from the second.
+
+The consequence is that a consumer which seeds from `getSync()` (`@ilingo/vue` does, for every translated binding) reaches the handler **twice** for a genuinely missing key: once for the seed, once for the async pass. That is harmless for a pure handler that just returns a string, but a handler with side effects — reporting to Sentry, incrementing a counter, appending to a file — should dedupe on `(locale, namespace, key)` itself:
+
+```typescript
+const reported = new Set<string>();
+
+const ilingo = new Ilingo({
+    store,
+    onMissingKey: (ctx) => {
+        const id = `${ctx.locale}|${ctx.namespace}|${ctx.key}`;
+        if (!reported.has(id)) {
+            reported.add(id);
+            telemetry.missingTranslation(ctx);
+        }
+        return undefined;
+    },
+});
+```
+
+The built-in default handler already does exactly this — its warn-once memo is shared by both paths, so a missing key warns once in total, not once per path.
+
 ## Examples
 
 ### Show the key

@@ -16,7 +16,7 @@ import {
 } from 'vue';
 import { injectIlingo } from './composables/instance';
 import { injectLocale } from './composables/locale';
-import { extractReactiveData } from './composables/utils';
+import { extractReactiveData, resolveSync } from './composables/utils';
 import type { DataMaybeRef } from './types';
 
 /**
@@ -61,19 +61,27 @@ export const ITranslateT = defineComponent({
         parsePath(props.path);
         const parsed = computed(() => parsePath(props.path));
 
+        const buildContext = () => {
+            const { namespace, key } = parsed.value;
+            return {
+                namespace,
+                key,
+                data: props.data ? extractReactiveData(props.data) : undefined,
+                locale: props.locale ?? localeRef.value,
+                count: props.count,
+            };
+        };
+
         const text = computedAsync(
             async () => {
-                const { namespace, key } = parsed.value;
-                const value = await instance.get({
-                    namespace,
-                    key,
-                    data: props.data ? extractReactiveData(props.data) : undefined,
-                    locale: props.locale ?? localeRef.value,
-                    count: props.count,
-                });
-                return value ?? `${namespace}.${key}`;
+                const context = buildContext();
+                const value = await instance.get(context);
+                return value ?? `${context.namespace}.${context.key}`;
             },
-            '',
+            // Seeded synchronously where the stores allow it, so the initial
+            // render already carries the message (and its slot markers)
+            // instead of an empty string — see issue #988.
+            resolveSync(instance, buildContext()) ?? '',
         );
 
         const tokens = computed(() => tokenize(text.value));

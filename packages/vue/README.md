@@ -90,6 +90,20 @@ app.mount('#app');
 </template>
 ```
 
+## SSR — the first render is not a placeholder
+
+`useTranslation` (and `<ITranslate>`, `<ITranslateT>`, `useScopedCatalog().t`) wraps the asynchronous `Ilingo.get()` in a `computedAsync`, which needs an initial value before its promise settles. That initial value comes from `Ilingo.getSync()`, the synchronous read path — so with an in-memory catalog the **first** render is already the real string rather than the `namespace.key` placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).
+
+For server-side rendering that removes a whole class of bugs: the translated string is what lands in the SSR markup, and the client's first render matches it instead of warning
+
+```text
+[Vue warn]: Hydration text mismatch in th
+  - rendered on server: "Name"
+  - expected on client: "app.name"
+```
+
+No opt-in, no payload plumbing. Stores that need I/O (a cold `LoaderStore` or `FSStore`, a remote adapter) can't answer synchronously — those keys still start at the placeholder and settle a tick later; warm them before rendering if the server output matters. See the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr) and [`getSync`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-getsync).
+
 ## `<ITranslateT>` — slot-aware interpolation
 
 `<ITranslateT>` lets a message string carry **slot placeholders** alongside the usual `{{var}}` interpolations. Each `{slot}` placeholder in the message is filled by a named scoped slot — drop arbitrary VNodes (links, icons, bold runs) inline without splitting the message across multiple keys.

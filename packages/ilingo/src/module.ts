@@ -8,6 +8,7 @@
 import type { IlingoOptions } from './options';
 import { LOCALE_DEFAULT } from './constants';
 import type { IStore } from './store';
+import { SyncUnavailableError } from './errors';
 import type {
     Data,
     Fallback,
@@ -264,6 +265,49 @@ export class Ilingo implements IIlingo {
     }
 
     /**
+     * Synchronous counterpart of {@link get}, for call sites that must
+     * produce a string *now* — most importantly the first render of a
+     * server-rendered component, where an awaited value arrives too late and
+     * a placeholder ends up in the markup (and then mismatches on hydration).
+     *
+     * The result is **strictly equivalent** to `await get(ctx)`: same locale
+     * chain, same store order, same plural selection, same interpolation, and
+     * the same `onMissingKey` routing for a key that is genuinely absent. So
+     * `undefined` here means exactly what it means there — the key is missing
+     * and no handler substituted anything.
+     *
+     * @throws {SyncUnavailableError} when a store consulted before the hit
+     * cannot answer without I/O (a cold `FSStore` namespace, an unloaded
+     * `LoaderStore` pair, an adapter with no synchronous read). The throw is
+     * expected control flow for a seeding call site: catch it with
+     * `isSyncUnavailableError` and fall back to `get()`. It keeps `undefined`
+     * unambiguous, which is what lets a caller apply the *same* fallback the
+     * async path would for a real miss.
+     *
+     * @example
+     *     // seed a Vue computedAsync so the first render is already correct
+     *     try {
+     *         initial = ilingo.getSync(ctx) ?? `${ctx.namespace}.${ctx.key}`;
+     *     } catch (e) {
+     *         if (!isSyncUnavailableError(e)) throw e;
+     *         initial = `${ctx.namespace}.${ctx.key}`;
+     *     }
+     */
+    getSync(ctx: GetContext): string | undefined {
+        const requestedLocale = ctx.locale ?? this.getLocale();
+        const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
+
+        // A store that cannot answer throws out of lookupSync, so there is no
+        // "unavailable" value to test for here — and the missing-key path below
+        // is reached only for a genuine miss.
+        const hit = this.lookupSync(chain, ctx);
+
+        return hit ?
+            this.render(hit.leaf, hit.locale, ctx) :
+            this.handleMissingKey(ctx, requestedLocale, chain);
+    }
+
+    /**
      * The post-lookup half of `get()`: pick the plural form for `ctx.count`,
      * auto-merge `count` into the interpolation data (so `{{count}}` works
      * without restating it), and substitute `{{var}}` placeholders against
@@ -301,6 +345,60 @@ export class Ilingo implements IIlingo {
         for (const locale of chain) {
             for (const store of this.stores.values()) {
                 const candidate = await store.get({
+                    locale,
+                    namespace: ctx.namespace,
+                    key: ctx.key,
+                });
+                if (typeof candidate !== 'undefined') {
+                    return { locale, leaf: candidate };
+                }
+            }
+        }
+        return undefined;
+    }
+
+    /**
+     * Synchronous mirror of {@link lookup} — same chain order, same serial
+     * intra-locale store order, same stop-at-first-hit rule.
+     *
+     * A store that cannot answer synchronously throws
+     * {@link SyncUnavailableError} out of its own `getSync`, which unwinds
+     * this walk untouched — no branch here, and the error already names the
+     * store and the lookup that declined. Aborting *at that point* rather than
+     * skipping the store is what keeps the result equivalent to the async walk:
+     * everything before it answered identically, and nothing after it can be
+     * consulted without knowing what the declining store would have said.
+     */
+    protected lookupSync(
+        chain: string[],
+        ctx: Pick<GetContext, 'namespace' | 'key'>,
+    ): { locale: string, leaf: Leaf } | undefined {
+        if (this.stores.size === 0) {
+            return undefined;
+        }
+
+        for (const locale of chain) {
+            for (const store of this.stores.values()) {
+                if (typeof store.getSync !== 'function') {
+                    // `getSync` is required by IStore, so this is either an
+                    // adapter written against ilingo <7 or a hand-rolled
+                    // duck-type. Turn what would be a bare
+                    // "store.getSync is not a function" into the actionable
+                    // version — the fix is three lines in the adapter.
+                    throw new SyncUnavailableError(
+                        `[ilingo] store "${String(store.id)}" does not implement getSync(). ` +
+                        'Every IStore provides the read in both idioms; an adapter that ' +
+                        'cannot read without I/O should call throwSyncUnavailable(context, this.id).',
+                        {
+                            locale,
+                            namespace: ctx.namespace,
+                            key: ctx.key,
+                            storeId: store.id,
+                        },
+                    );
+                }
+
+                const candidate = store.getSync({
                     locale,
                     namespace: ctx.namespace,
                     key: ctx.key,

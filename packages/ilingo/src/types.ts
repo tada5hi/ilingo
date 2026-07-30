@@ -180,5 +180,17 @@ export interface IIlingo {
 
     get(ctx: GetContext): Promise<string | undefined>;
 
+    /**
+     * Synchronous read — see `Ilingo.getSync`. Returns what `get` would
+     * resolve, or throws `SyncUnavailableError` when a consulted store cannot
+     * answer without I/O.
+     *
+     * Required, like `IStore.getSync`: an implementation that cannot read
+     * synchronously still provides it and throws (see `throwSyncUnavailable`),
+     * so a caller never has to feature-detect. Two outcomes, mirroring `get`'s
+     * value-or-rejection.
+     */
+    getSync(ctx: GetContext): string | undefined;
+
     format(input: string, data: Record<string, any>, locale?: string): string;
 }

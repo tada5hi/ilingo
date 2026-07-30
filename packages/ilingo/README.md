@@ -491,6 +491,8 @@ function register(ilingo: IIlingo) {
 
 `new Ilingo()` is still the way to construct an instance. Prefer `IIlingo` as the type position; reserve `Ilingo` (the class) for construction and `instanceof` checks.
 
+`IIlingo` includes [`getSync`](#synchronous-reads-for-ssr) as a required member, mirroring `IStore`: an implementation that cannot read synchronously still provides it and throws `SyncUnavailableError`, so a caller never has to feature-detect.
+
 ### Slot placeholders & `tokenize()`
 
 In addition to `{{var}}` data placeholders (and modifier syntax), messages can carry `{slot}` markers (single curly braces) for renderers that produce structured output rather than a string. The core `tokenize(str)` helper parses a message into `text` / `var` / `slot` tokens:
@@ -564,7 +566,7 @@ ilingo.setLocale(chosen);
 
 ## Store
 
-A store implements the read `IStore` port — `id`, `get`, `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract, and it is **frozen** for the stable release. **Writing** is an opt-in capability — `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Other capabilities (cache invalidation, file watching, …) layer the same way (see [Invalidation](#invalidation) below). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
+A store implements the read `IStore` port — `id`, `get`, [`getSync`](#synchronous-reads-for-ssr), `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract. The read is required in **both idioms** — same as confinity's `IStore` and locter's `IReader` — and an adapter that can't read without I/O implements `getSync` by declining (`throwSyncUnavailable(context, this.id)`). **Writing** is an opt-in capability — `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Caching layers the same way: [`IInvalidatingStore`](#invalidation). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
 
 ### Registering stores — `registerStore(store)`
 
@@ -610,6 +612,48 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 3 });
 ```
 
 Concurrent `get()`s for the same `(locale, namespace)` share one loader invocation. Misses (loader returning `undefined`) are cached too, so the loader isn't re-called for keys it has no answer for.
+
+### Synchronous reads for SSR
+
+`get()` is a `Promise`, which is a problem for server-side rendering: a Vue `computedAsync` renders its placeholder first, the placeholder ends up in the HTML, and the client's first render then mismatches it. `getSync(ctx)` walks the same locale chain and the same stores without awaiting, so the first render is the real string on both sides of the hydration boundary ([#988](https://github.com/tada5hi/ilingo/issues/988)):
+
+```typescript
+const ilingo = new Ilingo({ store: new MemoryStore({ data: catalog }), locale: 'de' });
+
+ilingo.getSync({ namespace: 'app', key: 'hi', data: { name: 'Peter' } }); // 'Hallo Peter'
+```
+
+A synchronous read has the same **two** outcomes as the asynchronous one — a value, or a failure:
+
+| Async | Sync | Meaning |
+|---|---|---|
+| resolves `Leaf` | returns the string | hit |
+| resolves `undefined` | returns `undefined` | **definite** miss |
+| rejects | throws `SyncUnavailableError` | a store would need I/O |
+
+Whenever `getSync()` returns, the value is exactly what `await get(ctx)` would produce — same fallback chain, same plural form, same interpolation, same `onMissingKey` routing. A sentinel return value was considered and rejected: it invents a third outcome async doesn't have, and shares a channel with `undefined`, whereas callers must distinguish "no such key" (fall back) from "ask me later" (don't).
+
+```typescript
+import { isSyncUnavailableError } from 'ilingo';
+
+try {
+    const value = ilingo.getSync(ctx);   // undefined ⇒ the key really is missing
+} catch (e) {
+    if (!isSyncUnavailableError(e)) throw e;
+    const value = await ilingo.get(ctx); // a store needs I/O
+}
+```
+
+`getSync` is part of `IStore`, so every store provides it:
+
+- `MemoryStore` — always answers; `undefined` is always a definite miss.
+- `LoaderStore` — answers for `(locale, namespace)` pairs already loaded, throws otherwise (it does not start a load).
+- `FSStore` — answers for namespaces already read from disk, throws while cold or mid-read.
+- An async-only store (HTTP, DB) — `getSync(context) { throwSyncUnavailable(context, this.id); }`.
+
+One behavioural note: because a genuinely missing key must resolve *identically* on both paths, `onMissingKey` runs for `getSync()` too. A consumer that seeds from it (`@ilingo/vue` does) therefore reaches the handler twice per missing key — once for the seed, once for the async pass. Pure handlers are unaffected; handlers with side effects (telemetry) should dedupe on `(locale, namespace, key)`. The built-in warn-once default already shares its memo across both paths, so a miss still warns once.
+
+`@ilingo/vue` consumes all of this automatically — see the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr).
 
 ### Invalidation
 

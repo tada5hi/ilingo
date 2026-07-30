@@ -25,10 +25,19 @@ export type StoreSetContext = StoreGetContext & {
 
 /**
  * **Read** port for translation backends — the contract `Ilingo` relies on.
- * ilingo's job is to *read* a datasource: the orchestrator only ever calls
- * `get` (and `getLocales`), never `set`. So the required surface is just
- * `id` + `get` + `getLocales`, and it is **frozen** at those — external
- * adapters can rely on this being the complete required contract.
+ * ilingo's job is to *read* a datasource: the orchestrator only ever reads,
+ * never writes. So the required surface is `id` + `get` + `getSync` +
+ * `getLocales` — every adapter provides the read in both idioms, the same way
+ * confinity's `IStore` pairs `get`/`getSync` and locter's `IReader` pairs
+ * `read`/`readSync`.
+ *
+ * A store that genuinely cannot read without I/O still implements `getSync` —
+ * by throwing {@link SyncUnavailableError} (use {@link throwSyncUnavailable}).
+ * That is not a workaround: a synchronous read has exactly two outcomes, a
+ * value or a throw, which is the same pair the asynchronous read has as a value
+ * or a rejection. Encoding "no answer" as a *return* value would invent a third
+ * outcome the async side doesn't have, and would put it in the same channel as
+ * `undefined` (= "no such key"), which callers must be able to tell apart.
  *
  * Writing is an *optional* capability layered as a separate interface
  * detected via a type guard — see {@link IMutableStore} / {@link isMutableStore}
@@ -61,6 +70,37 @@ export interface IStore {
      * Stores that don't support plurals can return just `string | undefined`.
      */
     get(context: StoreGetContext): Promise<Leaf | undefined>;
+
+    /**
+     * Resolve a `(locale, namespace, key)` **without I/O** — the synchronous
+     * twin of {@link get}, and the reason `Ilingo.getSync()` can exist.
+     *
+     * Returns exactly what `get` would return for the same context: a `Leaf`
+     * for a hit, `undefined` for a miss. When the store cannot honour that
+     * promise from memory it throws {@link SyncUnavailableError} instead —
+     * a cold `FSStore` namespace, an unloaded `LoaderStore` pair, or an
+     * adapter (HTTP, database) that has no synchronous read at all:
+     *
+     * ```typescript
+     * getSync(context: StoreGetContext): Leaf | undefined {
+     *     throwSyncUnavailable(context, this.id);
+     * }
+     * ```
+     *
+     * It must not start work whose result it cannot return. Synchronous I/O is
+     * fine — `FSStore` reads the file right here via `locter`'s `readSync`, and
+     * that is why a server-rendered tree resolves filesystem translations on
+     * its first pass. Kicking off an `import()` or a fetch is not: the value
+     * would arrive after this method has already returned, so the caller gets a
+     * miss *and* pays for the I/O. That is the line between `FSStore` (reads) and
+     * `LoaderStore` (declines).
+     *
+     * The distinction between a throw and `undefined` is load-bearing: a miss
+     * lets the orchestrator continue its walk, while an unavailable answer
+     * aborts it. Reporting a cold store as a miss would let the locale chain
+     * resolve a *farther* locale's string — a silently wrong translation.
+     */
+    getSync(context: StoreGetContext): Leaf | undefined;
 
     /**
      * Enumerate the locales the store can currently resolve. Used by

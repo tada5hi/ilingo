@@ -6,7 +6,7 @@
 [![main](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo/actions/workflows/main.yml)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
-Translate [validup](https://www.npmjs.com/package/validup) `Issue`s through [ilingo](https://www.npmjs.com/package/ilingo) — default EN / DE / FR / ES catalogs for the built-in `IssueCode`s, a pre-seeded `Store`, and pure `translateIssue` / `translateIssues` helpers.
+Translate [validup](https://www.npmjs.com/package/validup) `Issue`s through [ilingo](https://www.npmjs.com/package/ilingo) — default EN / DE / FR / ES catalogs for the built-in `IssueCode`s, a pre-seeded `Store`, and pure `translateIssue` / `translateIssues` helpers (each with a synchronous `…Sync` variant for SSR).
 
 **No Vue dependency.** Embeddable in any runtime: Node SSR, edge workers, queue handlers, CLI tools. Vue 3 users add [`@ilingo/validup-vue`](../validup-vue) on top for composables, the renderless component, and the install plugin.
 
@@ -96,7 +96,22 @@ Flatten an `Issue[]` to its leaf `IssueItem`s and translate each in parallel via
 
 Translate an `IssueGroup[]` — each by its **own** `code` (e.g. `one_of_failed`) — **without** descending into the group's children. The group-level counterpart to `translateIssues`: where that flattens to per-field leaves, this keeps each group intact for whole-form / banner rendering ("none of the alternatives validated"). Returns `IssueGroupTranslation[]` (`{ issue, message }`, where `issue` is the `IssueGroup`).
 
-Options on all three: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
+### `translateIssueSync` / `translateIssuesSync` / `translateIssueGroupsSync`
+
+Synchronous counterparts of the three helpers above, for call sites that need a message *now* — a server render, or seeding a Vue `computedAsync` so its first render isn't empty ([#988](https://github.com/tada5hi/ilingo/issues/988)). They read through [`Ilingo.getSync()`](../ilingo/README.md#synchronous-reads-for-ssr), so they answer whenever the catalog is in memory (the bundled `createMemoryStore()`) and **return `undefined`** only when a store would need I/O:
+
+```typescript
+import { translateIssuesSync } from '@ilingo/validup';
+
+const seed = translateIssuesSync(error.issues, ilingo, { locale: 'de' });
+const messages = seed ?? await translateIssues(error.issues, ilingo, { locale: 'de' });
+```
+
+An untranslated code is **not** a reason to decline: `getSync()` reports it as a definite miss (`undefined`), so the helper applies the async path's own `issue.message` fallback and the message is identical either way. Declining is reserved for the case `getSync()` signals by *throwing* — a store that would need I/O — where falling back would be wrong, because the async helper is about to resolve a real translation and the message would visibly change (across an SSR boundary, a hydration mismatch). An unexpected fault in a store or formatter is re-thrown, never masked as "unavailable".
+
+The batch helpers are **all-or-nothing**: `translateIssuesSync` / `translateIssueGroupsSync` return the complete batch or `undefined`, never a half-translated array. In practice that is rarely partial now — the only cause is a store needing I/O, which applies to every issue equally. An issue with no `code` is always answerable (the async path returns `issue.message` without consulting ilingo).
+
+Options on all six: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
 
 ### Default catalogs
 

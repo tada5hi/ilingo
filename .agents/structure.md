@@ -7,10 +7,10 @@ This is an npm-workspaces monorepo. Workspaces under `packages/` are publishable
 | Name                                                   | Version | Description                                                                 |
 |--------------------------------------------------------|---------|-----------------------------------------------------------------------------|
 | [`ilingo`](../packages/ilingo)                         | 5.x     | Framework-agnostic core: `Ilingo` orchestrator, `IStore` port, `MemoryStore`, template formatter, BCP-47 helpers |
-| [`@ilingo/fs`](../packages/fs)                         | 5.x     | File-system store adapter — extends `MemoryStore`, lazy-loads `<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}` |
+| [`@ilingo/fs`](../packages/fs)                         | 5.x     | File-system store adapter — extends `MemoryStore`, lazy-loads `<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}` through locter v4 (`readAsModule`/`readAsModuleSync`); answers `getSync` by reading the file synchronously |
 | [`@ilingo/vue`](../packages/vue)                       | 5.x     | Vue 3 plugin: `install()`, `provide/inject` for the `Ilingo` instance and reactive locale, `<ITranslate>` component, `useTranslation` composable |
 | [`@ilingo/vuelidate`](../packages/vuelidate)           | 6.x     | Vuelidate-message adapter on top of `@ilingo/vue` — ships built-in EN/DE/FR/ES translations for validator names |
-| [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Framework-agnostic core for the validup ecosystem. **Data-free `.` entry**: `translateIssue` / `translateIssues` / `translateIssueGroups` / `coerceIssueData` helpers, `NAMESPACE` / `STORE_ID` constants, `SlotName` enum + slot-prop types. Catalog stores live on subpaths — `./store/memory` (`createMemoryStore()`, eager, all locales — builds its catalog via `defineCatalog([...])`) and `./store/loader` (`createLoaderStore()`, lazy per-locale `import()` chunks returning `defineTranslations(...)`), each keyed by `STORE_ID`; register with `ilingo.registerStore(...)`. **No Vue deps** — embeddable in Node SSR, edge, workers. Peer-deps `ilingo`, `validup`. |
+| [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Framework-agnostic core for the validup ecosystem. **Data-free `.` entry**: `translateIssue` / `translateIssues` / `translateIssueGroups` (+ the synchronous `translateIssueSync` / `translateIssuesSync` / `translateIssueGroupsSync` used to seed SSR first renders) / `coerceIssueData` helpers, `NAMESPACE` / `STORE_ID` constants, `SlotName` enum + slot-prop types. Catalog stores live on subpaths — `./store/memory` (`createMemoryStore()`, eager, all locales — builds its catalog via `defineCatalog([...])`) and `./store/loader` (`createLoaderStore()`, lazy per-locale `import()` chunks returning `defineTranslations(...)`), each keyed by `STORE_ID`; register with `ilingo.registerStore(...)`. **No Vue deps** — embeddable in Node SSR, edge, workers. Peer-deps `ilingo`, `validup`. |
 | [`@ilingo/validup-vue`](../packages/validup-vue)       | 0.1.x   | Vue 3 plugin for `@ilingo/validup`. The `install` hook, five composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`, `useTranslationsForGroupErrors`, `useFieldValidation` — all **`setup()`-only**, like every composable here, since they wire a `computedAsync` watcher that only the setup scope disposes), the `<IValidup>` renderless component (leaf `:issues` mode + whole-form `:composable` mode with `#cross-cutting`/`#groups`/`#fields` slots), the slot-aware `<IValidupT>` (component-aware interpolation via `<ITranslateT>`), the renderless `<IFieldValidation>` (template-only companion to `useFieldValidation` — owns the watcher lifecycle in its own setup so the bundle can be bound in a template without the inline-call leak #965; default slot exposes the bundle as `value`), and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases (`useFieldValidation`/`FieldValidation` align with vuecs's `<VCFormGroup :validation>`). Mirrors the `validup` → `@validup/vue` split. Peer-deps `@ilingo/validup`, `@ilingo/vue`, `ilingo`, `vue`, `@vueuse/core`, `validup`, `@validup/vue`. |
 | [`@ilingo/docs`](../docs)                              | private | VitePress 1.x marketing + reference site. Deploys to GitHub Pages via `.github/workflows/docs.yml`. Never published to npm. |
 
@@ -45,7 +45,8 @@ src/
 ├── index.ts                  # barrel: re-exports config, module, store, utils, types
 ├── module.ts                 # IIlingo interface + Ilingo class — Map<symbol|string,IStore> + registerStore(store),
 │                             #   locale + fallback chain, plural rules cache,
-│                             #   per-instance warn-once memo, get / getResolvedLocale[Chain] / merge / format
+│                             #   per-instance warn-once memo, get / getSync (+ lookupSync, SSR path) /
+│                             #   getResolvedLocale[Chain] / merge / format
 ├── types.ts                  # normalized data shapes: Translations / Namespaces / Locales, Leaf, PluralForms;
 │                             #   descriptor-tree node types: PluralNode, TranslationsNode, NamespaceNode,
 │                             #   NamespaceChild, LocaleNode, CatalogNode, CatalogInput, NamespaceBodyInput;
@@ -60,15 +61,22 @@ src/
 │                             #   normalizeNamespaceBody(NamespaceBodyInput) → Translations
 │                             #   (shared reducer every store uses; exported from the barrel)
 ├── constants.ts              # LOCALE_DEFAULT = 'en'
+├── errors/
+│   ├── index.ts              # barrel
+│   ├── base.ts               # IlingoError + markError/hasErrorMarker (Symbol.for markers so
+│   │                         #   instanceof survives duplicate package copies)
+│   └── sync-unavailable.ts   # SyncUnavailableError (locale/namespace/key/storeId) +
+│                             #   isSyncUnavailableError guard + throwSyncUnavailable helper
 ├── options/
 │   ├── index.ts
 │   └── types.ts              # IlingoOptions { store?: IStore | IStore[], locale?, fallback?, onMissingKey?, formatters? } — all fields optional (defaults applied at runtime)
 ├── store/
 │   ├── index.ts              # barrel
-│   ├── types.ts              # IStore port, StoreGetContext, StoreSetContext (value: string | PluralNode),
-│   │                         #   MemoryStoreOptions, IInvalidatingStore + isInvalidatingStore guard
-│   ├── memory.ts             # MemoryStore — takes CatalogInput (runs normalizeCatalog in ctor); get() returns string | PluralForms | undefined (unwraps the plural node's .data)
-│   └── loader.ts             # LoaderStore — lazy load + per-(locale,namespace) cache + invalidate
+│   ├── types.ts              # IStore port (id / get / getSync / getLocales), StoreGetContext,
+│   │                         #   StoreSetContext (value: string | PluralNode), MemoryStoreOptions,
+│   │                         #   IMutableStore + IInvalidatingStore (+ their guards)
+│   ├── memory.ts             # MemoryStore — takes CatalogInput (runs normalizeCatalog in ctor); get()/getSync() both delegate to a protected resolve(); never throws SyncUnavailableError
+│   └── loader.ts             # LoaderStore — lazy load + per-(locale,namespace) cache + invalidate; getSync() answers cache-only (throws while cold)
 └── utils/
     ├── index.ts
     ├── locale.ts             # bcp47Parents, resolveLocaleChain
@@ -88,6 +96,8 @@ test/
     ├── formatters-integration.spec.ts # Ilingo.get() with number/date/list modifiers, cache + dev-warn
     ├── custom-formatters.spec.ts     # registerFormatter + IlingoOptions.formatters constructor sugar
     ├── loader-store.spec.ts          # LoaderStore lazy load, cache, miss cache, dedupe, invalidate, events
+    ├── sync.spec.ts                  # getSync — equivalence with get(), throw when a store needs I/O,
+    │                                 #   throw vs definite miss, error identity across copies
     ├── catalog/
     │   └── normalize.spec.ts         # normalizeCatalog (tree→Locales, dotted-namespace nesting, key nesting,
     │                                 #   plural node, sibling merge, default-namespace seam)
@@ -114,12 +124,16 @@ src/
 ├── module.ts                 # FSStore extends MemoryStore — directory[], writeDirectory,
 │                             #   lazy loadNamespace(), atomic persist() (write-tmp + rename)
 ├── types.ts                  # FSStoreOptionsInput (input) + FSStoreOptions (resolved, includes writeDirectory + watch)
-└── utils.ts                  # normalizeOptions (normalize directory[] + writeDirectory)
+├── utils.ts                  # normalizeOptions (normalize directory[] + writeDirectory)
+└── utils/
+    └── twin.ts               # internal: op() + runTwinAsync/runTwinSync — locter's scheme for
+                              #   deriving loadNamespace / loadNamespaceSync from one body
 test/
 ├── unit/
 │   ├── module.spec.ts        # loads test/data/language/<locale>/<namespace>.* via FSStore
 │   ├── dotted-namespace.spec.ts # dotted namespace ↔ dotted-filename resolution (app.nav.json)
 │   ├── persist.spec.ts       # set() round-trip, sibling preservation, split read/write dirs
+│   ├── sync.spec.ts          # getSync — throws while cold/in-flight, warm after get(), cold again after invalidate
 │   └── watch.spec.ts         # watch: true emits invalidate on file change, close() teardown
 └── data/language/{en,de,fr}/form.{cjs,ts,json}   # translations nodes — JSON `{ "type":"translations", "data":{…} }` / `export default defineTranslations({…})`
 ```
@@ -147,7 +161,8 @@ test/                         # happy-dom + @vue/test-utils via vitest
 └── unit/                     # catalogs built inline with the define* helpers (no shared toCatalog helper)
     ├── component-t.spec.ts   # <ITranslateT> rendering (slots, vars, fragments, error paths)
     ├── directive-t.spec.ts   # v-t directive (string/object bindings, reactive locale, opt-out)
-    └── scoped-catalog.spec.ts# useScopedCatalog (same-component t, descendant provide, no-leak, fallback)
+    ├── scoped-catalog.spec.ts# useScopedCatalog (same-component t, descendant provide, no-leak, fallback)
+    └── ssr.spec.ts           # renderToString writes real translations (#988) + hydrates without mismatch
 playground/                   # local Vue app for manual testing (vite dev)
 index.html, vite.config.js    # vite dev entry
 ```
@@ -235,6 +250,6 @@ The sidebar in `config.mts` is the source of truth for what pages should exist �
 
 - **`ilingo`** owns the domain: locale lookup, store iteration order, `{{var}}` template formatting, BCP-47 validation.
 - **`@ilingo/fs`** owns I/O — loading translation files from disk via `locter` and merging them with `smob`.
-- **`@ilingo/vue`** owns Vue integration: provide/inject of the `Ilingo` instance, reactive locale, component, composable.
+- **`@ilingo/vue`** owns Vue integration: provide/inject of the `Ilingo` instance, reactive locale, component, composable, and the synchronous `computedAsync` seeding that keeps SSR markup and hydration in sync.
 - **`@ilingo/vuelidate`** owns the Vuelidate use case: an eager `createMemoryStore()` and a lazy `createLoaderStore()` (both keyed by `STORE_ID`) pre-populated with validator-message translations, plus the composables that wire Vuelidate's `$errors` shape into ilingo.
 - **`@ilingo/docs`** owns the marketing and reference site. Imports the public APIs only — never reaches into a package's `src/`. Free to depend on any published `ilingo` package via workspace symlink.

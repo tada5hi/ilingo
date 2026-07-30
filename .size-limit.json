@@ -1,29 +1,29 @@
 [
     {
-        "name": "ilingo — full barrel",
+        "name": "ilingo \u2014 full barrel",
         "path": "packages/ilingo/dist/index.mjs",
-        "limit": "6 KB"
+        "limit": "6.5 KB"
     },
     {
-        "name": "ilingo — Ilingo + MemoryStore (typical minimum)",
+        "name": "ilingo \u2014 Ilingo + MemoryStore (typical minimum)",
         "path": "packages/ilingo/dist/index.mjs",
         "import": "{ Ilingo, MemoryStore }",
         "limit": "5 KB"
     },
     {
-        "name": "ilingo — defineCatalog only (tree-shake floor)",
+        "name": "ilingo \u2014 defineCatalog only (tree-shake floor)",
         "path": "packages/ilingo/dist/index.mjs",
         "import": "{ defineCatalog }",
         "limit": "1.3 KB"
     },
     {
-        "name": "ilingo — negotiateLocale + parseAcceptLanguage",
+        "name": "ilingo \u2014 negotiateLocale + parseAcceptLanguage",
         "path": "packages/ilingo/dist/index.mjs",
         "import": "{ negotiateLocale, parseAcceptLanguage }",
         "limit": "1.7 KB"
     },
     {
-        "name": "@ilingo/fs — full barrel (node externals)",
+        "name": "@ilingo/fs \u2014 full barrel (node externals)",
         "path": "packages/fs/dist/index.mjs",
         "ignore": [
             "node:fs",
@@ -37,13 +37,17 @@
         "limit": "4 KB"
     },
     {
-        "name": "@ilingo/vue — full barrel",
+        "name": "@ilingo/vue \u2014 full barrel",
         "path": "packages/vue/dist/index.mjs",
-        "ignore": ["vue", "ilingo", "@vueuse/core"],
+        "ignore": [
+            "vue",
+            "ilingo",
+            "@vueuse/core"
+        ],
         "limit": "2 KB"
     },
     {
-        "name": "@ilingo/vuelidate — full barrel",
+        "name": "@ilingo/vuelidate \u2014 full barrel",
         "path": "packages/vuelidate/dist/index.mjs",
         "ignore": [
             "vue",
@@ -55,9 +59,12 @@
         "limit": "2.5 KB"
     },
     {
-        "name": "@ilingo/validup — core barrel (data-free; guards no eager catalogs)",
+        "name": "@ilingo/validup \u2014 core barrel (data-free; guards no eager catalogs)",
         "path": "packages/validup/dist/index.mjs",
-        "ignore": ["ilingo", "validup"],
+        "ignore": [
+            "ilingo",
+            "validup"
+        ],
         "limit": "2 KB"
     }
 ]

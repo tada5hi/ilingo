@@ -28,10 +28,30 @@ export class MemoryStore implements IMutableStore {
     }
 
     async get(context: StoreGetContext): Promise<Leaf | undefined> {
-        return this.getSync(context);
+        return this.resolve(context);
     }
 
+    /**
+     * Synchronous read. Everything is in memory, so this never throws
+     * `SyncUnavailableError` — an `undefined` is always a definite miss.
+     * Subclasses that use this map as a *cache* do throw for data they haven't
+     * pulled in yet (see `FSStore` on a cold namespace).
+     */
     getSync(context: StoreGetContext): Leaf | undefined {
+        return this.resolve(context);
+    }
+
+    /**
+     * The actual map lookup, shared by both public faces so they can never
+     * disagree about what this store holds.
+     *
+     * Kept separate from `getSync` because a subclass may legitimately
+     * *override* `getSync` to decline (`FSStore` throws while a namespace is
+     * cold) — and `get`, being the asynchronous face that loads first, must not
+     * inherit that refusal. Routing `get` through the overridable method made
+     * `FSStore.get()` throw for a namespace it had just chosen not to cache.
+     */
+    protected resolve(context: StoreGetContext): Leaf | undefined {
         if (
             !this.data[context.locale] ||
             !this.data[context.locale][context.namespace]

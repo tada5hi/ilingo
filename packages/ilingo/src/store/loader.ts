@@ -7,6 +7,7 @@
 
 import { getPathValue, setPathValue } from 'pathtrace';
 import { normalizeNamespaceBody } from '../catalog/normalize';
+import { SyncUnavailableError } from '../errors';
 import type { Leaf, NamespaceBodyInput, Translations } from '../types';
 import { isPluralNode } from '../utils/identify';
 import type {
@@ -122,9 +123,39 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
 
     async get(context: StoreGetContext): Promise<Leaf | undefined> {
         const record = await this.loadNamespace(context.locale, context.namespace);
+        return this.readKey(record, context.key);
+    }
+
+    /**
+     * Synchronous read — answers only from the cache. A pair cached as a
+     * miss is a definite miss (`undefined`), matching `get`. A pair that has
+     * not been loaded yet throws: the loader is deliberately *not* kicked off
+     * here, because a synchronous read must not start I/O.
+     *
+     * @throws {SyncUnavailableError} for a `(locale, namespace)` that isn't cached.
+     */
+    getSync(context: StoreGetContext): Leaf | undefined {
+        const cached = this.cache.get(this.cacheKey(context.locale, context.namespace));
+        if (!cached) {
+            throw new SyncUnavailableError(
+                `[ilingo] "${context.locale}/${context.namespace}" is not loaded yet — ` +
+                'await get() to populate the cache before reading synchronously.',
+                {
+                    locale: context.locale,
+                    namespace: context.namespace,
+                    key: context.key,
+                    storeId: this.id,
+                },
+            );
+        }
+
+        return this.readKey(cached.record, context.key);
+    }
+
+    protected readKey(record: Translations | undefined, key: string): Leaf | undefined {
         if (!record) return undefined;
 
-        const output = getPathValue(record, context.key);
+        const output = getPathValue(record, key);
         if (typeof output === 'string') return output;
         if (isPluralNode(output)) return output.data;
         return undefined;
