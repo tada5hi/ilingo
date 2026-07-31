@@ -1,7 +1,7 @@
 {
     "name": "@ilingo/validup",
     "type": "module",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "description": "Translate validup Issues through ilingo — framework-agnostic core with default EN/DE/FR/ES catalogs.",
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",
@@ -63,12 +63,12 @@
     },
     "homepage": "https://github.com/tada5hi/ilingo#readme",
     "devDependencies": {
-        "ilingo": "^6.0.0",
+        "ilingo": "^6.1.0",
         "validup": "^1.0.0",
         "vite": "^8.1.5"
     },
     "peerDependencies": {
-        "ilingo": "^6.0.0",
+        "ilingo": "^6.1.0",
         "validup": "^1.0.0"
     },
     "publishConfig": {

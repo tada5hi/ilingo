@@ -1,5 +1,19 @@
 # Changelog
 
+## [6.1.0](https://github.com/tada5hi/ilingo/compare/fs-v6.0.0...fs-v6.1.0) (2026-07-31)
+
+
+### Features
+
+* synchronous read path for in-memory stores ([#988](https://github.com/tada5hi/ilingo/issues/988)) ([#990](https://github.com/tada5hi/ilingo/issues/990)) ([f520c52](https://github.com/tada5hi/ilingo/commit/f520c52ba0765b25072f59e0a2bfba6a71b5e518))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * ilingo bumped from ^6.0.0 to ^6.1.0
+
 ## [6.0.0](https://github.com/tada5hi/ilingo/compare/fs-v5.0.0...fs-v6.0.0) (2026-06-02)
 
 

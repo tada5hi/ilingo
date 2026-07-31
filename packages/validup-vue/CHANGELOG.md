@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.1.0](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.0.1...validup-vue-v1.1.0) (2026-07-31)
+
+
+### Features
+
+* synchronous read path for in-memory stores ([#988](https://github.com/tada5hi/ilingo/issues/988)) ([#990](https://github.com/tada5hi/ilingo/issues/990)) ([f520c52](https://github.com/tada5hi/ilingo/commit/f520c52ba0765b25072f59e0a2bfba6a71b5e518))
+
+
+### Bug Fixes
+
+* **deps:** bump the minorandpatch group across 1 directory with 19 updates ([#992](https://github.com/tada5hi/ilingo/issues/992)) ([605bdf8](https://github.com/tada5hi/ilingo/commit/605bdf876417dba3c3903e5f29e25b32a2bfd7b8))
+* **deps:** bump validup and @validup/vue to ^1.0.0 ([b535685](https://github.com/tada5hi/ilingo/commit/b535685635a34703fe76fc2342a1e4d9c1ccfc78))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/validup bumped from ^1.0.1 to ^1.1.0
+    * @ilingo/vue bumped from ^6.0.0 to ^6.1.0
+    * ilingo bumped from ^6.0.0 to ^6.1.0
+  * peerDependencies
+    * @ilingo/validup bumped from ^1.0.1 to ^1.1.0
+    * @ilingo/vue bumped from ^6.0.0 to ^6.1.0
+    * ilingo bumped from ^6.0.0 to ^6.1.0
+
 ## [1.0.1](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.0.0...validup-vue-v1.0.1) (2026-06-03)
 
 
