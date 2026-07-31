@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.1.0](https://github.com/tada5hi/ilingo/compare/ilingo-v6.0.0...ilingo-v6.1.0) (2026-07-31)
+
+
+### Features
+
+* synchronous read path for in-memory stores ([#988](https://github.com/tada5hi/ilingo/issues/988)) ([#990](https://github.com/tada5hi/ilingo/issues/990)) ([f520c52](https://github.com/tada5hi/ilingo/commit/f520c52ba0765b25072f59e0a2bfba6a71b5e518))
+
+
+### Bug Fixes
+
+* **deps:** bump the minorandpatch group across 1 directory with 19 updates ([#992](https://github.com/tada5hi/ilingo/issues/992)) ([605bdf8](https://github.com/tada5hi/ilingo/commit/605bdf876417dba3c3903e5f29e25b32a2bfd7b8))
+
 ## [6.0.0](https://github.com/tada5hi/ilingo/compare/ilingo-v5.0.0...ilingo-v6.0.0) (2026-06-02)
 
 

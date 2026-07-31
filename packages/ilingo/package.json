@@ -1,7 +1,7 @@
 {
     "name": "ilingo",
     "type": "module",
-    "version": "6.0.0",
+    "version": "6.1.0",
     "description": "A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript — pluggable stores, BCP-47 fallback, ICU-lite plurals, Intl formatters.",
     "author": {
         "name": "Peter Placzek",
