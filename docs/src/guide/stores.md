@@ -114,7 +114,7 @@ Who can answer synchronously:
 |---|---|
 | `MemoryStore` | always — `undefined` is always a definite miss |
 | `LoaderStore` | for `(locale, namespace)` pairs already loaded; throws otherwise (it does **not** kick off the loader) |
-| `FSStore` | for namespaces already read from disk; throws while cold or mid-read |
+| `FSStore` | always — [reads the file off disk synchronously](../integrations/fs#synchronous-reads-ssr), cold or warm; throws only for a module that needs an asynchronous `import()` |
 | a custom async-only store (HTTP, DB) | throws via `throwSyncUnavailable(context, this.id)` |
 
 `@ilingo/vue` uses this automatically — see [SSR & hydration](../recipes/ssr).

@@ -656,7 +656,7 @@ try {
 
 - `MemoryStore` — always answers; `undefined` is always a definite miss.
 - `LoaderStore` — answers for `(locale, namespace)` pairs already loaded, throws otherwise (it does not start a load).
-- `FSStore` — answers for namespaces already read from disk, throws while cold or mid-read.
+- `FSStore` — answers cold or warm, reading the file off disk synchronously via `locter`'s sync twins; throws only for a module that needs an asynchronous `import()` (a malformed file propagates its real parse error).
 - An async-only store (HTTP, DB) — `getSync(context) { throwSyncUnavailable(context, this.id); }`.
 
 One behavioural note: because a genuinely missing key must resolve *identically* on both paths, `onMissingKey` runs for `getSync()` too. A consumer that seeds from it (`@ilingo/vue` does) therefore reaches the handler twice per missing key — once for the seed, once for the async pass. Pure handlers are unaffected; handlers with side effects (telemetry) should dedupe on `(locale, namespace, key)`. The built-in warn-once default already shares its memo across both paths, so a miss still warns once.
