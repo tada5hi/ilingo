@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.2.0](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.1.0...validup-vue-v1.2.0) (2026-08-18)
+
+
+### Features
+
+* validup 2.0 + errors on @ebec/core BaseError ([#1008](https://github.com/tada5hi/ilingo/issues/1008)) ([7395337](https://github.com/tada5hi/ilingo/commit/73953376f53292dbc22611718ebc7cedf6cf0462))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/validup bumped from ^1.1.0 to ^1.2.0
+    * @ilingo/vue bumped from ^6.1.0 to ^6.1.1
+    * ilingo bumped from ^6.1.0 to ^6.2.0
+  * peerDependencies
+    * @ilingo/validup bumped from ^1.1.0 to ^1.2.0
+    * @ilingo/vue bumped from ^6.1.0 to ^6.1.1
+    * ilingo bumped from ^6.1.0 to ^6.2.0
+
 ## [1.1.0](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.0.1...validup-vue-v1.1.0) (2026-07-31)
 
 
