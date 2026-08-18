@@ -1,10 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <defs>
-    <linearGradient id="il-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#6366f1"/>
-      <stop offset="1" stop-color="#14b8a6"/>
-    </linearGradient>
-  </defs>
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#il-grad)"/>
-  <path d="M20 22h24M20 32h24M20 42h16" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ilingo-mark-title">
+    <title id="ilingo-mark-title">ilingo logo: a message bubble holding three lines of text</title>
+
+    <defs>
+        <linearGradient id="ilingo-mark" x1="32" y1="40" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#6366F1" />
+            <stop offset="1" stop-color="#14B8A6" />
+        </linearGradient>
+    </defs>
+
+    <path fill="url(#ilingo-mark)" d="M56 40 H200 A24 24 0 0 1 224 64 V168 A24 24 0 0 1 200 192 H132 L92 232 V192 H56 A24 24 0 0 1 32 168 V64 A24 24 0 0 1 56 40 Z" />
+
+    <!-- a message, in any language -->
+    <path stroke="#FFFFFF" stroke-width="17" stroke-linecap="round" d="M68 80 H188 M68 116 H188 M68 152 H156" />
 </svg>
