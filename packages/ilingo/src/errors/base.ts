@@ -5,7 +5,9 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-export const ILINGO_ERROR_MARKER = Symbol.for('ilingo.error');
+import { BaseError, markInstanceof } from '@ebec/core';
+import { isIlingoError } from './check';
+import { ILINGO_ERROR_INSTANCE } from './constants';
 
 /**
  * Base class for every error thrown by ilingo itself, so a consumer can catch
@@ -13,52 +15,33 @@ export const ILINGO_ERROR_MARKER = Symbol.for('ilingo.error');
  * own backend (a file read, an HTTP call) are **not** wrapped — they propagate
  * untouched, matching the existing contract that ilingo owns no error wrapper.
  *
+ * Extends `@ebec/core`'s `BaseError`, the same base `LocterError` (locter) and
+ * `ValidupError` (validup) build on, so an ilingo error carries a `code`, a
+ * `cause` and a `toJSON()` for transport, and answers `isBaseError()` across
+ * the whole family.
+ *
  * Identity is carried by a `Symbol.for` marker plus a `[Symbol.hasInstance]`
  * override rather than the prototype chain alone, so `instanceof` still holds
  * across duplicate package copies (pnpm, a peer-dependency mismatch, a bundler
  * that inlines a second copy of `ilingo`). A subclass thrown by the copy inside
  * `@ilingo/fs` must be recognisable to a `catch` in the app's copy — the same
  * reasoning that makes library catalog stores key themselves with
- * `Symbol.for('@scope/pkg')`.
- *
- * Mirrors the convention in the sibling packages (`LocterError` in locter,
- * `ConfinityError` in confinity), minus the `@ebec/core` base class: `ilingo`
- * ships to browsers under a bundle-size budget and this is the only place in
- * core that needs it.
+ * `Symbol.for('@scope/pkg')`. The marker rides `@ebec/core`'s `@instanceof`
+ * chain, so subclasses accumulate their ancestors' markers and — because
+ * `matchesInstanceof` also reads the chain's serialized string form — the
+ * identity survives a `toJSON()` round-trip too.
  */
-export class IlingoError extends Error {
+export class IlingoError extends BaseError {
     static override [Symbol.hasInstance](input: unknown): boolean {
-        return hasErrorMarker(input, ILINGO_ERROR_MARKER);
+        return isIlingoError(input);
     }
 
-    constructor(message: string, options?: ErrorOptions) {
-        super(message, options);
+    constructor(message: string, options: ErrorOptions = {}) {
+        // `BaseError` sets `name` from `new.target.name` and derives `code`
+        // from the class name, so a subclass reports both without restating.
+        super({ ...options, message });
 
-        // `new.target.name` rather than a hard-coded string, so a subclass
-        // reports its own name without restating it.
-        this.name = new.target.name;
-
-        markError(this, ILINGO_ERROR_MARKER);
+        markInstanceof(this, ILINGO_ERROR_INSTANCE);
     }
 }
 
-/**
- * Tag an error instance with a marker symbol. Non-enumerable so the marker
- * never shows up in serialisation of the error.
- */
-export function markError(error: object, marker: symbol): void {
-    Object.defineProperty(error, marker, {
-        value: true,
-        enumerable: false,
-        configurable: true,
-    });
-}
-
-/**
- * Marker-based `instanceof` check — the reader half of {@link markError}.
- */
-export function hasErrorMarker(input: unknown, marker: symbol): boolean {
-    return typeof input === 'object' &&
-        input !== null &&
-        (input as Record<symbol, unknown>)[marker] === true;
-}

@@ -663,6 +663,24 @@ One behavioural note: because a genuinely missing key must resolve *identically*
 
 `@ilingo/vue` consumes all of this automatically — see the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr).
 
+#### Error shape
+
+`SyncUnavailableError` extends `IlingoError`, which extends [`@ebec/core`](https://github.com/tada5hi/ebec)'s `BaseError` — the same base [locter](https://www.npmjs.com/package/locter) and [validup](https://www.npmjs.com/package/validup) build on. So it carries a `code` (`SYNC_UNAVAILABLE_ERROR`), an optional `cause`, the structured `locale` / `namespace` / `key` / `storeId` fields naming the lookup that declined, and a `toJSON()` that keeps all of them across a transport boundary.
+
+Prefer `isSyncUnavailableError(e)` over a bare `instanceof`. It is marker-based (`Symbol.for`), so it holds when the error was constructed by a *different copy* of ilingo — thrown inside `@ilingo/fs`, caught in your app — and it also matches an error rehydrated from `toJSON()`, which a plain `instanceof` cannot. `isIlingoError` is the same guard one level up, for catching anything ilingo threw:
+
+```typescript
+import { isIlingoError } from 'ilingo';
+
+try {
+    // ...
+} catch (e) {
+    if (isIlingoError(e)) {
+        console.error(e.code, e.message);   // e.g. SYNC_UNAVAILABLE_ERROR
+    }
+}
+```
+
 ### Invalidation
 
 Stores that cache lookups can implement `IInvalidatingStore`:

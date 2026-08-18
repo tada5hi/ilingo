@@ -2,13 +2,13 @@
     {
         "name": "ilingo \u2014 full barrel",
         "path": "packages/ilingo/dist/index.mjs",
-        "limit": "6.75 KB"
+        "limit": "7.5 KB"
     },
     {
         "name": "ilingo \u2014 Ilingo + MemoryStore (typical minimum)",
         "path": "packages/ilingo/dist/index.mjs",
         "import": "{ Ilingo, MemoryStore }",
-        "limit": "5 KB"
+        "limit": "5.5 KB"
     },
     {
         "name": "ilingo \u2014 defineCatalog only (tree-shake floor)",

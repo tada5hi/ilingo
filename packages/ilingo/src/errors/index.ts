@@ -6,4 +6,6 @@
  */
 
 export * from './base';
+export * from './check';
+export * from './constants';
 export * from './sync-unavailable';
