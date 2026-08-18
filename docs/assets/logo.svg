@@ -1,0 +1,16 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="docs-title">
+    <title id="docs-title">@ilingo/docs logo: a message bubble holding an open book</title>
+
+    <defs>
+        <linearGradient id="docs-bubble" x1="32" y1="40" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#6366F1" />
+            <stop offset="1" stop-color="#0EA5E9" />
+        </linearGradient>
+    </defs>
+
+    <path fill="url(#docs-bubble)" d="M56 40 H200 A24 24 0 0 1 224 64 V168 A24 24 0 0 1 200 192 H132 L92 232 V192 H56 A24 24 0 0 1 32 168 V64 A24 24 0 0 1 56 40 Z" />
+
+    <!-- the guide, both pages of it -->
+    <path fill="#FFFFFF" d="M56 74 C78 62 100 62 122 74 V166 C100 154 78 154 56 166 Z" />
+    <path fill="#FFFFFF" fill-opacity="0.72" d="M200 74 C178 62 156 62 134 74 V166 C156 154 178 154 200 166 Z" />
+</svg>

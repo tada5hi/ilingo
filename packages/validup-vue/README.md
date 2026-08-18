@@ -1,4 +1,12 @@
-# @ilingo/validup-vue
+<p align="center">
+    <img src="https://raw.githubusercontent.com/tada5hi/ilingo/HEAD/packages/validup-vue/assets/logo.svg" alt="@ilingo/validup-vue" width="128" height="128" />
+</p>
+
+<h1 align="center">@ilingo/validup-vue</h1>
+
+<p align="center">
+    <b>The <a href="https://vuejs.org">Vue 3</a> plugin for <a href="https://www.npmjs.com/package/@ilingo/validup">@ilingo/validup</a> — composables, renderless components, and the install hook.</b>
+</p>
 
 [![npm version](https://img.shields.io/npm/v/@ilingo/validup-vue.svg)](https://www.npmjs.com/package/@ilingo/validup-vue)
 [![npm downloads](https://img.shields.io/npm/dm/@ilingo/validup-vue.svg)](https://www.npmjs.com/package/@ilingo/validup-vue)
@@ -6,7 +14,7 @@
 [![main](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo/actions/workflows/main.yml)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
-Vue 3 plugin for [`@ilingo/validup`](../validup) — the install hook, five composables, the `<IValidup>` / `<IValidupT>` / `<IFieldValidation>` renderless components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases.
+The install hook, five composables, the `<IValidup>` / `<IValidupT>` / `<IFieldValidation>` renderless components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases.
 
 Sibling of [`@ilingo/vue`](../vue) and [`@ilingo/vuelidate`](../vuelidate); mirrors the `validup` → `@validup/vue` package split so the framework-agnostic validation-message surface (`@ilingo/validup`) stays free of Vue.
 

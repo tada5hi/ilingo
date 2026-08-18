@@ -1,4 +1,12 @@
-# @ilingo/vue 🖌️
+<p align="center">
+    <img src="https://raw.githubusercontent.com/tada5hi/ilingo/HEAD/packages/vue/assets/logo.svg" alt="@ilingo/vue" width="128" height="128" />
+</p>
+
+<h1 align="center">@ilingo/vue</h1>
+
+<p align="center">
+    <b>A <a href="https://vuejs.org">Vue 3</a> integration for <a href="https://www.npmjs.com/package/ilingo">ilingo</a> — provide/inject, a reactive locale, the <code>&lt;ITranslate&gt;</code> component, a <code>v-t</code> directive, and the <code>useTranslation</code> composable.</b>
+</p>
 
 [![npm version](https://img.shields.io/npm/v/@ilingo/vue.svg)](https://www.npmjs.com/package/@ilingo/vue)
 [![npm downloads](https://img.shields.io/npm/dm/@ilingo/vue.svg)](https://www.npmjs.com/package/@ilingo/vue)
@@ -7,8 +15,6 @@
 [![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=CLIA667K6V)](https://codecov.io/gh/tada5hi/ilingo)
 [![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg)](https://snyk.io/test/github/Tada5hi/ilingo)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
-
-This is an adapter for vue.
 
 **Table of Contents**
 

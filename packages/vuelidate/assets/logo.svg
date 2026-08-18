@@ -1,0 +1,19 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vuelidate-title">
+    <title id="vuelidate-title">@ilingo/vuelidate logo: a message bubble holding validator messages, each with its verdict</title>
+
+    <defs>
+        <linearGradient id="vuelidate-bubble" x1="32" y1="40" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#42B883" />
+            <stop offset="1" stop-color="#4F46E5" />
+        </linearGradient>
+    </defs>
+
+    <path fill="url(#vuelidate-bubble)" d="M56 40 H200 A24 24 0 0 1 224 64 V168 A24 24 0 0 1 200 192 H132 L92 232 V192 H56 A24 24 0 0 1 32 168 V64 A24 24 0 0 1 56 40 Z" />
+
+    <!-- one localized message per rule -->
+    <path stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" d="M64 88 L78 102 L104 72" />
+    <rect x="124" y="79" width="72" height="17" rx="8.5" fill="#FFFFFF" />
+
+    <path stroke="#FBBF24" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" d="M64 148 L78 162 L104 132" />
+    <rect x="124" y="139" width="56" height="17" rx="8.5" fill="#FBBF24" />
+</svg>

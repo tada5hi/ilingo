@@ -25,6 +25,7 @@
         }
     },
     "files": [
+        "assets",
         "dist"
     ],
     "scripts": {

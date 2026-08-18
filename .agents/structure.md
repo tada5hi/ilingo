@@ -36,7 +36,19 @@ Layer 2:
 
 Nx (`nx.json`) is configured so `build` depends on `^build`, which means workspace builds run in topological order automatically.
 
+## README Logos
+
+Every README — the root one, all six packages, and `docs/` — opens with a centred `<p align="center">` logo block, an `<h1 align="center">`, and a one-line bold tagline, following [tada5hi/validup@8aea10e](https://github.com/tada5hi/validup/commit/8aea10e103c985825ccf38ea1926d9e56b2907dc). The logos are one family: a **speech-bubble silhouette** — the shape of a message, which is what a catalog holds — filled with a per-package gradient and carrying a per-package white glyph, at `<pkg>/assets/logo.svg`.
+
+The bubble replaced an earlier rounded-tile silhouette; `docs/src/public/logo.svg` (the VitePress nav logo **and** the site favicon) was redrawn to the same bubble in the same commit, so the site and the READMEs stay one mark. Keep that file in sync with `assets/logo.svg` — they are the same drawing, and only the root/core marks are allowed to be near-identical.
+
+Glyph per package, all white on the gradient with `#FBBF24` as the single accent: three text lines (root), the same lines with the resolved one in amber (`ilingo`), a folder (`@ilingo/fs`), the Vue chevron (`@ilingo/vue`), check-plus-message rows (`@ilingo/vuelidate`), a single check (`@ilingo/validup`), chevron-plus-check (`@ilingo/validup-vue`), an open book (`docs/`). Glyphs are drawn directly in bubble-body coordinates (roughly x 56–200, y 62–170, centred on y≈116) — no nested `transform`, so the numbers in the file are the numbers on screen.
+
+**Package READMEs reference the logo by absolute `https://raw.githubusercontent.com/tada5hi/ilingo/HEAD/packages/<pkg>/assets/logo.svg` URL**, not a relative path — a relative `src` resolves against `npmjs.com` and 404s there. Each publishable package therefore lists `assets` in its `package.json` `files` array so the SVG ships in the tarball. The root and `docs/` READMEs are GitHub-only, so they use `./assets/logo.svg`.
+
 ## Per-Package Directory Layout
+
+Each package holds an `assets/logo.svg` next to `src/` (omitted from the trees below).
 
 ### `packages/ilingo/` — core
 
@@ -203,6 +215,7 @@ The public API is whatever the package's `src/index.ts` re-exports. Anything not
 docs/
 ├── package.json              # @ilingo/docs, private. scripts: dev / build / preview (vitepress src)
 ├── tsconfig.json
+├── assets/logo.svg           # README logo (GitHub-only — the site mark is src/public/logo.svg)
 └── src/
     ├── index.md              # layout: page — composes the 5 marketing components below
     ├── public/logo.svg

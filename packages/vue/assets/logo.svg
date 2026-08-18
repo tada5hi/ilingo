@@ -1,0 +1,15 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="vue-title">
+    <title id="vue-title">@ilingo/vue logo: a message bubble bearing the Vue chevron</title>
+
+    <defs>
+        <linearGradient id="vue-bubble" x1="32" y1="40" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#42B883" />
+            <stop offset="1" stop-color="#35495E" />
+        </linearGradient>
+    </defs>
+
+    <path fill="url(#vue-bubble)" d="M56 40 H200 A24 24 0 0 1 224 64 V168 A24 24 0 0 1 200 192 H132 L92 232 V192 H56 A24 24 0 0 1 32 168 V64 A24 24 0 0 1 56 40 Z" />
+
+    <path fill="#FFFFFF" d="M68 66 L128 170 L188 66 Z" />
+    <path fill="#35495E" d="M100 66 L128 114 L156 66 Z" />
+</svg>

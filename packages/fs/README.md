@@ -1,4 +1,12 @@
-# @ilingo/fs 🗃️
+<p align="center">
+    <img src="https://raw.githubusercontent.com/tada5hi/ilingo/HEAD/packages/fs/assets/logo.svg" alt="@ilingo/fs" width="128" height="128" />
+</p>
+
+<h1 align="center">@ilingo/fs</h1>
+
+<p align="center">
+    <b>A file-system store adapter for <a href="https://www.npmjs.com/package/ilingo">ilingo</a> — lazy-loads locale catalogs from disk and persists translations as JSON.</b>
+</p>
 
 [![npm version](https://img.shields.io/npm/v/@ilingo/fs.svg)](https://www.npmjs.com/package/@ilingo/fs)
 [![npm downloads](https://img.shields.io/npm/dm/@ilingo/fs.svg)](https://www.npmjs.com/package/@ilingo/fs)
@@ -7,8 +15,6 @@
 [![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=CLIA667K6V)](https://codecov.io/gh/tada5hi/ilingo)
 [![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg)](https://snyk.io/test/github/Tada5hi/ilingo)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
-
-This is a file system store for ilingo.
 
 **Table of Contents**
 

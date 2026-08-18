@@ -1,0 +1,16 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="fs-title">
+    <title id="fs-title">@ilingo/fs logo: a message bubble holding a folder of locale files</title>
+
+    <defs>
+        <linearGradient id="fs-bubble" x1="32" y1="40" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#F59E0B" />
+            <stop offset="1" stop-color="#EA580C" />
+        </linearGradient>
+    </defs>
+
+    <path fill="url(#fs-bubble)" d="M56 40 H200 A24 24 0 0 1 224 64 V168 A24 24 0 0 1 200 192 H132 L92 232 V192 H56 A24 24 0 0 1 32 168 V64 A24 24 0 0 1 56 40 Z" />
+
+    <!-- &lt;directory&gt;/&lt;locale&gt;/&lt;namespace&gt; -->
+    <path fill="#FFFFFF" d="M70 70 H108 L122 88 H184 A12 12 0 0 1 196 100 V154 A12 12 0 0 1 184 166 H70 A12 12 0 0 1 58 154 V82 A12 12 0 0 1 70 70 Z" />
+    <path stroke="#EA580C" stroke-width="12" stroke-linecap="round" d="M80 116 H168 M80 142 H138" />
+</svg>

@@ -33,6 +33,7 @@
         }
     },
     "files": [
+        "assets",
         "dist",
         "core",
         "vue"

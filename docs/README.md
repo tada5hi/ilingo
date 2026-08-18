@@ -1,6 +1,14 @@
-# @ilingo/docs
+<p align="center">
+    <img src="./assets/logo.svg" alt="@ilingo/docs" width="128" height="128" />
+</p>
 
-The VitePress site for [ilingo](https://github.com/tada5hi/ilingo). Private workspace — never published to npm. Deploys to <https://ilingo.tada5hi.net/> via `.github/workflows/docs.yml` on every push to `master`.
+<h1 align="center">@ilingo/docs</h1>
+
+<p align="center">
+    <b>The VitePress documentation site for <a href="https://github.com/tada5hi/ilingo">ilingo</a>.</b>
+</p>
+
+Private workspace — never published to npm. Deploys to <https://ilingo.tada5hi.net/> via `.github/workflows/docs.yml` on every push to `master`.
 
 ## Local development
 

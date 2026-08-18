@@ -1,4 +1,12 @@
-# @ilingo/vuelidate 🎉
+<p align="center">
+    <img src="https://raw.githubusercontent.com/tada5hi/ilingo/HEAD/packages/vuelidate/assets/logo.svg" alt="@ilingo/vuelidate" width="128" height="128" />
+</p>
+
+<h1 align="center">@ilingo/vuelidate</h1>
+
+<p align="center">
+    <b>A <a href="https://vuelidate-next.netlify.app">Vuelidate</a> message adapter for <a href="https://www.npmjs.com/package/ilingo">ilingo</a> — drop-in localized validator messages (EN / DE / FR / ES) for Vue 3 forms.</b>
+</p>
 
 [![npm version](https://img.shields.io/npm/v/@ilingo/vuelidate.svg)](https://www.npmjs.com/package/@ilingo/vuelidate)
 [![npm downloads](https://img.shields.io/npm/dm/@ilingo/vuelidate.svg)](https://www.npmjs.com/package/@ilingo/vuelidate)
@@ -7,8 +15,6 @@
 [![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=CLIA667K6V)](https://codecov.io/gh/tada5hi/ilingo)
 [![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg)](https://snyk.io/test/github/Tada5hi/ilingo)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
-
-This is an adapter for the vuelidate library.
 
 **Table of Contents**
 

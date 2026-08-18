@@ -1,0 +1,15 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ilingo-title">
+    <title id="ilingo-title">ilingo logo: a message bubble holding three lines of text</title>
+
+    <defs>
+        <linearGradient id="ilingo-bubble" x1="32" y1="40" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#6366F1" />
+            <stop offset="1" stop-color="#14B8A6" />
+        </linearGradient>
+    </defs>
+
+    <path fill="url(#ilingo-bubble)" d="M56 40 H200 A24 24 0 0 1 224 64 V168 A24 24 0 0 1 200 192 H132 L92 232 V192 H56 A24 24 0 0 1 32 168 V64 A24 24 0 0 1 56 40 Z" />
+
+    <!-- a message, in any language -->
+    <path stroke="#FFFFFF" stroke-width="17" stroke-linecap="round" d="M68 80 H188 M68 116 H188 M68 152 H156" />
+</svg>

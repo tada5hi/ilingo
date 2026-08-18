@@ -1,4 +1,12 @@
-# ilingo 💬
+<p align="center">
+    <img src="https://raw.githubusercontent.com/tada5hi/ilingo/HEAD/packages/ilingo/assets/logo.svg" alt="ilingo" width="128" height="128" />
+</p>
+
+<h1 align="center">ilingo</h1>
+
+<p align="center">
+    <b>A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript — pluggable stores, BCP-47 fallback, ICU-lite plurals, and Intl-native formatters.</b>
+</p>
 
 [![npm version](https://img.shields.io/npm/v/ilingo.svg)](https://www.npmjs.com/package/ilingo)
 [![npm downloads](https://img.shields.io/npm/dm/ilingo.svg)](https://www.npmjs.com/package/ilingo)
@@ -8,7 +16,7 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Tada5hi/ilingo?targetFile=package.json)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
-Ilingo is a lightweight library for translation and internationalization. The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob); on common workloads it runs **1.6× – 2.3× faster than `i18next`** ([benchmarks](https://ilingo.tada5hi.net/performance)).
+The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob); on common workloads it runs **1.6× – 2.3× faster than `i18next`** ([benchmarks](https://ilingo.tada5hi.net/performance)).
 
 **Table of Contents**
 
