@@ -5,7 +5,7 @@
 <h1 align="center">@ilingo/vue</h1>
 
 <p align="center">
-    <b>A <a href="https://vuejs.org">Vue 3</a> integration for <a href="https://www.npmjs.com/package/ilingo">ilingo</a> — provide/inject, a reactive locale, the <code>&lt;ITranslate&gt;</code> component, a <code>v-t</code> directive, and the <code>useTranslation</code> composable.</b>
+    <b>A <a href="https://vuejs.org">Vue 3</a> integration for <a href="https://www.npmjs.com/package/ilingo">ilingo</a>: provide/inject, a reactive locale, the <code>&lt;ITranslate&gt;</code> component, a <code>v-t</code> directive, and the <code>useTranslation</code> composable.</b>
 </p>
 
 [![npm version](https://img.shields.io/npm/v/@ilingo/vue.svg)](https://www.npmjs.com/package/@ilingo/vue)
@@ -96,9 +96,9 @@ app.mount('#app');
 </template>
 ```
 
-## SSR — the first render is not a placeholder
+## SSR: the first render is not a placeholder
 
-`useTranslation` (and `<ITranslate>`, `<ITranslateT>`, `useScopedCatalog().t`) wraps the asynchronous `Ilingo.get()` in a `computedAsync`, which needs an initial value before its promise settles. That initial value comes from `Ilingo.getSync()`, the synchronous read path — so with an in-memory catalog the **first** render is already the real string rather than the `namespace.key` placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).
+`useTranslation` (and `<ITranslate>`, `<ITranslateT>`, `useScopedCatalog().t`) wraps the asynchronous `Ilingo.get()` in a `computedAsync`, which needs an initial value before its promise settles. That initial value comes from `Ilingo.getSync()`, the synchronous read path, so with an in-memory catalog the **first** render is already the real string rather than the `namespace.key` placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).
 
 For server-side rendering that removes a whole class of bugs: the translated string is what lands in the SSR markup, and the client's first render matches it instead of warning
 
@@ -108,11 +108,11 @@ For server-side rendering that removes a whole class of bugs: the translated str
   - expected on client: "app.name"
 ```
 
-No opt-in, no payload plumbing. Stores that need I/O (a cold `LoaderStore` or `FSStore`, a remote adapter) can't answer synchronously — those keys still start at the placeholder and settle a tick later; warm them before rendering if the server output matters. See the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr) and [`getSync`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-getsync).
+No opt-in, no payload plumbing. Stores that need I/O (a cold `LoaderStore` or `FSStore`, a remote adapter) can't answer synchronously. Those keys still start at the placeholder and settle a tick later; warm them before rendering if the server output matters. See the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr) and [`getSync`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-getsync).
 
-## `<ITranslateT>` — slot-aware interpolation
+## `<ITranslateT>`: slot-aware interpolation
 
-`<ITranslateT>` lets a message string carry **slot placeholders** alongside the usual `{{var}}` interpolations. Each `{slot}` placeholder in the message is filled by a named scoped slot — drop arbitrary VNodes (links, icons, bold runs) inline without splitting the message across multiple keys.
+`<ITranslateT>` lets a message string carry **slot placeholders** alongside the usual `{{var}}` interpolations. Each `{slot}` placeholder in the message is filled by a named scoped slot, so you can drop arbitrary VNodes (links, icons, bold runs) inline without splitting the message across multiple keys.
 
 Message: `"Hi {{user}}, please {cta} to continue."`
 
@@ -143,16 +143,16 @@ Message: `"Hi {{user}}, please {cta} to continue."`
 
 The directive is registered globally during `install()`. Opt out per-app via `install(app, { store, directives: false })`.
 
-## `useScopedCatalog` — per-component message scope
+## `useScopedCatalog`: per-component message scope
 
-Some components (modals, embedded widgets, marketing sections) carry their own strings. `useScopedCatalog` creates an `Ilingo` instance whose stores resolve scoped messages first, then fall back to the parent app's stores. The scoped instance is provided to descendants — siblings outside the component still see the parent's stores.
+Some components (modals, embedded widgets, marketing sections) carry their own strings. `useScopedCatalog` creates an `Ilingo` instance whose stores resolve scoped messages first, then fall back to the parent app's stores. The scoped instance is provided to descendants; siblings outside the component still see the parent's stores.
 
 ```vue
 <script setup>
 import { useScopedCatalog, useTranslation } from '@ilingo/vue';
 import { defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
 
-// Returns { instance, t } — use `t` inside the same component because
+// Returns { instance, t }. Use `t` inside the same component because
 // Vue's provide/inject can't reach the current setup's own provides.
 const { t } = useScopedCatalog({
     messages: defineCatalog([
@@ -168,7 +168,7 @@ const greeting = t({ namespace: 'modal', key: 'greeting' });
 </script>
 ```
 
-Descendants can use plain `useTranslation` — they get the scoped instance via inject. On unmount, Vue's provides become unreachable and the scoped instance is garbage-collected.
+Descendants can use plain `useTranslation`: they get the scoped instance via inject. On unmount, Vue's provides become unreachable and the scoped instance is garbage-collected.
 
 ## License
 

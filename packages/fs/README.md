@@ -5,7 +5,7 @@
 <h1 align="center">@ilingo/fs</h1>
 
 <p align="center">
-    <b>A file-system store adapter for <a href="https://www.npmjs.com/package/ilingo">ilingo</a> — lazy-loads locale catalogs from disk and persists translations as JSON.</b>
+    <b>A file-system store adapter for <a href="https://www.npmjs.com/package/ilingo">ilingo</a>: lazy-loads locale catalogs from disk and persists translations as JSON.</b>
 </p>
 
 [![npm version](https://img.shields.io/npm/v/@ilingo/fs.svg)](https://www.npmjs.com/package/@ilingo/fs)
@@ -61,7 +61,7 @@ You should name the file according to the type of content it holds (e.g. app, fo
 For example, let’s say you want to create a file containing error messages.
 You might simply name it: `error.{ts,js,json}`.
 
-Each file should return a **translations node** — a `defineTranslations(...)` value for script files, or a `{ "type": "translations", "data": { ... } }` literal for JSON files.
+Each file should return a **translations node**: a `defineTranslations(...)` value for script files, or a `{ "type": "translations", "data": { ... } }` literal for JSON files.
 
 **`app.json`**
 ```json
@@ -82,7 +82,7 @@ export default defineTranslations({
 });
 ```
 
-The `data` object can also be (deeply) nested ⚡ — a nested object extends the dotted **key** (`{ nested: { key } }` → key `'nested.key'`):
+The `data` object can also be (deeply) nested ⚡. A nested object extends the dotted **key** (`{ nested: { key } }` → key `'nested.key'`):
 
 **`app.{ts,js}`**
 ```typescript
@@ -101,7 +101,7 @@ A dotted **namespace** maps to a dotted **filename**: namespace `app.nav` is rea
 
 ### Persistence
 
-`FSStore.set(...)` writes the updated namespace back to disk as JSON. By default the file is written to `<directory>/<locale>/<namespace>.json` — the first configured `directory`. Pass `writeDirectory` to send writes to a separate path while still reading from the original locations:
+`FSStore.set(...)` writes the updated namespace back to disk as JSON. By default the file is written to `<directory>/<locale>/<namespace>.json`, the first configured `directory`. Pass `writeDirectory` to send writes to a separate path while still reading from the original locations:
 
 ```typescript
 const store = new FSStore({
@@ -118,7 +118,7 @@ await store.set({
 // → overrides/en/app.json
 ```
 
-Writes are atomic (write-to-temp then `rename`) and the full merged record is serialized — sibling keys are preserved. If the original source for a namespace was a `.ts` / `.js` / `.cjs` file, that file is left untouched and the new `.json` lives alongside it; on the next load `smob` merges both, with the newer JSON taking precedence.
+Writes are atomic (write-to-temp then `rename`) and the full merged record is serialized, so sibling keys are preserved. If the original source for a namespace was a `.ts` / `.js` / `.cjs` file, that file is left untouched and the new `.json` lives alongside it; on the next load `smob` merges both, with the newer JSON taking precedence.
 
 ### Synchronous reads (SSR)
 
@@ -127,23 +127,23 @@ Writes are atomic (write-to-temp then `rename`) and the full merged record is se
 ```typescript
 const ilingo = new Ilingo({ store: new FSStore({ directory: './language' }) });
 
-ilingo.getSync({ namespace: 'app', key: 'hi' });   // 'Hello' — no warm-up, no await
+ilingo.getSync({ namespace: 'app', key: 'hi' });   // 'Hello' (no warm-up, no await)
 ```
 
-That is what lets a server-rendered Vue tree emit real translations on its first pass instead of `namespace.key` placeholders — with no priming step and no hydration payload. The whole extension matrix works on both paths (`.json`, `.conf`, `.ts`, `.mts`, `.js`, `.mjs`, `.cjs`), because each locter reader has a sync twin.
+That is what lets a server-rendered Vue tree emit real translations on its first pass instead of `namespace.key` placeholders, with no priming step and no hydration payload. The whole extension matrix works on both paths (`.json`, `.conf`, `.ts`, `.mts`, `.js`, `.mjs`, `.cjs`), because each locter reader has a sync twin.
 
-The read **blocks**, deliberately. `getSync`'s contract is that it must not start work whose result it cannot return; synchronous I/O returns its result, an `import()` does not. The cost is one glob plus one file read per `(locale, namespace)`, cached for the process lifetime — paid once per namespace, never again. If blocking during a render is unacceptable for your deployment, prime the store first (`await store.loadNamespace('app', locale)`, or `store.loadNamespaceSync('app', locale)` at start-up) and `getSync` will find everything cached.
+The read **blocks**, deliberately. `getSync`'s contract is that it must not start work whose result it cannot return; synchronous I/O returns its result, an `import()` does not. The cost is one glob plus one file read per `(locale, namespace)`, cached for the process lifetime: paid once per namespace, never again. If blocking during a render is unacceptable for your deployment, prime the store first (`await store.loadNamespace('app', locale)`, or `store.loadNamespaceSync('app', locale)` at start-up) and `getSync` will find everything cached.
 
 Two failure modes are kept apart:
 
 - a module that can only be loaded through an asynchronous `import()` → `SyncUnavailableError`, so the caller falls back to `get()`;
 - a malformed file → its real parse error, propagated. The async load would fail identically, so it must not be dressed up as "not available yet".
 
-Both read paths share **one** body internally (locter's twin scheme: one generator, two drivers), so the cache bookkeeping — the loaded flag, the in-flight dedup, the invalidation generation guard, the merge order — cannot drift between them.
+Both read paths share **one** body internally (locter's twin scheme: one generator, two drivers), so the cache bookkeeping (the loaded flag, the in-flight dedup, the invalidation generation guard, the merge order) cannot drift between them.
 
 ## Watch mode (dev hot-reload)
 
-`FSStore({ watch: true })` watches the configured `directory` paths via [chokidar](https://github.com/paulmillr/chokidar) and invalidates the matching `(locale, namespace)` cache entry on every file change. Subscribe via `store.on('invalidate', cb)` to react — `@ilingo/vue`'s `useTranslation` does this automatically, so file edits show up live in the rendered component without a remount.
+`FSStore({ watch: true })` watches the configured `directory` paths via [chokidar](https://github.com/paulmillr/chokidar) and invalidates the matching `(locale, namespace)` cache entry on every file change. Subscribe via `store.on('invalidate', cb)` to react. `@ilingo/vue`'s `useTranslation` does this automatically, so file edits show up live in the rendered component without a remount.
 
 ```typescript
 import { FSStore } from '@ilingo/fs';
@@ -165,7 +165,7 @@ Manual invalidation (no watch) works too:
 ```typescript
 const store = new FSStore({ directory: './language' });
 
-store.invalidate('en', 'app');   // drop the cached en/app.* — next get() re-reads
+store.invalidate('en', 'app');   // drop the cached en/app.*; next get() re-reads
 store.invalidate('en');          // drop all namespaces for en
 store.invalidate();              // drop everything
 ```

@@ -5,7 +5,7 @@
 <h1 align="center">ilingo</h1>
 
 <p align="center">
-    <b>A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript — pluggable stores, BCP-47 fallback, ICU-lite plurals, and Intl-native formatters.</b>
+    <b>A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript: pluggable stores, BCP-47 fallback, ICU-lite plurals, and Intl-native formatters.</b>
 </p>
 
 [![npm version](https://img.shields.io/npm/v/ilingo.svg)](https://www.npmjs.com/package/ilingo)
@@ -155,7 +155,7 @@ This package contains an adapter for the vuelidate library.
 
 **`@ilingo/validup`** + **`@ilingo/validup-vue`**
 
-Adapter pair for the [validup](https://www.npmjs.com/package/validup) ecosystem. `@ilingo/validup` is the framework-agnostic core — default EN/DE/FR/ES catalogs for the built-in `IssueCode`s, the pre-seeded `Store`, `translateIssue` / `translateIssues` helpers — embeddable in any runtime (Node SSR, edge, queue workers). `@ilingo/validup-vue` adds the Vue 3 plugin, composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`), and the `<IValidup>` renderless component. Mirrors the `validup` → `@validup/vue` split so Vue is opt-in, not a hard dep on the validation-message surface.
+Adapter pair for the [validup](https://www.npmjs.com/package/validup) ecosystem. `@ilingo/validup` is the framework-agnostic core: default EN/DE/FR/ES catalogs for the built-in `IssueCode`s, the pre-seeded `Store`, and the `translateIssue` / `translateIssues` helpers. It embeds in any runtime (Node SSR, edge, queue workers). `@ilingo/validup-vue` adds the Vue 3 plugin, composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`), and the `<IValidup>` renderless component. Mirrors the `validup` → `@validup/vue` split so Vue is opt-in, not a hard dep on the validation-message surface.
 
 [Core](./packages/validup/README.md) · [Vue](./packages/validup-vue/README.md)
 

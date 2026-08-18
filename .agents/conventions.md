@@ -42,6 +42,28 @@
 - **Charset**: UTF-8, final newline required, trailing whitespace trimmed (except in `.md`).
 - **Linting**: `eslint.config.js` is the single source of truth — flat config, no per-package overrides today. It invokes the `@tada5hi/eslint-config` factory with `typescript: true, vue: true`, then ignores `**/dist/**`, `**/node_modules/**`, `**/playground/**`, `**/test/**`, `**/*.d.ts`.
 
+## Prose Style
+
+**Do not use the em dash (`—`) in prose.** The rule covers every README, the VitePress docs under `docs/src/`, these agent docs, and commit messages and PR descriptions. Rewrite instead of substituting a look-alike: an en dash (`–`) or a spaced hyphen (` - `) is the same construction wearing a different glyph, so neither is an accepted replacement.
+
+Pick the punctuation that matches what the dash was doing:
+
+| Dash was doing | Write instead |
+|---|---|
+| Introducing a definition or an expansion | A colon: `` `IStore`: the read contract every adapter implements. `` |
+| Wrapping an aside | Parentheses, or commas for a short one |
+| Joining two independent clauses | A period, or a semicolon when the link is tight |
+| Gluing a fragment onto a list item | Restructure the sentence, or split it in two |
+| Separating a heading from its subject | A colon: `## SSR: the first render is not a placeholder` |
+
+Where prose genuinely needs a range or a minus sign, use the right character for the job (`6.0-6.1`, `−`), not an em dash.
+
+Hyphens inside compound modifiers (`framework-agnostic`, `warn-once`, `key-space`) are unaffected. Nothing here applies to code: string literals, fixture data, and any translation catalog may contain whatever characters they need, and a `—` quoted from an external source stays verbatim.
+
+All eight `README.md` files were swept clean when this rule landed and must stay at zero. The other docs (`.agents/*.md`, `docs/src/**`, `AGENTS.md`) still carry pre-rule em dashes; clean each passage as you touch it rather than in one sweep, so the diffs stay reviewable.
+
+To check a file before committing: `grep -n '—' <file>` should print nothing.
+
 ## File Header Convention
 
 Every source file starts with a short copyright block:

@@ -5,7 +5,7 @@
 <h1 align="center">ilingo</h1>
 
 <p align="center">
-    <b>A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript — pluggable stores, BCP-47 fallback, ICU-lite plurals, and Intl-native formatters.</b>
+    <b>A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript: pluggable stores, BCP-47 fallback, ICU-lite plurals, and Intl-native formatters.</b>
 </p>
 
 [![npm version](https://img.shields.io/npm/v/ilingo.svg)](https://www.npmjs.com/package/ilingo)
@@ -291,9 +291,9 @@ await ilingo.get({
 
 Plural forms are CLDR categories (`zero | one | two | few | many | other`, `other` required); the matching form is selected via `Intl.PluralRules`. The `count` is automatically merged into `data` so `{{count}}` works without restating it.
 
-A plural leaf is a dedicated **plural node** — built with the `definePlural` helper in TS / JS, or written as a `{ "type": "plural", "data": { ... } }` literal in JSON. A plural node is the only thing interpreted as a plural; a plain object inside `defineTranslations` is always treated as a nested key.
+A plural leaf is a dedicated **plural node**, built with the `definePlural` helper in TS / JS, or written as a `{ "type": "plural", "data": { ... } }` literal in JSON. A plural node is the only thing interpreted as a plural; a plain object inside `defineTranslations` is always treated as a nested key.
 
-**TS / JS files** (inline `defineCatalog`, or loaded by `FSStore`) — use the `definePlural` helper:
+**TS / JS files** (inline `defineCatalog`, or loaded by `FSStore`): use the `definePlural` helper:
 
 ```typescript
 import {
@@ -327,7 +327,7 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 1 });  // "1 item"
 await ilingo.get({ namespace: 'cart', key: 'items', count: 5 });  // "5 items"
 ```
 
-**JSON files** (loaded by `FSStore`) — use the literal `plural` node:
+**JSON files** (loaded by `FSStore`): use the literal `plural` node:
 
 ```json
 {
@@ -348,7 +348,7 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 5 });  // "5 items"
 
 If the selected category is absent from the leaf, `other` is used as a fallback.
 
-Plural leaves round-trip through `store.set()` — `StoreSetContext.value` accepts either a `string` or a plural **node** (`definePlural(...)` / `{ type: 'plural', data }`), not the unwrapped `PluralForms`, so the store can recognise and unwrap it on read. The `FSStore.set` persistence writes them as JSON unchanged.
+Plural leaves round-trip through `store.set()`: `StoreSetContext.value` accepts either a `string` or a plural **node** (`definePlural(...)` / `{ type: 'plural', data }`), not the unwrapped `PluralForms`, so the store can recognise and unwrap it on read. The `FSStore.set` persistence writes them as JSON unchanged.
 
 ### Fallback locale chain
 
@@ -371,7 +371,7 @@ new Ilingo({ fallback: false });           // disable fallback entirely
 new Ilingo({ fallback: [] });              // equivalent to `false`
 ```
 
-The chain is walked locale-first across all stores — the closest locale match wins regardless of store order. Within a single locale, stores are queried **serially in insertion order**, stopping at the first hit. A network-backed adapter registered after a Memory adapter is never called when the Memory adapter answers — the orchestrator does not pre-fan-out across stores.
+The chain is walked locale-first across all stores, so the closest locale match wins regardless of store order. Within a single locale, stores are queried **serially in insertion order**, stopping at the first hit. A network-backed adapter registered after a Memory adapter is never called when the Memory adapter answers: the orchestrator does not pre-fan-out across stores.
 
 Inspect the resolution with:
 
@@ -380,7 +380,7 @@ ilingo.getResolvedLocaleChain({ locale: 'pt-BR' });
 // ['pt-BR', 'pt', 'en']
 
 await ilingo.getResolvedLocale({ namespace: 'app', key: 'hi' });
-// 'pt'   — which locale actually yielded a value
+// 'pt'   (which locale actually yielded a value)
 // undefined if no store had the key anywhere in the chain
 ```
 
@@ -432,20 +432,20 @@ Syntax:
 {{value, formatter(k=v, k2=v2)}}   formatter with options
 ```
 
-The locale used to construct the `Intl.*Format` instance is the **resolved** locale — the one that actually yielded the message via the fallback chain — not the requested one. `Intl.*Format` instances are memoised per `(formatter, locale, options)` on the `Ilingo` instance, so repeated renders do not reallocate.
+The locale used to construct the `Intl.*Format` instance is the **resolved** locale (the one that actually yielded the message via the fallback chain), not the requested one. `Intl.*Format` instances are memoised per `(formatter, locale, options)` on the `Ilingo` instance, so repeated renders do not reallocate.
 
 Option-value coercion: `42` → `42` (number), `true` / `false` → boolean, anything else → string. So `currency=EUR` becomes `{ currency: 'EUR' }`, `minimumFractionDigits=2` becomes `{ minimumFractionDigits: 2 }`.
 
-Unknown modifiers fall back to `String(value)` and emit a one-shot dev-mode warning (silenced in `process.env.NODE_ENV === 'production'`). Malformed modifier expressions (unbalanced parens, non-identifier names) are treated the same way — never throw.
+Unknown modifiers fall back to `String(value)` and emit a one-shot dev-mode warning (silenced in `process.env.NODE_ENV === 'production'`). Malformed modifier expressions (unbalanced parens, non-identifier names) are treated the same way, and never throw.
 
 ### Authoring catalogs
 
 A catalog is a **tree of tagged descriptor nodes** built with four helpers:
 
-- `defineCatalog(locales)` — the root; the value you pass to `new MemoryStore({ data })`. Its children are `defineLocale(...)` nodes.
-- `defineLocale(name, children)` — one locale (`'en'`, `'de'`, …). Its children are `defineNamespace(...)` (and/or `defineTranslations(...)`) nodes.
-- `defineNamespace(name, children)` — a namespace. Its children are nested `defineNamespace(...)` and/or `defineTranslations(...)` nodes.
-- `defineTranslations(obj)` — a flat or key-nested map of translation strings (and `definePlural(...)` leaves).
+- `defineCatalog(locales)`: the root; the value you pass to `new MemoryStore({ data })`. Its children are `defineLocale(...)` nodes.
+- `defineLocale(name, children)`: one locale (`'en'`, `'de'`, …). Its children are `defineNamespace(...)` (and/or `defineTranslations(...)`) nodes.
+- `defineNamespace(name, children)`: a namespace. Its children are nested `defineNamespace(...)` and/or `defineTranslations(...)` nodes.
+- `defineTranslations(obj)`: a flat or key-nested map of translation strings (and `definePlural(...)` leaves).
 
 ```typescript
 import {
@@ -481,13 +481,13 @@ There are **two independent nesting hierarchies**:
 - **Nested `defineNamespace`** builds a dotted **namespace**. `defineNamespace('app', [defineNamespace('nav', …)])` exposes the inner namespace as `'app.nav'`.
 - **A nested object inside `defineTranslations`** builds a dotted **key**. `defineTranslations({ nav: { home: 'Home' } })` exposes the leaf as key `'nav.home'`.
 
-`get()` keys are loose `string`s and `get()` returns `Promise<string | undefined>`. The store model is open-world — API- and loader-backed stores hold keys that aren't known at build time — so there is **no** catalog-driven key inference. `definePlural` still gives you local CLDR-category autocomplete and a compile error on a missing `other` (or a non-CLDR key), but it does not drive `get()`'s key types.
+`get()` keys are loose `string`s and `get()` returns `Promise<string | undefined>`. The store model is open-world (API- and loader-backed stores hold keys that aren't known at build time), so there is **no** catalog-driven key inference. `definePlural` still gives you local CLDR-category autocomplete and a compile error on a missing `other` (or a non-CLDR key), but it does not drive `get()`'s key types.
 
 `defineCatalog` and friends are runtime functions that normalize the tree into the internal `Locales` shape (`normalizeCatalog` / `normalizeNamespaceBody` are exported for advanced use). Node types (`CatalogNode`, `LocaleNode`, `NamespaceNode`, `TranslationsNode`, `PluralNode`, `NamespaceChild`, `CatalogInput`, `NamespaceBodyInput`) and guards (`isCatalogNode`, `isLocaleNode`, `isNamespaceNode`, `isTranslationsNode`, `isPluralNode`) are exported too.
 
 ### The `IIlingo` interface
 
-`IIlingo` is the public type contract of the orchestrator — every method on the concrete `Ilingo` class plus the `stores` map and `formatters` registry. Library code that accepts an orchestrator (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accepts and returns `IIlingo`, so consumers can swap in test doubles or decorating wrappers without depending on the concrete class.
+`IIlingo` is the public type contract of the orchestrator: every method on the concrete `Ilingo` class plus the `stores` map and `formatters` registry. Library code that accepts an orchestrator (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup`, …) accepts and returns `IIlingo`, so consumers can swap in test doubles or decorating wrappers without depending on the concrete class.
 
 ```typescript
 import type { IIlingo } from 'ilingo';
@@ -518,7 +518,7 @@ tokenize('Hi {{user}}, please {cta} now.');
 // ]
 ```
 
-`tokenize()` and `template()` are parallel parsers — `template()` returns a substituted string (used by `Ilingo.format`); `tokenize()` returns tokens for VNode-producing renderers (e.g. `@ilingo/vue`'s `<ITranslateT>`). Plain `Ilingo.get()` always returns a string, so `{slot}` markers survive into the output unless a slot-aware renderer consumes them.
+`tokenize()` and `template()` are parallel parsers: `template()` returns a substituted string (used by `Ilingo.format`); `tokenize()` returns tokens for VNode-producing renderers (e.g. `@ilingo/vue`'s `<ITranslateT>`). Plain `Ilingo.get()` always returns a string, so `{slot}` markers survive into the output unless a slot-aware renderer consumes them.
 
 ### Custom formatters
 
@@ -543,7 +543,7 @@ await ilingo.get({
 // "{{name, upper}}" → "PETER"
 ```
 
-Or call `ilingo.registerFormatter(name, fn)` after construction. Custom formatters receive `(value, options, locale)` — `options` is the parsed `{key=value, ...}` from inside the modifier parens.
+Or call `ilingo.registerFormatter(name, fn)` after construction. Custom formatters receive `(value, options, locale)`, where `options` is the parsed `{key=value, ...}` from inside the modifier parens.
 
 `IlingoOptions.formatters` overrides win against the built-ins by name, so you can swap the default `number` formatter for a custom one if needed.
 
@@ -570,13 +570,13 @@ const chosen = negotiateLocale(supported, fromHeader) ?? 'en';
 ilingo.setLocale(chosen);
 ```
 
-`parseAcceptLanguage(header)` parses the RFC 9110 header into a quality-sorted tag list. Both functions are pure utilities — they don't mutate `Ilingo` state. Compose them with `setLocale()` to wire request-side locale negotiation in a server (Express / Hono / etc.) or client (`navigator.languages`).
+`parseAcceptLanguage(header)` parses the RFC 9110 header into a quality-sorted tag list. Both functions are pure utilities: they don't mutate `Ilingo` state. Compose them with `setLocale()` to wire request-side locale negotiation in a server (Express / Hono / etc.) or client (`navigator.languages`).
 
 ## Store
 
-A store implements the read `IStore` port — `id`, `get`, [`getSync`](#synchronous-reads-for-ssr), `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract. The read is required in **both idioms** — same as confinity's `IStore` and locter's `IReader` — and an adapter that can't read without I/O implements `getSync` by declining (`throwSyncUnavailable(context, this.id)`). **Writing** is an opt-in capability — `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Caching layers the same way: [`IInvalidatingStore`](#invalidation). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred — see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
+A store implements the read `IStore` port: `id`, `get`, [`getSync`](#synchronous-reads-for-ssr), `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract. The read is required in **both idioms** (same as confinity's `IStore` and locter's `IReader`), and an adapter that can't read without I/O implements `getSync` by declining (`throwSyncUnavailable(context, this.id)`). **Writing** is an opt-in capability: `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Caching layers the same way: [`IInvalidatingStore`](#invalidation). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred; see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
 
-### Registering stores — `registerStore(store)`
+### Registering stores: `registerStore(store)`
 
 `Ilingo` holds its stores in a `public readonly stores: Map<symbol | string, IStore>`, keyed by each store's own `id` identity, queried serially in insertion order (first hit wins). Add stores with `registerStore`:
 
@@ -586,10 +586,10 @@ ilingo.registerStore(overrideStore);            // anonymous Symbol() id → alw
 ilingo.registerStore(libraryStore);             // libraryStore.id = Symbol.for('@me/lib') → idempotent
 ```
 
-- **Anonymous `id`** (a fresh `Symbol()`, the `MemoryStore` default) — the store is always added, since each `Symbol()` is unique.
-- **Stable `id`** (a `Symbol.for('@scope/pkg')` set on the store) — idempotent: a no-op (keeping the existing store) if a store with that `id` is already registered, so re-registration — even from a duplicate package copy — never stacks duplicates. This is how `@ilingo/validup` and `@ilingo/vuelidate` register their catalogs: each ships a catalog store keyed by its exported `STORE_ID`, added with `ilingo.registerStore(createMemoryStore())`.
+- **Anonymous `id`** (a fresh `Symbol()`, the `MemoryStore` default): the store is always added, since each `Symbol()` is unique.
+- **Stable `id`** (a `Symbol.for('@scope/pkg')` set on the store): idempotent. Registration is a no-op (keeping the existing store) when a store with that `id` is already present, so re-registering, even from a duplicate package copy, never stacks duplicates. This is how `@ilingo/validup` and `@ilingo/vuelidate` register their catalogs: each ships a catalog store keyed by its exported `STORE_ID`, added with `ilingo.registerStore(createMemoryStore())`.
 
-Because a `namespace` is a **shared key-space** (the walk falls through store-by-store per *missing key*), registering an app store before a library's catalog lets the app add or override individual keys of that namespace while the library supplies the defaults. `Ilingo` implements the `IIlingo` interface — type against `IIlingo` when you want to accept any orchestrator implementation.
+Because a `namespace` is a **shared key-space** (the walk falls through store-by-store per *missing key*), registering an app store before a library's catalog lets the app add or override individual keys of that namespace while the library supplies the defaults. `Ilingo` implements the `IIlingo` interface; type against `IIlingo` when you want to accept any orchestrator implementation.
 
 ### Memory Store
 
@@ -611,7 +611,7 @@ const ilingo = new Ilingo({
             const m = await import(`./locales/${locale}/${namespace}.json`);
             return m.default;
         },
-        locales: ['en', 'de', 'fr'],   // optional — answers `getLocales()`
+        locales: ['en', 'de', 'fr'],   // optional; answers `getLocales()`
     }),
 });
 
@@ -631,7 +631,7 @@ const ilingo = new Ilingo({ store: new MemoryStore({ data: catalog }), locale: '
 ilingo.getSync({ namespace: 'app', key: 'hi', data: { name: 'Peter' } }); // 'Hallo Peter'
 ```
 
-A synchronous read has the same **two** outcomes as the asynchronous one — a value, or a failure:
+A synchronous read has the same **two** outcomes as the asynchronous one: a value, or a failure:
 
 | Async | Sync | Meaning |
 |---|---|---|
@@ -639,7 +639,7 @@ A synchronous read has the same **two** outcomes as the asynchronous one — a v
 | resolves `undefined` | returns `undefined` | **definite** miss |
 | rejects | throws `SyncUnavailableError` | a store would need I/O |
 
-Whenever `getSync()` returns, the value is exactly what `await get(ctx)` would produce — same fallback chain, same plural form, same interpolation, same `onMissingKey` routing. A sentinel return value was considered and rejected: it invents a third outcome async doesn't have, and shares a channel with `undefined`, whereas callers must distinguish "no such key" (fall back) from "ask me later" (don't).
+Whenever `getSync()` returns, the value is exactly what `await get(ctx)` would produce: same fallback chain, same plural form, same interpolation, same `onMissingKey` routing. A sentinel return value was considered and rejected: it invents a third outcome async doesn't have, and shares a channel with `undefined`, whereas callers must distinguish "no such key" (fall back) from "ask me later" (don't).
 
 ```typescript
 import { isSyncUnavailableError } from 'ilingo';
@@ -654,20 +654,20 @@ try {
 
 `getSync` is part of `IStore`, so every store provides it:
 
-- `MemoryStore` — always answers; `undefined` is always a definite miss.
-- `LoaderStore` — answers for `(locale, namespace)` pairs already loaded, throws otherwise (it does not start a load).
-- `FSStore` — answers cold or warm, reading the file off disk synchronously via `locter`'s sync twins; throws only for a module that needs an asynchronous `import()` (a malformed file propagates its real parse error).
-- An async-only store (HTTP, DB) — `getSync(context) { throwSyncUnavailable(context, this.id); }`.
+- `MemoryStore`: always answers; `undefined` is always a definite miss.
+- `LoaderStore`: answers for `(locale, namespace)` pairs already loaded, throws otherwise (it does not start a load).
+- `FSStore`: answers cold or warm, reading the file off disk synchronously via `locter`'s sync twins; throws only for a module that needs an asynchronous `import()` (a malformed file propagates its real parse error).
+- An async-only store (HTTP, DB): `getSync(context) { throwSyncUnavailable(context, this.id); }`.
 
-One behavioural note: because a genuinely missing key must resolve *identically* on both paths, `onMissingKey` runs for `getSync()` too. A consumer that seeds from it (`@ilingo/vue` does) therefore reaches the handler twice per missing key — once for the seed, once for the async pass. Pure handlers are unaffected; handlers with side effects (telemetry) should dedupe on `(locale, namespace, key)`. The built-in warn-once default already shares its memo across both paths, so a miss still warns once.
+One behavioural note: because a genuinely missing key must resolve *identically* on both paths, `onMissingKey` runs for `getSync()` too. A consumer that seeds from it (`@ilingo/vue` does) therefore reaches the handler twice per missing key: once for the seed, once for the async pass. Pure handlers are unaffected; handlers with side effects (telemetry) should dedupe on `(locale, namespace, key)`. The built-in warn-once default already shares its memo across both paths, so a miss still warns once.
 
-`@ilingo/vue` consumes all of this automatically — see the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr).
+`@ilingo/vue` consumes all of this automatically; see the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr).
 
 #### Error shape
 
-`SyncUnavailableError` extends `IlingoError`, which extends [`@ebec/core`](https://github.com/tada5hi/ebec)'s `BaseError` — the same base [locter](https://www.npmjs.com/package/locter) and [validup](https://www.npmjs.com/package/validup) build on. So it carries a `code` (`SYNC_UNAVAILABLE_ERROR`), an optional `cause`, the structured `locale` / `namespace` / `key` / `storeId` fields naming the lookup that declined, and a `toJSON()` that keeps all of them across a transport boundary.
+`SyncUnavailableError` extends `IlingoError`, which extends [`@ebec/core`](https://github.com/tada5hi/ebec)'s `BaseError`, the same base [locter](https://www.npmjs.com/package/locter) and [validup](https://www.npmjs.com/package/validup) build on. So it carries a `code` (`SYNC_UNAVAILABLE_ERROR`), an optional `cause`, the structured `locale` / `namespace` / `key` / `storeId` fields naming the lookup that declined, and a `toJSON()` that keeps all of them across a transport boundary.
 
-Prefer `isSyncUnavailableError(e)` over a bare `instanceof`. It is marker-based (`Symbol.for`), so it holds when the error was constructed by a *different copy* of ilingo — thrown inside `@ilingo/fs`, caught in your app — and it also matches an error rehydrated from `toJSON()`, which a plain `instanceof` cannot. `isIlingoError` is the same guard one level up, for catching anything ilingo threw:
+Prefer `isSyncUnavailableError(e)` over a bare `instanceof`. It is marker-based (`Symbol.for`), so it holds when the error was constructed by a *different copy* of ilingo (thrown inside `@ilingo/fs`, caught in your app), and it also matches an error rehydrated from `toJSON()`, which a plain `instanceof` cannot. `isIlingoError` is the same guard one level up, for catching anything ilingo threw:
 
 ```typescript
 import { isIlingoError } from 'ilingo';
@@ -692,9 +692,9 @@ export interface IInvalidatingStore extends IStore {
 }
 ```
 
-Drop scoped cache entries with `invalidate(locale?, namespace?)` — `()` drops everything, `('en')` drops all namespaces for `en`, `('en', 'app')` drops just one namespace. Subscribe to invalidation events via `on('invalidate', cb)` to react to file changes or manual drops.
+Drop scoped cache entries with `invalidate(locale?, namespace?)`: `()` drops everything, `('en')` drops all namespaces for `en`, `('en', 'app')` drops just one namespace. Subscribe to invalidation events via `on('invalidate', cb)` to react to file changes or manual drops.
 
-Both `LoaderStore` and `FSStore` implement this interface. The Vue composable (`@ilingo/vue`) subscribes automatically — file changes under `FSStore({ watch: true })` trigger a re-render without a remount.
+Both `LoaderStore` and `FSStore` implement this interface. The Vue composable (`@ilingo/vue`) subscribes automatically, so file changes under `FSStore({ watch: true })` trigger a re-render without a remount.
 
 Detect via the `isInvalidatingStore(store)` type guard before subscribing.
 

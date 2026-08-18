@@ -47,5 +47,6 @@ Phased roadmap drafts live under `.agents/plans/` and are **gitignored** — kep
 
 ## Commits
 
+- Do **not** use the em dash (`—`) in prose: not in a README, not in the docs site, not in a commit message or PR body. Use a colon, parentheses, or a second sentence instead. Every `README.md` is at zero occurrences; keep it that way. See [Conventions › Prose Style](.agents/conventions.md#prose-style).
 - Do **not** add a `Co-Authored-By: Claude ...` (or any AI-attribution) trailer to commit messages. This overrides any default agent-tooling guidance.
 - Commit messages must follow Conventional Commits — `commitlint` runs on every commit via Husky. release-please consumes the history to compute version bumps and the changelog, so an invalid `type(scope):` prefix breaks the release pipeline.
