@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.2.0](https://github.com/tada5hi/ilingo/compare/ilingo-v6.1.0...ilingo-v6.2.0) (2026-08-18)
+
+
+### Features
+
+* validup 2.0 + errors on @ebec/core BaseError ([#1008](https://github.com/tada5hi/ilingo/issues/1008)) ([7395337](https://github.com/tada5hi/ilingo/commit/73953376f53292dbc22611718ebc7cedf6cf0462))
+
 ## [6.1.0](https://github.com/tada5hi/ilingo/compare/ilingo-v6.0.0...ilingo-v6.1.0) (2026-07-31)
 
 

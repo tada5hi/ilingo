@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.1.1](https://github.com/tada5hi/ilingo/compare/vue-v6.1.0...vue-v6.1.1) (2026-08-18)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * ilingo bumped from ^6.1.0 to ^6.2.0
+  * peerDependencies
+    * ilingo bumped from ^6.1.0 to ^6.2.0
+
 ## [6.1.0](https://github.com/tada5hi/ilingo/compare/vue-v6.0.0...vue-v6.1.0) (2026-07-31)
 
 
