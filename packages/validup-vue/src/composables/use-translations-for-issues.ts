@@ -7,7 +7,7 @@
 
 import { computedAsync } from '@vueuse/core';
 import { injectIlingo, injectLocale } from '@ilingo/vue';
-import type { Issue } from 'validup';
+import type { Issue } from '@ebec/core';
 import type { MaybeRefOrGetter } from 'vue';
 import { shallowRef, toValue } from 'vue';
 import { translateIssues, translateIssuesSync } from '@ilingo/validup';

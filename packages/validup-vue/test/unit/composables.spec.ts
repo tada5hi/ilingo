@@ -8,8 +8,10 @@
 import { Store } from '@ilingo/validup/store/memory';
 import { install as installIlingoVue, provideLocale } from '@ilingo/vue';
 import { Ilingo } from 'ilingo';
-import { Container, IssueCode, defineIssueGroup, defineIssueItem } from 'validup';
-import type { IssueGroup, IssueItem, Validator } from 'validup';
+import { IssueCode, defineIssueGroup, defineIssueItem } from '@ebec/core';
+import { Container } from 'validup';
+import type { IssueGroup, IssueItem } from '@ebec/core';
+import type { Validator } from 'validup';
 import type { Composable } from '@validup/vue';
 import { useValidup } from '@validup/vue';
 import { mount } from '@vue/test-utils';

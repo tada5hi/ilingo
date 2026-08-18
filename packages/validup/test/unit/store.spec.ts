@@ -6,7 +6,7 @@
  */
 
 import { Ilingo } from 'ilingo';
-import { IssueCode } from 'validup';
+import { IssueCode } from '@ebec/core';
 import { describe, expect, it } from 'vitest';
 import { STORE_ID } from '../../src/constants';
 import { Store, createMemoryStore } from '../../src/store/memory';

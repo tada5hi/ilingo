@@ -9,7 +9,7 @@ import { computedAsync } from '@vueuse/core';
 import { injectIlingo, injectLocale } from '@ilingo/vue';
 import { translateIssueGroups, translateIssueGroupsSync } from '@ilingo/validup';
 import type { IssueGroupTranslation } from '@ilingo/validup';
-import type { IssueGroup } from 'validup';
+import type { IssueGroup } from '@ebec/core';
 import type { MaybeRefOrGetter } from 'vue';
 import { shallowRef, toValue } from 'vue';
 import type { GroupTranslations } from '../types';

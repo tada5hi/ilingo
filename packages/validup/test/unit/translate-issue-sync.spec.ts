@@ -6,8 +6,8 @@
  */
 
 import { Ilingo, LoaderStore } from 'ilingo';
-import type { Issue } from 'validup';
-import { IssueCode, defineIssueGroup, defineIssueItem } from 'validup';
+import type { Issue } from '@ebec/core';
+import { IssueCode, defineIssueGroup, defineIssueItem } from '@ebec/core';
 import { describe, expect, it } from 'vitest';
 import {
     translateIssue,

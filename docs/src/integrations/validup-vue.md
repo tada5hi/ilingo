@@ -5,7 +5,7 @@
 ## Install
 
 ```bash
-npm install @ilingo/validup-vue @ilingo/validup @ilingo/vue ilingo validup @validup/vue vue
+npm install @ilingo/validup-vue @ilingo/validup @ilingo/vue ilingo validup @validup/vue vue @ebec/core
 ```
 
 Peer dependencies: `@ilingo/validup`, `@ilingo/vue`, `ilingo`, `vue`, `@vueuse/core`, `validup`, `@validup/vue`.

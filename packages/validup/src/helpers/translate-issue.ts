@@ -7,8 +7,8 @@
 
 import { isProductionEnv, isSyncUnavailableError } from 'ilingo';
 import type { IIlingo } from 'ilingo';
-import type { Issue, IssueGroup, IssueItem } from 'validup';
-import { flattenIssueItems } from 'validup';
+import type { Issue, IssueGroup, IssueItem } from '@ebec/core';
+import { flattenIssueItems } from '@ebec/core';
 import { NAMESPACE } from '../constants';
 import type { IssueGroupTranslation } from '../types';
 
