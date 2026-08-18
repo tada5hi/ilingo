@@ -21,14 +21,15 @@ Sibling of [`@ilingo/vue`](../vue) and [`@ilingo/vuelidate`](../vuelidate); mirr
 ## Installation
 
 ```bash
-npm install @ilingo/validup-vue @ilingo/validup @ilingo/vue ilingo validup @validup/vue vue
+npm install @ilingo/validup-vue @ilingo/validup @ilingo/vue ilingo validup @validup/vue vue @ebec/core
 ```
 
 ## Quick start
 
 ```vue
 <script setup lang="ts">
-import { Container, defineIssueItem, IssueCode } from 'validup';
+import { defineIssueItem, IssueCode } from '@ebec/core';
+import { Container } from 'validup';
 import { useValidup } from '@validup/vue';
 import { useTranslationsForField } from '@ilingo/validup-vue';
 import { reactive } from 'vue';

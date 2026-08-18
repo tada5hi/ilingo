@@ -8,11 +8,13 @@
 import {
     afterEach, beforeEach, describe, expect, it, vi,
 } from 'vitest';
+import { markInstanceof } from '@ebec/core';
 import type {
     IStore, Leaf, StoreGetContext,
 } from '../../src';
 import {
     Ilingo,
+    IlingoError,
     LoaderStore,
     MemoryStore,
     SyncUnavailableError,
@@ -21,6 +23,7 @@ import {
     defineNamespace,
     definePlural,
     defineTranslations,
+    isIlingoError,
     isSyncUnavailableError,
     throwSyncUnavailable,
 } from '../../src';
@@ -269,16 +272,41 @@ describe('Ilingo — synchronous read path (#988)', () => {
         it('is recognised across duplicate package copies', () => {
             // The guard is marker-based (Symbol.for), so an error thrown by
             // another copy of ilingo — e.g. the one inside @ilingo/fs — is
-            // still caught by an app compiled against this one.
+            // still caught by an app compiled against this one. The marker
+            // rides @ebec/core's `@instanceof` chain, so a foreign instance is
+            // simulated the way a foreign copy would actually build one.
             const error = new SyncUnavailableError('cold', { locale: 'en' });
-            const foreign = JSON.parse(JSON.stringify({})) as Record<symbol, unknown>;
-            foreign[Symbol.for('ilingo.sync-unavailable-error')] = true;
+            const foreign = {};
+            markInstanceof(foreign, Symbol.for('ilingo/SyncUnavailableError'));
 
             expect(isSyncUnavailableError(error)).toBe(true);
+            expect(isIlingoError(error)).toBe(true);
             expect(error instanceof SyncUnavailableError).toBe(true);
+            expect(error instanceof IlingoError).toBe(true);
             expect(error instanceof Error).toBe(true);
             expect(isSyncUnavailableError(foreign)).toBe(true);
             expect(isSyncUnavailableError(new Error('other'))).toBe(false);
+            expect(isIlingoError(new Error('other'))).toBe(false);
+        });
+
+        it('survives a toJSON round-trip', () => {
+            // BaseError serialises the marker chain as strings, so identity
+            // outlives the symbols that JSON drops.
+            const error = new SyncUnavailableError('cold', {
+                locale: 'en',
+                namespace: 'app',
+                key: 'hi',
+                storeId: Symbol.for('test.store'),
+            });
+            const rehydrated = JSON.parse(JSON.stringify(error));
+
+            expect(isSyncUnavailableError(rehydrated)).toBe(true);
+            expect(isIlingoError(rehydrated)).toBe(true);
+            expect(rehydrated.locale).toEqual('en');
+            expect(rehydrated.namespace).toEqual('app');
+            expect(rehydrated.key).toEqual('hi');
+            expect(rehydrated.storeId).toEqual('Symbol(test.store)');
+            expect(rehydrated.code).toEqual('SYNC_UNAVAILABLE_ERROR');
         });
 
         it('honours a fallback opt-out identically', async () => {

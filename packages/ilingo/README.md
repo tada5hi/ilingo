@@ -656,12 +656,30 @@ try {
 
 - `MemoryStore` — always answers; `undefined` is always a definite miss.
 - `LoaderStore` — answers for `(locale, namespace)` pairs already loaded, throws otherwise (it does not start a load).
-- `FSStore` — answers for namespaces already read from disk, throws while cold or mid-read.
+- `FSStore` — answers cold or warm, reading the file off disk synchronously via `locter`'s sync twins; throws only for a module that needs an asynchronous `import()` (a malformed file propagates its real parse error).
 - An async-only store (HTTP, DB) — `getSync(context) { throwSyncUnavailable(context, this.id); }`.
 
 One behavioural note: because a genuinely missing key must resolve *identically* on both paths, `onMissingKey` runs for `getSync()` too. A consumer that seeds from it (`@ilingo/vue` does) therefore reaches the handler twice per missing key — once for the seed, once for the async pass. Pure handlers are unaffected; handlers with side effects (telemetry) should dedupe on `(locale, namespace, key)`. The built-in warn-once default already shares its memo across both paths, so a miss still warns once.
 
 `@ilingo/vue` consumes all of this automatically — see the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr).
+
+#### Error shape
+
+`SyncUnavailableError` extends `IlingoError`, which extends [`@ebec/core`](https://github.com/tada5hi/ebec)'s `BaseError` — the same base [locter](https://www.npmjs.com/package/locter) and [validup](https://www.npmjs.com/package/validup) build on. So it carries a `code` (`SYNC_UNAVAILABLE_ERROR`), an optional `cause`, the structured `locale` / `namespace` / `key` / `storeId` fields naming the lookup that declined, and a `toJSON()` that keeps all of them across a transport boundary.
+
+Prefer `isSyncUnavailableError(e)` over a bare `instanceof`. It is marker-based (`Symbol.for`), so it holds when the error was constructed by a *different copy* of ilingo — thrown inside `@ilingo/fs`, caught in your app — and it also matches an error rehydrated from `toJSON()`, which a plain `instanceof` cannot. `isIlingoError` is the same guard one level up, for catching anything ilingo threw:
+
+```typescript
+import { isIlingoError } from 'ilingo';
+
+try {
+    // ...
+} catch (e) {
+    if (isIlingoError(e)) {
+        console.error(e.code, e.message);   // e.g. SYNC_UNAVAILABLE_ERROR
+    }
+}
+```
 
 ### Invalidation
 

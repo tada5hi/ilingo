@@ -104,6 +104,8 @@ try {
 }
 ```
 
+`SyncUnavailableError` extends `IlingoError` → [`@ebec/core`](https://github.com/tada5hi/ebec)'s `BaseError`, the same base [locter](https://www.npmjs.com/package/locter) and [validup](https://www.npmjs.com/package/validup) use. It carries a `code` (`SYNC_UNAVAILABLE_ERROR`), an optional `cause`, the `locale` / `namespace` / `key` / `storeId` of the declined lookup, and a `toJSON()` that preserves them. Use `isSyncUnavailableError` rather than a bare `instanceof`: it is `Symbol.for`-marker based, so it holds across a duplicate copy of ilingo (thrown inside `@ilingo/fs`, caught in your app) and matches an error rehydrated from `toJSON()`. `isIlingoError` is the same guard one level up, matching anything ilingo threw.
+
 Whenever `getSync()` returns, the result is **strictly equivalent** to `await get()`: same locale chain, same store order, same plural selection and interpolation, same `onMissingKey` routing. The walk aborts at the first store that declines rather than skipping it — skipping would let a cold store holding the `de` string be passed over in favour of a warm store's `en` fallback, i.e. a silently wrong translation.
 
 Who can answer synchronously:
@@ -112,7 +114,7 @@ Who can answer synchronously:
 |---|---|
 | `MemoryStore` | always — `undefined` is always a definite miss |
 | `LoaderStore` | for `(locale, namespace)` pairs already loaded; throws otherwise (it does **not** kick off the loader) |
-| `FSStore` | for namespaces already read from disk; throws while cold or mid-read |
+| `FSStore` | always — [reads the file off disk synchronously](../integrations/fs#synchronous-reads-ssr), cold or warm; throws only for a module that needs an asynchronous `import()` |
 | a custom async-only store (HTTP, DB) | throws via `throwSyncUnavailable(context, this.id)` |
 
 `@ilingo/vue` uses this automatically — see [SSR & hydration](../recipes/ssr).

@@ -68,7 +68,7 @@ export interface IStore {
 
 **Two outcomes, not three.** A synchronous read either produces a value (`Leaf` for a hit, `undefined` for a definite miss) or throws — which is exactly the pair the asynchronous read has as resolve-or-reject. An earlier iteration returned a `SYNC_UNAVAILABLE` sentinel; it was dropped because it invented a third outcome async has no analogue for, and it shared a channel with `undefined`. Callers *must* separate "no such key" from "ask me later": the first wants a fallback (`issue.message`, the rule name, the `namespace.key` placeholder), the second must not fall back at all, because the async pass is about to produce a real translation. Dropping the sentinel also un-widened `MemoryStore.getSync`'s return type, which had only widened so `FSStore` could override it.
 
-`SyncUnavailableError` lives in `src/errors/` alongside an `IlingoError` base, following the convention in the sibling packages (`LocterError` in locter, `ConfinityError` in confinity): a base class per library, subclasses carrying structured fields (here `locale` / `namespace` / `key` / `storeId`), and **`Symbol.for` markers plus a `[Symbol.hasInstance]` override** so `instanceof` survives duplicate package copies — the same motivation that makes library catalog stores key themselves with `Symbol.for('@scope/pkg')`. The `@ebec/core` base used by locter is deliberately *not* pulled in: core ships to browsers under a bundle-size budget and this is its only error class. Use `isSyncUnavailableError` at any boundary where the error may cross copies (thrown inside `@ilingo/fs`, caught in an app).
+`SyncUnavailableError` lives in `src/errors/` alongside an `IlingoError` base, following the convention in the sibling packages (`LocterError` in locter, `ValidupError` in validup, `ConfinityError` in confinity): a base class per library, subclasses carrying structured fields (here `locale` / `namespace` / `key` / `storeId`), and **`Symbol.for` markers plus a `[Symbol.hasInstance]` override** so `instanceof` survives duplicate package copies — the same motivation that makes library catalog stores key themselves with `Symbol.for('@scope/pkg')`. `IlingoError` extends **`@ebec/core`'s `BaseError`** (see below). Use `isSyncUnavailableError` at any boundary where the error may cross copies (thrown inside `@ilingo/fs`, caught in an app).
 
 `Ilingo.lookupSync` mirrors `lookup` and lets a store's throw unwind untouched — no capability branch, and the error already names the store and lookup that declined. Aborting *at* the declining store rather than skipping it is what keeps the result equivalent to the async walk: everything before it answered identically, and nothing after it can be consulted without knowing what the decliner would have said. Hence the contract: **when `getSync` returns, it equals `await get()`**; when it can't guarantee that, it throws.
 
@@ -94,6 +94,20 @@ Implementations:
 These layers are the reason the core separates the two failure modes instead of collapsing them into one `undefined`. A code with no catalog entry must fall back to `issue.message` (exactly what the async path does), while a store that merely needs I/O must **not** — the async pass is about to produce a real translation, and falling back now would be a message that changes under the user, i.e. the very SSR mismatch class being fixed.
 
 With a definite miss reported as `undefined` and unavailability thrown, `translateIssueSync` applies the async path's own fallback for the first case and returns `undefined` only for the second. An unexpected error (a broken store or formatter) is **re-thrown**, not masked as "unavailable". The batch helpers stay **all-or-nothing** — a batch where some messages are real and others placeholders that flip a tick later is harder to reason about, and a mismatch risk across an SSR boundary — but that now triggers rarely, since the only cause is a store needing I/O, which applies to every issue in the batch equally. `@ilingo/vuelidate`'s `useTranslationsForBaseValidation` applies the same rule per rule-name record (`value || rule`, matching its async body).
+
+### Errors build on `@ebec/core`'s `BaseError`
+
+`IlingoError extends BaseError`, the same base `LocterError` (locter) and `ValidupError` (validup) use, so an ilingo error carries a `code` (derived from the class name — `SyncUnavailableError` → `SYNC_UNAVAILABLE_ERROR`), a `cause`, and a `toJSON()`, and answers `@ebec/core`'s `isBaseError()` alongside the rest of the family. `SyncUnavailableError` overrides `toJSON()` to add its own `locale` / `namespace` / `key` / `storeId` (the last stringified, since a store `id` is usually a symbol).
+
+The marker protocol is `@ebec/core`'s: each class declares a `Symbol.for(...)` marker and calls `markInstanceof(this, MARKER)`, so an instance accumulates its ancestors' markers on one non-enumerable `@instanceof` chain and a parent-class guard matches a subclass instance. This **replaced** ilingo's hand-rolled flat-symbol-property marker. Two things it buys beyond the dedup: `BaseError.toJSON()` re-emits the chain as strings, so identity survives a JSON round-trip (symbols don't serialise), and the whole family now shares one protocol.
+
+The guards — `isIlingoError` / `isSyncUnavailableError` — live together in `errors/check.ts` (mirroring `@ebec/core`'s own `helpers/check.ts`), each a one-line `matchesInstanceof(input, MARKER)`, and each class's `[Symbol.hasInstance]` override delegates to its guard so `instanceof` and the guard can never disagree. The markers sit in `errors/constants.ts` rather than beside their classes: `check.ts` needs them and the classes need `check.ts` back for `[Symbol.hasInstance]`, so keeping them in a leaf module is what stops that from being a runtime import cycle. This matches `isBaseError` / `isValidupError` in the sibling packages. Prefer the guard: it matches every subclass through the shared chain and recognises an error rehydrated from `toJSON()`, which no `instanceof` can.
+
+Markers use the family's `<pkg>/<ClassName>` key convention — `Symbol.for('ilingo/IlingoError')`, `Symbol.for('ilingo/SyncUnavailableError')`, alongside `@ebec/core/BaseError` and `validup/ValidupError` — exported as `ILINGO_ERROR_INSTANCE` / `SYNC_UNAVAILABLE_ERROR_INSTANCE`.
+
+ilingo's own `markError` / `hasErrorMarker` helpers were **removed** rather than kept as passthroughs: `@ebec/core` exports `markInstanceof` / `hasInstanceof` / `matchesInstanceof` and is now a direct dependency, so a consumer that wants them imports them from there. One consequence is deliberate: the marker *format* changed (flat symbol property → `@instanceof` chain), and no compatibility shim reads the old one, so an error thrown by a duplicate copy pinned to ilingo ≤ 6.1 is not recognised by this build's guards. The window is narrow — the flat format only ever shipped in 6.0–6.1, alongside `getSync` itself.
+
+This reverses the earlier decision to keep `@ebec/core` out of core for bundle weight. It is not free: the full barrel went 6.55 → 7.18 kB and `Ilingo + MemoryStore` 4.19 → 4.84 kB, so both budgets moved (6.75 → 7.5 kB, 5 → 5.5 kB). The two tree-shake-floor entries (`defineCatalog`, `negotiateLocale + parseAcceptLanguage`) are **unchanged** at 1.12 / 1.48 kB — `@ebec/core` drops out cleanly for a slice that never touches an error, so the cost lands only on consumers who pull the error surface in.
 
 ### Cache invalidation
 
@@ -209,7 +223,7 @@ Every store ingests the tree through this reducer:
 
 ### 8. ESM-first, dependency-light, browser-safe
 
-Each package's runtime dependencies are minimal — `pathtrace` and `smob` in core; `locter`, `pathe`, `smob` in `@ilingo/fs`. Vue and Vuelidate are declared as `peerDependencies`, not bundled. Core does not import `node:process` — `NODE_ENV` is read via a bare `process.env.NODE_ENV` literal (so Vite / Webpack DefinePlugin can replace it) wrapped in a `typeof process !== 'undefined'` guard for raw-browser execution.
+Each package's runtime dependencies are minimal — `@ebec/core`, `pathtrace` and `smob` in core; `locter`, `pathe`, `smob` in `@ilingo/fs`; `@ebec/core` in the two validup packages (see below). Vue and Vuelidate are declared as `peerDependencies`, not bundled. Core does not import `node:process` — `NODE_ENV` is read via a bare `process.env.NODE_ENV` literal (so Vite / Webpack DefinePlugin can replace it) wrapped in a `typeof process !== 'undefined'` guard for raw-browser execution.
 
 ## Design Patterns
 
@@ -325,6 +339,14 @@ Core support lives in `packages/ilingo/src/utils/template.ts` as a separate `tok
 
 Creates a fresh `Ilingo` instance with a `MemoryStore` for the scoped messages registered *first* (scoped strings win), then re-adds every store from the parent instance (non-scoped keys still fall through). Calls `provideIlingo(scoped)` so the component subtree sees the scoped instance via plain `useTranslation`. Returns `{ instance, t }` for same-component use, since Vue's provide can't reach the current setup's own injections.
 
+### `@ilingo/validup` — the issue model lives in `@ebec/core`
+
+`Issue`, `IssueGroup`, `IssueItem`, `IssueCode`, the `defineIssue*` factories, the `isIssue*` guards and `flattenIssue*` are owned and versioned by [`@ebec/core`](https://github.com/tada5hi/ebec), **not** by `validup`. Up to validup 1.x they were re-exported from `validup`, so ilingo imported them from there; validup 2.0.0 stopped re-exporting and both validup packages now import them from `@ebec/core` directly. The relocation was purely a move — the type shapes, all 23 `IssueCode` values and the helper signatures are unchanged (`flattenIssueItems` only widened its parameter to `readonly Issue[]`).
+
+`@ebec/core` is a plain **`dependency`** of `@ilingo/validup` and `@ilingo/validup-vue`, not a peer — matching how `validup` and `@validup/vue` declare it themselves, so a consumer never has to install it to make the packages work. It is safe as a non-peer because nothing here depends on instance identity: issues are plain data compared structurally, `IssueCode`s are strings, and `flattenIssueItems` is pure. A duplicate copy in the tree costs a few bytes and changes no behaviour — unlike `ilingo` and `validup`, which stay peers because the consumer constructs and hands in those very objects.
+
+`validup` itself remains a peer and still owns everything else the packages touch (`Container`, `ValidupError`, `ObjectLiteral`, `Validator`).
+
 ### `@ilingo/validup-vue` — composables are `setup()`-only; `<IFieldValidation>` for templates
 
 Every reactive composable in `@ilingo/validup-vue` ultimately wires a VueUse `computedAsync`, which registers a `watchEffect` in the **active effect scope at call time**. The contract is therefore: **call these composables from `setup()`**, where the active scope is the component scope — the watcher is created once and disposed on unmount. The `<IValidup>` / `<IValidupT>` components and all the `useTranslations*` composables already follow this.
@@ -385,6 +407,11 @@ packages/ilingo/src/
 ├── store/{types,memory}     ← port + default adapter
 ├── catalog.ts               ← defineCatalog / defineLocale / defineNamespace / defineTranslations / definePlural node builders
 ├── catalog/normalize.ts     ← normalizeCatalog(CatalogInput) → Locales; normalizeNamespaceBody(NamespaceBodyInput) → Translations (shared reducer)
+├── errors/
+│   ├── constants.ts         ← ILINGO_ERROR_INSTANCE / SYNC_UNAVAILABLE_ERROR_INSTANCE markers (leaf module — breaks the check ↔ class cycle)
+│   ├── check.ts             ← isIlingoError, isSyncUnavailableError (matchesInstanceof guards)
+│   ├── base.ts              ← IlingoError extends @ebec/core BaseError
+│   └── sync-unavailable.ts  ← SyncUnavailableError + throwSyncUnavailable
 ├── utils/
 │   ├── locale.ts            ← bcp47Parents, resolveLocaleChain
 │   ├── negotiate.ts         ← negotiateLocale, parseAcceptLanguage (request-side locale picking)

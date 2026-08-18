@@ -7,7 +7,7 @@ It is **framework-agnostic** — no Vue dependency. Embeddable in Node SSR, edge
 ## Install
 
 ```bash
-npm install @ilingo/validup ilingo validup
+npm install @ilingo/validup ilingo validup @ebec/core
 ```
 
 `ilingo` and `validup` are peer dependencies.
@@ -18,7 +18,7 @@ npm install @ilingo/validup ilingo validup
 import { Ilingo } from 'ilingo';
 import { translateIssue } from '@ilingo/validup';
 import { createMemoryStore } from '@ilingo/validup/store/memory';
-import { defineIssueItem, IssueCode } from 'validup';
+import { defineIssueItem, IssueCode } from '@ebec/core';
 
 const ilingo = new Ilingo({ locale: 'en' });
 ilingo.registerStore(createMemoryStore()); // EN/DE/FR/ES 'validup' catalog (idempotent)

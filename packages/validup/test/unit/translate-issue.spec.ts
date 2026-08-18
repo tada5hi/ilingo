@@ -6,7 +6,8 @@
  */
 
 import { Ilingo } from 'ilingo';
-import { IssueCode, ValidupError, defineIssueGroup, defineIssueItem } from 'validup';
+import { IssueCode, defineIssueGroup, defineIssueItem } from '@ebec/core';
+import { ValidupError } from 'validup';
 import { describe, expect, it } from 'vitest';
 import { translateIssue, translateIssueGroups, translateIssues } from '../../src';
 import { Store } from '../../src/store/memory';

@@ -21,7 +21,7 @@ Ships default EN / DE / FR / ES catalogs for the built-in `IssueCode`s, a pre-se
 ## Installation
 
 ```bash
-npm install @ilingo/validup ilingo validup
+npm install @ilingo/validup ilingo validup @ebec/core
 ```
 
 ## Quick start
@@ -30,7 +30,7 @@ npm install @ilingo/validup ilingo validup
 import { Ilingo } from 'ilingo';
 import { translateIssue } from '@ilingo/validup';
 import { createMemoryStore } from '@ilingo/validup/store/memory';
-import { defineIssueItem, IssueCode } from 'validup';
+import { defineIssueItem, IssueCode } from '@ebec/core';
 
 const ilingo = new Ilingo({ locale: 'en' });
 ilingo.registerStore(createMemoryStore()); // EN/DE/FR/ES 'validup' catalog (idempotent)

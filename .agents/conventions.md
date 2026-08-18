@@ -150,18 +150,20 @@ When adding new source files, keep this contract:
 
 | Entry | Budget | Current |
 |---|---|---|
-| `ilingo` — full barrel | 6.75 kB | 6.49 kB |
-| `ilingo` — `Ilingo + MemoryStore` | 5 kB | 4.13 kB |
+| `ilingo` — full barrel | 7.5 kB | 7.15 kB |
+| `ilingo` — `Ilingo + MemoryStore` | 5.5 kB | 4.82 kB |
 | `ilingo` — `defineCatalog` only | 1.3 kB | 1.12 kB |
 | `ilingo` — `negotiateLocale + parseAcceptLanguage` | 1.7 kB | 1.48 kB |
-| `@ilingo/fs` — full barrel | 4 kB | 3.46 kB |
-| `@ilingo/vue` — full barrel | 2 kB | 1.81 kB |
-| `@ilingo/vuelidate` — full barrel | 2.5 kB | 1.95 kB |
-| `@ilingo/validup` — core barrel | 2 kB | 783 B |
+| `@ilingo/fs` — full barrel | 4 kB | 3.47 kB |
+| `@ilingo/vue` — full barrel | 2 kB | 1.95 kB |
+| `@ilingo/vuelidate` — full barrel | 2.5 kB | 2.08 kB |
+| `@ilingo/validup` — core barrel | 2 kB | 916 B |
 
-The `ilingo` full-barrel budget was raised 6 → 6.5 kB when the synchronous read path (`getSync`, #988) landed: the baseline was already 5.92 kB, and the new public method plus the `SyncUnavailableError` class and its marker plumbing add ~430 B. It moved again to 6.75 kB with the `tsdown` 0.22.1 → 0.22.14 bump (#992), which shifted the emitted bundle by ~140 B with **no** source change — a toolchain measurement, not creep, and worth a little headroom so the next one-line change doesn't sit 10 B from the limit. That is the *only* legitimate reason to move a budget — a deliberate feature, measured, in the PR that adds it. Silent creep still fails CI, which is the point.
+The `ilingo` full-barrel budget was raised 6 → 6.5 kB when the synchronous read path (`getSync`, #988) landed: the baseline was already 5.92 kB, and the new public method plus the `SyncUnavailableError` class and its marker plumbing add ~430 B. It moved again to 6.75 kB with the `tsdown` 0.22.1 → 0.22.14 bump (#992), which shifted the emitted bundle by ~140 B with **no** source change — a toolchain measurement, not creep, and worth a little headroom so the next one-line change doesn't sit 10 B from the limit. Both `ilingo` entries moved again — full barrel 6.75 → 7.5 kB and `Ilingo + MemoryStore` 5 → 5.5 kB — when `IlingoError` was rebased on `@ebec/core`'s `BaseError`: that adds ~610 B of base class and marker machinery, net of the hand-rolled marker code it deleted. A deliberate, measured trade of bytes for one error protocol across ilingo / locter / validup. That is the *only* legitimate reason to move a budget — a deliberate feature, measured, in the PR that adds it. Silent creep still fails CI, which is the point.
 
-`@ilingo/fs`'s entry ignores `node:*` modules and the optional `chokidar` peer (server-only package — those aren't consumer-bundled). `@ilingo/vue` and `@ilingo/vuelidate` ignore their declared peers (`vue`, `ilingo`, etc.).
+`@ilingo/fs`'s entry ignores `node:*` modules and the optional `chokidar` peer (server-only package — those aren't consumer-bundled). `@ilingo/vue` and `@ilingo/vuelidate` ignore their declared peers (`vue`, `ilingo`, etc.). `@ilingo/validup` ignores its peers (`ilingo`, `validup`) but **not** `@ebec/core` — that one is a real `dependency`, so it ships to the consumer and its cost belongs in the measurement. Pulling `flattenIssueItems` from it is what moved the entry 783 B → 916 B when validup 2.0 rehomed the issue model.
+
+The two `ilingo` tree-shake-floor entries did **not** move for that change — `@ebec/core` drops out entirely for a slice that never references an error — which is what makes the cost acceptable: it lands only on consumers who pull the error surface in.
 
 A consequence of `smob` and `pathtrace` not declaring `sideEffects: false` themselves: any single-symbol import from `ilingo` carries a ~1.2 kB floor from those upstream deps. That's why `defineCatalog` alone weighs 1.12 kB — it's not the function (it's an identity); it's the deps that come along. If we ever upstream `sideEffects: false` to those packages (or replace them with first-party code), the tree-shake floor drops further.
 

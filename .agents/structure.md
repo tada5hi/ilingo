@@ -11,7 +11,7 @@ This is an npm-workspaces monorepo. Workspaces under `packages/` are publishable
 | [`@ilingo/vue`](../packages/vue)                       | 5.x     | Vue 3 plugin: `install()`, `provide/inject` for the `Ilingo` instance and reactive locale, `<ITranslate>` component, `useTranslation` composable |
 | [`@ilingo/vuelidate`](../packages/vuelidate)           | 6.x     | Vuelidate-message adapter on top of `@ilingo/vue` — ships built-in EN/DE/FR/ES translations for validator names |
 | [`@ilingo/validup`](../packages/validup)               | 0.1.x   | Framework-agnostic core for the validup ecosystem. **Data-free `.` entry**: `translateIssue` / `translateIssues` / `translateIssueGroups` (+ the synchronous `translateIssueSync` / `translateIssuesSync` / `translateIssueGroupsSync` used to seed SSR first renders) / `coerceIssueData` helpers, `NAMESPACE` / `STORE_ID` constants, `SlotName` enum + slot-prop types. Catalog stores live on subpaths — `./store/memory` (`createMemoryStore()`, eager, all locales — builds its catalog via `defineCatalog([...])`) and `./store/loader` (`createLoaderStore()`, lazy per-locale `import()` chunks returning `defineTranslations(...)`), each keyed by `STORE_ID`; register with `ilingo.registerStore(...)`. **No Vue deps** — embeddable in Node SSR, edge, workers. Peer-deps `ilingo`, `validup`. |
-| [`@ilingo/validup-vue`](../packages/validup-vue)       | 0.1.x   | Vue 3 plugin for `@ilingo/validup`. The `install` hook, five composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`, `useTranslationsForGroupErrors`, `useFieldValidation` — all **`setup()`-only**, like every composable here, since they wire a `computedAsync` watcher that only the setup scope disposes), the `<IValidup>` renderless component (leaf `:issues` mode + whole-form `:composable` mode with `#cross-cutting`/`#groups`/`#fields` slots), the slot-aware `<IValidupT>` (component-aware interpolation via `<ITranslateT>`), the renderless `<IFieldValidation>` (template-only companion to `useFieldValidation` — owns the watcher lifecycle in its own setup so the bundle can be bound in a template without the inline-call leak #965; default slot exposes the bundle as `value`), and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases (`useFieldValidation`/`FieldValidation` align with vuecs's `<VCFormGroup :validation>`). Mirrors the `validup` → `@validup/vue` split. Peer-deps `@ilingo/validup`, `@ilingo/vue`, `ilingo`, `vue`, `@vueuse/core`, `validup`, `@validup/vue`. |
+| [`@ilingo/validup-vue`](../packages/validup-vue)       | 0.1.x   | Vue 3 plugin for `@ilingo/validup`. The `install` hook, five composables (`useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForIssues`, `useTranslationsForGroupErrors`, `useFieldValidation` — all **`setup()`-only**, like every composable here, since they wire a `computedAsync` watcher that only the setup scope disposes), the `<IValidup>` renderless component (leaf `:issues` mode + whole-form `:composable` mode with `#cross-cutting`/`#groups`/`#fields` slots), the slot-aware `<IValidupT>` (component-aware interpolation via `<ITranslateT>`), the renderless `<IFieldValidation>` (template-only companion to `useFieldValidation` — owns the watcher lifecycle in its own setup so the bundle can be bound in a template without the inline-call leak #965; default slot exposes the bundle as `value`), and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases (`useFieldValidation`/`FieldValidation` align with vuecs's `<VCFormGroup :validation>`). Mirrors the `validup` → `@validup/vue` split. Peer-deps `@ilingo/validup`, `@ilingo/vue`, `ilingo`, `vue`, `@vueuse/core`, `validup`, `@validup/vue`; deps `@ebec/core` (the issue model). |
 | [`@ilingo/docs`](../docs)                              | private | VitePress 1.x marketing + reference site. Deploys to GitHub Pages via `.github/workflows/docs.yml`. Never published to npm. |
 
 ## Package Dependency Layers
@@ -20,18 +20,18 @@ Each layer may only depend on layers below it. Declared in each package's `packa
 
 ```
 Foundation:
-  ilingo                 (deps: pathtrace, smob)
+  ilingo                 (deps: @ebec/core, pathtrace, smob)
 
 Layer 1:
   @ilingo/fs             (deps: ilingo, locter, pathe, smob)
   @ilingo/vue            (peer: ilingo, vue, @vueuse/core)
 
 Layer 1.5:
-  @ilingo/validup        (peer: ilingo, validup)        # framework-agnostic
+  @ilingo/validup        (deps: @ebec/core; peer: ilingo, validup)   # framework-agnostic
 
 Layer 2:
   @ilingo/vuelidate      (peer: @ilingo/vue, ilingo, vue, @vueuse/core, @vuelidate/core)
-  @ilingo/validup-vue    (peer: @ilingo/validup, @ilingo/vue, ilingo, vue, @vueuse/core, validup, @validup/vue)
+  @ilingo/validup-vue    (deps: @ebec/core; peer: @ilingo/validup, @ilingo/vue, ilingo, vue, @vueuse/core, validup, @validup/vue)
 ```
 
 Nx (`nx.json`) is configured so `build` depends on `^build`, which means workspace builds run in topological order automatically.
@@ -75,10 +75,16 @@ src/
 ├── constants.ts              # LOCALE_DEFAULT = 'en'
 ├── errors/
 │   ├── index.ts              # barrel
-│   ├── base.ts               # IlingoError + markError/hasErrorMarker (Symbol.for markers so
-│   │                         #   instanceof survives duplicate package copies)
-│   └── sync-unavailable.ts   # SyncUnavailableError (locale/namespace/key/storeId) +
-│                             #   isSyncUnavailableError guard + throwSyncUnavailable helper
+│   ├── constants.ts          # ILINGO_ERROR_INSTANCE / SYNC_UNAVAILABLE_ERROR_INSTANCE markers
+│   │                         #   (Symbol.for('ilingo/<ClassName>')) — kept apart from the classes
+│   │                         #   so check.ts reads them without a runtime import cycle
+│   ├── check.ts              # isIlingoError / isSyncUnavailableError — matchesInstanceof guards
+│   │                         #   (mirrors @ebec/core's helpers/check.ts)
+│   ├── base.ts               # IlingoError extends @ebec/core BaseError; marks itself on the
+│   │                         #   @instanceof chain so instanceof survives duplicate package
+│   │                         #   copies + a toJSON round-trip (Symbol.hasInstance → the guard)
+│   └── sync-unavailable.ts   # SyncUnavailableError (locale/namespace/key/storeId, + toJSON)
+│                             #   + throwSyncUnavailable helper
 ├── options/
 │   ├── index.ts
 │   └── types.ts              # IlingoOptions { store?: IStore | IStore[], locale?, fallback?, onMissingKey?, formatters? } — all fields optional (defaults applied at runtime)
@@ -215,7 +221,7 @@ The public API is whatever the package's `src/index.ts` re-exports. Anything not
 docs/
 ├── package.json              # @ilingo/docs, private. scripts: dev / build / preview (vitepress src)
 ├── tsconfig.json
-├── assets/logo.svg           # README logo (GitHub-only — the site mark is src/public/logo.svg)
+├── assets/logo.svg           # README logo (GitHub-only — the site's own mark is src/public/logo.svg)
 └── src/
     ├── index.md              # layout: page — composes the 5 marketing components below
     ├── public/logo.svg

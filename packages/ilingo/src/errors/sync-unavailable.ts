@@ -5,14 +5,10 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { 
-    ILINGO_ERROR_MARKER, 
-    IlingoError, 
-    hasErrorMarker, 
-    markError, 
-} from './base';
-
-export const ILINGO_SYNC_UNAVAILABLE_ERROR_MARKER = Symbol.for('ilingo.sync-unavailable-error');
+import { markInstanceof } from '@ebec/core';
+import { IlingoError } from './base';
+import { isSyncUnavailableError } from './check';
+import { SYNC_UNAVAILABLE_ERROR_INSTANCE } from './constants';
 
 export type SyncUnavailableErrorOptions = ErrorOptions & {
     locale?: string,
@@ -46,7 +42,7 @@ export type SyncUnavailableErrorOptions = ErrorOptions & {
  */
 export class SyncUnavailableError extends IlingoError {
     static override [Symbol.hasInstance](input: unknown): boolean {
-        return hasErrorMarker(input, ILINGO_SYNC_UNAVAILABLE_ERROR_MARKER);
+        return isSyncUnavailableError(input);
     }
 
     readonly locale?: string;
@@ -73,19 +69,25 @@ export class SyncUnavailableError extends IlingoError {
         this.key = key;
         this.storeId = storeId;
 
-        markError(this, ILINGO_ERROR_MARKER);
-        markError(this, ILINGO_SYNC_UNAVAILABLE_ERROR_MARKER);
+        // The ancestors' markers ride the same `@instanceof` chain, so
+        // `IlingoError`'s does not need restating here.
+        markInstanceof(this, SYNC_UNAVAILABLE_ERROR_INSTANCE);
     }
-}
 
-/**
- * Type guard for {@link SyncUnavailableError}. Marker-based, so it holds across
- * duplicate package copies — use it instead of a bare `instanceof` at any
- * boundary where the error may have been constructed by another copy of
- * `ilingo` (e.g. thrown inside `@ilingo/fs`, caught in an app).
- */
-export function isSyncUnavailableError(input: unknown): input is SyncUnavailableError {
-    return hasErrorMarker(input, ILINGO_SYNC_UNAVAILABLE_ERROR_MARKER);
+    /**
+     * Carry the structured lookup fields alongside `BaseError`'s own payload,
+     * so an error crossing a JSON boundary still says *which* lookup declined.
+     * `storeId` stringifies because a store's `id` is often a symbol.
+     */
+    override toJSON() {
+        return {
+            ...super.toJSON(),
+            locale: this.locale,
+            namespace: this.namespace,
+            key: this.key,
+            storeId: typeof this.storeId === 'undefined' ? undefined : String(this.storeId),
+        };
+    }
 }
 
 /**

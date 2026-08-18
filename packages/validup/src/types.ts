@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { Issue, IssueGroup, IssueItem } from 'validup';
+import type { Issue, IssueGroup, IssueItem } from '@ebec/core';
 
 /**
  * A single translated leaf issue — the original `IssueItem` plus the

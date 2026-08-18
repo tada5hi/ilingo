@@ -14,7 +14,7 @@ import {
 import { ITranslateT } from '@ilingo/vue';
 import { NAMESPACE, coerceIssueData } from '@ilingo/validup';
 import type { IssueSlotProps } from '@ilingo/validup';
-import type { Issue } from 'validup';
+import type { Issue } from '@ebec/core';
 import { useTranslationsForIssues } from './composables';
 
 /**
