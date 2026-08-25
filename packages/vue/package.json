@@ -73,9 +73,9 @@
         "@vue/test-utils": "^2.4.11",
         "@vueuse/core": "^14.4.0",
         "cross-env": "^10.1.0",
-        "happy-dom": "^20.11.2",
+        "happy-dom": "^20.11.6",
         "ilingo": "^6.2.0",
-        "vite": "^8.2.1",
+        "vite": "^8.2.2",
         "vitest": "^4.1.5",
         "vue": "^3.5.41"
     },
