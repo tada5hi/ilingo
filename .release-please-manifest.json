@@ -2,7 +2,7 @@
     "packages/ilingo": "6.2.1",
     "packages/fs": "6.1.2",
     "packages/vue": "6.1.2",
-    "packages/vuelidate": "7.1.2",
+    "packages/vuelidate": "7.1.3",
     "packages/validup": "1.2.1",
-    "packages/validup-vue": "1.2.1"
+    "packages/validup-vue": "1.2.2"
 }

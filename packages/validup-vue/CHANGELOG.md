@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.2.1...validup-vue-v1.2.2) (2026-10-27)
+
+
+### Bug Fixes
+
+* accept @vueuse/core v15 in @ilingo/vuelidate and @ilingo/validup-vue ([9179c92](https://github.com/tada5hi/ilingo/commit/9179c927c78ebb2225f088dd5c9554884833a59d))
+
 ## [1.2.1](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.2.0...validup-vue-v1.2.1) (2026-10-27)
 
 
