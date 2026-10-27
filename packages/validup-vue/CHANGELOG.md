@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.2.1](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.2.0...validup-vue-v1.2.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** bump the minorandpatch group across 1 directory with 16 updates ([#1037](https://github.com/tada5hi/ilingo/issues/1037)) ([cdd39f8](https://github.com/tada5hi/ilingo/commit/cdd39f85478edab564bafe5b752abdf5f0245c28))
+* resolve lint issue, accept @vueuse/core v15 in @ilingo/vue ([69feca6](https://github.com/tada5hi/ilingo/commit/69feca6c3c60c19638a23232cd186afca7157d08))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/validup bumped from ^1.2.0 to ^1.2.1
+    * @ilingo/vue bumped from ^6.1.1 to ^6.1.2
+    * ilingo bumped from ^6.2.0 to ^6.2.1
+  * peerDependencies
+    * @ilingo/validup bumped from ^1.2.0 to ^1.2.1
+    * @ilingo/vue bumped from ^6.1.1 to ^6.1.2
+    * ilingo bumped from ^6.2.0 to ^6.2.1
+
 ## [1.2.0](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.1.0...validup-vue-v1.2.0) (2026-08-18)
 
 

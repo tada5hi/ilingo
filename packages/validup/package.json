@@ -1,7 +1,7 @@
 {
     "name": "@ilingo/validup",
     "type": "module",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "Translate validup Issues through ilingo — framework-agnostic core with default EN/DE/FR/ES catalogs.",
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",
@@ -67,12 +67,12 @@
         "@ebec/core": "^1.3.2"
     },
     "devDependencies": {
-        "ilingo": "^6.2.0",
+        "ilingo": "^6.2.1",
         "validup": "^2.0.1",
         "vite": "^8.3.5"
     },
     "peerDependencies": {
-        "ilingo": "^6.2.0",
+        "ilingo": "^6.2.1",
         "validup": "^2.0.1"
     },
     "publishConfig": {
