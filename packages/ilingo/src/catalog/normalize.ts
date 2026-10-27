@@ -62,8 +62,7 @@ function warnUnexpectedNode(context: string, received: unknown): void {
  * source tree is never mutated — only leaf values are shared by reference.
  */
 function mergeLines(target: Translations, source: Translations): Translations {
-    for (const key of Object.keys(source)) {
-        const value = source[key];
+    for (const [key, value] of Object.entries(source)) {
         if (typeof value === 'string' || isPluralNode(value)) {
             target[key] = value;
             continue;
