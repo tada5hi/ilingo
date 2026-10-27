@@ -1,5 +1,23 @@
 # Changelog
 
+## [7.1.2](https://github.com/tada5hi/ilingo/compare/vuelidate-v7.1.1...vuelidate-v7.1.2) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** bump the minorandpatch group across 1 directory with 16 updates ([#1037](https://github.com/tada5hi/ilingo/issues/1037)) ([cdd39f8](https://github.com/tada5hi/ilingo/commit/cdd39f85478edab564bafe5b752abdf5f0245c28))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/vue bumped from ^6.1.1 to ^6.1.2
+    * ilingo bumped from ^6.2.0 to ^6.2.1
+  * peerDependencies
+    * @ilingo/vue bumped from ^6.1.1 to ^6.1.2
+    * ilingo bumped from ^6.2.0 to ^6.2.1
+
 ## [7.1.1](https://github.com/tada5hi/ilingo/compare/vuelidate-v7.1.0...vuelidate-v7.1.1) (2026-08-18)
 
 
