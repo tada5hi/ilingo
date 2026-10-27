@@ -1,7 +1,7 @@
 {
     "name": "@ilingo/vuelidate",
     "type": "module",
-    "version": "7.1.2",
+    "version": "7.1.3",
     "description": "Vuelidate message adapter for ilingo — drop-in localized validator messages (EN/DE/FR/ES) for Vue 3 forms.",
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",

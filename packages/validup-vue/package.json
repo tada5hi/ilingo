@@ -1,7 +1,7 @@
 {
     "name": "@ilingo/validup-vue",
     "type": "module",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "Vue 3 plugin + composables that wire @ilingo/validup into a Vue app.",
     "main": "./dist/index.mjs",
     "module": "./dist/index.mjs",
