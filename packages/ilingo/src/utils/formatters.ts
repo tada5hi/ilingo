@@ -1,24 +1,5 @@
-/*
- * Copyright (c) 2026.
- * Author Peter Placzek (tada5hi)
- * For the full copyright and license information,
- * view the LICENSE file that was distributed with this source code.
- */
+import type { Formatter, FormatterOptions } from './types';
 
-/**
- * A formatter receives the raw `data` value, parsed options from the
- * placeholder, and the resolved locale, and returns the substituted string.
- * Register one via `Ilingo.registerFormatter(name, fn)` or the
- * `Options.formatters` constructor option; the built-ins are `number`,
- * `date`, and `list`.
- */
-export type Formatter = (
-    value: unknown,
-    options: Record<string, unknown>,
-    locale: string,
-) => string;
-
-export type FormatterOptions = Record<string, unknown>;
 
 /**
  * Parse the options-string segment of a template modifier.
@@ -29,14 +10,26 @@ export type FormatterOptions = Record<string, unknown>;
  * Numbers and booleans are auto-coerced; everything else stays a string.
  */
 export function parseFormatterOptions(input: string | undefined): FormatterOptions {
-    if (!input) return {};
+    if (!input) {
+        return {};
+    }
+
     const result: FormatterOptions = {};
+
     for (const segment of input.split(',')) {
         const eq = segment.indexOf('=');
-        if (eq === -1) continue;
+
+        if (eq === -1) {
+            continue;
+        }
+
         const key = segment.slice(0, eq).trim();
         const rawValue = segment.slice(eq + 1).trim();
-        if (!key || !rawValue) continue;
+
+        if (!key || !rawValue) {
+            continue;
+        }
+
         if (rawValue === 'true') {
             result[key] = true;
         } else if (rawValue === 'false') {
@@ -47,6 +40,7 @@ export function parseFormatterOptions(input: string | undefined): FormatterOptio
             result[key] = rawValue;
         }
     }
+
     return result;
 }
 
@@ -61,21 +55,36 @@ const NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 export function parseModifier(input: string): { name: string, options: string | undefined } | undefined {
     const trimmed = input.trim();
-    if (!trimmed) return undefined;
+
+    if (!trimmed) {
+        return undefined;
+    }
+
     const open = trimmed.indexOf('(');
+
     if (open === -1) {
         // Bare name. Must be a valid identifier — guards against malformed
         // input like 'number)' that has no opening paren but a stray closing one.
         return NAME_RE.test(trimmed) ? { name: trimmed, options: undefined } : undefined;
     }
+
     // The first `)` after the opening paren must be the very last character.
     // Catches stray closes like `number(currency=EUR))` and nested parens
     // (which the option grammar doesn't support).
     const close = trimmed.indexOf(')', open);
-    if (close !== trimmed.length - 1) return undefined;
+
+    if (close !== trimmed.length - 1) {
+        return undefined;
+    }
+
     const name = trimmed.slice(0, open).trim();
-    if (!NAME_RE.test(name)) return undefined;
+
+    if (!NAME_RE.test(name)) {
+        return undefined;
+    }
+
     const options = trimmed.slice(open + 1, close).trim();
+
     return { name, options };
 }
 
@@ -92,19 +101,28 @@ export class FormatterRegistry {
     constructor() {
         this.register('number', (value, options, locale) => {
             const numeric = typeof value === 'number' ? value : Number(value);
-            if (Number.isNaN(numeric)) return String(value);
+
+            if (Number.isNaN(numeric)) {
+                return String(value);
+            }
+
             const fmt = this.intl<Intl.NumberFormat>(
-                'number', 
-                locale, 
+                'number',
+                locale,
                 options,
                 () => new Intl.NumberFormat(locale, options as Intl.NumberFormatOptions),
             );
-            if (!fmt) return String(value);
+
+            if (!fmt) {
+                return String(value);
+            }
+
             return fmt.format(numeric);
         });
 
         this.register('date', (value, options, locale) => {
             let d: Date;
+
             if (value instanceof Date) {
                 d = value;
             } else if (typeof value === 'number' || typeof value === 'string') {
@@ -112,26 +130,41 @@ export class FormatterRegistry {
             } else {
                 return String(value);
             }
-            if (Number.isNaN(d.getTime())) return String(value);
+
+            if (Number.isNaN(d.getTime())) {
+                return String(value);
+            }
+
             const fmt = this.intl<Intl.DateTimeFormat>(
-                'date', 
-                locale, 
+                'date',
+                locale,
                 options,
                 () => new Intl.DateTimeFormat(locale, options as Intl.DateTimeFormatOptions),
             );
-            if (!fmt) return String(value);
+
+            if (!fmt) {
+                return String(value);
+            }
+
             return fmt.format(d);
         });
 
         this.register('list', (value, options, locale) => {
-            if (!Array.isArray(value)) return String(value);
+            if (!Array.isArray(value)) {
+                return String(value);
+            }
+
             const fmt = this.intl<Intl.ListFormat>(
-                'list', 
-                locale, 
+                'list',
+                locale,
                 options,
                 () => new Intl.ListFormat(locale, options as Intl.ListFormatOptions),
             );
-            if (!fmt) return value.map(String).join(', ');
+
+            if (!fmt) {
+                return value.map(String).join(', ');
+            }
+
             return fmt.format(value.map(String));
         });
     }
@@ -165,21 +198,27 @@ export class FormatterRegistry {
         create: () => T,
     ): T | undefined {
         let key: string;
+
         try {
             const sortedKeys = Object.keys(options).sort();
+
             key = `${kind}|${locale}|${JSON.stringify(options, sortedKeys)}`;
         } catch {
             return undefined;
         }
+
         let fmt = this.cache.get(key) as T | undefined;
+
         if (!fmt) {
             try {
                 fmt = create();
             } catch {
                 return undefined;
             }
+
             this.cache.set(key, fmt);
         }
+
         return fmt;
     }
 }

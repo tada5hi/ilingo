@@ -33,6 +33,7 @@ import type { App, Plugin } from 'vue';
  */
 export function install(app: App): void {
     const instance = injectIlingoSafe(app);
+
     if (!instance) {
         throw new Error(
             '@ilingo/validup-vue: no Ilingo instance found in the app context. ' +

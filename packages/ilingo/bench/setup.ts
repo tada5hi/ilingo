@@ -129,6 +129,7 @@ export function makeIlingo() {
 export function makeI18next() {
     const normalized = normalizeCatalog(catalog);
     const instance = i18next.createInstance();
+
     instance.init({
         lng: 'en',
         fallbackLng: 'en',
@@ -152,6 +153,7 @@ export function makeI18next() {
             // i18next's default `{{var}}` syntax already matches ilingo.
         },
     });
+
     return instance;
 }
 
@@ -165,6 +167,7 @@ function flatten(translations: Translations): Record<string, string> {
     const walk = (obj: Translations, prefix: string) => {
         for (const [k, v] of Object.entries(obj)) {
             const next = prefix ? `${prefix}.${k}` : k;
+
             if (typeof v === 'string') {
                 out[next] = v;
             } else if (isPluralNode(v)) {
@@ -177,6 +180,8 @@ function flatten(translations: Translations): Record<string, string> {
             }
         }
     };
+
     walk(translations, '');
+
     return out;
 }

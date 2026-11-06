@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-error-is-error -- Keep compatibility with the published Node.js runtime requirement. */
 /*
  * Copyright (c) 2024-2024.
  * Author Peter Placzek (tada5hi)
@@ -52,7 +53,8 @@ export function resolveSync(instance: IIlingo, ctx: GetContext): string | undefi
 }
 
 function reportSeedFailure(e: unknown): void {
-    const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    const message = (e instanceof Error) ? `${e.name}: ${e.message}` : String(e);
+
     if (warned.has(message)) {
         return;
     }
@@ -68,6 +70,7 @@ function reportSeedFailure(e: unknown): void {
 export function extractReactiveData(input: DataMaybeRef) : Data {
     const output : Data = {};
     const keys = Object.keys(input);
+
     for (const key of keys) {
         output[key] = unref(input[key]);
     }

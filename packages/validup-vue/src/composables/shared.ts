@@ -45,18 +45,24 @@ export function useTranslatedGroups(
         instance,
         { locale: locale.value },
     ));
+
     if (seed) {
         lastResolved.value = seed;
     }
 
     return computedAsync<IssueGroupTranslation[]>(async () => {
         const groups = toValue(source);
+
         if (!groups || groups.length === 0) {
             lastResolved.value = [];
+
             return [];
         }
+
         const next = await translateIssueGroups(groups, instance, { locale: locale.value });
+
         lastResolved.value = next;
+
         return next;
     }, lastResolved.value);
 }

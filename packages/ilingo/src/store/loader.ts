@@ -1,3 +1,13 @@
+import type {
+    CacheEntry,
+    IInvalidatingStore,
+    IMutableStore,
+    InvalidateListener,
+    LoaderFn,
+    LoaderStoreOptions,
+    StoreGetContext,
+    StoreSetContext,
+} from './types';
 /*
  * Copyright (c) 2026.
  * Author Peter Placzek (tada5hi)
@@ -8,61 +18,8 @@
 import { getPathValue, setPathValue } from 'pathtrace';
 import { normalizeNamespaceBody } from '../catalog/normalize';
 import { SyncUnavailableError } from '../errors';
-import type { Leaf, NamespaceBodyInput, Translations } from '../types';
+import type { Leaf, Translations } from '../types';
 import { isPluralNode } from '../utils/identify';
-import type {
-    IInvalidatingStore,
-    IMutableStore,
-    InvalidateListener,
-    StoreGetContext,
-    StoreSetContext,
-} from './types';
-
-/**
- * User-supplied loader. Resolves a `(locale, namespace)` pair to a
- * `TranslationsNode` (`defineTranslations({ ... })`) — the namespace body whose
- * `(locale, namespace)` is fixed by the call arguments.
- *
- * Return `undefined` to signal "no data for this pair" — the store caches
- * the absence so the loader isn't called again for the same pair.
- */
-export type LoaderFn = (
-    locale: string,
-    namespace: string,
-) => Promise<NamespaceBodyInput | undefined> | NamespaceBodyInput | undefined;
-
-export type LoaderStoreOptions = {
-    /**
-     * Function that loads a `Translations` on demand for a given
-     * `(locale, namespace)` pair. Typically wraps a dynamic `import()`:
-     *
-     * ```typescript
-     * new LoaderStore({
-     *     // each module's default export is a translations node — a `.json` file
-     *     // shaped `{ "type": "translations", "data": { ... } }`, or a `.ts` file
-     *     // `export default defineTranslations({ ... })`.
-     *     loader: (locale, namespace) =>
-     *         import(`./locales/${locale}/${namespace}.json`).then((m) => m.default),
-     * });
-     * ```
-     */
-    loader: LoaderFn,
-    /**
-     * Optional list of locales the loader knows about. Returned verbatim
-     * from `getLocales()` so `Ilingo.getLocales()` can answer without
-     * touching the loader (which would otherwise mean probing every
-     * (locale, namespace) combination). If omitted, `getLocales()` returns
-     * whatever has been cached so far.
-     */
-    locales?: string[],
-
-    id?: string | symbol,
-};
-
-type CacheEntry = {
-    /** `undefined` when the loader explicitly returned no data — cached as a miss. */
-    record: Translations | undefined,
-};
 
 /**
  * Separator used to join `(locale, namespace)` into a cache key. The NUL byte
@@ -70,7 +27,7 @@ type CacheEntry = {
  * so the resulting key is unambiguous even when a namespace string contains
  * characters that would collide with a printable separator.
  */
-const KEY_SEP = '\u0000';
+const KEY_SEP = '\0';
 
 /**
  * Lazy-loaded store backed by a user-supplied `loader(locale, namespace)`.
@@ -123,6 +80,7 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
 
     async get(context: StoreGetContext): Promise<Leaf | undefined> {
         const record = await this.loadNamespace(context.locale, context.namespace);
+
         return this.readKey(record, context.key);
     }
 
@@ -136,6 +94,7 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
      */
     getSync(context: StoreGetContext): Leaf | undefined {
         const cached = this.cache.get(this.cacheKey(context.locale, context.namespace));
+
         if (!cached) {
             throw new SyncUnavailableError(
                 `[ilingo] "${context.locale}/${context.namespace}" is not loaded yet — ` +
@@ -153,11 +112,20 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
     }
 
     protected readKey(record: Translations | undefined, key: string): Leaf | undefined {
-        if (!record) return undefined;
+        if (!record) {
+            return undefined;
+        }
 
         const output = getPathValue(record, key);
-        if (typeof output === 'string') return output;
-        if (isPluralNode(output)) return output.data;
+
+        if (typeof output === 'string') {
+            return output;
+        }
+
+        if (isPluralNode(output)) {
+            return output.data;
+        }
+
         return undefined;
     }
 
@@ -166,6 +134,7 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
         // namespace hasn't been loaded yet, load it first so we don't overwrite
         // the loader's data on a subsequent get().
         const record = (await this.loadNamespace(context.locale, context.namespace)) ?? {};
+
         setPathValue(record, context.key, context.value);
         this.cache.set(this.cacheKey(context.locale, context.namespace), { record });
         // Notify subscribers — `IInvalidatingStore` consumers (Vue's
@@ -179,14 +148,20 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
         if (this.locales.length > 0) {
             return [...this.locales];
         }
+
         // No declared locale list — return the set of locales we've seen
         // loads for. Best-effort; consumers that want a complete list
         // should pass `locales` to the constructor.
         const seen = new Set<string>();
+
         for (const key of this.cache.keys()) {
             const sep = key.indexOf(KEY_SEP);
-            if (sep >= 0) seen.add(key.slice(0, sep));
+
+            if (sep >= 0) {
+                seen.add(key.slice(0, sep));
+            }
         }
+
         return Array.from(seen);
     }
 
@@ -200,12 +175,16 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
             this.cache.clear();
         } else if (typeof namespace === 'undefined') {
             const prefix = `${locale}${KEY_SEP}`;
+
             for (const key of this.cache.keys()) {
-                if (key.startsWith(prefix)) this.cache.delete(key);
+                if (key.startsWith(prefix)) {
+                    this.cache.delete(key);
+                }
             }
         } else {
             this.cache.delete(this.cacheKey(locale, namespace));
         }
+
         // Fire after cache is dropped so subscribers see the post-invalidate
         // state if they probe the store.
         this.emit(locale, namespace);
@@ -216,7 +195,9 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
         if (event !== 'invalidate') {
             return () => {};
         }
+
         this.listeners.add(listener);
+
         return () => {
             this.listeners.delete(listener);
         };
@@ -235,12 +216,18 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
     protected async loadNamespace(locale: string, namespace: string): Promise<Translations | undefined> {
         const key = this.cacheKey(locale, namespace);
         const cached = this.cache.get(key);
-        if (cached) return cached.record;
+
+        if (cached) {
+            return cached.record;
+        }
 
         // De-duplicate concurrent loads — multiple `get()` calls for the
         // same (locale, namespace) share one loader invocation.
         const existing = this.inflight.get(key);
-        if (existing) return existing;
+
+        if (existing) {
+            return existing;
+        }
 
         // Capture the generation at load start. If invalidate() bumps it
         // before we resolve, our result is stale by definition — drop it on
@@ -251,15 +238,18 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
         const promise = Promise.resolve(this.loaderFn(locale, namespace))
             .then((body) => {
                 this.inflight.delete(key);
+
                 // Reduce the loaded namespace body to the internal `Translations`
                 // shape before caching — every store holds the normalized
                 // form. A nullish body is cached as a miss.
                 const record = typeof body === 'undefined' ?
                     undefined :
                     normalizeNamespaceBody(body);
+
                 if (this.generation === startGeneration) {
                     this.cache.set(key, { record });
                 }
+
                 return record;
             })
             .catch((err) => {
@@ -267,9 +257,12 @@ export class LoaderStore implements IInvalidatingStore, IMutableStore {
                 // will try again. Propagate so the orchestrator's existing
                 // missing-key path can handle it.
                 this.inflight.delete(key);
+
                 throw err;
             });
+
         this.inflight.set(key, promise);
+
         return promise;
     }
 }

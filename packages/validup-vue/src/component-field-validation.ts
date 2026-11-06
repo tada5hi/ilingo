@@ -57,6 +57,7 @@ const IFieldValidation = defineComponent({
 
         return () => {
             const slot = slots[SlotName.DEFAULT];
+
             return slot ? slot({ value }) : [];
         };
     },

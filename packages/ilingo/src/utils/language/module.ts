@@ -14,6 +14,7 @@ export function isISO639LanguageCode(input: string) {
 
 export function isBCP47LanguageCode(input: string) {
     const hyphenIndex = input.indexOf('-');
+
     if (hyphenIndex !== -1) {
         input = input.substring(0, hyphenIndex);
     }

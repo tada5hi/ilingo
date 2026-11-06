@@ -79,26 +79,33 @@ const IValidupT = defineComponent({
             // No placeholder slots → behave like <IValidup> leaf text.
             if (slotNames.length === 0) {
                 const output: VNodeChild[] = [];
+
                 for (const t of textTranslations.value) {
                     output.push(t.message);
                 }
+
                 return output;
             }
 
             // Slots present → per-issue <ITranslateT> with forwarded scoped slots.
             const output: VNodeChild[] = [];
+
             props.issues.forEach((issue, index) => {
                 const { code } = issue;
+
                 if (typeof code !== 'string' || code.length === 0) {
                     // No code → can't key a catalog entry; render the raw message.
                     output.push(props.tag ? h(props.tag, issue.message) : issue.message);
+
                     return;
                 }
 
                 // Forward each consumer slot, injecting the { issue, code } scope.
                 const forwarded: Record<string, () => VNodeChild> = {};
+
                 for (const name of slotNames) {
                     const slotFn = slots[name]!;
+
                     forwarded[name] = () => slotFn({ issue, code });
                 }
 
@@ -114,6 +121,7 @@ const IValidupT = defineComponent({
                     forwarded,
                 ));
             });
+
             return output;
         };
     },

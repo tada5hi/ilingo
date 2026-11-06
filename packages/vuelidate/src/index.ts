@@ -26,6 +26,7 @@ export function install(
     input?: Options | IIlingo,
 ) : void {
     const instance = applyInstallInput(app, input);
+
     instance.registerStore(createMemoryStore());
 }
 

@@ -59,10 +59,12 @@ export const ITranslateT = defineComponent({
         // Eagerly validated at setup so a malformed initial path fails on
         // mount rather than asynchronously on first render.
         parsePath(props.path);
+
         const parsed = computed(() => parsePath(props.path));
 
         const buildContext = () => {
             const { namespace, key } = parsed.value;
+
             return {
                 namespace,
                 key,
@@ -76,6 +78,7 @@ export const ITranslateT = defineComponent({
             async () => {
                 const context = buildContext();
                 const value = await instance.get(context);
+
                 return value ?? `${context.namespace}.${context.key}`;
             },
             // Seeded synchronously where the stores allow it, so the initial
@@ -88,6 +91,7 @@ export const ITranslateT = defineComponent({
 
         return () => {
             const children: VNodeChild[] = [];
+
             for (const token of tokens.value) {
                 if (token.kind === 'text') {
                     children.push(token.value);
@@ -99,6 +103,7 @@ export const ITranslateT = defineComponent({
                     // props.data in case the value is a Ref that wasn't
                     // unwrapped by extractReactiveData (defensive).
                     const raw = props.data?.[token.name];
+
                     if (typeof raw === 'undefined') {
                         // Preserve the FULL original placeholder, including any
                         // modifier expression — dropping it would silently
@@ -111,6 +116,7 @@ export const ITranslateT = defineComponent({
                     }
                 } else {
                     const slotFn = slots[token.name];
+
                     if (slotFn) {
                         // Spread the slot's VNodes inline.
                         for (const node of slotFn()) {
@@ -121,10 +127,12 @@ export const ITranslateT = defineComponent({
                     }
                 }
             }
+
             if (!props.tag) {
                 // `tag=""` renders the children without a wrapper element.
                 return children;
             }
+
             return h(props.tag, children);
         };
     },
@@ -132,11 +140,13 @@ export const ITranslateT = defineComponent({
 
 function parsePath(path: string): { namespace: string, key: string } {
     const index = path.indexOf('.');
+
     // Reject missing dot, leading dot (empty namespace), and trailing dot (empty key).
     if (index <= 0 || index >= path.length - 1) {
         throw new SyntaxError(
             `[ilingo] <ITranslateT path="${path}"> requires a "namespace.key" path.`,
         );
     }
+
     return { namespace: path.slice(0, index), key: path.slice(index + 1) };
 }

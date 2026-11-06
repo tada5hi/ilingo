@@ -17,9 +17,11 @@ import type { Fallback } from '../types';
 export function bcp47Parents(locale: string): string[] {
     const parts = locale.split('-');
     const chain: string[] = [];
+
     for (let i = parts.length - 1; i > 0; i--) {
         chain.push(parts.slice(0, i).join('-'));
     }
+
     return chain;
 }
 
@@ -67,12 +69,15 @@ export function resolveLocaleChain(
     // defaultLocale earlier in the chain if it appears in `explicit`.
     const seen = new Set<string>();
     const chain: string[] = [];
+
     for (const candidate of [locale, ...explicit]) {
         if (candidate !== defaultLocale && !seen.has(candidate)) {
             seen.add(candidate);
             chain.push(candidate);
         }
     }
+
     chain.push(defaultLocale);
+
     return chain;
 }

@@ -76,6 +76,7 @@ export class Ilingo implements IIlingo {
         this.warnedKeys = new Set();
         this.warnedFormatters = new Set();
         this.formatters = new FormatterRegistry();
+
         if (input.formatters) {
             for (const [name, fn] of Object.entries(input.formatters)) {
                 this.formatters.register(name, fn);
@@ -83,11 +84,15 @@ export class Ilingo implements IIlingo {
         }
 
         this.stores = new Map<symbol, IStore>();
-        if (input.store) {
-            const stores = Array.isArray(input.store) ? input.store : [input.store];
-            for (const store of stores) {
-                this.registerStore(store);
-            }
+
+        if (!input.store) {
+            return;
+        }
+
+        const stores = Array.isArray(input.store) ? input.store : [input.store];
+
+        for (const store of stores) {
+            this.registerStore(store);
         }
     }
 
@@ -168,6 +173,7 @@ export class Ilingo implements IIlingo {
             fallback: 'fallback' in overrides ? overrides.fallback : this.fallback,
             onMissingKey: 'onMissingKey' in overrides ? overrides.onMissingKey : this.onMissingKey,
         });
+
         // Inherit stores in order, preserving each store's symbol identity
         // (overrides.store, if any, was already added first by the
         // constructor under a minted symbol — appending parent's keeps the
@@ -176,10 +182,12 @@ export class Ilingo implements IIlingo {
         for (const [id, store] of this.stores) {
             child.stores.set(id, store);
         }
+
         // Share the formatter registry so custom registrations on the parent
         // are honoured. Trade-off: mutations on either side are visible to
         // both. Callers that need isolation should construct manually.
         child.formatters = this.formatters;
+
         // Apply any new formatters from the overrides AFTER pointing at the
         // shared registry, so they land on the shared map and are visible to
         // the parent too. (Type contract: overrides.formatters is honoured.)
@@ -188,6 +196,7 @@ export class Ilingo implements IIlingo {
                 child.formatters.register(name, fn);
             }
         }
+
         return child;
     }
 
@@ -225,9 +234,11 @@ export class Ilingo implements IIlingo {
 
     async getLocales(): Promise<string[]> {
         const locales: string[] = [];
+
         for (const store of this.stores.values()) {
             locales.push(...await store.getLocales());
         }
+
         return Array.from(new Set(locales));
     }
 
@@ -249,6 +260,7 @@ export class Ilingo implements IIlingo {
     async getResolvedLocale(ctx: GetContext): Promise<string | undefined> {
         const chain = this.getResolvedLocaleChain(ctx);
         const hit = await this.lookup(chain, ctx);
+
         return hit?.locale;
     }
 
@@ -259,6 +271,7 @@ export class Ilingo implements IIlingo {
         const chain = this.getResolvedLocaleChain({ locale: requestedLocale });
 
         const hit = await this.lookup(chain, ctx);
+
         return hit ?
             this.render(hit.leaf, hit.locale, ctx) :
             this.handleMissingKey(ctx, requestedLocale, chain);
@@ -316,9 +329,11 @@ export class Ilingo implements IIlingo {
     protected render(leaf: Leaf, locale: string, ctx: GetContext): string {
         const message = this.selectPluralForm(leaf, locale, ctx.count);
         const data: Data = { ...(ctx.data || {}) };
+
         if (typeof ctx.count === 'number' && typeof data.count === 'undefined') {
             data.count = ctx.count;
         }
+
         return this.format(message, data, locale);
     }
 
@@ -349,11 +364,13 @@ export class Ilingo implements IIlingo {
                     namespace: ctx.namespace,
                     key: ctx.key,
                 });
+
                 if (typeof candidate !== 'undefined') {
                     return { locale, leaf: candidate };
                 }
             }
         }
+
         return undefined;
     }
 
@@ -403,11 +420,13 @@ export class Ilingo implements IIlingo {
                     namespace: ctx.namespace,
                     key: ctx.key,
                 });
+
                 if (typeof candidate !== 'undefined') {
                     return { locale, leaf: candidate };
                 }
             }
         }
+
         return undefined;
     }
 
@@ -426,6 +445,7 @@ export class Ilingo implements IIlingo {
                 locale: requestedLocale,
                 resolvedLocale: chain[chain.length - 1],
             });
+
             return typeof result === 'string' ? result : undefined;
         }
 
@@ -435,6 +455,7 @@ export class Ilingo implements IIlingo {
         }
 
         const id = `${requestedLocale}|${ctx.namespace}|${ctx.key}`;
+
         if (!this.warnedKeys.has(id)) {
             this.warnedKeys.add(id);
             // eslint-disable-next-line no-console
@@ -443,6 +464,7 @@ export class Ilingo implements IIlingo {
                 `(locale=${requestedLocale})`,
             );
         }
+
         return undefined;
     }
 
@@ -455,20 +477,25 @@ export class Ilingo implements IIlingo {
         if (typeof leaf === 'string') {
             return leaf;
         }
+
         if (typeof count !== 'number') {
             return leaf.other;
         }
+
         const category = this.getPluralRules(locale).select(count);
         const candidate = leaf[category];
+
         return typeof candidate === 'string' ? candidate : leaf.other;
     }
 
     protected getPluralRules(locale: string): Intl.PluralRules {
         let rules = this.pluralRulesCache.get(locale);
+
         if (!rules) {
             rules = new Intl.PluralRules(locale);
             this.pluralRulesCache.set(locale, rules);
         }
+
         return rules;
     }
 
@@ -491,8 +518,10 @@ export class Ilingo implements IIlingo {
 
     protected handleUnknownFormatter(name: string): void {
         /* istanbul ignore next */
-        if (isProductionEnv()) return;
-        if (this.warnedFormatters.has(name)) return;
+        if (isProductionEnv() || this.warnedFormatters.has(name)) {
+            return;
+        }
+
         this.warnedFormatters.add(name);
         // eslint-disable-next-line no-console
         console.warn(`[ilingo] unknown formatter "${name}" — falling back to raw value`);

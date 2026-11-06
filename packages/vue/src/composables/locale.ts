@@ -27,6 +27,7 @@ export function provideLocale(
 
     if (typeof app === 'undefined') {
         provide(LocaleSymbol, value);
+
         return;
     }
 
@@ -35,6 +36,7 @@ export function provideLocale(
 
 export function injectLocale(app?: App) : Ref<string> {
     const locale = inject<Ref<string>>(LocaleSymbol, app);
+
     if (!locale) {
         throw new Error('An ilingo locale is not present in the vue context.');
     }

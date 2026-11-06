@@ -96,6 +96,7 @@ const IValidup = defineComponent({
                 const output: VNodeChild[] = [];
 
                 const cross = slots[SlotName.CROSS_CUTTING];
+
                 if (cross) {
                     output.push(...cross({ translations: crossCuttingTranslations.value }));
                 } else {
@@ -105,6 +106,7 @@ const IValidup = defineComponent({
                 }
 
                 const groups = slots[SlotName.GROUPS];
+
                 if (groups) {
                     output.push(...groups({ translations: groupTranslations.value }));
                 } else {
@@ -114,6 +116,7 @@ const IValidup = defineComponent({
                 }
 
                 const fields = slots[SlotName.FIELDS];
+
                 if (fields) {
                     output.push(...fields({ translations: fieldTranslations.value }));
                 } else {
@@ -127,11 +130,14 @@ const IValidup = defineComponent({
 
             // Leaf mode — :issues shortcut.
             const slot = slots[SlotName.DEFAULT];
+
             if (typeof slot === 'undefined') {
                 const output: VNodeChild[] = [];
+
                 for (const t of leafTranslations.value) {
                     output.push(t.message);
                 }
+
                 return output;
             }
 

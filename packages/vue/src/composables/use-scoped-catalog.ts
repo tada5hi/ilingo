@@ -1,3 +1,4 @@
+import type { UseScopedCatalogResult } from './types';
 /*
  * Copyright (c) 2026.
  * Author Peter Placzek (tada5hi)
@@ -6,7 +7,7 @@
  */
 
 import { computedAsync } from '@vueuse/core';
-import type { CatalogInput, IIlingo } from 'ilingo';
+import type { CatalogInput } from 'ilingo';
 import { MemoryStore } from 'ilingo';
 import type { Ref } from 'vue';
 import { unref } from 'vue';
@@ -14,18 +15,6 @@ import type { GetContextReactive } from '../types';
 import { injectIlingo, provideIlingo } from './instance';
 import { injectLocale } from './locale';
 import { extractReactiveData, resolveSync } from './utils';
-
-export type UseScopedCatalogResult = {
-    /** The scoped `Ilingo` instance — exposed for advanced cases. */
-    instance: IIlingo;
-    /**
-     * `useTranslation`-shaped lookup bound to the scoped instance. Use this
-     * inside the same setup that called `useScopedCatalog` — provide/inject
-     * is hierarchical, so a same-component `useTranslation` would still see
-     * the parent instance.
-     */
-    t(ctx: GetContextReactive): Ref<string>;
-};
 
 /**
  * Scope a per-component message catalog. Creates a fresh `Ilingo` instance,
@@ -93,6 +82,7 @@ export function useScopedCatalog(options: { messages: CatalogInput }): UseScoped
         return computedAsync(
             async () => {
                 const value = await instance.get(buildContext());
+
                 return value || defaultValue;
             },
             // Synchronous seed, so a scoped message renders correctly on the

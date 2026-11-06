@@ -1,3 +1,4 @@
+import type { TemplateContext, TemplateToken } from './types';
 /*
  * Copyright (c) 2023.
  * Author Peter Placzek (tada5hi)
@@ -5,37 +6,10 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { FormatterRegistry } from './formatters';
+
 import { parseFormatterOptions, parseModifier } from './formatters';
 
-export type TemplateContext = {
-    locale: string;
-    formatters: FormatterRegistry;
-    onUnknownFormatter?: (name: string) => void;
-};
-
 const DEFAULT_REGEX = /\{\{\s*([^,}]+?)(?:\s*,\s*([^}]+?))?\s*\}\}/g;
-
-/**
- * Tokens emitted by `tokenize()` for slot-aware rendering (e.g. Vue's
- * `<ITranslateT>` component).
- *
- * - `text`: literal substring between placeholders.
- * - `var`:  `{{name}}` or `{{name, modifier(opts)}}`. The orchestrator
- *           replaces these with `data[name]` (optionally piped through
- *           a formatter); slot renderers do the same.
- * - `slot`: `{slot-name}` (single curly braces). Slot renderers fill
- *           these from a named scoped slot; plain `template()` leaves
- *           them as literal text (no slot-aware substitution).
- */
-export type TextToken = { kind: 'text', value: string };
-export type VarToken = {
-    kind: 'var',
-    name: string,
-    modifierExpression?: string,
-};
-export type SlotToken = { kind: 'slot', name: string };
-export type TemplateToken = TextToken | VarToken | SlotToken;
 
 // `{{...}}` for vars (with optional modifier) OR `{ident}` for slots.
 // Slot identifier is restricted to a JS-ish identifier so an inline JSON
@@ -52,30 +26,37 @@ const TOKEN_REGEX =    /\{\{\s*([^,}]+?)(?:\s*,\s*([^}]+?))?\s*\}\}|\{\s*([A-Za-
 export function tokenize(str: string): TemplateToken[] {
     const tokens: TemplateToken[] = [];
     let lastIndex = 0;
+
     // `replace()` exposes match index via the named-callback signature.
     // `matchAll` is cleaner here.
     for (const match of str.matchAll(TOKEN_REGEX)) {
         const start = match.index ?? 0;
+
         if (start > lastIndex) {
             tokens.push({ kind: 'text', value: str.slice(lastIndex, start) });
         }
 
         const [, varName, modifierExpression, slotName] = match;
+
         if (typeof slotName === 'string') {
             tokens.push({ kind: 'slot', name: slotName });
         } else if (typeof varName === 'string') {
             const token: TemplateToken = { kind: 'var', name: varName.trim() };
+
             if (typeof modifierExpression === 'string') {
                 token.modifierExpression = modifierExpression.trim();
             }
+
             tokens.push(token);
         }
 
         lastIndex = start + match[0].length;
     }
+
     if (lastIndex < str.length) {
         tokens.push({ kind: 'text', value: str.slice(lastIndex) });
     }
+
     return tokens;
 }
 
@@ -100,6 +81,7 @@ export function template(
 ): string {
     let regex: RegExp;
     let ctx: TemplateContext | undefined;
+
     if (ctxOrRegex instanceof RegExp) {
         regex = ctxOrRegex;
         ctx = undefined;
@@ -110,7 +92,10 @@ export function template(
 
     return str.replace(regex, (match, rawKey: string, modExpr: string | undefined) => {
         const key = rawKey.trim();
-        if (typeof data[key] === 'undefined') return match;
+
+        if (typeof data[key] === 'undefined') {
+            return match;
+        }
 
         const value = data[key];
 
@@ -119,15 +104,21 @@ export function template(
         }
 
         const modifier = parseModifier(modExpr);
-        if (!modifier) return String(value);
+
+        if (!modifier) {
+            return String(value);
+        }
 
         const formatter = ctx.formatters.get(modifier.name);
+
         if (!formatter) {
             ctx.onUnknownFormatter?.(modifier.name);
+
             return String(value);
         }
 
         const options = parseFormatterOptions(modifier.options);
+
         return formatter(value, options, ctx.locale);
     });
 }

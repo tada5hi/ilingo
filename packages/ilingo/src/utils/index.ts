@@ -7,9 +7,18 @@
 
 export * from './env';
 export * from './formatters';
+export type { Formatter, FormatterOptions } from './types';
 export * from './identify';
 export * from './language';
 export * from './translations-record';
+export type { TranslationsRecordParsed } from './types';
 export * from './locale';
 export * from './negotiate';
 export * from './template';
+export type {
+    TemplateContext,
+    TextToken,
+    VarToken,
+    SlotToken,
+    TemplateToken,
+} from './types';

@@ -193,22 +193,31 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
             delete this.data[locale];
         } else {
             const namespaces = this.loaded[locale];
+
             if (namespaces) {
                 this.loaded[locale] = namespaces.filter((g) => g !== namespace);
             }
+
             if (this.data[locale]) {
                 delete this.data[locale][namespace];
             }
         }
+
         for (const listener of this.listeners) {
             listener(locale, namespace);
         }
     }
 
     on(event: 'invalidate', listener: InvalidateListener): () => void {
-        if (event !== 'invalidate') return () => {};
+        if (event !== 'invalidate') {
+            return () => {};
+        }
+
         this.listeners.add(listener);
-        return () => { this.listeners.delete(listener); };
+
+        return () => {
+            this.listeners.delete(listener);
+        };
     }
 
     /**
@@ -221,6 +230,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
             await this.watcher.close();
             this.watcher = undefined;
         }
+
         this.listeners.clear();
     }
 
@@ -254,6 +264,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
         // still-empty record and report a spurious miss.
         const key = `${locale} ${namespace}`;
         const inflight = this.loading.get(key);
+
         if (inflight) {
             return inflight;
         }
@@ -262,6 +273,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
             .finally(() => {
                 this.loading.delete(key);
             });
+
         this.loading.set(key, promise);
 
         return promise;
@@ -342,9 +354,11 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
         }
 
         this.initLines(namespace, locale);
+
         if (files.length > 0) {
             this.data[locale][namespace] = this.mergeFiles(files);
         }
+
         // Mark loaded even when no file backed the namespace: the answer
         // ("nothing here") is now cached, and repeating the directory scan on
         // every get() for a namespace that doesn't exist is the behaviour this
@@ -393,6 +407,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
      */
     protected async startWatcher(): Promise<void> {
         let chokidar: ChokidarLike;
+
         try {
             // Lazy import so the dep is loaded only when watch mode is on.
             chokidar = await import('chokidar') as unknown as ChokidarLike;
@@ -403,6 +418,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
                 'Install it via `npm i chokidar -D`.',
                 err,
             );
+
             return;
         }
 
@@ -410,10 +426,15 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
             ignoreInitial: true,
             persistent: false,
         });
+
         const onPath = (changedPath: string) => {
             const parsed = this.parseLocaleNamespace(changedPath);
-            if (parsed) this.invalidate(parsed.locale, parsed.namespace);
+
+            if (parsed) {
+                this.invalidate(parsed.locale, parsed.namespace);
+            }
         };
+
         this.watcher.on('add', onPath);
         this.watcher.on('change', onPath);
         this.watcher.on('unlink', onPath);
@@ -427,25 +448,31 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
      */
     protected parseLocaleNamespace(filePath: string): { locale: string, namespace: string } | undefined {
         const absPath = path.resolve(filePath);
+
         for (const dir of this.directories) {
             const absDir = path.resolve(dir);
+
             if (absPath.startsWith(`${absDir}${path.sep}`)) {
                 const rel = absPath.slice(absDir.length + 1);
                 const parts = rel.split(path.sep);
+
                 if (parts.length === 2) {
                     const [locale, file] = parts;
                     const dotIdx = file.lastIndexOf('.');
+
                     if (dotIdx > 0 && isBCP47LanguageCode(locale)) {
                         return { locale, namespace: file.slice(0, dotIdx) };
                     }
                 }
             }
         }
+
         return undefined;
     }
 
     protected buildLocatorOptionsForLocale(locale?: string): LocatorOptionsInput {
         let directory: string[];
+
         if (this.directories.length === 0) {
             directory = [locale || 'en'];
         } else {
@@ -466,6 +493,7 @@ export class FSStore extends MemoryStore implements IInvalidatingStore {
 
     protected mergeFiles(files: unknown[]) {
         const translations: Translations = {};
+
         for (const file of files) {
             // Each file is a translations node — `{ type: 'translations', data }` (JSON) or
             // `export default defineTranslations({ ... })` (TS/JS). Reduce it to the
@@ -495,6 +523,7 @@ function isAsyncOnlyLoadError(input: unknown): boolean {
     }
 
     const { code, cause } = input as { code?: unknown, cause?: unknown };
+
     if (typeof code === 'string' && ASYNC_ONLY_LOAD_ERROR_CODES.has(code)) {
         return true;
     }

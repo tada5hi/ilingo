@@ -18,6 +18,7 @@ export default defineComponent({
     setup(props) {
         const parseKey = (key: string) : [string, string] => {
             const index = key.indexOf('.');
+
             if (index === -1) {
                 throw new SyntaxError('The key with required namespace prefix could not be parsed.');
             }

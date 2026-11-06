@@ -5,7 +5,14 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import type { CatalogInput, Leaf, PluralNode } from '../types';
+import type {
+    CatalogInput,
+    Leaf,
+    NamespaceBodyInput,
+    PluralNode,
+    Translations,
+} from '../types';
+
 
 export type StoreGetContext = {
     locale: string,
@@ -189,3 +196,49 @@ export function isInvalidatingStore(store: IStore): store is IInvalidatingStore 
     return typeof (store as Partial<IInvalidatingStore>).invalidate === 'function' &&
         typeof (store as Partial<IInvalidatingStore>).on === 'function';
 }
+
+/**
+ * User-supplied loader. Resolves a `(locale, namespace)` pair to a
+ * `TranslationsNode` (`defineTranslations({ ... })`) — the namespace body whose
+ * `(locale, namespace)` is fixed by the call arguments.
+ *
+ * Return `undefined` to signal "no data for this pair" — the store caches
+ * the absence so the loader isn't called again for the same pair.
+ */
+export type LoaderFn = (
+    locale: string,
+    namespace: string,
+) => Promise<NamespaceBodyInput | undefined> | NamespaceBodyInput | undefined;
+
+export type LoaderStoreOptions = {
+    /**
+     * Function that loads a `Translations` on demand for a given
+     * `(locale, namespace)` pair. Typically wraps a dynamic `import()`:
+     *
+     * ```typescript
+     * new LoaderStore({
+     *     // each module's default export is a translations node — a `.json` file
+     *     // shaped `{ "type": "translations", "data": { ... } }`, or a `.ts` file
+     *     // `export default defineTranslations({ ... })`.
+     *     loader: (locale, namespace) =>
+     *         import(`./locales/${locale}/${namespace}.json`).then((m) => m.default),
+     * });
+     * ```
+     */
+    loader: LoaderFn,
+    /**
+     * Optional list of locales the loader knows about. Returned verbatim
+     * from `getLocales()` so `Ilingo.getLocales()` can answer without
+     * touching the loader (which would otherwise mean probing every
+     * (locale, namespace) combination). If omitted, `getLocales()` returns
+     * whatever has been cached so far.
+     */
+    locales?: string[],
+
+    id?: string | symbol,
+};
+
+export type CacheEntry = {
+    /** `undefined` when the loader explicitly returned no data — cached as a miss. */
+    record: Translations | undefined,
+};

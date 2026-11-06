@@ -48,6 +48,7 @@ const IVuelidate = defineComponent({
         return () => {
             if (typeof slots[SlotName.DEFAULT] === 'undefined') {
                 const output : VNodeChild = [];
+
                 for (let i = 0; i < keyValuePairs.value.length; i++) {
                     output.push(keyValuePairs.value[i].value);
                 }

@@ -51,17 +51,31 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
     // computedAsync re-runs on the next tick because `invalidationTick.value`
     // is in its dep set.
     const unsubscribes: Array<() => void> = [];
+
     for (const store of instance.stores.values()) {
-        if (!isInvalidatingStore(store)) continue;
+        if (!isInvalidatingStore(store)) {
+            continue;
+        }
+
         const stop = store.on('invalidate', (invLocale, invGroup) => {
-            if (invLocale !== undefined && invLocale !== (ctx.locale ?? locale.value)) return;
-            if (invGroup !== undefined && invGroup !== ctx.namespace) return;
+            if (invLocale !== undefined && invLocale !== (ctx.locale ?? locale.value)) {
+                return;
+            }
+
+            if (invGroup !== undefined && invGroup !== ctx.namespace) {
+                return;
+            }
+
             invalidationTick.value += 1;
         });
+
         unsubscribes.push(stop);
     }
+
     onScopeDispose(() => {
-        for (const stop of unsubscribes) stop();
+        for (const stop of unsubscribes) {
+            stop();
+        }
     });
 
     return computedAsync(
