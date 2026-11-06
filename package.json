@@ -3,7 +3,7 @@
     "version": "0.0.0",
     "private": true,
     "type": "module",
-    "description": "A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript — pluggable stores, BCP-47 fallback, ICU-lite plurals, Intl formatters.",
+    "description": "A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript \u2014 pluggable stores, BCP-47 fallback, ICU-lite plurals, Intl formatters.",
     "author": {
         "name": "Peter Placzek",
         "email": "contact@tada5hi.net",
@@ -40,7 +40,7 @@
     ],
     "license": "MIT",
     "engines": {
-        "node": "^24.11.0 || >=26.0.0"
+        "node": "^24.15.0 || >=26.0.0"
     },
     "devDependencies": {
         "@size-limit/preset-small-lib": "^14.3.0",

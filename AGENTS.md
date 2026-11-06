@@ -15,7 +15,7 @@ npm run lint                  # eslint (flat config) across the repo
 npm run lint:fix              # eslint --fix
 ```
 
-- **Development Node.js**: 24.11+ on the 24.x line, or 26+ (CI runs on 24). Published runtime requirements are declared in each package manifest.
+- **Development Node.js**: 24.15+ on the 24.x line, or 26+ (CI runs on 24). Published runtime requirements are declared in each package manifest.
 - **Package manager**: npm (workspaces)
 - **Build orchestration**: Nx (`nx.json`, cacheable: `build`, `lint`, `test`)
 - **Bundler**: tsdown (Rolldown + Oxc), `dts: false` everywhere — JS only; `@ilingo/vue` adds `unplugin-vue/rolldown` to compile `.vue` SFCs

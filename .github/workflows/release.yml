@@ -15,7 +15,7 @@ permissions:
     id-token: write
 
 env:
-    PRIMARY_NODE_VERSION: 24
+    PRIMARY_NODE_VERSION: '^24.15.0'
 
 defaults:
     run:

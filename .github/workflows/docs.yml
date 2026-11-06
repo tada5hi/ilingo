@@ -19,7 +19,7 @@ concurrency:
     cancel-in-progress: true
 
 env:
-    PRIMARY_NODE_VERSION: 24
+    PRIMARY_NODE_VERSION: '^24.15.0'
 
 jobs:
     docs:
