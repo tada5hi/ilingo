@@ -203,7 +203,7 @@ Same ratchet rule as coverage thresholds: tighten budgets in the same PR that im
 
 - `.github/workflows/main.yml` — jobs: `install → build → {lint, tests}`. Composite actions `./.github/actions/install` (caches `node_modules` keyed on `package-lock.json`) and `./.github/actions/build` (caches `**/dist/**` keyed on `github.sha`).
 - `.github/workflows/release.yml` — release-please + monoship as above.
-- Primary Node version: 24 (matrices may be added later; `engines.node` is `>=22.0.0`).
+- The workflow selects the contributor runtime; published package requirements live in their manifests.
 - Dependabot is configured (`.github/dependabot.yml`); minor + patch updates are grouped.
 
 ## Architecture Conventions

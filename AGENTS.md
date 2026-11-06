@@ -1,5 +1,3 @@
-<!-- NOTE: Keep this file and all corresponding files in the .agents directory updated as the project evolves. When making architectural changes, adding new patterns, or discovering important conventions, update the relevant sections. -->
-
 # ilingo — Agent Guide
 
 ilingo is a lightweight TypeScript library for translation and internationalization (i18n). The repository is an npm-workspaces monorepo of four publishable packages plus a docs site: a framework-agnostic core (`ilingo`), a file-system store adapter (`@ilingo/fs`), a Vue 3 plugin (`@ilingo/vue`), a Vuelidate-message adapter (`@ilingo/vuelidate`), and a private VitePress site at `docs/` (`@ilingo/docs`).
@@ -39,7 +37,16 @@ The docs site at `docs/` (`@ilingo/docs`) is a VitePress 1.x app. Run it locally
 - **[Project Structure](.agents/structure.md)** — Workspace layout, the four packages, and how they depend on each other
 - **[Architecture](.agents/architecture.md)** — `IStore` port + `MemoryStore`/`FSStore` adapters, the `Ilingo` orchestrator, Vue plugin install flow
 - **[Testing](.agents/testing.md)** — Vitest setup, per-package `test/unit/` and `test/data/` layout, what is covered today
-- **[Conventions](.agents/conventions.md)** — ESLint config, Conventional Commits + commitlint, Husky, release-please, rollup/SWC build
+- **[Conventions](.agents/conventions.md)** — ESLint config, Conventional Commits + commitlint, Husky, release-please, tsdown build
+
+### Writing agent docs
+
+Keep the guides factual and focused on contracts a future change could silently break.
+
+- Update an existing line when an invariant or cross-cutting rule changes. Put defect stories and verification details in the PR, and user-facing changes in the documentation site or release notes.
+- Keep subsystem detail in `.agents/topics/` and link it from the relevant guide; do not import topic files into `CLAUDE.md`.
+- Describe current behavior and cite issues or PRs, rather than local plan files or a running history of completed work.
+- `npm run lint` enforces the shared config's agent-doc size, import-budget and history checks. Preserve the critical contracts when splitting a guide.
 
 ## Plans
 

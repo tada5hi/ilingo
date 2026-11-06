@@ -213,7 +213,7 @@ GitHub Actions:
 - `.github/workflows/main.yml` — runs on push/PR
 - `.github/workflows/release.yml` — driven by release-please
 
-Inspect those workflows for the exact matrix; the package-level `engines` field declares support for Node `^20.19 || ^22.13 || ^23.5 || >=24`, so CI should exercise at least one supported major.
+Inspect those workflows for the exact matrix. Each published package declares its consumer runtime support in `engines.node`; the contributor runtime is listed in AGENTS.md.
 
 ## Writing New Tests
 
