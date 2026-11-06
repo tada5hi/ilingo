@@ -40,7 +40,7 @@
     ],
     "license": "MIT",
     "engines": {
-        "node": ">=22.0.0"
+        "node": "^24.11.0 || >=26.0.0"
     },
     "devDependencies": {
         "@size-limit/preset-small-lib": "^14.3.0",
