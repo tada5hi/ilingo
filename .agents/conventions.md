@@ -11,7 +11,7 @@
 | `unplugin-vue/rolldown`                    | Vue SFC compilation inside tsdown (only `@ilingo/vue` uses it)          |
 | `tsc`                                      | `.d.ts` emission (`build:types`) for `.ts`-only packages (`ilingo`, `@ilingo/fs`, `@ilingo/validup`) via `tsconfig.build.json` |
 | `vue-tsc`                                  | `.d.ts` emission (`build:types`) for Vue packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup-vue`) — `tsc` cannot read `.vue` SFCs |
-| Vitest 4                                   | Test runner; config lives in `packages/<pkg>/test/vitest.config.ts`     |
+| Vitest 5                                   | Test runner; config lives in `packages/<pkg>/test/vitest.config.ts`     |
 | ESLint 10 (flat config)                    | Linting via `@tada5hi/eslint-config({ typescript: true, vue: true })`   |
 | Husky + commitlint                         | Pre-commit hook validating Conventional Commits                         |
 | release-please                             | Automated changelogs + version bumps from commit history                |

@@ -10,6 +10,22 @@ export * from './catalog/normalize';
 export * from './errors';
 export * from './options';
 export * from './module';
-export * from './store';
+export {
+    LoaderStore,
+    MemoryStore,
+    isInvalidatingStore,
+    isMutableStore,
+} from './store';
+export type {
+    IInvalidatingStore,
+    IMutableStore,
+    IStore,
+    InvalidateListener,
+    LoaderFn,
+    LoaderStoreOptions,
+    MemoryStoreOptions,
+    StoreGetContext,
+    StoreSetContext,
+} from './store';
 export * from './utils';
 export * from './types';

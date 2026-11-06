@@ -26,6 +26,7 @@ Output:
 
 `getSync(ctx)` runs the identical pipeline with step 3 replaced by `lookupSync`
 (same order; a store's `SyncUnavailableError` aborts the walk) and returns
-`string | undefined` directly — no Promise. An aborted walk skips step 4
-entirely (no `onMissingKey`, no warning) and yields `undefined`.
+`string | undefined` directly, without a Promise. A store that cannot answer
+synchronously causes `getSync` to throw `SyncUnavailableError`. The aborted walk
+skips step 4 entirely (no `onMissingKey`, no warning).
 

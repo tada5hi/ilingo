@@ -1,6 +1,6 @@
 # Configuration
 
-There are no environment variables. All configuration is passed via constructor inputs:
+Library options come from constructor inputs. Built-in missing-key and unknown-formatter warnings are silenced when `process.env.NODE_ENV === 'production'`:
 
 | Object                    | Shape                                                                                                                                |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
