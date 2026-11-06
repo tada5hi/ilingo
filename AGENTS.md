@@ -17,12 +17,12 @@ npm run lint                  # eslint (flat config) across the repo
 npm run lint:fix              # eslint --fix
 ```
 
-- **Node.js**: `>=22.0.0`
+- **Development Node.js**: 24.11+ on the 24.x line, or 26+ (CI runs on 24). Published runtime requirements are declared in each package manifest.
 - **Package manager**: npm (workspaces)
 - **Build orchestration**: Nx (`nx.json`, cacheable: `build`, `lint`, `test`)
 - **Bundler**: tsdown (Rolldown + Oxc), `dts: false` everywhere — JS only; `@ilingo/vue` adds `unplugin-vue/rolldown` to compile `.vue` SFCs
 - **Type declarations**: every package splits `build:js` (tsdown) from `build:types`, a separate declaration-only pass via `tsconfig.build.json` → `tsc --declaration --emitDeclarationOnly` for `.ts`-only packages (`ilingo`, `@ilingo/fs`, `@ilingo/validup`), `vue-tsc` for Vue packages (`@ilingo/vue`, `@ilingo/vuelidate`, `@ilingo/validup-vue`; tsdown's dts pipeline does not understand `.vue` files). All packages emit `.d.ts` (not `.d.mts`)
-- **Test runner**: Vitest 4 (config at `packages/<pkg>/test/vitest.config.ts`)
+- **Test runner**: Vitest 5 (config at `packages/<pkg>/test/vitest.config.ts`)
 - **Linter**: ESLint 10 flat config via `@tada5hi/eslint-config` factory (`vue: true`, `typescript: true`)
 - **Releases**: release-please opens the version-bump PR; merging it triggers `tada5hi/monoship@v2` which publishes any workspace whose `version` is not yet on the registry (OIDC trusted publishing, no `NPM_TOKEN` needed)
 

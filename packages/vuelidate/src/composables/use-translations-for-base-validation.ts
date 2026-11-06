@@ -23,8 +23,10 @@ export function useTranslationsForBaseValidation<
     const rules = computed<string[]>(() => {
         const output : string[] = [];
         const keys = Object.keys(result);
+
         for (const key of keys) {
             const item = (result as Record<string, any>)[key];
+
             if (!item || !item.$invalid || !isRuleResult(item)) {
                 continue;
             }
@@ -63,6 +65,7 @@ export function useTranslationsForBaseValidation<
             const ruleResult = (result as Record<string, any>)[rule];
 
             let value : string | undefined;
+
             try {
                 value = instance.getSync({
                     namespace: NAMESPACE,

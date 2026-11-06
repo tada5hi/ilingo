@@ -11,6 +11,7 @@ import type { FSStoreOptions, FSStoreOptionsInput } from './types';
 
 export function normalizeOptions(input: FSStoreOptionsInput = {}): FSStoreOptions {
     let directory: string[];
+
     if (input.directory) {
         directory = Array.isArray(input.directory) ?
             input.directory :

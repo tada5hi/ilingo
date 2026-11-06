@@ -41,19 +41,27 @@ export function negotiateLocale(
     supported: string[],
     requested: string[],
 ): string | undefined {
-    if (supported.length === 0 || requested.length === 0) return undefined;
+    if (supported.length === 0 || requested.length === 0) {
+        return undefined;
+    }
 
     const supportedSet = new Map<string, string>();
+
     for (const s of supported) {
         const key = canonicalize(s);
-        if (!supportedSet.has(key)) supportedSet.set(key, s);
+
+        if (!supportedSet.has(key)) {
+            supportedSet.set(key, s);
+        }
     }
 
     for (const r of requested) {
         const key = canonicalize(r);
 
         // 1. Exact.
-        if (supportedSet.has(key)) return supportedSet.get(key)!;
+        if (supportedSet.has(key)) {
+            return supportedSet.get(key)!;
+        }
 
         // 2. Prefix — requested 'pt' should match supported 'pt-BR'.
         for (const [supKey, supRaw] of supportedSet) {
@@ -64,9 +72,12 @@ export function negotiateLocale(
 
         // 3. Parent walk — requested 'pt-PT' should match supported 'pt'.
         for (const parent of bcp47Parents(key)) {
-            if (supportedSet.has(parent)) return supportedSet.get(parent)!;
+            if (supportedSet.has(parent)) {
+                return supportedSet.get(parent)!;
+            }
         }
     }
+
     return undefined;
 }
 
@@ -94,23 +105,36 @@ export function negotiateLocale(
  *   // → ['en', 'de']    (French explicitly rejected)
  */
 export function parseAcceptLanguage(header: string): string[] {
-    if (!header) return [];
+    if (!header) {
+        return [];
+    }
 
     const entries: { tag: string, q: number }[] = [];
+
     for (const raw of header.split(',')) {
         const item = raw.trim();
-        if (!item) continue;
+
+        if (!item) {
+            continue;
+        }
+
         const [tagRaw, ...params] = item.split(';');
         const tag = tagRaw.trim();
-        if (!tag || tag === '*') continue;
+
+        if (!tag || tag === '*') {
+            continue;
+        }
 
         let q = 1;
         let qValid = true;
+
         for (const param of params) {
             const [k, v] = param.split('=').map((s) => s.trim());
+
             // Header parameter names are case-insensitive (RFC 9110 § 5.6.2).
             if (k.toLowerCase() === 'q' && v !== undefined) {
                 const parsed = Number(v);
+
                 if (Number.isNaN(parsed) || parsed < 0 || parsed > 1) {
                     qValid = false;
                 } else {
@@ -118,8 +142,12 @@ export function parseAcceptLanguage(header: string): string[] {
                 }
             }
         }
+
         // q=0 ⇒ "not acceptable" — drop. Invalid q ⇒ drop (defensive).
-        if (!qValid || q <= 0) continue;
+        if (!qValid || q <= 0) {
+            continue;
+        }
+
         entries.push({ tag, q });
     }
 
@@ -127,6 +155,7 @@ export function parseAcceptLanguage(header: string): string[] {
     // declared order (Array.prototype.sort in V8 / SpiderMonkey is stable
     // since ES2019).
     entries.sort((a, b) => b.q - a.q);
+
     return entries.map((e) => e.tag);
 }
 
@@ -137,16 +166,26 @@ export function parseAcceptLanguage(header: string): string[] {
  */
 function canonicalize(tag: string): string {
     const parts = tag.split('-');
-    if (parts.length === 0 || !parts[0]) return tag;
+
+    if (parts.length === 0 || !parts[0]) {
+        return tag;
+    }
 
     return parts
         .map((part, i) => {
-            if (i === 0) return part.toLowerCase();
-            if (part.length === 2) return part.toUpperCase(); // region
+            if (i === 0) {
+                return part.toLowerCase();
+            }
+
+            if (part.length === 2) {
+                return part.toUpperCase();
+            } // region
+
             if (part.length === 4) {
                 // script: titlecase
                 return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
             }
+
             return part.toLowerCase();
         })
         .join('-');

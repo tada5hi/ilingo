@@ -1,3 +1,4 @@
+import type { TranslateIssueOptions } from './types';
 /*
  * Copyright (c) 2026.
  * Author Peter Placzek (tada5hi)
@@ -44,32 +45,43 @@ export function coerceIssueData(
     if (!data) {
         return undefined;
     }
+
     const output: Record<string, string | number> = {};
+
     for (const [key, value] of Object.entries(data)) {
         if (typeof value === 'string' || typeof value === 'number') {
             output[key] = value;
+
             continue;
         }
+
         if (value == null) {
             output[key] = '';
+
             continue;
         }
+
         if (typeof value === 'boolean') {
             output[key] = String(value);
+
             continue;
         }
 
         let serialized: string;
+
         try {
             const json = JSON.stringify(value);
+
             serialized = typeof json === 'string' ? json : String(value);
         } catch {
             serialized = String(value);
         }
+
         output[key] = serialized;
 
         if (!isProductionEnv()) {
             const id = `${key}|${typeof value}`;
+
             if (!warnedNonPrimitive.has(id)) {
                 warnedNonPrimitive.add(id);
                 // eslint-disable-next-line no-console
@@ -81,25 +93,9 @@ export function coerceIssueData(
             }
         }
     }
+
     return output;
 }
-
-/**
- * Options for `translateIssue` / `translateIssues`.
- */
-export type TranslateIssueOptions = {
-    /**
-     * Override the locale for this lookup. Defaults to the `Ilingo`
-     * instance's current locale.
-     */
-    locale?: string;
-    /**
-     * Catalog namespace name to look up codes under. Defaults to `'validup'`
-     * (the namespace used by the default `Store`). Override when you've
-     * mounted the translations under a different namespace.
-     */
-    namespace?: string;
-};
 
 /**
  * Resolve a single validup `Issue` to a translated string via the
@@ -123,6 +119,7 @@ export async function translateIssue(
     options: TranslateIssueOptions = {},
 ): Promise<string> {
     const { code } = issue;
+
     if (typeof code === 'string' && code.length > 0) {
         const translated = await ilingo.get({
             namespace: options.namespace ?? NAMESPACE,
@@ -136,10 +133,12 @@ export async function translateIssue(
             data: coerceIssueData(issue.data),
             locale: options.locale,
         });
+
         if (typeof translated === 'string' && translated.length > 0) {
             return translated;
         }
     }
+
     return issue.message;
 }
 
@@ -165,12 +164,14 @@ export function translateIssueSync(
     options: TranslateIssueOptions = {},
 ): string | undefined {
     const { code } = issue;
+
     if (typeof code !== 'string' || code.length === 0) {
         // No code — the async path never consults ilingo either.
         return issue.message;
     }
 
     let translated: string | undefined;
+
     try {
         translated = ilingo.getSync({
             namespace: options.namespace ?? NAMESPACE,
@@ -219,6 +220,7 @@ export async function translateIssues(
     const messages = await Promise.all(
         flat.map((issue) => translateIssue(issue, ilingo, options)),
     );
+
     return flat.map((issue, i) => ({ issue, message: messages[i]! }));
 }
 
@@ -246,9 +248,11 @@ export function translateIssuesSync(
 
     for (const issue of flat) {
         const message = translateIssueSync(issue, ilingo, options);
+
         if (typeof message === 'undefined') {
             return undefined;
         }
+
         output.push({ issue, message });
     }
 
@@ -281,6 +285,7 @@ export async function translateIssueGroups(
     const messages = await Promise.all(
         groups.map((group) => translateIssue(group, ilingo, options)),
     );
+
     return groups.map((issue, i) => ({ issue, message: messages[i]! }));
 }
 
@@ -298,9 +303,11 @@ export function translateIssueGroupsSync(
 
     for (const group of groups) {
         const message = translateIssueSync(group, ilingo, options);
+
         if (typeof message === 'undefined') {
             return undefined;
         }
+
         output.push({ issue: group, message });
     }
 

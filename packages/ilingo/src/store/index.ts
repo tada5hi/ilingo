@@ -6,5 +6,6 @@
  */
 
 export * from './loader';
+export type { LoaderFn, LoaderStoreOptions, CacheEntry } from './types';
 export * from './memory';
 export * from './types';

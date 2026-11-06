@@ -40,14 +40,14 @@ const warnedNodeShapes = new Set<string>();
 
 function warnUnexpectedNode(context: string, received: unknown): void {
     /* istanbul ignore next */
-    if (isProductionEnv()) {
+    if (isProductionEnv() || warnedNodeShapes.has(context)) {
         return;
     }
-    if (warnedNodeShapes.has(context)) {
-        return;
-    }
+
     warnedNodeShapes.add(context);
+
     const kind = received === null ? 'null' : typeof received;
+
     // eslint-disable-next-line no-console
     console.warn(
         `[ilingo] ${context}: expected a catalog descriptor node but received ${kind}. ` +
@@ -65,14 +65,18 @@ function mergeLines(target: Translations, source: Translations): Translations {
     for (const [key, value] of Object.entries(source)) {
         if (typeof value === 'string' || isPluralNode(value)) {
             target[key] = value;
+
             continue;
         }
+
         const existing = target[key];
         const base: Translations = (existing && typeof existing !== 'string' && !isPluralNode(existing)) ?
             existing as Translations :
             {};
+
         target[key] = mergeLines(base, value as Translations);
     }
+
     return target;
 }
 
@@ -92,6 +96,7 @@ function namespaceInto(
             namespaces[fullName] = mergeLines(namespaces[fullName] || {}, child.data);
         } else if (isNamespaceNode(child)) {
             const nested = fullName ? `${fullName}.${child.name}` : child.name;
+
             namespaceInto(namespaces, nested, child.data);
         } else {
             warnUnexpectedNode('namespace child', child);
@@ -103,9 +108,11 @@ function toLocaleNodes(input: CatalogInput): LocaleNode[] {
     if (isCatalogNode(input)) {
         return input.data;
     }
+
     if (Array.isArray(input)) {
         return input;
     }
+
     return [input];
 }
 
@@ -119,12 +126,16 @@ function toLocaleNodes(input: CatalogInput): LocaleNode[] {
  */
 export function normalizeCatalog(input: CatalogInput): Locales {
     const result: Locales = {};
+
     for (const locale of toLocaleNodes(input)) {
         if (!isLocaleNode(locale)) {
             warnUnexpectedNode('catalog locale', locale);
+
             continue;
         }
+
         const namespaces = result[locale.name] || (result[locale.name] = {});
+
         for (const child of locale.data) {
             if (isNamespaceNode(child)) {
                 namespaceInto(namespaces, child.name, child.data);
@@ -138,6 +149,7 @@ export function normalizeCatalog(input: CatalogInput): Locales {
             }
         }
     }
+
     return result;
 }
 
@@ -150,6 +162,8 @@ export function normalizeNamespaceBody(body: NamespaceBodyInput): Translations {
     if (isTranslationsNode(body)) {
         return mergeLines({}, body.data);
     }
+
     warnUnexpectedNode('namespace body', body);
+
     return {};
 }

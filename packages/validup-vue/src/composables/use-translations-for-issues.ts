@@ -72,21 +72,27 @@ export function useTranslationsForIssues(
         instance,
         { locale: toValue(localeOverride) ?? locale.value },
     ) as IssueTranslation[] | undefined);
+
     if (seed) {
         lastResolved.value = seed;
     }
 
     return computedAsync<IssueTranslation[]>(async () => {
         const source = toValue(issues);
+
         if (!source || source.length === 0) {
             lastResolved.value = [];
+
             return [];
         }
+
         // Read both deps unconditionally so the computed re-runs on either
         // an override change or an injected-locale flip.
         const effectiveLocale = toValue(localeOverride) ?? locale.value;
         const next = await translateIssues(source, instance, { locale: effectiveLocale }) as IssueTranslation[];
+
         lastResolved.value = next;
+
         return next;
     }, lastResolved.value);
 }

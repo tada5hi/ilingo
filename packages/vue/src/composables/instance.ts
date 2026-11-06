@@ -23,6 +23,7 @@ export function provideIlingo(
 ) {
     if (typeof app === 'undefined') {
         provide(IlingoSymbol, ilingo);
+
         return;
     }
 
@@ -31,6 +32,7 @@ export function provideIlingo(
 
 export function injectIlingo(app?: App) : IIlingo {
     const instance = inject<IIlingo>(IlingoSymbol, app);
+
     if (!instance) {
         throw new Error('An ilingo instance is not present in the vue context.');
     }

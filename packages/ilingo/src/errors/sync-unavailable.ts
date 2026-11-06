@@ -1,3 +1,4 @@
+import type { SyncUnavailableErrorOptions } from './types';
 /*
  * Copyright (c) 2026.
  * Author Peter Placzek (tada5hi)
@@ -9,14 +10,6 @@ import { markInstanceof } from '@ebec/core';
 import { IlingoError } from './base';
 import { isSyncUnavailableError } from './check';
 import { SYNC_UNAVAILABLE_ERROR_INSTANCE } from './constants';
-
-export type SyncUnavailableErrorOptions = ErrorOptions & {
-    locale?: string,
-    namespace?: string,
-    key?: string,
-    /** `id` of the store that declined, when a specific store is responsible. */
-    storeId?: string | symbol,
-};
 
 /**
  * Thrown by a synchronous read that *may* hold the value but cannot produce it
@@ -55,10 +48,10 @@ export class SyncUnavailableError extends IlingoError {
 
     constructor(message: string, options: SyncUnavailableErrorOptions = {}) {
         const {
-            locale, 
-            namespace, 
-            key, 
-            storeId, 
+            locale,
+            namespace,
+            key,
+            storeId,
             ...rest
         } = options;
 
@@ -113,9 +106,9 @@ export class SyncUnavailableError extends IlingoError {
  */
 export function throwSyncUnavailable(
     context: {
-        locale?: string, 
-        namespace?: string, 
-        key?: string 
+        locale?: string,
+        namespace?: string,
+        key?: string
     } = {},
     storeId?: string | symbol,
 ): never {

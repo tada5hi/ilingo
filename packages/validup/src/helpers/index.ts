@@ -6,3 +6,4 @@
  */
 
 export * from './translate-issue';
+export type { TranslateIssueOptions } from './types';

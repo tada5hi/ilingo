@@ -86,12 +86,18 @@ export function install(app: App, input?: Options | IIlingo): void {
     app.component('ITranslateT', ITranslateT);
 
     const directivesEnabled = !(input && !isIlingo(input) && input.directives === false);
-    if (directivesEnabled) {
+
+    if (!directivesEnabled) {
+        return;
+    }
+
+    {
         // applyInstallInput always ensures a locale Ref is provided to the
         // app, so the non-safe injectLocale is justified here. If that
         // contract ever changes, this throws instead of producing a
         // misbehaving directive.
         const locale = injectLocale(app);
+
         app.directive('t', createVTDirective(instance, locale));
     }
 }
@@ -101,7 +107,7 @@ export default { install } satisfies Plugin<Options | IIlingo | undefined>;
 export { default as ITranslate } from './component.vue';
 export { ITranslateT } from './component-t';
 export { createVTDirective } from './directives/t';
-export type { VTBinding } from './directives/t';
+export type { VTBinding } from './directives/types';
 export * from './composables';
 export * from './types';
 export * from './helpers';

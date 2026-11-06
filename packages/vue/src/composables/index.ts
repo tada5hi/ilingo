@@ -8,4 +8,5 @@
 export * from './instance';
 export * from './locale';
 export * from './use-scoped-catalog';
+export type { UseScopedCatalogResult } from './types';
 export * from './use-translation';

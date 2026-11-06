@@ -9,3 +9,4 @@ export * from './base';
 export * from './check';
 export * from './constants';
 export * from './sync-unavailable';
+export type { SyncUnavailableErrorOptions } from './types';

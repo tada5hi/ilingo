@@ -43,7 +43,9 @@ export function createLoaderStore(): LoaderStore {
             if (namespace !== NAMESPACE) {
                 return undefined;
             }
+
             const load = loaders[locale];
+
             return load ? load() : undefined;
         },
     });

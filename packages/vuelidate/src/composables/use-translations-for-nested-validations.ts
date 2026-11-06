@@ -15,6 +15,7 @@ export function useTranslationsForNestedValidations<
 >(validation: Validation<V, T>) : NestedValidationsTranslations<T> {
     const keys = Object.keys(validation);
     const output = {} as NestedValidationsTranslations<T>;
+
     for (const key of keys) {
         if (key.startsWith('$')) {
             continue;

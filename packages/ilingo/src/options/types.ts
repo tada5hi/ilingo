@@ -1,6 +1,6 @@
 import type { IStore } from '../store';
 import type { Fallback, MissingKeyHandler } from '../types';
-import type { Formatter } from '../utils/formatters';
+import type { Formatter } from '../utils/types';
 
 /**
  * Options accepted by the `Ilingo` constructor and `Ilingo.clone()`.

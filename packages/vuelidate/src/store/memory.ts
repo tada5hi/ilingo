@@ -1,3 +1,4 @@
+/* eslint-disable @tada5hi/no-reexport-shims -- Preserve this existing public forwarding module. */
 /*
  * Copyright (c) 2024.
  * Author Peter Placzek (tada5hi)
@@ -16,9 +17,9 @@ import {
 } from 'ilingo';
 import { NAMESPACE, STORE_ID } from '../constants';
 import {
-    de, 
-    en, 
-    es, 
+    de,
+    en,
+    es,
     fr,
 } from '../translations';
 
@@ -72,18 +73,20 @@ export function createMemoryStore(): Store {
  */
 export async function extendStore(store: IMutableStore) {
     const translations : Record<string, TranslationsNode> = {
-        en, 
-        de, 
-        fr, 
+        en,
+        de,
+        fr,
         es,
     };
 
     const promises : Promise<void>[] = [];
 
     const locales = Object.keys(translations);
+
     for (const locale of locales) {
         const node = translations[locale];
         const pairs = parseTranslationsRecord(node.data);
+
         for (const pair of pairs) {
             promises.push(
                 store.set({

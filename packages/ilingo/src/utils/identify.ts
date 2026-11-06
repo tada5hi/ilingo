@@ -35,19 +35,20 @@ export function isPluralForms(value: unknown): value is PluralForms {
     if (!isObject(value)) {
         return false;
     }
+
     const obj = value as Record<string, unknown>;
     const keys = Object.keys(obj);
+
     if (keys.length === 0 || typeof obj.other !== 'string') {
         return false;
     }
+
     for (const key of keys) {
-        if (!PLURAL_CATEGORIES.has(key as PluralCategory)) {
-            return false;
-        }
-        if (typeof obj[key] !== 'string') {
+        if (!PLURAL_CATEGORIES.has(key as PluralCategory) || (typeof obj[key] !== 'string')) {
             return false;
         }
     }
+
     return true;
 }
 
