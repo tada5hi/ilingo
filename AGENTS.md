@@ -35,7 +35,6 @@ The docs site at `docs/` (`@ilingo/docs`) is a VitePress 1.x app. Run it locally
 ## Detailed Guides
 
 
-CLAUDE.md imports AGENTS.md and its explicitly listed core guides. Focused topic files are linked for on-demand reading.
 - **[Project Structure](.agents/structure.md)** — Workspace layout, the four packages, and how they depend on each other
 - **[Architecture](.agents/architecture.md)** — `IStore` port + `MemoryStore`/`FSStore` adapters, the `Ilingo` orchestrator, Vue plugin install flow
 - **[Testing](.agents/testing.md)** — Vitest setup, per-package `test/unit/` and `test/data/` layout, what is covered today
@@ -46,7 +45,7 @@ CLAUDE.md imports AGENTS.md and its explicitly listed core guides. Focused topic
 Keep the guides factual and focused on contracts a future change could silently break.
 
 - Keep existing commands, paths and factual descriptions current. Add guide content only for an invariant or cross-cutting rule. Put defect stories and verification details in the PR, and user-facing changes in the documentation site or release notes.
-- Keep subsystem detail in `.agents/topics/` and link it from the relevant guide; do not import topic files into `CLAUDE.md`.
+- Keep subsystem detail in `.agents/topics/` and link it from the relevant guide.
 - Describe current behavior and cite issues or PRs, rather than local plan files or a running history of completed work.
 - `npm run lint` enforces the shared config's agent-doc size, import-budget and history checks. Preserve the critical contracts when splitting a guide.
 
