@@ -83,15 +83,15 @@
         "@vuelidate/validators": "^2.0.4",
         "@vueuse/core": "^15.0.0",
         "ilingo": "^6.2.1",
-        "vite": "^8.3.5",
-        "vue": "^3.5.44"
+        "vite": "^8.3.6",
+        "vue": "^3.5.45"
     },
     "peerDependencies": {
         "@ilingo/vue": "^6.1.2",
         "@vuelidate/core": "^2.0.3",
         "@vueuse/core": "^14.4.0 || ^15.0.0",
         "ilingo": "^6.2.1",
-        "vue": "^3.5.44"
+        "vue": "^3.5.45"
     },
     "publishConfig": {
         "access": "public"
