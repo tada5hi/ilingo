@@ -69,7 +69,7 @@
     "devDependencies": {
         "ilingo": "^6.2.1",
         "validup": "^2.0.1",
-        "vite": "^8.3.5"
+        "vite": "^8.3.6"
     },
     "peerDependencies": {
         "ilingo": "^6.2.1",
