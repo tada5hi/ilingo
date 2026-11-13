@@ -83,7 +83,7 @@
         "@vuelidate/validators": "^2.0.4",
         "@vueuse/core": "^15.0.0",
         "ilingo": "^6.2.1",
-        "vite": "^8.3.6",
+        "vite": "^8.3.7",
         "vue": "^3.5.45"
     },
     "peerDependencies": {
