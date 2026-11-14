@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.3](https://github.com/tada5hi/ilingo/compare/fs-v6.1.2...fs-v6.1.3) (2026-11-14)
+
+
+### Bug Fixes
+
+* **deps:** bump the minorandpatch group with 2 updates ([#1049](https://github.com/tada5hi/ilingo/issues/1049)) ([2bd583e](https://github.com/tada5hi/ilingo/commit/2bd583e68fdfd0d68701153481690c4feba84920))
+
 ## [6.1.2](https://github.com/tada5hi/ilingo/compare/fs-v6.1.1...fs-v6.1.2) (2026-10-27)
 
 
