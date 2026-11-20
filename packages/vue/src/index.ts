@@ -41,7 +41,12 @@ export function applyInstallInput(
     const instanceExisted = typeof instance !== 'undefined';
 
     if (!input) {
-        instance = new Ilingo();
+        // Nothing to apply: keep an instance that is already provided (e.g.
+        // by an earlier @ilingo/vue install) so stores registered on the
+        // returned instance reach the app, and only create one otherwise.
+        if (!instance) {
+            instance = new Ilingo();
+        }
     } else if (isIlingo(input)) {
         if (instance) {
             instance.merge(input);

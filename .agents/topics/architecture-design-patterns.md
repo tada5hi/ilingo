@@ -91,7 +91,7 @@ If `onMissingKey` is not configured, the built-in default warns once per `(reque
 `@ilingo/vue` exposes `install(app, input)` and a default `Plugin` object. `applyInstallInput` is the heart of it — idempotent and merge-aware:
 
 1. Read any already-`provide`d `Ilingo` instance and locale `Ref` from the app.
-2. Resolve the new `input`: nothing → fresh `Ilingo`; an `Ilingo` → merge into existing or use directly; an `Options { store, locale }` → add the store to the existing instance or create one.
+2. Resolve the new `input`: nothing → keep the provided instance, or create a fresh `Ilingo` when none is provided (returning an unprovided instance would strand stores that callers such as `@ilingo/vuelidate` register on it); an `Ilingo` → merge into existing or use directly; an `Options { store, locale }` → add the store to the existing instance or create one.
 3. Provide the instance and locale only if they were not provided before — so calling `install` more than once does not clobber existing wiring.
 
 `useTranslation(ctx)` forwards `count` as `MaybeRef<number>` (unwrapped via `unref`) so plural selection is reactive to count changes the same way `data` is.

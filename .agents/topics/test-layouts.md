@@ -38,6 +38,7 @@ data/
 unit/
 ├── component-t.spec.ts         # <ITranslateT> — slot rendering, vars, fragments, error paths
 ├── directive-t.spec.ts         # v-t directive — string/object bindings, reactive locale, opt-out
+├── install.spec.ts             # applyInstallInput without input returns the already-provided instance
 ├── invalidation.spec.ts        # useTranslation re-runs on IInvalidatingStore.invalidate() (scoped)
 ├── scope.spec.ts               # useTranslation outside a component: no onScopeDispose warning,
                                 #   caller-owned effectScope().stop() releases subscriptions (#1075)

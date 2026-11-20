@@ -22,9 +22,9 @@ install(app);
 app.mount('#app');
 ```
 
-`install()` chains `@ilingo/vue`'s install, then ensures a built-in `MemoryStore` pre-loaded with EN/DE/FR/ES validator messages is registered if no store is present yet.
+`install()` runs `@ilingo/vue`'s `applyInstallInput`, then registers the built-in `MemoryStore` with the EN/DE/FR/ES validator messages. The store is keyed by `Symbol.for('@ilingo/vuelidate')`, so installing twice never stacks a second copy. It does not register `<ITranslate>` or `v-t`; install `@ilingo/vue` for those.
 
-You can pass the same `Options` / `Ilingo` input that `@ilingo/vue`'s `install` accepts — Vuelidate's translations are added to the same instance.
+You can pass the same `Options` / `Ilingo` input that `@ilingo/vue`'s `install` accepts. Without input, the instance the app already provides (from an earlier `@ilingo/vue` install) is used, so the messages land on the instance your components inject.
 
 ## `<IVuelidate>` component
 
