@@ -75,6 +75,23 @@ That is what makes server-side rendering work: the SSR markup carries the transl
 
 Stores that need I/O (a cold `LoaderStore` or `FSStore`, a remote adapter) can't answer synchronously, so those keys still start at the placeholder and settle a tick later. See the [SSR recipe](../recipes/ssr#_5-the-first-render-getsync) for warming them up before a server render.
 
+### Calling it outside a component
+
+`useTranslation` ties its cleanup (the store `invalidate` subscriptions and the `computedAsync` watcher) to the active effect scope, so it belongs in `setup()`. It can also run outside a component, for example under `app.runWithContext()` while building plugin options. There is no scope to clean up with in that case, so wrap the call in your own `effectScope()` and stop it when the value is no longer needed ([#1075](https://github.com/tada5hi/ilingo/issues/1075)):
+
+```ts
+import { effectScope } from 'vue';
+import { useTranslation } from '@ilingo/vue';
+
+const scope = effectScope();
+const label = app.runWithContext(() => scope.run(() => useTranslation({ namespace: 'app', key: 'save' }))!);
+
+// later, when the label is no longer used
+scope.stop();
+```
+
+Without a scope the ref still works, but its subscriptions live as long as the stores do.
+
 ## `<ITranslate>` component
 
 For inline use:

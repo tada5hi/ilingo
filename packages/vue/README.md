@@ -96,6 +96,20 @@ app.mount('#app');
 </template>
 ```
 
+### Outside a component
+
+`useTranslation` cleans up (store `invalidate` subscriptions, the `computedAsync` watcher) when the active effect scope is disposed. Called outside one, for example under `app.runWithContext()`, wrap it in your own `effectScope()` and call `scope.stop()` when done:
+
+```ts
+import { effectScope } from 'vue';
+import { useTranslation } from '@ilingo/vue';
+
+const scope = effectScope();
+const label = app.runWithContext(() => scope.run(() => useTranslation({ namespace: 'app', key: 'save' }))!);
+
+scope.stop();
+```
+
 ## SSR: the first render is not a placeholder
 
 `useTranslation` (and `<ITranslate>`, `<ITranslateT>`, `useScopedCatalog().t`) wraps the asynchronous `Ilingo.get()` in a `computedAsync`, which needs an initial value before its promise settles. That initial value comes from `Ilingo.getSync()`, the synchronous read path, so with an in-memory catalog the **first** render is already the real string rather than the `namespace.key` placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).

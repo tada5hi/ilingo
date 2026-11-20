@@ -39,6 +39,8 @@ unit/
 ├── component-t.spec.ts         # <ITranslateT> — slot rendering, vars, fragments, error paths
 ├── directive-t.spec.ts         # v-t directive — string/object bindings, reactive locale, opt-out
 ├── invalidation.spec.ts        # useTranslation re-runs on IInvalidatingStore.invalidate() (scoped)
+├── scope.spec.ts               # useTranslation outside a component: no onScopeDispose warning,
+                                #   caller-owned effectScope().stop() releases subscriptions (#1075)
 ├── scoped-catalog.spec.ts      # useScopedCatalog — same-component t, descendant provide, no-leak, fallback
 └── ssr.spec.ts                 # @vue/server-renderer: SSR markup carries the translation for
                                 #   useTranslation / <ITranslateT> / useScopedCatalog, placeholder

@@ -8,12 +8,25 @@
 import { computedAsync } from '@vueuse/core';
 import { isInvalidatingStore } from 'ilingo';
 import type { Ref } from 'vue';
-import { onScopeDispose, ref, unref } from 'vue';
+import {
+    getCurrentScope,
+    onScopeDispose,
+    ref,
+    unref,
+} from 'vue';
 import type { GetContextReactive } from '../types';
 import { extractReactiveData, resolveSync } from './utils';
 import { injectIlingo } from './instance';
 import { injectLocale } from './locale';
 
+/**
+ * Reactive translation for `(namespace, key)` in the injected locale.
+ *
+ * Cleanup (store `invalidate` subscriptions and the `computedAsync`
+ * watcher) is tied to the active effect scope. When called outside one,
+ * e.g. under `app.runWithContext()`, wrap the call in an `effectScope()`
+ * and `stop()` it when the value is no longer needed.
+ */
 export function useTranslation(ctx: GetContextReactive): Ref<string> {
     const instance = injectIlingo();
     const locale = injectLocale();
@@ -72,11 +85,17 @@ export function useTranslation(ctx: GetContextReactive): Ref<string> {
         unsubscribes.push(stop);
     }
 
-    onScopeDispose(() => {
-        for (const stop of unsubscribes) {
-            stop();
-        }
-    });
+    // Outside an effect scope (e.g. under `app.runWithContext()`) there is
+    // nothing to attach the cleanup to: Vue would warn and the subscriptions
+    // (and the computedAsync watcher) would live forever. Such callers wrap
+    // the call in their own `effectScope()` and `stop()` it. See #1075.
+    if (getCurrentScope()) {
+        onScopeDispose(() => {
+            for (const stop of unsubscribes) {
+                stop();
+            }
+        });
+    }
 
     return computedAsync(
         async () => {
