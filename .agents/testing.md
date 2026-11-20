@@ -2,7 +2,7 @@
 
 ## Setup
 
-- **Runner**: [Vitest](https://vitest.dev/) (v4)
+- **Runner**: [Vitest](https://vitest.dev/) (v5)
 - **Test location**: `packages/<pkg>/test/unit/**/*.spec.ts`
 - **Fixtures**: `packages/<pkg>/test/data/` — real locale files loaded at test time (no mocking of the filesystem)
 - **Config**: `packages/<pkg>/test/vitest.config.ts` per package; the test script (`vitest --config test/vitest.config.ts --run`) sets `NODE_ENV=test` via `cross-env`. Coverage is configured but not enforced via thresholds.
@@ -115,7 +115,7 @@ Together: the env spec proves the guard is correct in isolation, and the smoke s
 
 The shared `bench/setup.ts` exports `makeIlingo()` / `makeI18next()` factories built from the same synthetic catalog so the two libraries do the same work. Each scenario is one `.bench.ts` file — keep it that way so contributors can run just the file that's relevant.
 
-Numbers and methodology live on the `/performance` docs page. When you change something in the resolution path (orchestrator, store lookup, formatter dispatch), run the suite before and after; the `hz` ratio is the answer to "did this make ilingo slower". `bench/results.json` is gitignored — it's a per-run artifact, not a tracked baseline.
+Numbers and methodology live on the `/performance` docs page. When you change something in the resolution path (orchestrator, store lookup, formatter dispatch), run the suite before and after; the `hz` ratio is the answer to "did this make ilingo slower". Each scenario is one `test()` that calls `bench.compare(bench(...), bench(...))` through the test context (Vitest 5 provides `bench` on the test context, not as a module export). The config sets the `verbose` reporter, which is the only one that prints the comparison table. There is no tracked baseline.
 
 `vue-i18n` isn't part of the comparison because its API is shaped around Vue setup context; a fair comparison runs through `@ilingo/vue` not core. Planned as a separate bench page when `@ilingo/vue` benchmarks land.
 

@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { bench, describe } from 'vitest';
+import { test } from 'vitest';
 import { makeI18next, makeIlingo } from './setup';
 
 /**
@@ -15,19 +15,20 @@ import { makeI18next, makeIlingo } from './setup';
  *
  * Headline workload — what every render in a typical app pays per call.
  */
-describe('get() — cache hit, simple string leaf', () => {
+test('get() — cache hit, simple string leaf', async ({ bench }) => {
     const ilingo = makeIlingo();
     const i18n = makeI18next();
 
-    bench('ilingo.get', async () => {
-        await ilingo.get({
-            namespace: 'app', 
-            key: 'greeting', 
-            data: { name: 'Peter' }, 
-        });
-    });
-
-    bench('i18next.t', () => {
-        i18n.t('app:greeting', { name: 'Peter' });
-    });
+    await bench.compare(
+        bench('ilingo.get', async () => {
+            await ilingo.get({
+                namespace: 'app',
+                key: 'greeting',
+                data: { name: 'Peter' },
+            });
+        }),
+        bench('i18next.t', () => {
+            i18n.t('app:greeting', { name: 'Peter' });
+        }),
+    );
 });

@@ -1,6 +1,6 @@
 # Performance
 
-ilingo is built to be a small, fast i18n library. This page shows the numbers and how they were measured. They aren't marketing claims — the benchmark suite lives in `packages/ilingo/bench/`, you can run it locally with `npm run bench --workspace=packages/ilingo`, and a fresh `results.json` lands every time.
+ilingo is built to be a small, fast i18n library. This page shows the numbers and how they were measured. They aren't marketing claims: the benchmark suite lives in `packages/ilingo/bench/`, and you can run it locally with `npm run bench --workspace=packages/ilingo`.
 
 ## Headline numbers
 
@@ -17,7 +17,7 @@ ilingo wins on every scenario despite the async API surface (every `get()` is a 
 
 ## Methodology
 
-- Tool: [vitest's `bench` mode](https://vitest.dev/api/vi.html#bench), which delegates to [tinybench](https://github.com/tinylibs/tinybench) for warmup, sample count, and statistical noise handling.
+- Tool: [vitest's benchmarking](https://vitest.dev/guide/benchmarking) (`bench.compare(...)` inside a test, run via `vitest bench`), which delegates to [tinybench](https://github.com/tinylibs/tinybench) for warmup, sample count, and statistical noise handling.
 - Reported metric: `hz` (operations per second) — tinybench's headline number, derived from sample mean over a several-hundred-thousand-call window.
 - Catalog: a synthetic ~30-key catalog spanning two namespaces, plain strings, nested namespaces, one plural leaf, one number-format leaf. See `packages/ilingo/bench/setup.ts`.
 - Hardware (the numbers above): Apple M4 Pro, macOS Darwin 24.6.0 arm64, Node v24.15.0. Your numbers will vary in absolute terms — the *ratio* between contenders is the durable part.
@@ -49,7 +49,7 @@ For a head-to-head size and feature comparison against `i18next`, see [ilingo vs
 npm run bench --workspace=packages/ilingo
 ```
 
-The suite writes `packages/ilingo/bench/results.json` (gitignored) — useful for CI integration. Each scenario is a separate `.bench.ts` file so you can run one in isolation:
+The suite prints one comparison table per scenario (the bench config enables the verbose reporter for that). Each scenario is a separate `.bench.ts` file so you can run one in isolation:
 
 ```bash
 cd packages/ilingo

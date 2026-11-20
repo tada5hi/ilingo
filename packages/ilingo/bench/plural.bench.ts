@@ -5,7 +5,7 @@
  * view the LICENSE file that was distributed with this source code.
  */
 
-import { bench, describe } from 'vitest';
+import { test } from 'vitest';
 import { makeI18next, makeIlingo } from './setup';
 
 /**
@@ -13,21 +13,22 @@ import { makeI18next, makeIlingo } from './setup';
  * mechanism. Both libraries cache the rules instance internally, so this
  * primarily measures the form-selection branch + `{{count}}` substitution.
  */
-describe('get() — plural lookup', () => {
+test('get() — plural lookup', async ({ bench }) => {
     const ilingo = makeIlingo();
     const i18n = makeI18next();
 
     // Pick a non-`one` count so the `other` branch fires — the typical
     // case for product counters / list lengths.
-    bench('ilingo.get (plural, count=5)', async () => {
-        await ilingo.get({
-            namespace: 'app', 
-            key: 'cart.items', 
-            count: 5, 
-        });
-    });
-
-    bench('i18next.t (plural, count=5)', () => {
-        i18n.t('app:cart.items', { count: 5 });
-    });
+    await bench.compare(
+        bench('ilingo.get (plural, count=5)', async () => {
+            await ilingo.get({
+                namespace: 'app',
+                key: 'cart.items',
+                count: 5,
+            });
+        }),
+        bench('i18next.t (plural, count=5)', () => {
+            i18n.t('app:cart.items', { count: 5 });
+        }),
+    );
 });

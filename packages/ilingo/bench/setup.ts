@@ -147,7 +147,7 @@ export function makeI18next() {
             },
         },
         // Match ilingo: synchronous init, no async I/O during t().
-        initImmediate: false,
+        initAsync: false,
         interpolation: {
             escapeValue: false,
             // i18next's default `{{var}}` syntax already matches ilingo.

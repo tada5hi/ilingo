@@ -10,11 +10,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
     test: {
         include: ['bench/**/*.bench.ts'],
-        benchmark: {
-            // Stable defaults — tinybench warms up + averages internally.
-            // Reporters default to the verbose text reporter, which is
-            // what `npm run bench` prints to stdout.
-            outputJson: 'bench/results.json',
-        },
+        // Vitest 5 prints the per-benchmark comparison table (hz, rme,
+        // samples) only through the verbose reporter.
+        reporters: ['verbose'],
     },
 });

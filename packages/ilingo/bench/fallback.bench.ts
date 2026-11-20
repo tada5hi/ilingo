@@ -6,8 +6,14 @@
  */
 
 import i18next from 'i18next';
-import { bench, describe } from 'vitest';
-import { Ilingo, MemoryStore } from '../src';
+import { test } from 'vitest';
+import {
+    Ilingo,
+    MemoryStore,
+    defineLocale,
+    defineNamespace,
+    defineTranslations,
+} from '../src';
 import { catalog } from './setup';
 
 /**
@@ -18,16 +24,16 @@ import { catalog } from './setup';
  * Worst-case path for the cache-hit benchmark — every lookup pays this
  * when a locale is partially translated.
  */
-describe('get() — cache miss with 3-deep fallback', () => {
+test('get() — cache miss with 3-deep fallback', async ({ bench }) => {
     // Construct an ilingo that requests `pt-BR` -> `pt` -> `en`. Only `en`
     // has the key, so the chain is fully walked.
     const ilingo = new Ilingo({
         store: new MemoryStore({
-            data: {
-                'pt-BR': { app: {} },
-                pt: { app: {} },
-                en: catalog.en,
-            },
+            data: [
+                defineLocale('pt-BR', [defineNamespace('app', [defineTranslations({})])]),
+                defineLocale('pt', [defineNamespace('app', [defineTranslations({})])]),
+                ...catalog.data.filter((locale) => locale.name === 'en'),
+            ],
         }),
         locale: 'pt-BR',
     });
@@ -48,19 +54,20 @@ describe('get() — cache miss with 3-deep fallback', () => {
                 form: {},
             },
         },
-        initImmediate: false,
+        initAsync: false,
         interpolation: { escapeValue: false },
     });
 
-    bench('ilingo.get (3-deep fallback)', async () => {
-        await ilingo.get({
-            namespace: 'app',
-            key: 'greeting',
-            data: { name: 'Peter' },
-        });
-    });
-
-    bench('i18next.t (3-deep fallback)', () => {
-        i18n.t('app:greeting', { name: 'Peter' });
-    });
+    await bench.compare(
+        bench('ilingo.get (3-deep fallback)', async () => {
+            await ilingo.get({
+                namespace: 'app',
+                key: 'greeting',
+                data: { name: 'Peter' },
+            });
+        }),
+        bench('i18next.t (3-deep fallback)', () => {
+            i18n.t('app:greeting', { name: 'Peter' });
+        }),
+    );
 });
