@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.3](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.2.2...validup-vue-v1.2.3) (2026-11-20)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @ilingo/validup bumped from ^1.2.1 to ^1.2.2
+    * @ilingo/vue bumped from ^6.1.2 to ^6.1.3
+    * ilingo bumped from ^6.2.1 to ^6.2.2
+  * peerDependencies
+    * @ilingo/validup bumped from ^1.2.1 to ^1.2.2
+    * @ilingo/vue bumped from ^6.1.2 to ^6.1.3
+    * ilingo bumped from ^6.2.1 to ^6.2.2
+
 ## [1.2.2](https://github.com/tada5hi/ilingo/compare/validup-vue-v1.2.1...validup-vue-v1.2.2) (2026-10-27)
 
 

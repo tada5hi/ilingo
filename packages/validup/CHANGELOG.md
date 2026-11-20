@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.2](https://github.com/tada5hi/ilingo/compare/validup-v1.2.1...validup-v1.2.2) (2026-11-20)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * ilingo bumped from ^6.2.1 to ^6.2.2
+  * peerDependencies
+    * ilingo bumped from ^6.2.1 to ^6.2.2
+
 ## [1.2.1](https://github.com/tada5hi/ilingo/compare/validup-v1.2.0...validup-v1.2.1) (2026-10-27)
 
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## [6.1.3](https://github.com/tada5hi/ilingo/compare/vue-v6.1.2...vue-v6.1.3) (2026-11-20)
+
+
+### Bug Fixes
+
+* accept any value as interpolation data ([3d1aa3d](https://github.com/tada5hi/ilingo/commit/3d1aa3dc200dff7ef9fd944d3ddf136eb12d38c2))
+* **vue:** keep the provided instance when install input is empty ([f6cbe06](https://github.com/tada5hi/ilingo/commit/f6cbe069007ab6915899ea988cb2ac68923c957b))
+* **vue:** only register onScopeDispose in useTranslation when a scope is active ([1126cbe](https://github.com/tada5hi/ilingo/commit/1126cbe5f8eb79396958717d42fc1ad48b1b7d9c)), closes [#1075](https://github.com/tada5hi/ilingo/issues/1075)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * ilingo bumped from ^6.2.1 to ^6.2.2
+  * peerDependencies
+    * ilingo bumped from ^6.2.1 to ^6.2.2
+
 ## [6.1.2](https://github.com/tada5hi/ilingo/compare/vue-v6.1.1...vue-v6.1.2) (2026-10-27)
 
 
