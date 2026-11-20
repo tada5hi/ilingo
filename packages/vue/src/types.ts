@@ -20,7 +20,7 @@ export type Options = {
     directives?: boolean,
 };
 
-export type DataMaybeRef = Record<string, MaybeRef<string | number>>;
+export type DataMaybeRef = Record<string, MaybeRef<unknown>>;
 
 export type GetContextReactive = Omit<GetContext, 'data' | 'count'> & {
     data?: DataMaybeRef,

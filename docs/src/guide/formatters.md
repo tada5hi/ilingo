@@ -47,6 +47,8 @@ await ilingo.get({ namespace: 'app', key: 'invited', data: { people: ['Alice', '
 | `date`    | `Intl.DateTimeFormat`    | `dateStyle`, `timeStyle`, `timeZone`, `hour12`              |
 | `list`    | `Intl.ListFormat`        | `style`, `type`                                             |
 
+`data` values reach a formatter unchanged (`GetContext.data` is `Record<string, unknown>`), so `list` takes an array and `date` a `Date`, a timestamp or an ISO string. Without a formatter, a placeholder renders `String(value)`.
+
 ## Option-value coercion
 
 Options are parsed from the source string. The coercion rules:

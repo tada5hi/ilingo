@@ -111,7 +111,13 @@ export type NamespaceBodyInput = TranslationsNode;
 
 export type DotKey = `${string}.${string}`;
 
-export type Data = Record<string, string | number>;
+/**
+ * Interpolation values for `{{name}}` placeholders. A plain placeholder
+ * renders `String(value)`; a formatter receives the value as is, so this
+ * also carries arrays for `list`, `Date`s for `date`, or anything a custom
+ * formatter accepts.
+ */
+export type Data = Record<string, unknown>;
 
 export type GetContext = {
     data?: Data,
