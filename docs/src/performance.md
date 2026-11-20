@@ -10,17 +10,17 @@ Per-call throughput on four representative workloads, compared against [`i18next
 |---|--:|--:|--:|
 | Cache hit, simple string leaf | 1,528,857 | 753,082 | **2.03×** |
 | Plural lookup (`count=5`) | 895,483 | 437,527 | **2.05×** |
-| Cache miss + 3-deep fallback chain | 742,703 | 318,299 | **2.33×** |
+| Cache miss + 3-deep fallback chain | 700,170 | 678,907 | **1.03×** |
 | Template + `Intl.NumberFormat` modifier | 571,205 | 349,604 | **1.63×** |
 
-ilingo wins on every scenario despite the async API surface (every `get()` is a `Promise`, paying a microtask round-trip per call). The async hit is real but the orchestrator's overall path is shorter — locale-first serial walk, single-table dotted-path traversal, no plugin/format-resolver indirection.
+ilingo wins on every scenario (narrowly on the fallback chain, where both libraries do the same locale walk) despite the async API surface (every `get()` is a `Promise`, paying a microtask round-trip per call). The async hit is real but the orchestrator's overall path is shorter — locale-first serial walk, single-table dotted-path traversal, no plugin/format-resolver indirection.
 
 ## Methodology
 
 - Tool: [vitest's benchmarking](https://vitest.dev/guide/benchmarking) (`bench.compare(...)` inside a test, run via `vitest bench`), which delegates to [tinybench](https://github.com/tinylibs/tinybench) for warmup, sample count, and statistical noise handling.
 - Reported metric: `hz` (operations per second) — tinybench's headline number, derived from sample mean over a several-hundred-thousand-call window.
 - Catalog: a synthetic ~30-key catalog spanning two namespaces, plain strings, nested namespaces, one plural leaf, one number-format leaf. See `packages/ilingo/bench/setup.ts`.
-- Hardware (the numbers above): Apple M4 Pro, macOS Darwin 24.6.0 arm64, Node v24.15.0. Your numbers will vary in absolute terms — the *ratio* between contenders is the durable part.
+- Hardware (the numbers above): Apple M4 Pro, macOS Darwin 24.6.0 arm64, Node v24.15.0 (the fallback row: same machine, macOS Darwin 25.6.0, Node v26.13.0). Your numbers will vary in absolute terms — the *ratio* between contenders is the durable part.
 - ilingo and i18next instances are constructed once outside the timed block; the bench measures only the per-call cost.
 - For a fair compare, the two libraries are configured to do the same work: same fallback chain (`pt-BR → pt → en` in the fallback scenario), same plural categories, same `Intl.NumberFormat({ currency: 'EUR' })` formatter. i18next's namespace concept maps onto our `namespace` argument; its plural-suffix convention (`items_one`, `items_other`) is rebuilt from our `definePlural` shape at setup time.
 
@@ -85,6 +85,6 @@ The shared `setup.ts` already exports pre-built ilingo and i18next instances aga
 
 ## Caveats
 
-- These are micro-benchmarks. Real-world performance is dominated by render cycles, hydration costs, and bundle parse time. ilingo being 2× faster than i18next per call rarely makes a user-visible difference unless you're rendering tens of thousands of translated strings per frame.
+- These are micro-benchmarks. Real-world performance is dominated by render cycles, hydration costs, and bundle parse time. ilingo being up to 2× faster than i18next per call rarely makes a user-visible difference unless you're rendering tens of thousands of translated strings per frame.
 - The async hit on ilingo is the *floor* — every call pays it. If you call `get()` inside a tight loop and don't await between iterations, the microtask queue resolves them in batches; effective throughput stays close to the bench numbers above.
 - `vue-i18n` isn't included in this comparison because its API is shaped around Vue component context (`useI18n` / `t` from setup), not a standalone translator. A `vue-i18n.global.t(...)` comparison would test a path most users don't run; planning a separate `@ilingo/vue` benchmark page for the Vue-specific composables.

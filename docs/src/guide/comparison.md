@@ -28,13 +28,13 @@ ilingo declares `"sideEffects": false`, so a bundler drops every export you don'
 
 ## Throughput
 
-ilingo runs **1.6× – 2.3× faster than i18next** per call across four representative workloads — *despite* ilingo's async `get()` paying a microtask per call. Full table, methodology, and hardware are on the [Performance](../performance) page; the ratios:
+ilingo runs **up to 2× faster than i18next** per call across four representative workloads, and level with it on a 3-deep fallback chain, *despite* ilingo's async `get()` paying a microtask per call. Full table, methodology, and hardware are on the [Performance](../performance) page; the ratios:
 
 | Workload | ilingo / i18next |
 |---|--:|
 | Cache hit, simple string leaf | **2.03×** |
 | Plural lookup (`count = 5`) | **2.05×** |
-| Cache miss + 3-deep fallback chain | **2.33×** |
+| Cache miss + 3-deep fallback chain | **1.03×** |
 | Template + `Intl.NumberFormat` modifier | **1.63×** |
 
 These are micro-benchmarks — read the [caveats](../performance#caveats). Per-call speed almost never dominates a real app (render and hydration do); treat it as evidence of a short resolution path, not a reason to switch on its own.

@@ -16,7 +16,7 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Tada5hi/ilingo?targetFile=package.json)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
-The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob); on common workloads it runs **1.6× – 2.3× faster than `i18next`** ([benchmarks](https://ilingo.tada5hi.net/performance)).
+The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob); on common workloads it runs **up to 2× faster than `i18next`** ([benchmarks](https://ilingo.tada5hi.net/performance)).
 
 **Table of Contents**
 
