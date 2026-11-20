@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.2.2](https://github.com/tada5hi/ilingo/compare/ilingo-v6.2.1...ilingo-v6.2.2) (2026-11-20)
+
+
+### Bug Fixes
+
+* accept any value as interpolation data ([3d1aa3d](https://github.com/tada5hi/ilingo/commit/3d1aa3dc200dff7ef9fd944d3ddf136eb12d38c2))
+
 ## [6.2.1](https://github.com/tada5hi/ilingo/compare/ilingo-v6.2.0...ilingo-v6.2.1) (2026-10-27)
 
 
