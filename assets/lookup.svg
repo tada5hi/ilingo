@@ -1,0 +1,65 @@
+<svg width="960" height="330" viewBox="0 0 960 330" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ilc-title ilc-desc">
+    <title id="ilc-title">How ilingo resolves a translation: a ladder of fallback locales</title>
+    <desc id="ilc-desc">The locale chain for de-AT is drawn as three message bubbles stacked from closest to most generic: de-AT, de and en. Each bubble holds the stores in registration order, MemoryStore then FSStore. de-AT misses in both, de misses in MemoryStore and hits in FSStore with Hallo {{name}}, so the en bubble is never opened. The hit renders as Hallo Peter.</desc>
+    <style>
+        :root { --fg: #1E1B4B; --muted: #5B5F86; --panel: #F5F6FD; --panel-edge: #D5D8F0; --card: #FFFFFF; --rail: #8E92B8; --skip: #B9BCD8; }
+        @media (prefers-color-scheme: dark) {
+            :root { --fg: #EEF0FF; --muted: #A3A7CC; --panel: #151827; --panel-edge: #343A5C; --card: #0D1117; --rail: #6B7099; --skip: #3F4566; }
+        }
+        text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: var(--fg); }
+        .muted { fill: var(--muted); }
+        .code { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace; }
+        .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--muted); }
+        .title { font-size: 13px; font-weight: 600; }
+        .panel { fill: var(--panel); stroke: var(--panel-edge); }
+        .card { fill: var(--card); stroke: var(--panel-edge); }
+        .rail { stroke: var(--rail); }
+        .skip { fill: none; stroke: var(--skip); stroke-dasharray: 5 4; }
+    </style>
+    <defs>
+        <marker id="ilc-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 Z" fill="#8E92B8" />
+        </marker>
+    </defs>
+    <rect class="panel" x="16" y="16" width="928" height="298" rx="18" />
+    <rect class="card" x="32" y="30" width="612" height="36" rx="10" stroke="#6366F1" stroke-width="1.5" />
+    <text class="code" font-size="12" x="46" y="53">ilingo.get({ locale: 'de-AT', namespace: 'app', key: 'greeting', data: { name } })</text>
+    <path class="rail" d="M72 108 V272" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round" />
+    <circle cx="72" cy="110" r="11" style="fill:var(--panel);stroke:var(--panel-edge)" /><text font-size="11" font-weight="600" x="72" y="114" text-anchor="middle">1</text>
+    <path class="card" stroke="#6366F1" stroke-width="1.5" d="M114 84 H630 A14 14 0 0 1 644 98 V122 A14 14 0 0 1 630 136 H148 L130 148 V136 H114 A14 14 0 0 1 100 122 V98 A14 14 0 0 1 114 84 Z" />
+    <text class="code" font-size="12.5" font-weight="600" x="120" y="115">de-AT</text>
+    <rect class="card" x="236" y="92" width="192" height="36" rx="8" style="fill:var(--panel)" />
+    <text class="title" x="248" y="115">MemoryStore</text>
+    <text class="muted" font-size="11.5" x="416" y="115" text-anchor="end">miss</text>
+    <rect class="card" x="440" y="92" width="192" height="36" rx="8" style="fill:var(--panel)" />
+    <text class="title" x="452" y="115">FSStore</text>
+    <text class="muted" font-size="11.5" x="620" y="115" text-anchor="end">miss</text>
+    <circle cx="72" cy="188" r="11" style="fill:var(--panel);stroke:var(--panel-edge)" /><text font-size="11" font-weight="600" x="72" y="192" text-anchor="middle">2</text>
+    <path class="card" stroke="#6366F1" stroke-width="1.5" d="M114 162 H630 A14 14 0 0 1 644 176 V200 A14 14 0 0 1 630 214 H148 L130 226 V214 H114 A14 14 0 0 1 100 200 V176 A14 14 0 0 1 114 162 Z" />
+    <text class="code" font-size="12.5" font-weight="600" x="120" y="193">de</text>
+    <rect class="card" x="236" y="170" width="192" height="36" rx="8" style="fill:var(--panel)" />
+    <text class="title" x="248" y="193">MemoryStore</text>
+    <text class="muted" font-size="11.5" x="416" y="193" text-anchor="end">miss</text>
+    <rect x="440" y="170" width="192" height="36" rx="8" style="fill:var(--card)" stroke="#14B8A6" stroke-width="2" />
+    <text class="title" x="452" y="193">FSStore</text>
+    <text class="code" font-size="11" x="620" y="193" text-anchor="end" style="fill:#0D9488">Hallo {{name}}</text>
+    <circle cx="72" cy="266" r="11" style="fill:var(--panel);stroke:var(--panel-edge)" /><text font-size="11" font-weight="600" x="72" y="270" text-anchor="middle" class="muted">3</text>
+    <path class="skip" d="M114 240 H630 A14 14 0 0 1 644 254 V278 A14 14 0 0 1 630 292 H148 L130 304 V292 H114 A14 14 0 0 1 100 278 V254 A14 14 0 0 1 114 240 Z" />
+    <text class="code muted" font-size="12.5" font-weight="600" x="120" y="271">en (default)</text>
+    <rect class="skip" x="236" y="248" width="192" height="36" rx="8" style="fill:var(--panel)" />
+    <text class="title muted" x="248" y="271">MemoryStore</text>
+    <text class="muted" font-size="11.5" x="416" y="271" text-anchor="end">not asked</text>
+    <rect class="skip" x="440" y="248" width="192" height="36" rx="8" style="fill:var(--panel)" />
+    <text class="title muted" x="452" y="271">FSStore</text>
+    <text class="muted" font-size="11.5" x="620" y="271" text-anchor="end">not asked</text>
+    <path d="M632 188 H700" stroke="#14B8A6" stroke-width="2" marker-end="url(#ilc-head)" />
+    <path d="M718 150 H912 A16 16 0 0 1 928 166 V230 A16 16 0 0 1 912 246 H900 L884 262 V246 H718 A16 16 0 0 1 702 230 V166 A16 16 0 0 1 718 150 Z" style="fill:var(--card)" stroke="#F59E0B" stroke-width="2" />
+    <text class="label" x="720" y="174">rendered as de</text>
+    <text class="code" font-size="15" font-weight="600" x="720" y="202">'Hallo Peter'</text>
+    <text class="muted" font-size="11" x="720" y="224">plural form, then placeholders</text>
+    <rect class="card" x="702" y="84" width="226" height="52" rx="10" />
+    <text class="muted" font-size="11" x="716" y="106">Stores answer in registration</text>
+    <text class="muted" font-size="11" x="716" y="123">order; the first hit wins.</text>
+    <rect class="card" x="702" y="276" width="226" height="28" rx="8" />
+    <text class="muted" font-size="11" x="716" y="294">No hit: <tspan class="code" style="fill:var(--fg)">onMissingKey(ctx)</tspan></text>
+</svg>

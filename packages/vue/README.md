@@ -8,25 +8,40 @@
     <b>A <a href="https://vuejs.org">Vue 3</a> integration for <a href="https://www.npmjs.com/package/ilingo">ilingo</a>: provide/inject, a reactive locale, the <code>&lt;ITranslate&gt;</code> component, a <code>v-t</code> directive, and the <code>useTranslation</code> composable.</b>
 </p>
 
-[![npm version](https://img.shields.io/npm/v/@ilingo/vue.svg)](https://www.npmjs.com/package/@ilingo/vue)
-[![npm downloads](https://img.shields.io/npm/dm/@ilingo/vue.svg)](https://www.npmjs.com/package/@ilingo/vue)
-[![minzipped size](https://img.shields.io/bundlephobia/minzip/@ilingo/vue)](https://bundlephobia.com/package/@ilingo/vue)
-[![main](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml)
-[![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=CLIA667K6V)](https://codecov.io/gh/tada5hi/ilingo)
-[![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg)](https://snyk.io/test/github/Tada5hi/ilingo)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+<p align="center">
+    <a href="https://www.npmjs.com/package/@ilingo/vue"><img src="https://img.shields.io/npm/v/@ilingo/vue" alt="npm version" /></a>
+    <a href="https://github.com/tada5hi/ilingo/actions/workflows/main.yml"><img src="https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg" alt="CI" /></a>
+    <a href="https://codecov.io/gh/tada5hi/ilingo"><img src="https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=4KNSG8L13V" alt="Coverage" /></a>
+    <a href="https://bundlephobia.com/package/@ilingo/vue"><img src="https://img.shields.io/bundlephobia/minzip/@ilingo/vue" alt="minzipped size" /></a>
+</p>
 
-**Table of Contents**
+<p align="center">
+    <a href="#installation"><b>Installation</b></a>
+    ·
+    <a href="#usage">Usage</a>
+    ·
+    <a href="#install-input">Install input</a>
+    ·
+    <a href="#ssr-the-first-render-is-not-a-placeholder">SSR</a>
+    ·
+    <a href="#itranslatet-slot-aware-interpolation"><code>&lt;ITranslateT&gt;</code></a>
+    ·
+    <a href="#v-t-directive"><code>v-t</code></a>
+    ·
+    <a href="#usescopedcatalog-per-component-message-scope"><code>useScopedCatalog</code></a>
+</p>
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [License](#license)
+---
+
+Use [ilingo](https://www.npmjs.com/package/ilingo) in a Vue 3 app without wiring the reactivity yourself. `install()` provides one `Ilingo` instance and a locale `Ref` to the whole app; `useTranslation`, `<ITranslate>`, `<ITranslateT>` and `v-t` re-resolve when that locale changes. Each translation is seeded from `ilingo.getSync()`, so the first render, including the server render, already shows the real string.
 
 ## Installation
 
 ```bash
-npm install @ilingo/vue --save
+npm install @ilingo/vue ilingo vue @vueuse/core
 ```
+
+ESM only. Peer dependencies: `ilingo` ^6.2.1, `vue` ^3.5.45 and `@vueuse/core` ^14.4.0 or ^15.0.0. `@ilingo/vue/core` re-exports `ilingo`.
 
 ## Usage
 
@@ -96,6 +111,10 @@ app.mount('#app');
 </template>
 ```
 
+- `<ITranslate>` takes `path` (`'<namespace>.<key>'`) and `data`. The `path` is read once at setup; to switch keys, re-key the component.
+- `useTranslation(ctx)` takes the `get()` context; `data` values and `count` may be `Ref`s. It returns a `Ref<string>` that starts as `namespace.key` when the stores cannot answer synchronously, and it also re-resolves when a store [invalidates](https://ilingo.tada5hi.net/guide/stores) a namespace (for example `FSStore` in watch mode).
+- `injectLocale()` returns the app's locale `Ref`; assigning it switches every translation in the app.
+
 ### Outside a component
 
 `useTranslation` cleans up (store `invalidate` subscriptions, the `computedAsync` watcher) when the active effect scope is disposed. Called outside one, for example under `app.runWithContext()`, wrap it in your own `effectScope()` and call `scope.stop()` when done:
@@ -110,6 +129,18 @@ const label = app.runWithContext(() => scope.run(() => useTranslation({ namespac
 scope.stop();
 ```
 
+## Install input
+
+`install(app, input?)` (also the plugin's default export, so `app.use(plugin, input)` works) accepts:
+
+| Input | Effect |
+|---|---|
+| `{ store, locale?, directives? }` | Creates an `Ilingo` with `store` (or registers `store` on an instance that is already provided). `locale` sets the initial locale `Ref` (default `'en'`). `directives: false` skips registering `v-t` |
+| an `Ilingo` / `IIlingo` instance | Provides that instance (or merges its stores into one already provided). The locale `Ref` starts at `instance.getLocale()`. `v-t` is always registered |
+| nothing | Keeps the instance that is already provided, or creates and provides an empty `Ilingo` |
+
+`<ITranslate>` and `<ITranslateT>` are registered globally in every case. `provideIlingo` / `injectIlingo` / `injectIlingoSafe` and `provideLocale` / `injectLocale` / `injectLocaleSafe` expose the same provide/inject pair for custom integrations; `applyInstallInput(app, input)` is the install logic without the component registration, used by the validation packages.
+
 ## SSR: the first render is not a placeholder
 
 `useTranslation` (and `<ITranslate>`, `<ITranslateT>`, `useScopedCatalog().t`) wraps the asynchronous `Ilingo.get()` in a `computedAsync`, which needs an initial value before its promise settles. That initial value comes from `Ilingo.getSync()`, the synchronous read path, so with an in-memory catalog the **first** render is already the real string rather than the `namespace.key` placeholder ([#988](https://github.com/tada5hi/ilingo/issues/988)).
@@ -122,7 +153,9 @@ For server-side rendering that removes a whole class of bugs: the translated str
   - expected on client: "app.name"
 ```
 
-No opt-in, no payload plumbing. Stores that need I/O (a cold `LoaderStore` or `FSStore`, a remote adapter) can't answer synchronously. Those keys still start at the placeholder and settle a tick later; warm them before rendering if the server output matters. See the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr) and [`getSync`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-getsync).
+No opt-in, no payload plumbing. `FSStore` reads a cold namespace from disk synchronously, so file-backed keys are seeded too. Stores that need asynchronous I/O (a `LoaderStore` before its chunk has loaded, a remote adapter) can't answer synchronously: those keys start at the placeholder (`namespace.key` for `useTranslation` and `<ITranslate>`, an empty string for `<ITranslateT>`) and settle a tick later. Warm them before rendering if the server output matters.
+
+`v-t` is the exception: it fills `textContent` after the element mounts, so on the server it renders an empty element. Use `useTranslation` or `<ITranslate>` for text that must be in the SSR markup. See the [SSR recipe](https://ilingo.tada5hi.net/recipes/ssr) and [`getSync`](https://ilingo.tada5hi.net/guide/stores#synchronous-reads-getsync).
 
 ## `<ITranslateT>`: slot-aware interpolation
 
@@ -139,6 +172,7 @@ Message: `"Hi {{user}}, please {cta} to continue."`
 <!-- → <span>Hi Peter, please <a href="/start">get started</a> to continue.</span> -->
 ```
 
+- Props: `path`, `data`, plus optional `locale` (overrides the app locale) and `count` (plural selection). Unlike `<ITranslate>`, a changed `path` is picked up.
 - Rendered tag: `<span>` by default. Override with `tag="p"` etc.; pass `tag=""` to render a fragment with no wrapper.
 - Unfilled slot placeholders stay as literal `{slot}` text (no throw).
 - `{{var}}` placeholders that have no matching `data` key stay as literal `{{var}}`.
@@ -155,7 +189,7 @@ Message: `"Hi {{user}}, please {cta} to continue."`
 <p v-t="{ namespace: 'cart', key: 'items', count: 3 }"></p>
 ```
 
-The directive is registered globally during `install()`. Opt out per-app via `install(app, { store, directives: false })`.
+The directive is registered globally during `install()`. Opt out per-app via `install(app, { store, directives: false })`; installing with an `Ilingo` instance always registers it. It fills the element after mount, so it renders empty during SSR (see [SSR](#ssr-the-first-render-is-not-a-placeholder)).
 
 ## `useScopedCatalog`: per-component message scope
 

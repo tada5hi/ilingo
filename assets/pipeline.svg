@@ -1,0 +1,75 @@
+<svg width="960" height="230" viewBox="0 0 960 230" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ild-title ild-desc">
+    <title id="ild-title">How ilingo turns a call into a string: the get() pipeline</title>
+    <desc id="ild-desc">A call ilingo.get for key total with locale de-AT and data amount 42 passes five stages. The locale chain becomes de-AT, de, en. The store walk asks each store per locale and finds the message only in en. The plural stage is skipped because no count was given. The number formatter renders 42 as euro currency for the resolved locale en. The result is Total: €42.00.</desc>
+    <style>
+        :root { --fg: #1E1B4B; --muted: #5B5F86; --panel: #F5F6FD; --panel-edge: #D5D8F0; --card: #FFFFFF; --rail: #8E92B8; --skip: #B9BCD8; }
+        @media (prefers-color-scheme: dark) {
+            :root { --fg: #EEF0FF; --muted: #A3A7CC; --panel: #151827; --panel-edge: #343A5C; --card: #0D1117; --rail: #6B7099; --skip: #3F4566; }
+        }
+        text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; fill: var(--fg); }
+        .muted { fill: var(--muted); }
+        .code { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace; }
+        .label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--muted); }
+        .title { font-size: 13px; font-weight: 600; }
+        .panel { fill: var(--panel); stroke: var(--panel-edge); }
+        .card { fill: var(--card); stroke: var(--panel-edge); }
+        .rail { stroke: var(--rail); }
+        .skip { fill: none; stroke: var(--skip); stroke-dasharray: 5 4; }
+    </style>
+    <defs>
+        <marker id="ild-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 Z" fill="#8E92B8" />
+        </marker>
+    </defs>
+    <rect class="panel" x="16" y="16" width="928" height="198" rx="18" />
+    <rect class="card" x="32" y="32" width="168" height="166" rx="12" stroke="#6366F1" stroke-width="1.5" />
+    <text class="label" x="46" y="54">1 · request</text>
+    <path class="rail" d="M200 115 H214" stroke-width="2" marker-end="url(#ild-head)" />
+    <rect class="card" x="214" y="32" width="168" height="166" rx="12" />
+    <text class="label" x="228" y="54">2 · locale chain</text>
+    <path class="rail" d="M382 115 H396" stroke-width="2" marker-end="url(#ild-head)" />
+    <rect class="card" x="396" y="32" width="168" height="166" rx="12" />
+    <text class="label" x="410" y="54">3 · store walk</text>
+    <path class="rail" d="M564 115 H578" stroke-width="2" marker-end="url(#ild-head)" />
+    <rect class="card" x="578" y="32" width="168" height="166" rx="12" />
+    <text class="label" x="592" y="54">4 · format as en</text>
+    <path class="rail" d="M746 115 H760" stroke-width="2" marker-end="url(#ild-head)" />
+    <rect class="card" x="760" y="32" width="168" height="166" rx="12" stroke="#F59E0B" stroke-width="2" />
+    <text class="label" x="774" y="54">5 · result</text>
+    <text class="code" font-size="11" x="44" y="84">get({</text>
+    <text class="code" font-size="11" x="54" y="104">locale: 'de-AT',</text>
+    <text class="code" font-size="11" x="54" y="124">namespace: 'cart',</text>
+    <text class="code" font-size="11" x="54" y="144">key: 'total',</text>
+    <text class="code" font-size="11" x="54" y="164">data: { amount: 42 },</text>
+    <text class="code" font-size="11" x="44" y="184">})</text>
+    <rect class="card" x="238" y="74" width="120" height="26" rx="13" stroke="#6366F1" />
+    <text class="code" font-size="12" x="298" y="91" text-anchor="middle">de-AT</text>
+    <path class="rail" d="M298 101 V110" stroke-width="1.5" />
+    <rect class="card" x="238" y="112" width="120" height="26" rx="13" stroke="#6366F1" />
+    <text class="code" font-size="12" x="298" y="129" text-anchor="middle">de</text>
+    <path class="rail" d="M298 139 V148" stroke-width="1.5" />
+    <rect class="card" x="238" y="150" width="120" height="26" rx="13" stroke="#6366F1" />
+    <text class="code" font-size="12" x="298" y="167" text-anchor="middle">en</text>
+    <text class="muted" font-size="10.5" x="228" y="190">BCP-47 parents, then en</text>
+    <text class="muted" font-size="10" x="472" y="76" text-anchor="middle">Memory</text><text class="muted" font-size="10" x="528" y="76" text-anchor="middle">FS</text>
+    <text class="code" font-size="10" x="406" y="101">de-AT</text>
+    <rect class="card" x="450" y="86" width="44" height="22" rx="6" style="fill:var(--panel)" /><text class="muted" font-size="10" x="472" y="101" text-anchor="middle">miss</text>
+    <rect class="card" x="506" y="86" width="44" height="22" rx="6" style="fill:var(--panel)" /><text class="muted" font-size="10" x="528" y="101" text-anchor="middle">miss</text>
+    <text class="code" font-size="10" x="406" y="131">de</text>
+    <rect class="card" x="450" y="116" width="44" height="22" rx="6" style="fill:var(--panel)" /><text class="muted" font-size="10" x="472" y="131" text-anchor="middle">miss</text>
+    <rect class="card" x="506" y="116" width="44" height="22" rx="6" style="fill:var(--panel)" /><text class="muted" font-size="10" x="528" y="131" text-anchor="middle">miss</text>
+    <text class="code" font-size="10" x="406" y="161">en</text>
+    <rect x="450" y="146" width="44" height="22" rx="6" fill="#14B8A6" /><text font-size="10" font-weight="600" x="472" y="161" text-anchor="middle" style="fill:#FFFFFF">hit</text>
+    <rect class="skip" x="506" y="146" width="44" height="22" rx="6" /><text class="muted" font-size="10" x="528" y="161" text-anchor="middle">–</text>
+    <text class="muted" font-size="10" x="406" y="190">first hit wins, rest skipped</text>
+    <text class="code" font-size="10.5" x="592" y="84">Total: {{amount,</text>
+    <text class="code" font-size="10.5" x="604" y="100">number(style=</text>
+    <text class="code" font-size="10.5" x="604" y="116">currency,</text>
+    <text class="code" font-size="10.5" x="604" y="132">currency=EUR)}}</text>
+    <text class="muted" font-size="10.5" x="592" y="160">no count: plural skipped</text>
+    <text class="muted" font-size="10.5" x="592" y="178">Intl.NumberFormat('en')</text>
+    <text class="code" font-size="14" font-weight="600" x="774" y="110">'Total: €42.00'</text>
+    <text class="muted" font-size="10.5" x="774" y="140">getSync() gives the</text>
+    <text class="muted" font-size="10.5" x="774" y="156">same string, or throws</text>
+    <text class="muted" font-size="10.5" x="774" y="172">when a store needs I/O</text>
+</svg>

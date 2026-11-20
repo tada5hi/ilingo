@@ -8,21 +8,37 @@
     <b>Translate <a href="https://www.npmjs.com/package/validup">validup</a> <code>Issue</code>s through <a href="https://www.npmjs.com/package/ilingo">ilingo</a>: framework-agnostic, with default EN / DE / FR / ES catalogs for the built-in <code>IssueCode</code>s.</b>
 </p>
 
-[![npm version](https://img.shields.io/npm/v/@ilingo/validup.svg)](https://www.npmjs.com/package/@ilingo/validup)
-[![npm downloads](https://img.shields.io/npm/dm/@ilingo/validup.svg)](https://www.npmjs.com/package/@ilingo/validup)
-[![minzipped size](https://img.shields.io/bundlephobia/minzip/@ilingo/validup)](https://bundlephobia.com/package/@ilingo/validup)
-[![main](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo/actions/workflows/main.yml)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+<p align="center">
+    <a href="https://www.npmjs.com/package/@ilingo/validup"><img src="https://img.shields.io/npm/v/@ilingo/validup" alt="npm version" /></a>
+    <a href="https://github.com/tada5hi/ilingo/actions/workflows/main.yml"><img src="https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg" alt="CI" /></a>
+    <a href="https://bundlephobia.com/package/@ilingo/validup"><img src="https://img.shields.io/bundlephobia/minzip/@ilingo/validup" alt="minzipped size" /></a>
+</p>
 
-Ships default EN / DE / FR / ES catalogs for the built-in `IssueCode`s, a pre-seeded `Store`, and pure `translateIssue` / `translateIssues` helpers (each with a synchronous `…Sync` variant for SSR).
+<p align="center">
+    <a href="#installation"><b>Installation</b></a>
+    ·
+    <a href="#quick-start">Quick start</a>
+    ·
+    <a href="#api">API</a>
+    ·
+    <a href="#extending--overriding-the-validup-namespace">Overriding messages</a>
+    ·
+    <a href="#going-vue">Vue</a>
+</p>
 
-**No Vue dependency.** Embeddable in any runtime: Node SSR, edge workers, queue handlers, CLI tools. Vue 3 users add [`@ilingo/validup-vue`](../validup-vue) on top for composables, the renderless component, and the install plugin.
+---
+
+Turn a validup `Issue` into a sentence in the user's language: the helpers look up `issue.code` in the `validup` namespace, fill the message with the issue's `data`, and fall back to `issue.message` when there is no translation. Default EN / DE / FR / ES catalogs for the built-in `IssueCode`s come as eager or lazy stores (`createMemoryStore()` / `createLoaderStore()` on subpaths), and every helper has a synchronous `…Sync` variant for SSR.
+
+**No Vue dependency.** Embeddable in any runtime: Node SSR, edge workers, queue handlers, CLI tools. Vue 3 users add [`@ilingo/validup-vue`](https://www.npmjs.com/package/@ilingo/validup-vue) on top for composables, the renderless components, and the install plugin.
 
 ## Installation
 
 ```bash
-npm install @ilingo/validup ilingo validup @ebec/core
+npm install @ilingo/validup ilingo validup
 ```
+
+ESM only, Node.js 22 or later on the server. Peer dependencies: `ilingo` and `validup`. `@ebec/core` (the issue model) is installed as a dependency; add it to your own `package.json` too if you import from it directly, as the quick start does.
 
 ## Quick start
 
@@ -106,7 +122,7 @@ Translate an `IssueGroup[]`, each by its **own** `code` (e.g. `one_of_failed`), 
 
 ### `translateIssueSync` / `translateIssuesSync` / `translateIssueGroupsSync`
 
-Synchronous counterparts of the three helpers above, for call sites that need a message *now*: a server render, or seeding a Vue `computedAsync` so its first render isn't empty ([#988](https://github.com/tada5hi/ilingo/issues/988)). They read through [`Ilingo.getSync()`](../ilingo/README.md#synchronous-reads-for-ssr), so they answer whenever the catalog is in memory (the bundled `createMemoryStore()`) and **return `undefined`** only when a store would need I/O:
+Synchronous counterparts of the three helpers above, for call sites that need a message *now*: a server render, or seeding a Vue `computedAsync` so its first render isn't empty ([#988](https://github.com/tada5hi/ilingo/issues/988)). They read through [`Ilingo.getSync()`](https://www.npmjs.com/package/ilingo#synchronous-reads-for-ssr), so they answer whenever the catalog is in memory (the bundled `createMemoryStore()`) and **return `undefined`** only when a store would need I/O:
 
 ```typescript
 import { translateIssuesSync } from '@ilingo/validup';
@@ -121,11 +137,17 @@ The batch helpers are **all-or-nothing**: `translateIssuesSync` / `translateIssu
 
 Options on all six: `{ locale?: string, namespace?: string }`. The default namespace is `'validup'`; override when you've mounted translations under a different name.
 
+`coerceIssueData(data)` is the step the helpers use to turn an issue's `data` into interpolation values: `null` / `undefined` become `''`, booleans become `"true"` / `"false"`, and objects or arrays are JSON-serialised with a one-time dev warning. Call it yourself when you render issue data outside the helpers.
+
+`SlotName` and the `SlotProps` / `IssueSlotProps` / `GroupSlotProps` types describe the slots of the `@ilingo/validup-vue` components; they live here so non-Vue renderers can share them.
+
 ### Default catalogs
 
 ```typescript
 import { en, de, fr, es } from '@ilingo/validup/store/memory';
 ```
+
+`@ilingo/validup/store/memory` also exports the `Store` class behind `createMemoryStore()` and `extendStore(store)`, which writes all four catalogs into an `IMutableStore` you already have (for example a `MemoryStore` your app owns) instead of registering a separate store.
 
 Each is a `TranslationsNode` (`defineTranslations(...)`, i.e. `{ type: 'translations', data }`) keyed by the built-in `IssueCode` runtime values. (They live on the `./store/memory` subpath, the eager entry, so the data-free core stays free of translation modules.)
 
@@ -166,7 +188,7 @@ The `validup` namespace name is exported as `NAMESPACE` if you'd rather build th
 
 ## Going Vue
 
-For composables (`useTranslationsForIssues`, `useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForGroupErrors`, `useFieldValidation`), the `<IValidup>` / `<IValidupT>` / `<IFieldValidation>` renderless components, and the Vue plugin install hook, add [`@ilingo/validup-vue`](../validup-vue).
+For composables (`useTranslationsForIssues`, `useTranslationsForField`, `useTranslationsForComposable`, `useTranslationsForGroupErrors`, `useFieldValidation`), the `<IValidup>` / `<IValidupT>` / `<IFieldValidation>` renderless components, and the Vue plugin install hook, add [`@ilingo/validup-vue`](https://www.npmjs.com/package/@ilingo/validup-vue).
 
 ## License
 

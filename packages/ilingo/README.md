@@ -5,23 +5,51 @@
 <h1 align="center">ilingo</h1>
 
 <p align="center">
-    <b>A lightweight, framework-agnostic translation and internationalization (i18n) library for TypeScript: pluggable stores, BCP-47 fallback, ICU-lite plurals, and Intl-native formatters.</b>
+    <b>Framework-agnostic i18n for TypeScript: pluggable stores, BCP-47 locale fallback, plurals and Intl formatters.</b><br>
+    One lookup walks the locale chain, asks your stores in order, picks the plural form and formats the values for the locale that answered.
 </p>
 
-[![npm version](https://img.shields.io/npm/v/ilingo.svg)](https://www.npmjs.com/package/ilingo)
-[![npm downloads](https://img.shields.io/npm/dm/ilingo.svg)](https://www.npmjs.com/package/ilingo)
-[![minzipped size](https://img.shields.io/bundlephobia/minzip/ilingo)](https://bundlephobia.com/package/ilingo)
-[![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=4KNSG8L13V)](https://codecov.io/gh/tada5hi/ilingo)
-[![Master Workflow](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo)
-[![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg?targetFile=package.json)](https://snyk.io/test/github/Tada5hi/ilingo?targetFile=package.json)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+<p align="center">
+    <a href="https://www.npmjs.com/package/ilingo"><img src="https://img.shields.io/npm/v/ilingo" alt="npm version" /></a>
+    <a href="https://github.com/tada5hi/ilingo/actions/workflows/main.yml"><img src="https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg" alt="CI" /></a>
+    <a href="https://codecov.io/gh/tada5hi/ilingo"><img src="https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=4KNSG8L13V" alt="Coverage" /></a>
+    <a href="https://bundlephobia.com/package/ilingo"><img src="https://img.shields.io/bundlephobia/minzip/ilingo" alt="minzipped size" /></a>
+</p>
 
-The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob); on common workloads it runs **up to 2× faster than `i18next`** ([benchmarks](https://ilingo.tada5hi.net/performance)).
+<p align="center">
+    <a href="#why-ilingo"><b>Why ilingo?</b></a>
+    ·
+    <a href="#installation">Installation</a>
+    ·
+    <a href="#usage">Usage</a>
+    ·
+    <a href="#store">Stores</a>
+    ·
+    <a href="https://ilingo.tada5hi.net">Documentation</a>
+</p>
+
+---
+
+## Why ilingo?
+
+| Concern | Hand-rolled `messages[locale][key]` | ilingo |
+|---|---|---|
+| **Locale fallback** | A `??` chain at every call site; `de-AT` misses when only `de` exists | The requested locale, its BCP-47 parents (or your `fallback`), then `en`. The closest locale wins |
+| **Where catalogs live** | One import that bundles every language | `MemoryStore`, `LoaderStore` (lazy `import()` per locale and namespace), or [`FSStore`](https://www.npmjs.com/package/@ilingo/fs); several stores are asked in registration order |
+| **Plurals** | `count === 1 ? one : other`, wrong for Polish or Arabic | `definePlural(...)`, picked by `Intl.PluralRules` for the locale that answered |
+| **Numbers, dates, lists** | `Intl.*Format` calls with the locale passed by hand | `{{amount, number(style=currency, currency=EUR)}}` in the message |
+| **Missing keys** | `undefined` or the raw key reaches the UI | `onMissingKey` decides; otherwise one console warning per key outside production |
+| **Server rendering** | An async lookup leaves a placeholder in the server markup | `getSync()` returns what `get()` would, or throws `SyncUnavailableError` |
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/tada5hi/ilingo/HEAD/assets/pipeline.svg" alt="A call ilingo.get for key total with locale de-AT and data amount 42 passes five stages. The locale chain becomes de-AT, de, en. The store walk asks each store per locale and finds the message only in en. The plural stage is skipped because no count was given. The number formatter renders 42 as euro currency for the resolved locale en. The result is Total: €42.00." width="100%" />
+</p>
+
+The runtime dependencies are [`@ebec/core`](https://www.npmjs.com/package/@ebec/core), [`pathtrace`](https://www.npmjs.com/package/pathtrace) and [`smob`](https://www.npmjs.com/package/smob). On common workloads ilingo runs **up to 2× faster than `i18next`** ([benchmarks](https://ilingo.tada5hi.net/performance)).
 
 **Table of Contents**
 
 - [Installation](#installation)
-- [Configuration](#configuration)
 - [Usage](#usage)
   - [Basic](#basic)
   - [Parameters](#parameters)
@@ -36,6 +64,7 @@ The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/pac
   - [Slot placeholders & `tokenize()`](#slot-placeholders--tokenize)
   - [Custom formatters](#custom-formatters)
   - [Locale negotiation](#locale-negotiation)
+- [Options](#options)
 - [Store](#store)
   - [Memory](#memory-store)
   - [Loader](#loader-store)
@@ -46,30 +75,17 @@ The core's only runtime dependencies are [`pathtrace`](https://www.npmjs.com/pac
 ## Installation
 
 ```bash
-npm install ilingo --save
+npm install ilingo
 ```
 
-## Configuration
-While full localization of an application is a complex subject,
-swapping out strings in your application for different supported languages/locales is simple.
-The different locale strings for translation are provided  by interacting with the library class instance.
+ESM only. Node.js 22 or later on the server; the package has no Node-specific imports, and CI smoke-tests the build under Node and Bun.
 
 ## Usage
 
 ### Basic
 
-Create an instance and set the default locale.
+An `Ilingo` instance holds the current locale and the stores it reads from. Without a `store` it has none, and every lookup is a miss, so pass at least one. A `MemoryStore` takes a catalog built with the `defineCatalog` / `defineLocale` / `defineNamespace` / `defineTranslations` tree helpers:
 
-```typescript
-import { Ilingo } from 'ilingo';
-
-const ilingo = new Ilingo({
-    locale: 'en'
-})
-```
-
-The **default** (memory-) store is initialized with a catalog built from the
-`defineCatalog` / `defineLocale` / `defineNamespace` / `defineTranslations` tree helpers.
 ```typescript
 import {
     Ilingo,
@@ -96,29 +112,18 @@ const catalog = defineCatalog([
     ]),
 ]);
 
-const store = new MemoryStore({ data: catalog });
-
 const ilingo = new Ilingo({
-    store,
-    locale: 'en'
+    store: new MemoryStore({ data: catalog }),
+    locale: 'en',
 });
 ```
 
-To retrieve text from any of the language files, simply pass the filename/namespace and the access key
-as the first parameter, separated by a period (.).
-
-After that you can simply access the locale string, as described in the following:
+`get()` takes one context object: the `namespace`, the `key` inside it, and optionally `data`, `locale` and `count`. It resolves to the rendered string, or `undefined` for a missing key:
 
 ```typescript
-import { Ilingo } from 'ilingo';
-
-const ilingo = new Ilingo({
-    // ...
-});
-
 await ilingo.get({
     namespace: 'app',
-    key: 'key'
+    key: 'key',
 });
 // Hello my name is {{name}}
 
@@ -126,8 +131,8 @@ await ilingo.get({
     namespace: 'app',
     key: 'key',
     data: {
-        name: 'Peter'
-    }
+        name: 'Peter',
+    },
 });
 // Hello my name is Peter
 
@@ -135,16 +140,18 @@ await ilingo.get({
     namespace: 'app',
     key: 'key',
     data: {
-        name: 'Peter'
+        name: 'Peter',
     },
-    locale: 'de'
+    locale: 'de',
 });
 // Hallo mein Name ist Peter
 ```
 
+A placeholder with no matching `data` entry stays in the output as written, as the first call shows.
+
 ### Parameters
-As a template delimiter a mustache like `{{}}` interpolation is used.
-Data properties can be injected as a second argument, e.g.
+
+Placeholders use mustache-like `{{name}}` delimiters. Their values come from the `data` field of the context:
 
 ```typescript
 import { Ilingo, MemoryStore, defineCatalog, defineLocale, defineNamespace, defineTranslations } from 'ilingo';
@@ -158,17 +165,17 @@ const ilingo = new Ilingo({
                 ]),
             ]),
         ]),
-    })
+    }),
 });
 
 await ilingo.get({
     namespace: 'app',
     key: 'age',
     data: {
-        age: 18
-    }
+        age: 18,
+    },
 });
-// I am 18 yeas old
+// I am 18 years old.
 ```
 
 ### Locales
@@ -189,7 +196,7 @@ await ilingo.get({
         age: 18
     }
 });
-// I am 18 yeas old
+// I am 18 years old.
 
 ilingo.setLocale('de');
 
@@ -220,7 +227,7 @@ await ilingo.get({
         age: 18
     }
 });
-// I am 18 yeas old
+// I am 18 years old.
 
 await ilingo.get({
     namespace: 'app',
@@ -346,13 +353,13 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 5 });  // "5 items"
 
 `definePlural` returns a plural node with the same runtime shape as the JSON `{ "type": "plural", "data": { ... } }` literal. The TS/JS version gives local CLDR-category autocomplete and a compile error if you misspell `other` or pass a non-CLDR key.
 
-If the selected category is absent from the leaf, `other` is used as a fallback.
+If the selected category is absent from the leaf, `other` is used as a fallback. A plural leaf looked up without a `count` returns its `other` form.
 
 Plural leaves round-trip through `store.set()`: `StoreSetContext.value` accepts either a `string` or a plural **node** (`definePlural(...)` / `{ type: 'plural', data }`), not the unwrapped `PluralForms`, so the store can recognise and unwrap it on read. The `FSStore.set` persistence writes them as JSON unchanged.
 
 ### Fallback locale chain
 
-`get()` walks an ordered fallback chain. By default the chain is derived from BCP-47 parents of the requested locale, terminating at `en`:
+`get()` walks an ordered fallback chain: the requested locale (the call's `locale`, else the instance locale), then its BCP-47 parents, then `en`. Duplicates are dropped and `en` always stays last:
 
 ```typescript
 new Ilingo({ locale: 'pt-BR' }).getResolvedLocaleChain({ locale: 'pt-BR' });
@@ -371,6 +378,10 @@ new Ilingo({ fallback: false });           // disable fallback entirely
 new Ilingo({ fallback: [] });              // equivalent to `false`
 ```
 
+- A string, a non-empty array or a function's result **replaces** the BCP-47 parents; `en` is still appended at the end. `fallback: 'es'` with locale `pt-BR` gives `['pt-BR', 'es', 'en']`.
+- `false`, `[]`, or a function that returns `[]` disables fallback entirely, including `en`: the chain is just the requested locale. In the function example above, every non-`pt` locale therefore has no fallback at all.
+- The terminal `en` is a constant, not the instance `locale`: `new Ilingo({ locale: 'de' })` resolves `['de', 'en']`.
+
 The chain is walked locale-first across all stores, so the closest locale match wins regardless of store order. Within a single locale, stores are queried **serially in insertion order**, stopping at the first hit. A network-backed adapter registered after a Memory adapter is never called when the Memory adapter answers: the orchestrator does not pre-fan-out across stores.
 
 Inspect the resolution with:
@@ -386,12 +397,14 @@ await ilingo.getResolvedLocale({ namespace: 'app', key: 'hi' });
 
 ### Missing-key handler
 
-Override the default dev-mode `console.warn` via `onMissingKey`. Return a string to make it the result of `get()`; return `undefined` to keep the result `undefined`.
+A key that no store has in any locale of the chain is a miss, not an error. By default `get()` resolves to `undefined` and logs `[ilingo] missing translation for "<namespace>.<key>"` once per locale, namespace and key, except when `NODE_ENV` is `production`. Pass `onMissingKey` to replace that: return a string to make it the result of `get()` (and `getSync()`), or `undefined` to keep the result `undefined`.
+
+The handler receives the whole lookup context. `locale` is the requested locale; `resolvedLocale` is the last locale tried (the end of the chain, usually `en`).
 
 ```typescript
 const ilingo = new Ilingo({
-    onMissingKey: ({ namespace, key, resolvedLocale }) => {
-        track('i18n.miss', { namespace, key, locale: resolvedLocale });
+    onMissingKey: ({ namespace, key, locale }) => {
+        track('i18n.miss', { namespace, key, locale });
         return `[missing: ${namespace}.${key}]`;
     },
 });
@@ -424,6 +437,8 @@ await ilingo.get({ namespace: 'app', key: 'invited', data: { people: ['Alice', '
 // → "Alice, Bob, and Carol"
 ```
 
+`data` values are passed to a formatter as they are, so `list` takes an array and `date` a `Date`, a timestamp or an ISO string. Without a formatter, a placeholder renders `String(value)`.
+
 Syntax:
 
 ```text
@@ -436,7 +451,7 @@ The locale used to construct the `Intl.*Format` instance is the **resolved** loc
 
 Option-value coercion: `42` → `42` (number), `true` / `false` → boolean, anything else → string. So `currency=EUR` becomes `{ currency: 'EUR' }`, `minimumFractionDigits=2` becomes `{ minimumFractionDigits: 2 }`.
 
-Unknown modifiers fall back to `String(value)` and emit a one-shot dev-mode warning (silenced in `process.env.NODE_ENV === 'production'`). Malformed modifier expressions (unbalanced parens, non-identifier names) are treated the same way, and never throw.
+Unknown formatter names fall back to `String(value)` and emit a one-shot dev-mode warning (silenced in `process.env.NODE_ENV === 'production'`). Malformed modifier expressions (unbalanced parens, non-identifier names) also fall back to `String(value)`, without a warning. Neither ever throws. Option values cannot contain a comma.
 
 ### Authoring catalogs
 
@@ -518,7 +533,7 @@ tokenize('Hi {{user}}, please {cta} now.');
 // ]
 ```
 
-`tokenize()` and `template()` are parallel parsers: `template()` returns a substituted string (used by `Ilingo.format`); `tokenize()` returns tokens for VNode-producing renderers (e.g. `@ilingo/vue`'s `<ITranslateT>`). Plain `Ilingo.get()` always returns a string, so `{slot}` markers survive into the output unless a slot-aware renderer consumes them.
+`tokenize()` and `template()` are parallel parsers: `template()` returns a substituted string (used by `Ilingo.format`); `tokenize()` returns tokens for VNode-producing renderers (e.g. `@ilingo/vue`'s `<ITranslateT>`). Plain `Ilingo.get()` returns a plain string (or `undefined` for a miss), so `{slot}` markers survive into the output unless a slot-aware renderer consumes them.
 
 ### Custom formatters
 
@@ -572,9 +587,34 @@ ilingo.setLocale(chosen);
 
 `parseAcceptLanguage(header)` parses the RFC 9110 header into a quality-sorted tag list. Both functions are pure utilities: they don't mutate `Ilingo` state. Compose them with `setLocale()` to wire request-side locale negotiation in a server (Express / Hono / etc.) or client (`navigator.languages`).
 
+## Options
+
+`new Ilingo(options)` takes one optional object. Every field has a default:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `store` | `IStore \| IStore[]` | none | Stores registered at construction, in order. An earlier store wins per key. Without one, every lookup is a miss |
+| `locale` | `string` | `'en'` | Locale used when a call passes no `locale` |
+| `fallback` | `string \| string[] \| (locale) => string[] \| false` | BCP-47 parents | Locales tried after the requested one, before `en`. See [Fallback locale chain](#fallback-locale-chain) |
+| `onMissingKey` | `(ctx) => string \| undefined` | warn once, outside production | Decides the result of a miss. See [Missing-key handler](#missing-key-handler) |
+| `formatters` | `Record<string, Formatter>` | `number`, `date`, `list` | Extra formatters, added to the built-ins. See [Custom formatters](#custom-formatters) |
+
+The instance methods besides `get()` / `getSync()`:
+
+| Method | Description |
+|---|---|
+| `setLocale(locale)` / `getLocale()` / `resetLocale()` | Change, read, or reset (to `'en'`) the instance locale |
+| `registerStore(store)` | Add a store after construction. A no-op when a store with the same `id` is already registered ([details](#registering-stores-registerstorestore)) |
+| `registerFormatter(name, fn)` | Add a formatter to the instance's registry |
+| `getLocales()` | Every locale any store knows, deduplicated |
+| `getResolvedLocaleChain(ctx)` / `getResolvedLocale(ctx)` | The chain a lookup would walk, and the locale that actually answered |
+| `clone(overrides?)` | A new instance with the same locale, fallback, handler and stores; `overrides.store` goes **before** the inherited stores. The formatter registry is shared with the parent |
+| `merge(instance)` | Append another instance's stores, skipping any whose `id` is already present |
+| `format(message, data, locale?)` | Render a template string directly, with this instance's formatters |
+
 ## Store
 
-A store implements the read `IStore` port: `id`, `get`, [`getSync`](#synchronous-reads-for-ssr), `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract. The read is required in **both idioms** (same as confinity's `IStore` and locter's `IReader`), and an adapter that can't read without I/O implements `getSync` by declining (`throwSyncUnavailable(context, this.id)`). **Writing** is an opt-in capability: `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory) and `FSStore` (disk); `extendStore(...)` takes a `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Caching layers the same way: [`IInvalidatingStore`](#invalidation). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred; see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
+A store implements the read `IStore` port: `id`, `get`, [`getSync`](#synchronous-reads-for-ssr), `getLocales`. ilingo is **read-first**: the orchestrator only ever *reads* (it never calls `set`), so that's the whole required contract. The read is required in **both idioms** (same as confinity's `IStore` and locter's `IReader`), and an adapter that can't read without I/O implements `getSync` by declining (`throwSyncUnavailable(context, this.id)`). **Writing** is an opt-in capability: `IMutableStore` adds `set(ctx)` and is implemented by `MemoryStore` (in-memory), `LoaderStore` (loads the namespace first, then writes and notifies invalidation listeners) and `FSStore` (disk); integration packages such as `@ilingo/validup` ship an `extendStore(store)` helper that takes an `IMutableStore`, and `isMutableStore(store)` is the runtime guard. Caching layers the same way: [`IInvalidatingStore`](#invalidation). `has`, `delete`, `getKeys`, and batch `getAll` were each considered and deferred; see the JSDoc on `IStore` in `packages/ilingo/src/store/types.ts` for the per-method rationale.
 
 ### Registering stores: `registerStore(store)`
 
@@ -593,8 +633,18 @@ Because a `namespace` is a **shared key-space** (the walk falls through store-by
 
 ### Memory Store
 
-The Memory Store is the default store and is set if no
-other Store is specified manually.
+`MemoryStore` keeps a catalog in memory and answers both `get()` and `getSync()` without I/O. It is not added automatically: an `Ilingo` constructed without `store` has no stores at all. The `store` option takes one store or an array, registered in order.
+
+```typescript
+const store = new MemoryStore({
+    data: catalog,                     // CatalogInput: defineCatalog([...]), a LocaleNode or LocaleNode[]
+    id: Symbol.for('@my-app/catalog'), // optional; defaults to a fresh Symbol('MemoryStore')
+});
+
+await store.set({ locale: 'en', namespace: 'app', key: 'bye', value: 'Goodbye' });
+store.setSync({ locale: 'en', namespace: 'app', key: 'hi', value: 'Hello' }); // seed without await
+store.getLocalesSync();                                                      // ['en', ...]
+```
 
 ### Loader Store
 
@@ -619,7 +669,7 @@ await ilingo.get({ namespace: 'cart', key: 'items', count: 3 });
 // First call loads `./locales/en/cart.json`; subsequent calls hit the cache.
 ```
 
-Concurrent `get()`s for the same `(locale, namespace)` share one loader invocation. Misses (loader returning `undefined`) are cached too, so the loader isn't re-called for keys it has no answer for.
+Concurrent `get()`s for the same `(locale, namespace)` share one loader invocation. Misses (loader returning `undefined`) are cached too, so the loader isn't re-called for keys it has no answer for. A loader that **rejects** is not cached: the rejection propagates out of `get()`, and the next lookup calls the loader again.
 
 ### Synchronous reads for SSR
 
@@ -700,7 +750,7 @@ Detect via the `isInvalidatingStore(store)` type guard before subscribing.
 
 ### FS Store
 
-The [FSStore](../fs/README.md) is a Store which access
+The [FSStore](https://www.npmjs.com/package/@ilingo/fs) is a Store which access
 the FileSystem for locating namespace files of different locales.
 
 

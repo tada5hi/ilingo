@@ -8,25 +8,38 @@
     <b>A file-system store adapter for <a href="https://www.npmjs.com/package/ilingo">ilingo</a>: lazy-loads locale catalogs from disk and persists translations as JSON.</b>
 </p>
 
-[![npm version](https://img.shields.io/npm/v/@ilingo/fs.svg)](https://www.npmjs.com/package/@ilingo/fs)
-[![npm downloads](https://img.shields.io/npm/dm/@ilingo/fs.svg)](https://www.npmjs.com/package/@ilingo/fs)
-[![minzipped size](https://img.shields.io/bundlephobia/minzip/@ilingo/fs)](https://bundlephobia.com/package/@ilingo/fs)
-[![main](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/Tada5hi/ilingo/actions/workflows/main.yml)
-[![codecov](https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=CLIA667K6V)](https://codecov.io/gh/tada5hi/ilingo)
-[![Known Vulnerabilities](https://snyk.io/test/github/Tada5hi/ilingo/badge.svg)](https://snyk.io/test/github/Tada5hi/ilingo)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+<p align="center">
+    <a href="https://www.npmjs.com/package/@ilingo/fs"><img src="https://img.shields.io/npm/v/@ilingo/fs" alt="npm version" /></a>
+    <a href="https://github.com/tada5hi/ilingo/actions/workflows/main.yml"><img src="https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg" alt="CI" /></a>
+    <a href="https://codecov.io/gh/tada5hi/ilingo"><img src="https://codecov.io/gh/tada5hi/ilingo/branch/master/graph/badge.svg?token=4KNSG8L13V" alt="Coverage" /></a>
+    <a href="https://bundlephobia.com/package/@ilingo/fs"><img src="https://img.shields.io/bundlephobia/minzip/@ilingo/fs" alt="minzipped size" /></a>
+</p>
 
-**Table of Contents**
+<p align="center">
+    <a href="#installation"><b>Installation</b></a>
+    ·
+    <a href="#usage">Usage</a>
+    ·
+    <a href="#options">Options</a>
+    ·
+    <a href="#persistence">Persistence</a>
+    ·
+    <a href="#synchronous-reads-ssr">Sync reads</a>
+    ·
+    <a href="#watch-mode-dev-hot-reload">Watch mode</a>
+</p>
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [License](#license)
+---
+
+Keep your translations as files in your repository, one folder per locale and one file per namespace, and let ilingo read them when they are first needed. `FSStore` is an [ilingo](https://www.npmjs.com/package/ilingo) store: it finds `<directory>/<locale>/<namespace>.{js,mjs,cjs,ts,mts,json,conf}` on the first lookup of that namespace, caches it for the life of the process, and can write changes back as JSON. It also answers `getSync()` by reading the file synchronously, so a server render needs no warm-up step.
 
 ## Installation
 
 ```bash
-npm install @ilingo/fs --save
+npm install ilingo @ilingo/fs
 ```
+
+ESM only, Node.js 22 or later (it uses `node:fs`). `ilingo` is a dependency of `@ilingo/fs`, but you import `Ilingo` from it, so install it directly too. [`chokidar`](https://github.com/paulmillr/chokidar) is an optional peer, needed only for [watch mode](#watch-mode-dev-hot-reload). `@ilingo/fs/core` re-exports `ilingo` for setups that want a single import source.
 
 ## Usage
 
@@ -46,11 +59,11 @@ Locale strings should be stored in subdirectories as a namespace for each suppor
 ├── ...
 └── language
     ├── de
-    │   ├── app.{ts,js,json,conf}      # app namespace
-    │   └── forum.{ts,js,json,conf}    # forum namespace
+    │   ├── app.{json,ts,js,...}       # app namespace
+    │   └── forum.{json,ts,js,...}     # forum namespace
     └── en
-        ├── app.{ts,js,json,conf}      # app namespace
-        └── forum.{ts,js,json,conf}    # forum namespace
+        ├── app.{json,ts,js,...}       # app namespace
+        └── forum.{json,ts,js,...}     # forum namespace
 ```
 
 To get started, create e.g. a language directory somewhere in your project.
@@ -59,7 +72,7 @@ Inside this directory, create a folder for each locale (e.g. en, de, ...), which
 The created folder represents a locale namespace. These namespaces do not have to follow any specific naming convention.
 You should name the file according to the type of content it holds (e.g. app, forum, ...).
 For example, let’s say you want to create a file containing error messages.
-You might simply name it: `error.{ts,js,json}`.
+You might simply name it `error.json` (or `error.ts`, `error.js`, ...). The supported extensions are `.js`, `.mjs`, `.cjs`, `.ts`, `.mts`, `.json` and `.conf`.
 
 Each file should return a **translations node**: a `defineTranslations(...)` value for script files, or a `{ "type": "translations", "data": { ... } }` literal for JSON files.
 
@@ -95,9 +108,20 @@ export default defineTranslations({
 });
 ```
 
+### Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `directory` | `string \| string[]` | `process.cwd()` | Where the locale folders live. With several directories, files for the same namespace are merged |
+| `writeDirectory` | `string` | the first `directory` | Where [`set()`](#persistence) writes JSON |
+| `watch` | `boolean` | `false` | Invalidate cached namespaces when files change ([watch mode](#watch-mode-dev-hot-reload)) |
+| `id` | `string \| symbol` | a fresh `Symbol` | The store's identity for `ilingo.registerStore()` deduplication |
+
+`getLocales()` lists the subfolders of every `directory` whose names are valid BCP-47 tags.
+
 ### Dotted namespaces
 
-A dotted **namespace** maps to a dotted **filename**: namespace `app.nav` is read from `<locale>/app.nav.{ts,js,json,conf}` (not `<locale>/app/nav.…`).
+A dotted **namespace** maps to a dotted **filename**: namespace `app.nav` is read from `<locale>/app.nav.<ext>` (not `<locale>/app/nav.…`).
 
 ### Persistence
 
@@ -118,7 +142,7 @@ await store.set({
 // → overrides/en/app.json
 ```
 
-Writes are atomic (write-to-temp then `rename`) and the full merged record is serialized, so sibling keys are preserved. If the original source for a namespace was a `.ts` / `.js` / `.cjs` file, that file is left untouched and the new `.json` lives alongside it; on the next load `smob` merges both, with the newer JSON taking precedence.
+Writes are atomic (write-to-temp then `rename`) and the full merged record is serialized as a translations node (`{ "type": "translations", "data": { ... } }`), so sibling keys are preserved. If the original source for a namespace was a `.ts` / `.js` / `.cjs` file, that file is left untouched and the new `.json` lives alongside it. On the next load both files are merged in the order they are found on disk, not by age, so a key present in both is not guaranteed to come from the JSON: remove it from the script file once you persist it.
 
 ### Synchronous reads (SSR)
 
@@ -130,7 +154,7 @@ const ilingo = new Ilingo({ store: new FSStore({ directory: './language' }) });
 ilingo.getSync({ namespace: 'app', key: 'hi' });   // 'Hello' (no warm-up, no await)
 ```
 
-That is what lets a server-rendered Vue tree emit real translations on its first pass instead of `namespace.key` placeholders, with no priming step and no hydration payload. The whole extension matrix works on both paths (`.json`, `.conf`, `.ts`, `.mts`, `.js`, `.mjs`, `.cjs`), because each locter reader has a sync twin.
+That is what lets a server-rendered Vue tree emit real translations on its first pass instead of `namespace.key` placeholders, with no priming step and no hydration payload. Every extension (`.json`, `.conf`, `.ts`, `.mts`, `.js`, `.mjs`, `.cjs`) has a synchronous reader in locter. A module that Node refuses to `require` (`ERR_REQUIRE_ESM`, `ERR_REQUIRE_ASYNC_MODULE`, for example an ES module with top-level `await`) can only be loaded asynchronously; that case is the `SyncUnavailableError` below.
 
 The read **blocks**, deliberately. `getSync`'s contract is that it must not start work whose result it cannot return; synchronous I/O returns its result, an `import()` does not. The cost is one glob plus one file read per `(locale, namespace)`, cached for the process lifetime: paid once per namespace, never again. If blocking during a render is unacceptable for your deployment, prime the store first (`await store.loadNamespace('app', locale)`, or `store.loadNamespaceSync('app', locale)` at start-up) and `getSync` will find everything cached.
 
@@ -158,7 +182,7 @@ store.on('invalidate', (locale, namespace) => {
 });
 ```
 
-`chokidar` is an **optional peer dependency**. Install it (`npm i chokidar -D`) when enabling `watch: true`; the store logs a clear error and continues without watching if it isn't available. Call `store.close()` on app shutdown / in tests to stop the watcher.
+`chokidar` is an **optional peer dependency**. Install it (`npm i chokidar -D`) when enabling `watch: true`; the store logs a clear error and continues without watching if it isn't available. Call `store.close()` on app shutdown / in tests to stop the watcher; it also removes every `invalidate` listener.
 
 Manual invalidation (no watch) works too:
 

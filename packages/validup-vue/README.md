@@ -8,21 +8,35 @@
     <b>The <a href="https://vuejs.org">Vue 3</a> plugin for <a href="https://www.npmjs.com/package/@ilingo/validup">@ilingo/validup</a>: composables, renderless components, and the install hook.</b>
 </p>
 
-[![npm version](https://img.shields.io/npm/v/@ilingo/validup-vue.svg)](https://www.npmjs.com/package/@ilingo/validup-vue)
-[![npm downloads](https://img.shields.io/npm/dm/@ilingo/validup-vue.svg)](https://www.npmjs.com/package/@ilingo/validup-vue)
-[![minzipped size](https://img.shields.io/bundlephobia/minzip/@ilingo/validup-vue)](https://bundlephobia.com/package/@ilingo/validup-vue)
-[![main](https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg)](https://github.com/tada5hi/ilingo/actions/workflows/main.yml)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
+<p align="center">
+    <a href="https://www.npmjs.com/package/@ilingo/validup-vue"><img src="https://img.shields.io/npm/v/@ilingo/validup-vue" alt="npm version" /></a>
+    <a href="https://github.com/tada5hi/ilingo/actions/workflows/main.yml"><img src="https://github.com/tada5hi/ilingo/actions/workflows/main.yml/badge.svg" alt="CI" /></a>
+    <a href="https://bundlephobia.com/package/@ilingo/validup-vue"><img src="https://img.shields.io/bundlephobia/minzip/@ilingo/validup-vue" alt="minzipped size" /></a>
+</p>
 
-The install hook, five composables, the `<IValidup>` / `<IValidupT>` / `<IFieldValidation>` renderless components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases.
+<p align="center">
+    <a href="#installation"><b>Installation</b></a>
+    ·
+    <a href="#quick-start">Quick start</a>
+    ·
+    <a href="#composables">Composables</a>
+    ·
+    <a href="#component">Components</a>
+</p>
 
-Sibling of [`@ilingo/vue`](../vue) and [`@ilingo/vuelidate`](../vuelidate); mirrors the `validup` → `@validup/vue` package split so the framework-agnostic validation-message surface (`@ilingo/validup`) stays free of Vue.
+---
+
+Show validup's issues as translated messages in a Vue 3 form without writing the reactivity yourself. The composables and components here inject the app's `Ilingo` and locale from [`@ilingo/vue`](https://www.npmjs.com/package/@ilingo/vue), translate through [`@ilingo/validup`](https://www.npmjs.com/package/@ilingo/validup), re-run when the locale or the issues change, and seed their first value synchronously so a server render already contains the messages.
+
+The package provides the install hook, five composables, the `<IValidup>` / `<IValidupT>` / `<IFieldValidation>` renderless components, and the `FieldTranslations` / `GroupTranslations` / `FieldValidation` aliases. It mirrors the `validup` → `@validup/vue` split, so the framework-agnostic message layer (`@ilingo/validup`) stays free of Vue; [`@ilingo/vuelidate`](https://www.npmjs.com/package/@ilingo/vuelidate) is the equivalent for Vuelidate.
 
 ## Installation
 
 ```bash
-npm install @ilingo/validup-vue @ilingo/validup @ilingo/vue ilingo validup @validup/vue vue @ebec/core
+npm install @ilingo/validup-vue @ilingo/validup @ilingo/vue ilingo validup @validup/vue vue @vueuse/core
 ```
+
+ESM only. Every package in the command except `@ilingo/validup-vue` itself is a peer dependency; `@ebec/core` comes along as a regular dependency.
 
 ## Quick start
 
@@ -72,14 +86,14 @@ import { install } from '@ilingo/validup-vue';
 install(app);
 ```
 
-Looks up the `Ilingo` instance previously installed by `@ilingo/vue` and registers the default `Store` (from `@ilingo/validup`) onto it. Throws a pointed error when called without a pre-installed `Ilingo`, which is better than silently constructing a second instance that `<ITranslate>` and `useTranslation()` wouldn't see. Idempotent: re-calling won't stack duplicate `Store` instances.
+Looks up the `Ilingo` instance previously installed by `@ilingo/vue` and registers `createMemoryStore()` from `@ilingo/validup/store/memory` (the EN / DE / FR / ES catalog) onto it. `install` is also the plugin's default export, so `app.use(plugin)` works the same way. Throws a pointed error when called without a pre-installed `Ilingo`, which is better than silently constructing a second instance that `<ITranslate>` and `useTranslation()` wouldn't see. Idempotent: the store is keyed by `STORE_ID`, so re-calling won't stack duplicate catalogs.
 
 ### Composables
 
 | Export | What it does |
 |--------|--------------|
-| `useTranslationsForIssues(issues)` | `MaybeRefOrGetter<Issue[]>` → reactive `Ref<IssueTranslation[]>`. Flattens to leaves and translates each. |
-| `useTranslationsForField(fieldState)` | `MaybeRef<FieldState>` from `@validup/vue` → reactive translations of the field's dirty-gated `$errors`. |
+| `useTranslationsForIssues(issues, locale?)` | `MaybeRefOrGetter<Issue[]>` → reactive `Ref<IssueTranslation[]>`. Flattens to leaves and translates each. The optional second argument (`MaybeRefOrGetter<string \| undefined>`) overrides the app locale. |
+| `useTranslationsForField(fieldState)` | `MaybeRef<FieldState>` from `@validup/vue` → reactive translations of the field's `$errors`, as `@validup/vue` exposes them: issues from required mounts show right away, issues from optional mounts once the field is dirty. |
 | `useTranslationsForComposable($v)` | `MaybeRef<Composable<T>>` from `@validup/vue` → reactive translations of every field's `$errors`. |
 | `useTranslationsForGroupErrors($v)` | `MaybeRef<Composable<T>>` → reactive `Ref<IssueGroupTranslation[]>`. Translates `$groupErrors` by each group's own `code` **without** descending into children, for whole-form / banner rendering, not per-field. |
 | `useFieldValidation(fieldState)` | `MaybeRef<FieldState>` → a **`reactive`** `{ severity, messages, issues }` bundle for one binding onto a form-group host's `:validation` prop. |
@@ -87,7 +101,7 @@ Looks up the `Ilingo` instance previously installed by `@ilingo/vue` and registe
 All re-run when the injected locale flips. The injected `Ilingo` instance and locale `Ref` come from `@ilingo/vue`: call its `install()` first, then this package's `install(app)` to register the default catalog.
 
 `useTranslationsForIssues` and `useTranslationsForGroupErrors` preserve the previously-resolved translations during async re-evaluation, so a locale switch on a form with visible errors doesn't blank the UI for a tick before the new translations paint.
-Both also **seed their first value synchronously** where the catalog allows it (`translateIssuesSync` / `translateIssueGroupsSync` under the hood), so the messages are present on the very first render rather than one tick later: no blink on mount, and identical markup on both sides of an SSR boundary ([#988](https://github.com/tada5hi/ilingo/issues/988)). The seed is all-or-nothing, but it only backs off when a store would need I/O. An untranslated `code` still seeds, from the issue's own message, exactly as the async pass would resolve it. It never shows a message that then changes.
+Both also **seed their first value synchronously** where the catalog allows it (`translateIssuesSync` / `translateIssueGroupsSync` under the hood), so the messages are present on the very first render rather than one tick later: no blink on mount, and identical markup on both sides of an SSR boundary ([#988](https://github.com/tada5hi/ilingo/issues/988)). The seed is all-or-nothing, but it only backs off when a store would need I/O. An untranslated `code` still seeds, from the issue's own message, exactly as the async pass would resolve it. It never shows a message that then changes. Unlike the `…Sync` helpers, the composables' seed step swallows **any** error and simply starts empty; the async pass then reports it.
 
 #### `useFieldValidation`
 
@@ -108,7 +122,7 @@ const validation = useFieldValidation($v.fields.email);
 
 `validation` is a `reactive` bundle so its keys auto-unwrap when bound:
 
-- `severity`: `getSeverity(field)` from `@validup/vue` (`undefined` while pristine); the host's `validation-severity`.
+- `severity`: `getSeverity(field)` from `@validup/vue`; the host's `validation-severity`. It is `'warning'` while validation is pending, and also for a pristine field that already shows errors from required mounts; `undefined` only when nothing is shown.
 - `messages`: `{ key: issue.code ?? 'validation', value: message }[]`; the host's `validation-messages`.
 - `issues`: the raw `IssueTranslation[]` escape hatch for consumers that want richer rendering.
 
