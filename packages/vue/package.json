@@ -71,7 +71,7 @@
         "@vitejs/plugin-vue": "^6.0.11",
         "@vue/server-renderer": "^3.5.46",
         "@vue/test-utils": "^2.6.0",
-        "@vueuse/core": "^15.0.0",
+        "@vueuse/core": "^15.1.0",
         "cross-env": "^10.1.0",
         "happy-dom": "^21.0.4",
         "ilingo": "^6.2.2",
